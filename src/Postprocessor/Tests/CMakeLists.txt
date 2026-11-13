@@ -10,6 +10,26 @@ include("${CUBITSIM_SOURCE_ROOT}/cmake/CubitVtkSDK.cmake")
 add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Results" results)
 
 add_library(postprocessor_display_code STATIC
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/capture/CaptureSnapshot.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/capture/CaptureFileWriter.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorCaptureInterface.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Annotations/PostprocessorAnnotationPainter.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotData.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotHistory.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotTableData.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PostprocessorCorePlots.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotCodec.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotCsvExport.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorPlotsInterface.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/plots/PlotCommandText.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Plots/PostprocessorPlotControls.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Plots/PostprocessorPlotInteraction.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/annotations/PostprocessorCoreAnnotations.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/annotations/AnnotationCodec.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorAnnotationsInterface.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Annotations/PostprocessorAnnotationDisplay.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Annotations/PostprocessorAnnotationInteraction.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Annotations/PostprocessorAnnotationMenu.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/persistence/PostprocessorSessionCodec.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/application/PostprocessorCorePersistence.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/tables/ResultTables.cpp"
@@ -153,3 +173,18 @@ set_tests_properties(postprocessor_source_defaults PROPERTIES ENVIRONMENT "QT_QP
 if (WIN32)
   set_property(TEST postprocessor_source_defaults APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
 endif ()
+
+add_executable(postprocessor_table_pane_tests TablePaneTests.cpp)
+target_link_libraries(postprocessor_table_pane_tests PRIVATE postprocessor_display_code)
+add_test(NAME postprocessor_table_pane COMMAND postprocessor_table_pane_tests)
+set_tests_properties(postprocessor_table_pane PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+if (WIN32)
+  set_property(TEST postprocessor_table_pane APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
+endif ()
+
+# Annotation cases share the selection fixture but keep feature tests separate.
+target_sources(postprocessor_selection_tests PRIVATE AnnotationTests.cpp)
+
+target_sources(postprocessor_selection_tests PRIVATE PlotTests.cpp)
+
+target_sources(postprocessor_selection_tests PRIVATE CaptureTests.cpp)

@@ -6,7 +6,9 @@ class PostprocessorTableModel : public QAbstractTableModel
 {
 public:
   explicit PostprocessorTableModel(QObject* parent);
+  static constexpr int ActiveFrameRole = Qt::UserRole+1;
   void set_data(Postprocessor::ResultTableData data);
+  void set_active_frame(std::optional<std::size_t> frame);
   int rowCount(const QModelIndex& parent = {}) const override;
   int columnCount(const QModelIndex& parent = {}) const override;
   QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;

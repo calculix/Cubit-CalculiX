@@ -9,10 +9,14 @@
 #include <vector>
 
 class ReportSource;
+class CalculiXJobRunRecord;
+#include <memory>
 
 class CalculiXJobsInterface
 {
 public:
+  bool get_run_record(int jobId, std::shared_ptr<const CalculiXJobRunRecord>& output, std::string& error) const;
+  void freeze_prepared_setup(int jobId, const std::string& filename, bool supportedContext) noexcept;
   bool get_monitor_snapshot(std::vector<JobMonitorEntry>& output, std::string& error) const;
   bool get_report_source(int id, ReportSource& output, std::string& error);
   bool get_job_settings(int id, JobsSettings& settings, std::string& error);

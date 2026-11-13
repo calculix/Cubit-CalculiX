@@ -4,6 +4,8 @@
 #include "HDF5Tool.hpp"
 #include "CubitMessage.hpp"
 #include <array>
+#include <QJsonDocument>
+#include <QJsonParseError>
 #include <stdexcept>
 #include <utility>
 
@@ -175,7 +177,7 @@ std::vector<DrawEntityKey> readKeys(HDF5Tool& file, const std::string& group, co
 
 DrawSavedState readState(HDF5Tool& file)
 {
-  require(readInt(file, Root, "schema_version") == 1, "Unsupported drawing schema version.");
+  require(readInt(file, Root, "schema_version") == 2, "Unsupported drawing schema version.");
   DrawSavedState saved;
   saved.scope = readScope(file, Root, "scope_");
   saved.overlayVisible = readBool(file, Root, "overlay_visible");
@@ -231,8 +233,21 @@ bool CoreDrawPersistence::read(HDF5Tool& file, CoreDraw& drawing)
     {
       return true;
     }
-    const auto saved = readState(file);
+    auto saved = readState(file);
     std::string error;
+    std::vector<std::string> payload;
+    if (!file.read_dataset_string_rank_1("labels", Root, payload) || payload.size() != 1 || payload.front().size() > 4096)
+    {
+      PRINT_WARNING("Saved drawing settings ignored: invalid label settings payload.\n");
+      return true;
+    }
+    QJsonParseError parse;
+    const auto json = QJsonDocument::fromJson(QByteArray::fromStdString(payload.front()), &parse);
+    if (parse.error != QJsonParseError::NoError || !json.isObject() || !DrawLabelSettings::from_json(json.object(), saved.labels, error))
+    {
+      PRINT_WARNING("Saved drawing settings ignored: invalid label settings.\n");
+      return true;
+    }
     if (!drawing.restoreState(saved, error))
     {
       PRINT_WARNING("Saved drawing settings ignored: %s\n", error.c_str());
@@ -254,6 +269,12 @@ bool CoreDrawPersistence::write(HDF5Tool& file, const CoreDraw& drawing)
   try
   {
     const auto saved = drawing.savedState();
+    std::string labelError;
+    if (!saved.labels.validate(labelError))
+    {
+      PRINT_ERROR("Cannot save drawing labels: %s\n", labelError.c_str());
+      return false;
+    }
     require(file.createGroup(Root), "Cannot create drawing group.");
     writeScope(file, Root, "scope_", saved.scope);
     writeInt(file, Root, "overlay_visible", saved.overlayVisible);
@@ -286,8 +307,14 @@ bool CoreDrawPersistence::write(HDF5Tool& file, const CoreDraw& drawing)
       writeKeys(file, path, "entity_filter", source.entityFilter);
       writeKeys(file, path, "entity", source.entities);
     }
+    const auto labels = QJsonDocument(saved.labels.to_json()).toJson(QJsonDocument::Compact).toStdString();
+    if (!file.write_dataset_string_rank_1("labels", Root, {labels}))
+    {
+      PRINT_ERROR("Cannot save drawing label settings: %s\n", file.last_error().c_str());
+      return false;
+    }
     // Written last so a partial drawing section cannot be mistaken for a complete one.
-    writeInt(file, Root, "schema_version", 1);
+    writeInt(file, Root, "schema_version", 2);
     return true;
   }
   catch (const H5::Exception& error)

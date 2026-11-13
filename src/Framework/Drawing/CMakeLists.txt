@@ -6,6 +6,8 @@ add_library(cubitsim_drawing SHARED
   DrawingMeshGeometry.cpp DrawingMeshGeometry.hpp
   DrawingService.cpp DrawingService.hpp
   DrawingGraphics.cpp DrawingGraphics.hpp
+  DrawingCaptureRequest.cpp DrawingCaptureRequest.hpp
+  DrawingCaptureRenderer.cpp DrawingCaptureRenderer.hpp
   DrawingPicker.cpp DrawingPicker.hpp
   DrawingHitTest.cpp DrawingHitTest.hpp
   DrawingHover.cpp DrawingHover.hpp DrawingPickData.hpp
@@ -16,9 +18,10 @@ target_compile_definitions(cubitsim_drawing PRIVATE CUBITSIM_DRAWING_BUILD)
 target_include_directories(cubitsim_drawing PUBLIC "${CUBITSIM_SOURCE_ROOT}")
 target_link_libraries(cubitsim_drawing
   # DrawingService.hpp exposes picker types backed by Showviz and VTK headers.
-  PUBLIC showviz_base VTK::CommonCore VTK::CommonDataModel
+  PUBLIC showviz_base VTK::CommonCore VTK::CommonDataModel Qt6::Core
   PRIVATE cubiti cubit_util cubit_gui clarogui clarofw navigation
-    showviz_cubit showviz_mesh showviz_geom Qt6::Widgets
+    showviz_cubit showviz_mesh showviz_geom Qt6::Widgets Qt6::Gui
+    VTK::RenderingCore VTK::RenderingOpenGL2
 )
 set_target_properties(cubitsim_drawing PROPERTIES
   WINDOWS_EXPORT_ALL_SYMBOLS OFF

@@ -74,8 +74,14 @@ std::vector<std::vector<std::string>> CalculiXCore::get_jobs_tree_data()
 
 bool CalculiXCore::prepare_job_input(int job_id, const std::string& filename)
 {
+  jobs->clear_prepared_setup(job_id);
   const auto execute_command = [this](const std::string& text)
   {
+    // Keep synchronization blocked through Cubit's completion notifications,
+    // which can run after the export command has restored its local GUI block.
+    const QScopedValueRollback<bool> core_guard(bool_block_core_update, true);
+    const QScopedValueRollback<bool> gui_guard(bool_block_gui_update, true);
+
     CoreTopologyTrace::write("job.export_command.enter");
     const bool result = silent_cmd(text);
     CoreTopologyTrace::write(result ? "job.export_command.success" : "job.export_command.failure");

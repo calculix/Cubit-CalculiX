@@ -3,6 +3,7 @@
 
 #include "CoreTopologyLevelSetStructs.hpp"
 #include <map>
+#include <string>
 
 struct TopologyLevelSetDesign;
 
@@ -23,8 +24,8 @@ public:
   static TopologyLevelSetSettings default_settings();
   /// Internal QP/backtracking limits; these are not GUI or command defaults.
   static TopologyLevelSetUpdateControls default_update_controls();
-  /// False with a Cubit error for non-finite, out-of-range or conflicting settings.
-  static bool validate_settings(const TopologyLevelSetSettings& settings);
+  /// False for invalid settings; non-null error collects the message without Cubit calls.
+  static bool validate_settings(const TopologyLevelSetSettings& settings, std::string* error = nullptr);
 };
 
 #endif

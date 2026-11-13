@@ -94,6 +94,7 @@ CalculiX settings (Windows example paths)::
    ccx useroptions material_library "libmaterial.hdf5"
    ccx useroptions solver_threads 8
    ccx useroptions converter_threads 8
+   ccx useroptions quadrature_cache_mib 128
    ccx useroptions save_loaded_results on
    ccx useroptions drawing size_factor 1.0
    ccx useroptions drawing overlay on
@@ -105,6 +106,12 @@ CalculiX settings (Windows example paths)::
    ccx useroptions drawing selection_color yellow
 
 Thread counts are positive integers. The size factor must be finite and positive.
+The topology quadrature cache budget is a positive integer in MiB (default 128),
+shared by all integration workers in one pass. It limits retained reference-rule
+payload, not total process memory. Allocation grows as rules are needed; the
+full budget is not reserved. Changes apply to the next integration pass. The
+CalculiX options page exposes the same setting as ``Topology quadrature cache
+(MiB)``. Fine rules that do not fit use the existing uncached numerical path.
 Drawing colors accept ``red``, ``yellow``, ``green``, ``blue``, ``cyan``,
 ``magenta``, ``white``, ``black`` and ``orange``.
 

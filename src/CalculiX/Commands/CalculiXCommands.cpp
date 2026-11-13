@@ -1,4 +1,5 @@
 #include "Commands/drawing/ccxDisplayCommand.hpp"
+#include "Commands/drawing/ccxCaptureCommand.hpp"
 #include "CalculiXCommands.hpp"
 #include <string>
 #include <vector>
@@ -190,6 +191,7 @@ std::vector<std::string> CalculiXCommands::command_keys() const
   keys.push_back("ccxPrintCoreCommand");
   keys.push_back("ccxLogCoreCommand");
   keys.push_back("ccxDisplayCommand");
+  keys.push_back("ccxCaptureCommand");
   keys.push_back("ccxDrawCommand");
   keys.push_back("ccxDrawStepCommand");
   keys.push_back("ccxBlockElementTypeCommand");
@@ -409,6 +411,10 @@ CubitCommand* CalculiXCommands::create_command(const std::string &key)
   if (key == "ccxDisplayCommand")
   {
     return new ccxDisplayCommand();
+  }
+  if (key == "ccxCaptureCommand")
+  {
+    return new ccxCaptureCommand();
   }
   if(key == "ccxDrawCommand")
   {

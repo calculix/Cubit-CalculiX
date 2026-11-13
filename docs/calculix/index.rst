@@ -10,3 +10,5 @@ inspect their results. Workspace commands use the ``ccx`` prefix.
    ../user/index
    ../commands/index
    ../tutorials/index
+   drawing-labels
+   capture

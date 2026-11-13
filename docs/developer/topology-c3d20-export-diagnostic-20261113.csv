@@ -1,0 +1,2 @@
+source_run,formulation,execution,termination,iterations,convergence,history_reopen,grouped_compliance,exact_compliance,relative_reanalysis_difference,topology_history_unchanged,job.export_command.enter,job.export_command.success,export.gui_restore.enter,export.gui_restore.leave,export.material_release.enter,export.material_release.leave,export.mesh_release.enter,export.mesh_release.leave,exception_markers
+20261113T124243Z_2c79ac2d,C3D20,PASS,iteration_limit,60,NOT_REACHED,PASS,6338.3551344,6342.8470096,0.0007086815277392855,True,60,60,60,60,60,60,60,60,0

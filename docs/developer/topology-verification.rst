@@ -998,15 +998,220 @@ Offline tests can be run without Cubit::
 
    python tests/topology/test_level_set_verification.py
 
-Six Python test methods passed, covering all-six synthetic decks, malformed
+Eleven Python test methods passed, covering all-six synthetic decks, malformed
 connectivity/material/section cases, copied-job verification, paired reanalysis,
 iteration-limit continuation, unexpected failure/interrupt stopping and environment
-restoration. Additional offline checks passed on actual exported decks for all
+restoration, sequential DAT energy parsing, cached history validation, snapshot
+mismatches and progress throttling. Additional offline checks passed on actual exported decks for all
 six formulations (192 hex, 22600 tet and 2592 wedge elements per corresponding
 fixture). Refactored C3D8 standalone reanalysis/history checks passed with mocked
 APIs. These are harness checks, separate from the nine passing native suites.
-The new six-formulation matrix and refactored playback entry points remain
-**PENDING CUBIT EXECUTION**; no production-gate change is implied.
+Initial matrix run ``20261110T133641Z_91bf4dfc`` reached C3D4 convergence at
+iteration 52 but encountered expensive synchronous history validation. Its
+last recorded validation checkpoint was 28/52. This is partial evidence, not
+a complete matrix PASS. The updated harness below remains **PENDING CUBIT
+EXECUTION**; no production-gate change is implied.
+
+Linear post-run validation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The initial energy oracle called dat_get_element_values_for_component separately
+for every element of every iteration. That C++ query scans the matching result
+block on every call. Validating 52 iterations of 22600 elements therefore required
+roughly 26 billion record examinations, while Python held the synchronous
+playback path. The captured history JSON was approximately 140 MB, and repeated
+full snapshots increased temporary memory. Solver convergence had already
+completed; the expensive phase was the verification harness.
+
+The matrix and standalone journals now use compliance_from_dat, a restricted
+single-pass reader of the fixture's internal energy (element, energy) output.
+It retains only the latest output time, requires final time 1 in the single
+loading step, and validates exact element coverage, duplicates, finite/nonnegative
+energies and malformed records. Multiple disjoint output sets at the latest
+time are combined without overlap. Earlier increments are discarded. This is
+an independent file oracle, not a replacement for the production DAT importer.
+The legacy small-fixture API cross-check remains available but is not called
+by journal energy validation or paired-job reanalysis.
+
+History validation reuses the captured fields/factors and resolves all iteration
+DAT paths once. Save/reopen and post-reanalysis comparisons query one iteration
+at a time against that snapshot rather than constructing another full copy.
+Snapshot JSON is written with json.dump instead of creating a full JSON string.
+Stage labels distinguish capture, writing, validation and comparison. Progress
+reporting is throttled to at most one update per 200 ms, with validation iteration
+counts retained in report.json. These messages do not pump the GUI event loop
+or make Python execution asynchronous. The original snapshot still occupies
+memory; this change avoids additional full copies rather than promising a
+constant-memory history store.
+
+The new reader agreed with 18 archived DAT files across all six formulations
+to maximum relative difference about 4e-15. The local offline check, including
+loading the archived snapshots, took approximately 2.2 s; this is not a Cubit GUI
+responsiveness benchmark. All eleven Python harness test methods passed without
+loading Cubit, a native library or a solver. No C++ code or build changed.
+The updated playback must be started in a fresh/restarted Cubit session to load
+the new helper module. Existing output directories remain available; a new run
+gets a new token. GUI responsiveness and complete matrix execution still need
+to be verified. General per-element DAT query indexing is a separate future
+optimization; its production implementation is unchanged here.
+
+Targeted export diagnostic selection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Run ``20261113T122046Z_82b6f636`` completed C3D8, then failed during C3D20
+iteration-12 physical export/startup. The input reached END STEP but the export
+command did not complete successfully; no solver start was reported for that
+iteration. This does not establish which cleanup/return operation raised the
+unexpected exception. Native tracing was disabled in that run.
+
+The isolated C3D20 run 20261113T124243Z_2c79ac2d subsequently passed execution,
+all 60 history checks, native reopen and both frozen-design reanalyses. It
+reached the iteration limit: convergence remains NOT_REACHED. Grouped compliance
+was 6338.3551344; exact-factor compliance was 6342.8470096, a +0.070868 percent
+difference. Accuracy acceptance remains NOT_ASSESSED. Its native trace contains
+60 matched physical export enter/success pairs and 60 matched enter/leave pairs
+for each GUI restoration, material release and mesh release, with no exception
+markers. This did not reproduce or fix the earlier intermittent exception.
+
+.. csv-table:: Archived isolated C3D20 diagnostic
+   :file: topology-c3d20-export-diagnostic-20261113.csv
+   :header-rows: 1
+
+Remaining-formulation batch and checkpoint recovery
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``tests/topology/verify_level_set_matrix.jou`` now selects C3D4, C3D10, C3D6 and
+C3D15, with TRACE_NATIVE = True. These four cases keep cap 32, maximum 60
+iterations, move limit 0.05, interface width 1, integration tolerance 0.0001 and
+maximum refinements 5. Core convergence defaults are unchanged. Run in Cubit::
+
+   playback "C:/Users/offic/Desktop/Git/Cubit-CalculiX/tests/topology/verify_level_set_matrix.jou"
+
+Save current work first: each fresh case resets the model. The developer
+controller option must remain ON. No rebuild is required for this journal
+change. A fresh/restarted session ensures the updated Python helper is loaded.
+``report.json`` records selected formulations, configuration, full_matrix false,
+and the trace path. Only selected cases contribute to this attempt's execution
+and all_converged fields. Separate prior_coverage records identify C3D8 from
+20261113T122046Z_82b6f636 (PASS, REACHED) and C3D20 from
+20261113T124243Z_2c79ac2d (PASS, NOT_REACHED). Missing source reports are explicitly
+UNAVAILABLE; prior results are never presented as newly executed checks. The
+earlier C3D8 case passed although its containing batch later failed on C3D20.
+
+Immediately after successful optimization and a terminal converged/iteration_limit
+state check, the journal saves convergence_history.cub5. It records checkpoint
+completion only after the save command succeeds and a nonempty native file
+exists. Snapshot capture, streaming JSON output, history validation and paired
+reanalysis follow. This ordering retains native run state even if postprocessing
+fails. A JSON snapshot alone cannot restore a Core topology run.
+
+To recover an attempt produced by this journal, set its explicit configuration::
+
+   RESUME_RUN = "C:/Users/offic/Desktop/Git/Cubit-CalculiX/tests/matrix_topology_runs/<source-run>"
+
+Keep the same plugin build and fixture implementation. Selection and recorded
+numerical configuration must match before any SDK call or model reset. There is
+no build fingerprint or automatic compatibility conversion. Older reports without
+the configuration/checkpoint fields are rejected; they remain useful evidence.
+A changed method, default, fixture or plugin build requires RESUME_RUN = None.
+
+Every playback gets a new output directory. Complete PASS cases are retained
+with their source provenance and skipped. An incomplete case with a recorded,
+nonempty native checkpoint and settings reloads that model and repeats only
+postprocessing/reanalysis. Loaded settings must match the checkpoint settings,
+and loaded state must be a completed optimization. A missing/empty checkpoint
+causes a fresh optimization in the new attempt directory. A checkpoint that fails
+to open or fails loaded-state/settings checks stops the batch for review rather
+than silently substituting another model.
+
+Recovery reads original physical inputs/DAT files from their original artifact
+directory. New snapshots, validation CSVs and reports go into the new attempt;
+paired jobs use the new attempt token in filenames. The pre-reanalysis checkpoint
+restores the original job IDs, so paired-job IDs can repeat without overwriting
+earlier solver files. Source reports and checkpoints remain untouched. Retain
+the referenced source directories until recovery is complete. If recovery is
+interrupted again, select the newest attempt as RESUME_RUN.
+
+Empty, duplicate and unsupported formulation selections block before SDK access.
+The trace environment is restored after success, failure or Python interruption,
+both for inherited values and an initially unset variable. Hard native process
+termination cannot execute cleanup; flushed trace/report files remain available.
+Trace I/O can affect timings. Offline Python harness tests cover checkpoint
+selection/recovery, configuration rejection, retained PASS cases, retry filenames,
+source-report preservation, trace restoration and the validation/reanalysis path.
+Actual native checkpoint recovery and the remaining four-formulation playback
+are PENDING EXECUTION. No C++ code, compilation or Cubit execution was performed
+for these harness changes. Full-sequence export reproduction may still be needed.
+
+Parallel integration verification
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The subsequent Boost integration implementation adds LevelSetPipelineTests.cpp,
+registered as topology_pipeline in the standalone native project. It compares
+one/four workers and a zero-byte quadrature-cache budget for C3D4, C3D10, C3D6,
+C3D15, C3D8 and C3D20. Cases include constant solid/void, preservation, a smooth
+free field, geometry/derivative comparisons, and exact ordered compliance/nodal
+assembly agreement. Additional cases cover source-cache hits/misses, changed
+coefficients/settings/iteration, retained entries after rejected insertion,
+invalid Jacobians/settings, cancellation, throwing progress callbacks, reuse
+after failure, batch bounds and progress callback thread identity.
+
+The native test imports the actual production pipeline; it does not start Cubit
+or replace the numerical implementation. BOOST_ROOT defaults to the same
+sibling boost_1_92_0 directory as the production source project and can be set
+explicitly if that dependency is elsewhere. Rebuild the production plugin first
+when authorized, then build the native helpers and run all ten native suites.
+No new complete optimization campaign is required just to compare serial and
+parallel element math. Existing native/live evidence predates this change.
+
+**PENDING EXECUTION:** compilation, all ten native suites, Windows/Linux runtime
+checks and a GUI progress/cancellation/performance smoke check. No build or
+native execution was performed while implementing this change. Actual allocation
+or scheduling exhaustion is handled in the implementation but is not injected
+by this suite. Existing optimization evidence remains evidence for its original
+serial implementation and settings, not automatic certification of this update.
+
+The shared-reference-rule update retains this suite and adds borrowed-pointer
+identity, stable pointers when a new type is prepared between batches, private
+reader counters, zero duplicate rule payload, and subdivision-8 storage within
+the former 32 MiB total budget for each formulation. Warm serial/four-worker
+batches must retain equal memory/build counts and produce unchanged results.
+Mixed-type batches are compared with uncached serial integration. The default
+total budget is now 128 MiB, with a persisted positive-integer user option in MiB.
+Only coarse levels are prepared initially; finer rules are prepared between
+batches after workers actually request them. First-batch fallback counts are
+therefore expected. Actual measured speedup is still pending.
+
+After rebuilding, also verify the user-options page: default 128, command-based
+save of another positive MiB value, reset-to-default edits, reopening the page,
+and persistence across application restart. Verify rejection of zero, negative,
+noninteger and address-space-overflowing values, and confirm the next geometry
+and sensitivity passes log the selected budget and shared preparation timings.
+These GUI/command/persistence checks have not been executed during this change.
+
+Prepared physical mapping regression
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The next source change adds ElementPhysicalMapping.hpp/.cpp and reuses one
+prepared mapping across an element's integration points and refinement levels.
+LevelSetQuadratureTests.cpp now compares direct prepared evaluation, supplied
+reference mapping and existing public wrappers for all six formulations. The
+existing physical-map finite-difference Jacobian checks remain an independent
+oracle, supplemented by the affine determinant 1.5 fixture. Variants cover
+distorted/curved geometry and large translations, owned offsets after input
+edits, successful re-preparation, invalid reference sizes/values/gradients,
+alias preservation, failed-prepare invalidation, coordinate NaN/offset overflow,
+unsupported types, inverted Jacobians and recovery. Existing geometry,
+sensitivity, source-cache and parallel suites remain regression requirements.
+
+The completed four-formulation matrix 20261113T143115Z_95e8e00e is the pre-mapping
+baseline: C3D4 converged at iteration 52; C3D10, C3D6 and C3D15 reached iteration
+60. All four passed execution, history/reopen and paired reanalysis, with
+topology history unchanged. None of those results certifies this later source
+change. Rebuild when authorized, run the complete native suite and compare
+matching fixture/iteration timings before claiming a performance improvement.
+No C++ build, compilation, native tests or Cubit playback were performed while
+implementing the prepared mapping.
 
 Cubit progress display
 ~~~~~~~~~~~~~~~~~~~~~~

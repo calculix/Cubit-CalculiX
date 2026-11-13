@@ -15,4 +15,5 @@ implementations are excluded.
    calculix
    postprocessor
    reporting
+   calculix-job-snapshots
    ../README

@@ -5,6 +5,7 @@
 #include "Core/interactions/CoreConstraints.hpp"
 #include <exception>
 #include "CoreDrawScope.hpp"
+#include "CalculiXDrawLabels.hpp"
 #include "Core/CalculiXCore.hpp"
 #include "Core/steps/CoreSteps.hpp"
 #include "Core/bcs/CoreHBCs.hpp"
@@ -46,6 +47,8 @@ struct Condition
   int element = -1;
   bool body = false;
   std::string color;
+  std::string labelValue;
+  bool homogeneous = false;
 };
 
 // Native keyword families are independent. OP=NEW only applies to the first
@@ -196,6 +199,7 @@ bool boundary(CalculiXCore& core, Conditions& conditions, int type, int id, int 
   bool reset = false;
   std::string family = "BOUNDARY";
   std::vector<int> dofs;
+  std::map<int, std::string> componentValues;
   if (type == 1)
   {
     BCsDisplacementsSettings data;
@@ -211,6 +215,7 @@ bool boundary(CalculiXCore& core, Conditions& conditions, int type, int id, int 
       if (components[axis] != "free")
       {
         dofs.push_back(axis + 1);
+        componentValues[axis + 1] = homogeneous ? "0" : components[axis];
       }
     }
   }
@@ -225,6 +230,7 @@ bool boundary(CalculiXCore& core, Conditions& conditions, int type, int id, int 
     reset = data.operation == "new";
     family = data.keyword == "*TEMPERATURE" && !homogeneous ? "TEMPERATURE" : "BOUNDARY";
     dofs = {11};
+    componentValues[11] = homogeneous ? "0" : data.magnitude;
   }
   conditions.beginCard(family, !homogeneous && reset);
   for (int node : CubitInterface::get_nodeset_nodes_inclusive(nodeset))
@@ -235,6 +241,8 @@ bool boundary(CalculiXCore& core, Conditions& conditions, int type, int id, int 
       condition.owner = {type == 1 ? DrawFeature::Displacement : DrawFeature::Temperature, id};
       condition.point = coordinate(node);
       condition.dof = dof;
+      condition.labelValue = componentValues[dof];
+      condition.homogeneous = homogeneous;
       condition.step = step;
       condition.color = type == 1 ? "coral" : "red";
       conditions.put(family, std::to_string(node) + ":" + std::to_string(dof), condition, false);
@@ -741,6 +749,44 @@ bool CoreDrawScope::resolveStep(CalculiXCore& core, int stepId, double size, Res
       {
         const auto& condition = entry.second;
         auto& geometry = result.geometry[condition.owner];
+        auto label = result.labels.find(condition.owner);
+        if (label == result.labels.end())
+        {
+          DrawLabelData data;
+          if (!CalculiXDrawLabels::read(condition.owner, data, error, false))
+          {
+            return false;
+          }
+          data.values.clear();
+          if (condition.homogeneous)
+          {
+            data.amplitude.clear();
+            data.secondaryAmplitude.clear();
+            data.typeName += " (homogeneous)";
+          }
+          data.stepId = stepId;
+          data.symbolSize = size;
+          label = result.labels.emplace(condition.owner, std::move(data)).first;
+        }
+        if (label->second.anchors.empty() && condition.point.size() == 3)
+        {
+          label->second.anchors.push_back({condition.point[0], condition.point[1], condition.point[2]});
+        }
+        const char* forceComponents[] = {"FX", "FY", "FZ", "MX", "MY", "MZ"};
+        const char* boundaryComponents[] = {"UX", "UY", "UZ", "RX", "RY", "RZ"};
+        std::string component = "Defined step value";
+        if (condition.dof == 11)
+        {
+          component = "Temperature";
+        }
+        else if (condition.dof >= 1 && condition.dof <= 6)
+        {
+          component = family.first == "BOUNDARY" ? boundaryComponents[condition.dof - 1] : forceComponents[condition.dof - 1];
+        }
+        std::ostringstream value;
+        value.precision(8);
+        value << condition.value;
+        CalculiXDrawLabels::resolved_value(label->second, component, condition.labelValue.empty() ? value.str() : condition.labelValue);
         bool valid = true;
         if (family.first == "BOUNDARY" || family.first == "TEMPERATURE")
         {

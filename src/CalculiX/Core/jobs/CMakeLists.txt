@@ -1,4 +1,17 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobInputBundle.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobInputBundle.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobSetupScene.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobSetupScene.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobSetupSnapshot.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobSetupSnapshot.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobRunRecord.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXJobRunRecord.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreJobSnapshotBuilder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreJobSnapshotBuilder.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreJobRunPersistence.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreJobRunPersistence.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreJobsRunSnapshots.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobProgress.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobProgress.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreJobsProgress.cpp

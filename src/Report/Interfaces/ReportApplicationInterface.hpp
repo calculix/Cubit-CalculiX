@@ -1,4 +1,5 @@
 #pragma once
+#include "Framework/Reporting/ReportImageRequest.hpp"
 #include "Report/Core/ReportCore.hpp"
 #include <memory>
 #include <cstdint>
@@ -24,6 +25,7 @@ public:
   bool generate(const std::string& provider, int job, const std::string& profile, std::string& error);
   bool update(std::string& error);
   bool configure(const std::string& key, const std::string& value, std::string& error);
+  bool add_image(const ReportImageRequest& request,const std::string& caption,std::string& error);
   bool note(const std::string& section, const std::string& value, std::string& error);
   bool profile(const std::string& action, const std::string& name, std::vector<ReportProfile>& output, std::string& error);
   bool request_preview(std::string& error, int page = -1, int zoom = -1, const std::string& fit = "");

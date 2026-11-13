@@ -379,3 +379,13 @@ bool ReportApplicationInterface::read_project(const std::string& filename, std::
 {
   return prepare_project_read(filename,error) && commit_project_read(error);
 }
+
+bool ReportApplicationInterface::add_image(const ReportImageRequest& request,const std::string& caption,std::string& error)
+{
+  if (!core.add_image(request,caption,error))
+  {
+    return false;
+  }
+  ++previewRevision;
+  return true;
+}

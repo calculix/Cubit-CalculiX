@@ -1,4 +1,6 @@
 #include "PostprocessorModule.hpp"
+#include "Interfaces/PostprocessorReportImageProvider.hpp"
+#include "GUI/Capture/PostprocessorCaptureRenderer.hpp"
 #include "Commands/PostprocessorCommands.hpp"
 #include "Interfaces/PostprocessorApplicationInterface.hpp"
 #include "GUI/PostprocessorGui.hpp"
@@ -39,6 +41,7 @@ bool PostprocessorModule::initialize(UserOptionsInterface& options, DrawingInter
   }
   application = std::move(candidate);
   commands = std::make_unique<PostprocessorCommands>(application);
+  imageProvider = std::make_unique<PostprocessorReportImageProvider>(application);
   modelObserver = std::make_unique<PostprocessorModelObserver>([this]()
   {
     std::string error;
@@ -66,6 +69,7 @@ void PostprocessorModule::shutdown() noexcept
   {
     application->shutdown_user_options();
   }
+  imageProvider.reset();
   application.reset();
 }
 
@@ -103,11 +107,27 @@ bool PostprocessorModule::start_component(int withGUI, QWidget* host, std::strin
     gui = std::make_unique<PostprocessorGui>(application, submitCommand, silentCommand);
   }
 
-  return gui->start(host, error);
+  if (!gui->start(host,error))
+  {
+    return false;
+  }
+  application->set_capture_renderer([](const Postprocessor::CaptureSnapshot& snapshot,
+    const std::shared_ptr<PostprocessorApplicationInterface>& frozen,QByteArray& png,QJsonObject& manifest,std::string& failure)
+  {
+    return PostprocessorCaptureRenderer().render(snapshot,frozen,png,manifest,failure);
+  },[this](Postprocessor::CaptureTarget target,const std::string& id)
+  {
+    return gui->capture_reference_size(target,id);
+  });
+  return true;
 }
 
 void PostprocessorModule::stop_component() noexcept
 {
+  if (application)
+  {
+    application->set_capture_renderer({});
+  }
   gui.reset();
 }
 
@@ -169,4 +189,9 @@ bool PostprocessorModule::prepare_project_save(const ProjectStateContext&, std::
 bool PostprocessorModule::write_project_state(const ProjectStateContext& context, std::string& error)
 {
   return application && application->write_project(context.filename,error);
+}
+
+ReportImageProviderInterface* PostprocessorModule::report_image_provider() noexcept
+{
+  return imageProvider.get();
 }

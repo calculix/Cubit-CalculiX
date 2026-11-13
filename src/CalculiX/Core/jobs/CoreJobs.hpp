@@ -3,6 +3,7 @@
 
 #include "JobsSettings.hpp"
 #include "JobProgress.hpp"
+#include "CalculiXJobRunRecord.hpp"
 #include "Framework/Interfaces/JobMonitorProviderInterface.hpp"
 #include <map>
 
@@ -20,6 +21,11 @@ class CoreJobs
 {
 
 public:
+  bool get_run_record(int jobId, std::shared_ptr<const CalculiXJobRunRecord>& output, std::string& error) const;
+  void freeze_prepared_setup(int jobId, const std::string& filename, bool supportedContext) noexcept;
+  void clear_prepared_setup(int jobId);
+  void prepare_run_record(int jobId, const std::string& filename, bool imported, CalculiXJobRunRecord& output) noexcept;
+  void publish_run_record(CalculiXJobRunRecord&& record) noexcept;
   bool get_settings(int id, JobsSettings& settings, std::string& error) const;
   std::vector<int> get_job_ids() const;
   bool get_monitor_snapshot(std::vector<JobMonitorEntry>& output, std::string& error) const;
@@ -97,6 +103,12 @@ public:
   ProgressTool *progressbar; // progressbar
 
 private:
+  friend class CoreJobsPersistence;
+  std::map<int, std::shared_ptr<const CalculiXJobRunRecord>> runRecords;
+  std::map<int, CalculiXJobRunRecord> preparedRuns;
+  std::map<int, std::string> preparedRunErrors;
+  std::set<int> unsupportedPreparedRuns;
+  bool copy_job_input(const std::string& source, const std::string& destination);
   std::map<int, CalculiXJobProgress::State> job_progress;
   struct MonitorExecution
   {

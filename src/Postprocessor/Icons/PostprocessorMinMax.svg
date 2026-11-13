@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" role="img" stroke-linecap="round" stroke-linejoin="round">
+<title>Min / Max</title>
+<path d="M3 19 8 12 12 15 19 5" stroke="#263238" fill="none" stroke-width="1.5"/>
+<path d="M3 21h6M16 3h6" stroke="#263238" stroke-width="1.5"/>
+<circle cx="4" cy="18" r="2.5" fill="#4D89F5"/>
+<circle cx="19" cy="5" r="2.5" fill="#DD284C"/>
+<path d="M10 20v-5m-2 2 2-2 2 2M14 4v5m-2-2 2 2 2-2" fill="none" stroke="#263238" stroke-width="1.2"/>
+</svg>

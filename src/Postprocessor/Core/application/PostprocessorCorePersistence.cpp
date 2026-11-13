@@ -333,7 +333,7 @@ namespace Postprocessor
     std::uint64_t token = 0;
     for (const auto& item : state.views)
     {
-      token = std::max({token,item.second.camera_revision,item.second.fit_request,item.second.selection.revision});
+      token = std::max({token,item.second.camera_revision,item.second.fit_request,item.second.selection.revision,item.second.annotations.revision});
     }
     if (token == std::numeric_limits<std::uint64_t>::max())
     {
@@ -345,7 +345,18 @@ namespace Postprocessor
       item.second.camera_revision = token+1;
       item.second.fit_request = token+1;
       item.second.selection.revision = token+1;
+      item.second.annotations.revision = token+1;
       item.second.selection.entity.reset();
+    }
+    if (state.plot_revision == std::numeric_limits<std::uint64_t>::max())
+    {
+      error = "Plot revisions are exhausted.";
+      return false;
+    }
+    prepared.definitions.session.plot_revision = state.plot_revision+1;
+    for (auto& plot : prepared.definitions.session.plots)
+    {
+      plot.second.data_revision = prepared.definitions.session.plot_revision;
     }
     // Every allocation and validation is complete before publishing containers.
     next_source_number = next;

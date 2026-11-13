@@ -54,7 +54,7 @@ def module_info(source):
 
 
 def closure(modules):
-    pending = ["VTK::CommonCore", "VTK::CommonDataModel", "VTK::IOParallelXML", "VTK::FiltersCore", "VTK::FiltersGeometry", "VTK::RenderingAnnotation", "VTK::GUISupportQt"]
+    pending = ["VTK::CommonCore", "VTK::CommonDataModel", "VTK::IOParallelXML", "VTK::FiltersCore", "VTK::FiltersGeometry", "VTK::RenderingAnnotation", "VTK::GUISupportQt", "VTK::ChartsCore", "VTK::ViewsContext2D", "VTK::RenderingContextOpenGL2"]
     result = set()
     while pending:
         name = pending.pop()
@@ -116,6 +116,8 @@ def wrapper(source, selected, modules):
     lines.append('set(VTK_MODULE_ENABLE_VTK_IOParallelXML YES CACHE STRING "" FORCE)')
     lines.append('set(VTK_QT_VERSION 6 CACHE STRING "" FORCE)')
     lines.append('set(VTK_MODULE_ENABLE_VTK_GUISupportQt YES CACHE STRING "" FORCE)')
+    for module in ("ChartsCore", "ViewsContext2D", "RenderingContextOpenGL2"):
+        lines.append(f'set(VTK_MODULE_ENABLE_VTK_{module} YES CACHE STRING "" FORCE)')
     for group in sorted({group for fields in modules.values() for group in fields.get("GROUPS", [])}):
         lines.append(f'set(VTK_GROUP_ENABLE_{group} DONT_WANT CACHE STRING "" FORCE)')
     lines.extend(["add_subdirectory(" + bracket(source) + " vtk)", "set(_includes \"set(CUBIT_VTK_GENERATED_INCLUDE_DIRECTORIES\\n\")"])
@@ -144,7 +146,7 @@ def write_sdk(output, source, report, modules):
         raise ValueError("CMake did not generate the Release CXX SDK include metadata")
     lines = ["# Generated development adapter; runtime DLLs remain owned by Cubit.",
              'set(CUBIT_VTK_SDK_VERSION "9.4.2")', 'set(CUBIT_VTK_SDK_COMPATIBILITY "unvalidated")',
-             'set(CUBIT_VTK_SDK_FEATURES "results;viewport-qt")',
+             'set(CUBIT_VTK_SDK_FEATURES "results;viewport-qt;charts-qt")',
              "set(CUBIT_VTK_SDK_HOST_ROOT " + bracket(report["cubit_root"]) + ")",
              "set(CUBIT_VTK_SDK_SOURCE_ROOT " + bracket(source) + ")",
              "include(" + bracket(include_file) + ")", "list(REMOVE_DUPLICATES CUBIT_VTK_GENERATED_INCLUDE_DIRECTORIES)"]
@@ -154,7 +156,9 @@ def write_sdk(output, source, report, modules):
                         "vtkCommonDataModel/vtkCommonDataModelModule.h",
                         "vtkRenderingCore/vtkRenderingCoreModule.h",
                         "vtkRenderingOpenGL2/vtkRenderingOpenGL2Module.h",
-                        "vtkGUISupportQt/vtkGUISupportQtModule.h"]
+                        "vtkGUISupportQt/vtkGUISupportQtModule.h",
+                        "vtkChartsCore/vtkChartsCoreModule.h", "vtkViewsContext2D/vtkViewsContext2DModule.h",
+                        "vtkRenderingContextOpenGL2/vtkRenderingContextOpenGL2Module.h"]
     for relative in required_headers:
         header = output / "header-build/vtk" / relative
         if not header.is_file():

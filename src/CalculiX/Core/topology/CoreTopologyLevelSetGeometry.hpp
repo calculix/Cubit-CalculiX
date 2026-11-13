@@ -33,20 +33,27 @@ public:
    * @param preserved Force fraction one and derivatives zero after geometry checks.
    * @param settings Valid settings; quadrature controls are independent of solver rules.
    * @param[out] geometry Cleared on entry/failure; replaced only after convergence.
-   * @param poll Optional calling-thread progress/interrupt callback; false aborts.
-   * The callback owns update throttling; quadrature does not publish percentages.
+   * @param poll Optional interruption callback; false aborts. Parallel workers
+   * supply an atomic cancellation check, never a Cubit/GUI callback. Serial
+   * callers can supply a calling-thread progress callback with throttling.
    * @param quadrature Optional pass-local reference-rule cache; oversized rules
    * use the ordinary path and all physical Jacobians remain element-specific.
+   * @param error Optional error destination. Non-null suppresses Cubit messages
+   * throughout numerical settings/interpolation/quadrature calls. The caller
+   * clears it before a request and reports failures on the calling thread.
    * @return False with cleared geometry on invalid data, unresolved integration or interruption.
    * @note Positive phi is solid; phi=0 is the interface. Uses a compact C1
    * Heaviside with dimensionless half-width settings.interface_width. Higher-order
    * interpolation may overshoot nodal bounds; the Heaviside still lies in [0,1].
    * Composite three-point tensor Gauss rules use a Duffy map for tet/wedge.
+   * One worker-local ElementPhysicalMapping validates coordinates and prepares
+   * ordering/coordinate offsets once, reused across all refinement levels.
+   * Reference data and point-specific positive Jacobians remain checked.
    * Refinement compares volume, fraction and width-scaled nodal derivatives.
    * This is an error estimate, not a certified integration or element-validity
    * bound. It does not split/remesh Cubit elements or store a mesh snapshot.
    */
-  static bool evaluate_element(const std::string& calculix_type, int cubit_type, const std::vector<std::array<double, 3>>& node_coordinates, const std::vector<double>& node_values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll = {}, CoreTopologyLevelSetQuadrature* quadrature = nullptr);
+  static bool evaluate_element(const std::string& calculix_type, int cubit_type, const std::vector<std::array<double, 3>>& node_coordinates, const std::vector<double>& node_values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll = {}, CoreTopologyLevelSetQuadrature* quadrature = nullptr, std::string* error = nullptr);
 };
 
 #endif

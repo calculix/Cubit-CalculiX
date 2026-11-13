@@ -39,6 +39,7 @@ std::vector<std::string> ReportConfigureCommand::get_syntax()
     const std::string argument = numeric ? "<value:" : word ? "<string:type='unquoted',number='1'," : "<string:type='quoted',number='1',";
     settings += " [" + option.first + " " + argument + "label='" + option.first + "'>]";
   }
+  settings += " [option <string:type='quoted',number='1',label='option_key'> value <string:type='quoted',number='1',label='option_value'>]...";
   settings += " [logo_file <string:type='quoted',number='1',label='logo_file'>] [logo_remove]";
   return {"report configure <string:type='quoted',number='1',label='key'> <string:type='quoted',number='1',label='value'>",
     settings,
@@ -122,6 +123,23 @@ bool ReportConfigureCommand::run(CubitCommandData& data, const std::shared_ptr<R
   if (data.find_keyword("SETTINGS"))
   {
     ReportConfiguration patch;
+    if (data.find_keyword("OPTION"))
+    {
+      std::vector<std::string> keys, values;
+      if (!data.get_strings("option_key", keys) || !data.get_strings("option_value", values) || keys.empty() || keys.size() != values.size())
+      {
+        error = "Each report setting option requires one quoted key and value.";
+        return false;
+      }
+      for (std::size_t index = 0; index < keys.size(); ++index)
+      {
+        if (settingsOptions().count(keys[index]) != 0 || !patch.values.emplace(keys[index], values[index]).second)
+        {
+          error = "Duplicate setting or common option used through template-option syntax: " + keys[index];
+          return false;
+        }
+      }
+    }
     for (const auto& option : settingsOptions())
     {
       const auto keyword = QString::fromStdString(option.first).toUpper().toStdString();

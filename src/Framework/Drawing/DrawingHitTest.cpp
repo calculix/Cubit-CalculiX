@@ -171,10 +171,8 @@ bool DrawingHitTest::pick(GView& view, float x, float y, const DrawingPickSnapsh
     const auto& entity = snapshot.entities[index];
     for (const auto& primitive : entity.geometry.primitives)
     {
-      if (primitive.kind == DrawingPrimitiveKind::Label)
-      {
-        continue;
-      }
+      // Labels use the same owner as their symbols. Their world-space origin
+      // is pickable with the existing point tolerance; no guessed text bounds.
       std::vector<Point> points;
       for (const auto& world : primitive.points)
       {

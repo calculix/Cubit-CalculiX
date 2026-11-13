@@ -16,6 +16,7 @@ class CalculiXResultSourceProvider;
 class CalculiXJobMonitorProvider;
 class CalculiXReportTemplateProvider;
 class CalculiXReportModelProvider;
+class CalculiXReportImageProvider;
 
 class CalculiXModule : public ModuleInterface,
                        public CommandProviderInterface,
@@ -46,6 +47,7 @@ public:
   JobMonitorProviderInterface* job_monitor_provider() noexcept override;
   ReportTemplateProviderInterface* report_template_provider() noexcept override;
   ReportModelProviderInterface* report_model_provider() noexcept override;
+  ReportImageProviderInterface* report_image_provider() noexcept override;
   bool workspace_view(WorkspaceView& view, std::string& error) override;
 
 private:
@@ -55,6 +57,7 @@ private:
   std::unique_ptr<CalculiXJobMonitorProvider> monitorProvider;
   std::unique_ptr<CalculiXReportTemplateProvider> reportTemplates;
   std::unique_ptr<CalculiXReportModelProvider> reportModels;
+  std::unique_ptr<CalculiXReportImageProvider> reportImages;
   bool observer_registered = false;
 };
 

@@ -31,9 +31,9 @@ ReportSettingsDialog::ReportSettingsDialog(QWidget* parent, const ReportConfigur
   auto* outer = new QVBoxLayout(this);
   auto* tabs = new QTabWidget(this);
   ReportConfiguration displayed = configuration;
+  ReportTemplate definition;
   if (const auto active = application.lock())
   {
-    ReportTemplate definition;
     std::string error;
     if (active->describe(definition, error))
     {
@@ -79,6 +79,44 @@ ReportSettingsDialog::ReportSettingsDialog(QWidget* parent, const ReportConfigur
   pageFields->addRow(tr("Paper size"), paper);
   pageFields->addRow(tr("Significant digits"), precision);
   tabs->addTab(page, tr("Page layout"));
+  // Providers describe available values and limits; GUI supplies no solver defaults.
+  auto* capture = new QWidget(tabs);
+  auto* captureFields = new QFormLayout(capture);
+  for (const auto& option : definition.options)
+  {
+    if (option.kind == "choice")
+    {
+      auto* combo = new QComboBox(capture);
+      combo->setObjectName(QString::fromStdString("ReportSetting_" + option.key));
+      for (const auto& choice : option.choices)
+      {
+        combo->addItem(QString::fromStdString(choice));
+      }
+      combo->setCurrentText(text(option.key));
+      captureChoices.emplace(option.key, combo);
+      captureFields->addRow(QString::fromStdString(option.label), combo);
+    }
+    else if (option.kind == "integer")
+    {
+      auto* spin = new QSpinBox(capture);
+      spin->setObjectName(QString::fromStdString("ReportSetting_" + option.key));
+      spin->setRange(option.minimum, option.maximum);
+      spin->setValue(text(option.key).toInt());
+      captureIntegers.emplace(option.key, spin);
+      captureFields->addRow(QString::fromStdString(option.label), spin);
+    }
+  }
+  if (!captureChoices.empty() || !captureIntegers.empty())
+  {
+    auto* hint = new QLabel(tr("Image inclusion and label visibility are controlled in the report content tree. These settings are saved with the report profile."), capture);
+    hint->setWordWrap(true);
+    captureFields->addRow(hint);
+    tabs->addTab(capture, tr("Images"));
+  }
+  else
+  {
+    delete capture;
+  }
   auto* brandingScroll = new QScrollArea(tabs);
   brandingScroll->setWidgetResizable(true);
   auto* branding = new QWidget(brandingScroll);
@@ -219,6 +257,14 @@ void ReportSettingsDialog::apply()
     patch.values[entry.first] = entry.second->isChecked() ? "true" : "false";
   }
   patch.values["logo_placement"] = logoPlacement->currentData().toString().toStdString();
+  for (const auto& entry : captureChoices)
+  {
+    patch.values[entry.first] = entry.second->currentText().toStdString();
+  }
+  for (const auto& entry : captureIntegers)
+  {
+    patch.values[entry.first] = std::to_string(entry.second->value());
+  }
   patch.values["logo_width_mm"] = std::to_string(logoWidth->value());
   patch.replace_company_logo = logoChanged;
   patch.company_logo = stagedLogo;
@@ -246,7 +292,8 @@ void ReportSettingsDialog::apply()
     return;
   }
   std::string command, error;
-  if (!ReportSettingsCommandText::build(patch, logoFilename, command, error))
+  ReportTemplate definition;
+  if (!active->describe(definition, error) || !ReportSettingsCommandText::build(patch, logoFilename, command, error, &definition))
   {
     message->setText(QString::fromStdString(error));
     return;

@@ -41,6 +41,8 @@ private:
   QJsonObject baseline;
   DrawingOptionsWidget* drawingOptions;
   QLabel* restartNotice;
+  QLabel* topologyQuadratureBudgetLabel;
+  QLineEdit* topologyQuadratureBudget;
   std::string log;
 
   QGridLayout* GridLayout;

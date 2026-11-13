@@ -402,6 +402,14 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
     progressbar->step();
 
     //clean export data
+    if (result && output_file.good())
+    {
+      output_file.flush();
+      if (output_file.good())
+      {
+        ccx_export_iface.freeze_job_setup();
+      }
+    }
     stage = "cleaning export data";
     cleanup_pending = false;
     ccx_export_iface.trace_export("export.cleanup.enter");

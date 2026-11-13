@@ -484,4 +484,16 @@ void PostprocessorScene::apply_appearance(const std::array<double, 3>& top, cons
   renderer->SetBackground(bottom[0], bottom[1], bottom[2]);
   renderer->SetBackground2(top[0], top[1], top[2]);
   renderer->SetGradientBackground(top != bottom);
+  for (const auto& display : displays)
+  {
+    display.second->coloring->update_appearance();
+  }
+}
+
+void PostprocessorScene::scale_capture(double scale)
+{
+  for (const auto& display : displays)
+  {
+    display.second->coloring->set_capture_scale(scale);
+  }
 }

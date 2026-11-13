@@ -1,4 +1,5 @@
 #include "PostprocessorGui.hpp"
+#include "Postprocessor/Core/capture/CaptureDefinition.hpp"
 #include "Workspace/PostprocessorWorkspace.hpp"
 #include "Observers/PostprocessorGuiObserver.hpp"
 #include "CubitMessage.hpp"
@@ -92,4 +93,9 @@ bool PostprocessorGui::workspace_view(WorkspaceView& view, std::string& error)
 
   workspace->workspace_view(view);
   return true;
+}
+
+std::array<int,2> PostprocessorGui::capture_reference_size(Postprocessor::CaptureTarget target,const std::string& id) const
+{
+  return workspace ? workspace->capture_reference_size(target,id) : std::array<int,2>{Postprocessor::CaptureDefaults::width,Postprocessor::CaptureDefaults::height};
 }

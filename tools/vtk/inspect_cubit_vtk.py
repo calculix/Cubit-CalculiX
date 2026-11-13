@@ -120,6 +120,7 @@ def inspect(cubit_root):
     pending.append("vtkioparallelxml-9.4.dll")
     # Cubit packages QVTK's Qt widget implementation inside showviz_qt.dll.
     pending.append("showviz_qt.dll")
+    pending.extend(["vtkchartscore-9.4.dll", "vtkviewscontext2d-9.4.dll", "vtkrenderingcontextopengl2-9.4.dll"])
     pending.extend("vtk" + name.lower() + "-9.4.dll" for name in host_targets)
     libraries = []
     visited = set()

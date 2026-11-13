@@ -19,6 +19,7 @@ private:
   QAction* drawAll = nullptr;
   QAction* overlayVisibility = nullptr;
   QAction* symbolPicking = nullptr;
+  QAction* labelVisibility = nullptr;
   QComboBox* scope = nullptr;
   QDoubleSpinBox* size = nullptr;
   std::map<DrawGroup, QAction*> groups;

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" role="img" stroke-linecap="round" stroke-linejoin="round">
+<title>Add to report</title>
+<path d="M3 2h11l4 4v6M3 2v20h15v-4M14 2v4h4" fill="white" stroke="#263238" stroke-width="1.5"/>
+<path d="M6 7h5M6 10h8" stroke="#263238" stroke-width="1.2"/>
+<path d="M6 14h7v5H6Z" fill="#D6E8FA" stroke="#4D89F5" stroke-width="1.2"/>
+<path d="M14 15h8m-3-3 3 3-3 3" fill="none" stroke="#BE26D1" stroke-width="1.8"/>
+</svg>

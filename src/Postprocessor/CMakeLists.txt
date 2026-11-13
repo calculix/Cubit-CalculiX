@@ -1,4 +1,14 @@
 add_library(postprocessor_core STATIC
+  Core/capture/CaptureSnapshot.cpp
+  Core/capture/CaptureFileWriter.cpp
+  Core/plots/PlotData.cpp
+  Core/plots/PlotHistory.cpp
+  Core/plots/PlotTableData.cpp
+  Core/plots/PostprocessorCorePlots.cpp
+  Core/plots/PlotCodec.cpp
+  Core/plots/PlotCsvExport.cpp
+  Core/annotations/PostprocessorCoreAnnotations.cpp
+  Core/annotations/AnnotationCodec.cpp
   Core/tables/ResultTables.cpp
   Core/tables/PostprocessorCoreTables.cpp
   Core/persistence/PostprocessorSessionCodec.cpp
@@ -48,7 +58,28 @@ target_compile_features(postprocessor_core PUBLIC cxx_std_17)
 set_target_properties(postprocessor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(postprocessor_module SHARED
+  Interfaces/PostprocessorCaptureInterface.cpp
+  Interfaces/PostprocessorReportImageProvider.cpp
+  Commands/capture/PostCaptureCommand.cpp
+  GUI/Capture/PostprocessorCaptureRenderer.cpp
+  GUI/Capture/PostprocessorCaptureDialog.cpp
+  GUI/Annotations/PostprocessorAnnotationPainter.cpp
+  GUI/Plots/PostprocessorPlotRendering.cpp
+  Icons/PostprocessorCaptureViewport.svg
+  Icons/PostprocessorRenderImage.svg
+  Icons/PostprocessorAddToReport.svg
+  Icons/PostprocessorPlotHistory.svg
+  Interfaces/PostprocessorPlotsInterface.cpp
+  Commands/plots/PostPlotCommand.cpp
+  Commands/plots/PlotCommandText.cpp
+  GUI/Plots/PostprocessorPlotChart.cpp
+  GUI/Plots/PostprocessorPlotPane.cpp
+  GUI/Plots/PostprocessorPlotControls.cpp
+  GUI/Plots/PostprocessorPlotInteraction.cpp
   Icons/Postprocessor.svg
+  Icons/PostprocessorMinMax.svg
+  Icons/PostprocessorAddResultLabel.svg
+  Icons/PostprocessorShowLabels.svg
   Icons/PostprocessorIntegrationPoint.svg
   Core/sources/VtkFileSourceProvider.cpp
   Commands/tables/PostTableCommand.cpp
@@ -65,6 +96,13 @@ add_library(postprocessor_module SHARED
   EventObservers/PostprocessorModelObserver.cpp
   EventObservers/PostprocessorModelObserver.hpp
   Interfaces/PostprocessorApplicationInterface.cpp
+  Interfaces/PostprocessorAnnotationsInterface.cpp
+  Commands/annotations/PostLabelCommand.cpp
+  Commands/annotations/PostLabelsCommand.cpp
+  GUI/Annotations/PostprocessorAnnotationDisplay.cpp
+  GUI/Annotations/PostprocessorAnnotationInteraction.cpp
+  GUI/Annotations/PostprocessorAnnotationControls.cpp
+  GUI/Annotations/PostprocessorAnnotationMenu.cpp
   Interfaces/PostprocessorApplicationInterface.hpp
   Commands/PostprocessorCommands.cpp
   Commands/PostprocessorCommands.hpp
@@ -160,7 +198,7 @@ add_library(postprocessor_module SHARED
   GUI/Observers/PostprocessorGuiObserver.hpp
 )
 
-target_link_libraries(postprocessor_module PRIVATE postprocessor_core cubitsim_storage cubiti cubit_util clarogui clarofw
+target_link_libraries(postprocessor_module PRIVATE VTK::ChartsCore VTK::ViewsContext2D VTK::RenderingContext2D VTK::RenderingContextOpenGL2 postprocessor_core cubitsim_storage cubitsim_reporting cubiti cubit_util clarogui clarofw
   Qt6::Widgets Qt6::OpenGLWidgets VTK::IOXML VTK::GUISupportQt VTK::RenderingCore VTK::RenderingAnnotation VTK::RenderingOpenGL2 VTK::FiltersCore VTK::FiltersGeometry)
 target_compile_features(postprocessor_module PUBLIC cxx_std_17)
 target_include_directories(postprocessor_module PUBLIC "${CUBITSIM_SOURCE_ROOT}")
@@ -181,6 +219,27 @@ add_custom_target(postprocessor_icons ALL
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorIntegrationPoint.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorIntegrationPoint.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorMinMax.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorMinMax.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorAddResultLabel.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorAddResultLabel.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorShowLabels.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorShowLabels.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorPlotHistory.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorPlotHistory.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorCaptureViewport.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorCaptureViewport.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorRenderImage.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorRenderImage.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorAddToReport.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorAddToReport.svg"
   VERBATIM
 )
 add_dependencies(postprocessor_module postprocessor_icons)

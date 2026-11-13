@@ -98,7 +98,7 @@ namespace Postprocessor
     {
       const auto data = result_data(source_id);
       const auto& table = state.views.at(view_id).table;
-      if (table && table->source_id == source_id)
+      if (table && !state.views.at(view_id).plot_active && table->source_id == source_id)
       {
         if (!data || increment_index >= data->increments.size())
         {
@@ -163,7 +163,7 @@ namespace Postprocessor
   }
 
   bool PostprocessorCore::set_coloring(const std::string& source_id, const std::string& view_id,
-    const ResultColoring& coloring, std::string& error)
+    const ResultColoring& coloring, std::string& error, bool activateResult)
   {
     error.clear();
     if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max() ||
@@ -183,11 +183,14 @@ namespace Postprocessor
       {
         try
         {
-          if (same_coloring(display.coloring, coloring))
+          const bool closesTable = activateResult && state.views.at(view_id).table.has_value();
+          const bool changesActive = activateResult && (state.active_source_id != source_id ||
+            state.active_view_id != view_id || state.active_representation_id != entry.first);
+          if (same_coloring(display.coloring,coloring) && !closesTable && !changesActive)
           {
             return true;
           }
-          if (coloring.field && !same_field(display.coloring.field,coloring.field))
+          if (coloring.field && (activateResult || !same_field(display.coloring.field,coloring.field)))
           {
             const auto data = result_data(source_id);
             const auto* field = data && display.increment_index < data->increments.size() ?
@@ -202,6 +205,13 @@ namespace Postprocessor
           }
           auto staged = state;
           staged.representations.at(entry.first).coloring = coloring;
+          if (activateResult)
+          {
+            staged.views.at(view_id).table.reset();
+            staged.active_view_id = view_id;
+            staged.active_source_id = source_id;
+            staged.active_representation_id = entry.first;
+          }
           state.swap(staged);
           ++scene_revision;
           return true;

@@ -8,6 +8,8 @@
 
 namespace ElementInterpolation
 {
+  // Optional error destinations collect failures without Cubit messages. This
+  // permits exclusive numerical worker calls; default callers retain messages.
   using Coordinates = std::array<double, 3>;
 
   /// Supported full-integration volume type node count; zero means unsupported.
@@ -22,7 +24,7 @@ namespace ElementInterpolation
    * are triangle components 1..2 and z in [-1,1]; hex coordinates lie in [-1,1].
    * C3D4/6/8/10/15/20 are supported. C3D8R is deliberately unsupported.
    */
-  bool evaluate_reference(const std::string& calculix_type, const Coordinates& point, std::vector<double>& values, std::vector<Coordinates>& gradients);
+  bool evaluate_reference(const std::string& calculix_type, const Coordinates& point, std::vector<double>& values, std::vector<Coordinates>& gradients, std::string* error = nullptr);
 
   /**
    * @brief Evaluate a mapped point using coordinates in Cubit/Exodus node order.
@@ -31,7 +33,7 @@ namespace ElementInterpolation
    * The determinant has units of length cubed, excludes quadrature weights,
    * and must be positive at this point. This is not an all-domain validity test.
    */
-  bool evaluate_physical(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const Coordinates& point, std::vector<double>& values, double& determinant);
+  bool evaluate_physical(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const Coordinates& point, std::vector<double>& values, double& determinant, std::string* error = nullptr);
 
   /**
    * @brief Map precomputed reference interpolation to one current physical element.
@@ -39,10 +41,12 @@ namespace ElementInterpolation
    * order. Recomputes the element-specific Jacobian, preserving accumulation
    * order and subtraction of node_coordinates[0]. Inputs must not alias outputs.
    * Direct vector aliasing is rejected before clearing the aliased input.
+   * This single-point wrapper prepares physical coordinates for each call;
+   * repeated quadrature should reuse an ElementPhysicalMapping instead.
    * @return False with empty values and zero determinant on invalid input or
    * geometry (except the alias rejection above). Output capacity is reused.
    */
-  bool evaluate_physical_from_reference(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const std::vector<double>& reference_values, const std::vector<Coordinates>& reference_gradients, std::vector<double>& values, double& determinant);
+  bool evaluate_physical_from_reference(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const std::vector<double>& reference_values, const std::vector<Coordinates>& reference_gradients, std::vector<double>& values, double& determinant, std::string* error = nullptr);
 
 }
 

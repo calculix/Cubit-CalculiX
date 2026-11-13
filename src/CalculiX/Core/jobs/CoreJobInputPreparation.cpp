@@ -21,6 +21,7 @@ bool CoreJobInputPreparation::prepare(const CoreTopology* topology, CoreJobExpor
 
   CoreJobExportContext context;
   context.job_id = job_id;
+  context.filename = filename;
 
   if (!topology)
   {

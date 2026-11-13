@@ -1,5 +1,8 @@
 #include "CoreDraw.hpp"
+#include "CoreDrawCapture.hpp"
+#include "CoreDrawSnapshotCapture.hpp"
 #include "CoreDrawScope.hpp"
+#include "CalculiXDrawLabels.hpp"
 #include "Core/loadCalculiXCore.hpp"
 #include "Core/steps/CoreSteps.hpp"
 #include "CubitInterface.hpp"
@@ -79,7 +82,20 @@ bool CoreDraw::storeGeometry(DrawEntityKey key, DrawingGeometry geometry, double
   {
     return false;
   }
-  scene.replace(key, std::move(geometry));
+  DrawLabelData label;
+  const auto category = drawing_group(key.feature);
+  const bool labeled = category == DrawGroup::Loads || category == DrawGroup::BoundaryConditions;
+  if (labeled)
+  {
+    std::string error;
+    if (!CalculiXDrawLabels::read(key, label, error))
+    {
+      PRINT_ERROR("Cannot build drawing label: %s\n", error.c_str());
+      return false;
+    }
+    label.symbolSize = size;
+  }
+  scene.replace(key, std::move(geometry), labeled ? &label : nullptr);
   if (!rebuilding)
   {
     auto& group = scene.state.groups[drawing_group(key.feature)];
@@ -238,7 +254,8 @@ bool CoreDraw::refreshDrawing(std::string& error)
       {
         if (accepted(geometry.first))
         {
-          scene.replace(geometry.first, geometry.second);
+          const auto label = resolved->labels.find(geometry.first);
+          scene.replace(geometry.first, geometry.second, label == resolved->labels.end() ? nullptr : &label->second);
           selected.push_back(geometry.first);
         }
       }
@@ -492,4 +509,34 @@ bool CoreDraw::pickSymbol(int viewId, double xFraction, double yFraction, Calcul
 void CoreDraw::bindDrawing(DrawingInterface* drawings) noexcept
 {
   scene.bind(drawings);
+}
+
+bool CoreDraw::capturePNG(const CalculiXCaptureRequest& request, QByteArray& png, std::string& error)
+{
+  DrawingFrame frame;
+  if (!CoreDrawCapture::buildFrame(ccx_core, request, frame, error))
+  {
+    return false;
+  }
+  return scene.capture(frame, request.image, png, error);
+}
+
+bool CoreDraw::captureSnapshotPNG(const CalculiXJobSetupSnapshot& snapshot, const CalculiXCaptureRequest& request, QByteArray& png, std::string& error)
+{
+  DrawingFrame frame;
+  if (!CoreDrawSnapshotCapture::buildFrame(snapshot, request, frame, error))
+  {
+    return false;
+  }
+  return scene.capture(frame, request.image, png, error);
+}
+
+bool CoreDraw::setLabelSettings(const DrawLabelSettings& settings, std::string& error)
+{
+  if (!settings.validate(error) || !scene.synchronize(error, &settings))
+  {
+    return false;
+  }
+  scene.state.labels = settings;
+  return true;
 }

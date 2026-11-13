@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QPointer>
 #include <functional>
+#include <array>
 #include <memory>
 #include <optional>
 #include <cstdint>
@@ -12,10 +13,13 @@
 #include "Framework/Results/ResultJobEntry.hpp"
 
 class PostprocessorApplicationInterface;
+class PostprocessorAnnotationControls;
 class PostprocessorResultsTree;
 class PostprocessorProperties;
 class PostprocessorTableView;
-class QStackedWidget;
+class QSplitter;
+class QTabWidget;
+class PostprocessorPlotPane;
 class QLabel;
 class PostprocessorOptionsPanel;
 class PostprocessorMouseOptionsPanel;
@@ -31,6 +35,7 @@ class QMainWindow;
 namespace Postprocessor
 {
   enum class DatasetVisibilityAction;
+  enum class CaptureTarget;
 }
 
 class PostprocessorWorkspace : public QWidget
@@ -41,13 +46,16 @@ public:
     std::function<bool(const std::string&, std::string&)> submit,
     std::function<bool(const std::string&, std::string&)> silent);
   ~PostprocessorWorkspace() override;
+  std::array<int,2> capture_reference_size(Postprocessor::CaptureTarget target,const std::string& id) const;
   void refresh();
   bool bind_native_toolbar(Claro* host, std::string& error);
   bool camera_command_active() const noexcept;
   void workspace_view(WorkspaceView& view);
 
 private:
+  void refresh_result_panes(const std::shared_ptr<PostprocessorApplicationInterface>& application,bool dataChanged);
   void submit(const QString& command);
+  void capture_dialog(bool report,bool quick);
   void import_results();
   void add_job(const SimResults::ResultJobEntry& job);
   QString frame_command(std::size_t frame) const;
@@ -58,12 +66,18 @@ private:
   PostprocessorResultsTree* tree = nullptr;
   PostprocessorProperties* properties = nullptr;
   PostprocessorViewport* viewport = nullptr;
-  QStackedWidget* viewStack = nullptr;
+  QSplitter* viewSplitter = nullptr;
+  QTabWidget* resultTabs = nullptr;
+  PostprocessorPlotPane* plotPane = nullptr;
+  std::optional<std::uint64_t> panelPlotRevision;
+  bool panelPlotActive = false;
+  bool tablePaneInitialized = false;
   PostprocessorTableView* tableView = nullptr;
   QLabel* viewTitle = nullptr;
   PostprocessorFrameNavigation* navigation = nullptr;
   PostprocessorDeformationControls* deformationControls = nullptr;
   PostprocessorPickControls* pickControls = nullptr;
+  PostprocessorAnnotationControls* annotationControls = nullptr;
   QPointer<PostprocessorOptionsPanel> optionsPanel;
   QPointer<PostprocessorMouseOptionsPanel> mouseOptionsPanel;
   PostprocessorColorControls* colorControls = nullptr;

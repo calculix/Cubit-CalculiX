@@ -11,6 +11,7 @@ QJsonObject ReportImage::to_json() const
   result.insert("caption", QString::fromStdString(caption));
   result.insert("media_type", QString::fromStdString(media_type));
   result.insert("base64_data", QString::fromStdString(base64_data));
+  result.insert("provenance",provenance);
   return result;
 }
 
@@ -33,6 +34,12 @@ bool ReportImage::from_json(const QJsonObject& input, ReportImage& output, std::
   {
     return false;
   }
+  if (input.contains("provenance") && !input.value("provenance").isObject())
+  {
+    error = "Invalid report image provenance.";
+    return false;
+  }
+  candidate.provenance = input.value("provenance").toObject();
   output = std::move(candidate);
   error.clear();
   return true;

@@ -5,8 +5,10 @@
 #include "../layouts/LayoutDefinition.hpp"
 #include "../representations/Representation.hpp"
 #include "../views/ViewDefinition.hpp"
+#include "../plots/PlotDefinition.hpp"
 
 #include <map>
+#include <utility>
 #include <string>
 
 namespace Postprocessor
@@ -28,6 +30,9 @@ namespace Postprocessor
       {"view1", ViewDefinition{"view1", "3D View 1", std::nullopt}}
     };
     std::map<std::string, Representation> representations;
+    std::map<std::string, PlotDefinition> plots;
+    std::string active_plot_id;
+    std::uint64_t plot_revision = 1;
     LayoutDefinition layout;
 
     // Empty IDs mean no active object. All active IDs are session-scoped.
@@ -44,6 +49,8 @@ namespace Postprocessor
       noexcept(sources.swap(other.sources)) &&
       noexcept(views.swap(other.views)) &&
       noexcept(representations.swap(other.representations)) &&
+      noexcept(plots.swap(other.plots)) &&
+      noexcept(active_plot_id.swap(other.active_plot_id)) &&
       noexcept(layout.root_node_id.swap(other.layout.root_node_id)) &&
       noexcept(layout.nodes.swap(other.layout.nodes)) &&
       noexcept(active_source_id.swap(other.active_source_id)) &&
@@ -53,6 +60,9 @@ namespace Postprocessor
       sources.swap(other.sources);
       views.swap(other.views);
       representations.swap(other.representations);
+      plots.swap(other.plots);
+      active_plot_id.swap(other.active_plot_id);
+      std::swap(plot_revision,other.plot_revision);
       layout.root_node_id.swap(other.layout.root_node_id);
       layout.nodes.swap(other.layout.nodes);
       active_source_id.swap(other.active_source_id);

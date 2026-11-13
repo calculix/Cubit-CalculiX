@@ -16,12 +16,19 @@ QJsonObject ReportSource::to_json() const
   result.insert("fingerprints", ReportJson::strings(fingerprints));
   result.insert("provenance", QString::fromStdString(provenance));
   result.insert("run_identity", QString::fromStdString(run_identity));
+  result.insert("solver_launch_id", QString::fromStdString(solver_launch_id));
+  result.insert("setup_snapshot_id", QString::fromStdString(setup_snapshot_id));
   return result;
 }
 
 bool ReportSource::from_json(const QJsonObject& input, ReportSource& output, std::string& error)
 {
   ReportSource candidate;
+  if (!ReportJson::text(input, "solver_launch_id", candidate.solver_launch_id, error) ||
+      !ReportJson::text(input, "setup_snapshot_id", candidate.setup_snapshot_id, error))
+  {
+    return false;
+  }
   if (!ReportJson::text(input, "kind", candidate.kind, error) ||
       !ReportJson::text(input, "model_id", candidate.model_id, error) ||
       (candidate.kind != "job" && candidate.kind != "model"))

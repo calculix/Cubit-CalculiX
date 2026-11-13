@@ -17,6 +17,8 @@ class UserOptions
     QString mSolverThreadsName;
     int mConverterThreads;
     QString mConverterThreadsName;
+    int mTopologyQuadratureCacheMiB;
+    QString mTopologyQuadratureCacheMiBName;
     QString mPathIcons;
     QString mPathIconsName;
     QString mPathPythonInterface;

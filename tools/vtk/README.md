@@ -133,3 +133,18 @@ separate exporter uses IOXML and IOParallelXML (local writes do not need MPI).
 No postprocessing workspace is present. The standalone checks under `tests/vtk`
 exercise production conversion and export against Cubit's runtime without a
 viewport; see `docs/developer/vtk-conversion.rst` for the test commands.
+
+## Chart development adapter
+
+Plotting requires ChartsCore, RenderingContext2D, ViewsContext2D and
+RenderingContextOpenGL2. Inspection includes the chart runtime roots explicitly;
+header preparation enables their source modules. The capability marker is
+results;viewport-qt;charts-qt. The next normal user configuration regenerates
+viewport-only adapters. This includes compiler probes/import-library generation,
+so it was not executed during the no-build restriction. No runtime DLL is replaced.
+
+Static inspection on Cubit 2026.11 Windows found all 59 runtime closure DLLs and
+expected chart/context/OpenGL exported symbols. This is not ABI or rendering
+validation. Linux uses an explicit host-compatible 9.4.2 SDK with matching chart
+components. SVG/GL2PS exporters exist in the inspected runtime but are not
+imported or implemented by the plotting/CSV patch.

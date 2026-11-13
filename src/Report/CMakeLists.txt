@@ -1,6 +1,8 @@
 find_package(Qt6 COMPONENTS Svg REQUIRED)
 
 add_library(report_module SHARED
+  Commands/ReportImageCommand.cpp
+  Core/ReportImages.cpp
   Commands/ReportSourceCommand.cpp Commands/ReportSourceCommand.hpp
   Commands/ReportCommands.cpp
   Commands/ReportConfigureCommand.cpp

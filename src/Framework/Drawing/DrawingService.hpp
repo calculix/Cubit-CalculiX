@@ -12,6 +12,7 @@ public:
   DrawingService();
   ~DrawingService() override;
   bool submit(const std::string& workspace, DrawingFrame frame, std::string& error) override;
+  bool capture(const DrawingFrame& frame, const DrawingCaptureRequest& request, QByteArray& png, std::string& error) override;
   void set_pick_callback(const std::string& workspace, DrawingPickCallback callback) override;
   bool activate_workspace(const std::string& workspace, std::string& error) override;
   bool picking_active(const std::string& workspace) const override;

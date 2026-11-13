@@ -1,3 +1,4 @@
+#include "CoreDrawEntityGeometry.hpp"
 #include "Core/drawing/CalculiXDrawingAdapter.hpp"
 #include "Framework/Drawing/DrawingSymbols.hpp"
 #include "CoreDrawMeshGeometry.hpp"
@@ -168,33 +169,11 @@ bool CoreDraw::draw_label(std::vector<double> coord, std::string color, double s
 bool CoreDraw::draw_load_force(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface ccx_draw_iface;
-  std::vector<std::vector<double>> draw_data = ccx_draw_iface.get_draw_data_for_load_force(id);
-
-  for (size_t i = 0; i + 1 < draw_data.size(); i += 2)
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::Force, id}, size, geometry, error))
   {
-    if (draw_data[i][3] != 0.0 || draw_data[i][4] != 0.0 || draw_data[i][5] != 0.0)
-    {
-      if (!draw_arrow(
-          {draw_data[i][0], draw_data[i][1], draw_data[i][2]},
-          {-draw_data[i][3], -draw_data[i][4], -draw_data[i][5]},
-          false, "green", size))
-      {
-        return false;
-      }
-    }
-    if (draw_data[i + 1][3] != 0.0 || draw_data[i + 1][4] != 0.0 || draw_data[i + 1][5] != 0.0)
-    {
-      if (!draw_arrow_flat(
-          {draw_data[i + 1][0], draw_data[i + 1][1], draw_data[i + 1][2]},
-          {-draw_data[i + 1][3], -draw_data[i + 1][4], -draw_data[i + 1][5]},
-          false, "seagreen", size))
-      {
-        return false;
-      }
-    }
+    PRINT_ERROR("%s\n", error.c_str());
+    return false;
   }
   return storeGeometry({DrawFeature::Force, id}, std::move(geometry), size);
 }
@@ -202,148 +181,59 @@ bool CoreDraw::draw_load_force(int id, double size)
 bool CoreDraw::draw_load_pressure(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface ccx_draw_iface;
-
-    std::vector<std::vector<double>> draw_data;
-    draw_data = ccx_draw_iface.get_draw_data_for_load_pressure(id);
-
-    for (size_t i = 0; i < draw_data.size(); i++)
-    {
-        if (!draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "lightskyblue", size))
-        {
-          return false;
-        }
-    }
-
-    return storeGeometry({DrawFeature::Pressure, id}, std::move(geometry), size);
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::Pressure, id}, size, geometry, error))
+  {
+    PRINT_ERROR("%s\n", error.c_str());
+    return false;
+  }
+  return storeGeometry({DrawFeature::Pressure, id}, std::move(geometry), size);
 }
 
 bool CoreDraw::draw_load_heatflux(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface ccx_draw_iface;
-
-    std::vector<std::vector<double>> draw_data;
-    draw_data = ccx_draw_iface.get_draw_data_for_load_heatflux(id);
-
-    for (size_t i = 0; i < draw_data.size(); i++)
-    {
-        if (!draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "purple", size))
-        {
-          return false;
-        }
-    }
-
-    return storeGeometry({DrawFeature::Heatflux, id}, std::move(geometry), size);
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::Heatflux, id}, size, geometry, error))
+  {
+    PRINT_ERROR("%s\n", error.c_str());
+    return false;
+  }
+  return storeGeometry({DrawFeature::Heatflux, id}, std::move(geometry), size);
 }
 
 bool CoreDraw::draw_load_gravity(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface ccx_draw_iface;
-
-    std::vector<std::vector<double>> draw_data;
-    draw_data = ccx_draw_iface.get_draw_data_for_load_gravity(id);
-
-    for (size_t i = 0; i < draw_data.size(); i++)
-    {
-        if (!draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "brown", size))
-        {
-          return false;
-        }
-    }
-
-    return storeGeometry({DrawFeature::Gravity, id}, std::move(geometry), size);
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::Gravity, id}, size, geometry, error))
+  {
+    PRINT_ERROR("%s\n", error.c_str());
+    return false;
+  }
+  return storeGeometry({DrawFeature::Gravity, id}, std::move(geometry), size);
 }
 
 bool CoreDraw::draw_load_centrifugal(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface ccx_draw_iface;
-
-    std::vector<std::vector<double>> draw_data;
-    draw_data = ccx_draw_iface.get_draw_data_for_load_centrifugal(id);
-
-    for (size_t i = 0; i < draw_data.size(); i++)
-    {
-        if (!draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "khaki", size))
-        {
-          return false;
-        }
-    }
-
-    return storeGeometry({DrawFeature::Centrifugal, id}, std::move(geometry), size);
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::Centrifugal, id}, size, geometry, error))
+  {
+    PRINT_ERROR("%s\n", error.c_str());
+    return false;
+  }
+  return storeGeometry({DrawFeature::Centrifugal, id}, std::move(geometry), size);
 }
 
 bool CoreDraw::draw_load_trajectory(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXLoadsInterface loads;
-  const auto type = loads.loadstrajectory_get_load_type(id);
-  std::vector<int> nodes;
-  std::vector<std::vector<double>> hits, times;
-  std::vector<std::vector<std::vector<int>>> elements;
-  bool faces = false;
-  if (type == "HEATFLUX")
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::Trajectory, id}, size, geometry, error))
   {
-    faces = true;
-    nodes = loads.loadstrajectory_heatflux_get_node_ids(id);
-    hits = loads.loadstrajectory_heatflux_get_hit_coordinates(id);
-    times = loads.loadstrajectory_heatflux_get_times(id);
-    elements = loads.loadstrajectory_heatflux_get_draw_face_ids(id);
-  }
-  else if (type == "BODYHEATFLUXSPHERE")
-  {
-    nodes = loads.loadstrajectory_bodyheatfluxsphere_get_node_ids(id);
-    hits = loads.loadstrajectory_bodyheatfluxsphere_get_hit_coordinates(id);
-    times = loads.loadstrajectory_bodyheatfluxsphere_get_times(id);
-    elements = loads.loadstrajectory_bodyheatfluxsphere_get_draw_element_ids(id);
-  }
-  else
-  {
+    PRINT_ERROR("%s\n", error.c_str());
     return false;
-  }
-  for (const auto& samples : elements)
-  {
-    for (std::size_t ring = 0; ring < samples.size(); ++ring)
-    {
-      for (int element : samples[ring])
-      {
-        if (!CoreDrawMeshGeometry::append(faces ? "face" : "element", element, false, get_color(static_cast<int>(ring)), *currentGeometry))
-        {
-          return false;
-        }
-      }
-    }
-  }
-  for (std::size_t index = 0; index < nodes.size() && index < hits.size(); ++index)
-  {
-    if (hits[index].size() < 3)
-    {
-      continue;
-    }
-    const auto point = CubitInterface::get_nodal_coordinates(nodes[index]);
-    if (!graphics_point({point[0], point[1], point[2]}, "red") || !graphics_line({point[0], point[1], point[2]}, {hits[index][0], hits[index][1], hits[index][2]}, "red"))
-    {
-      return false;
-    }
-  }
-  if (!nodes.empty() && !times.empty() && times.front().size() >= 2 && times.back().size() >= 2)
-  {
-    const auto first = CubitInterface::get_nodal_coordinates(nodes.front());
-    const auto last = CubitInterface::get_nodal_coordinates(nodes.back());
-    graphics_label({first[0], first[1], first[2]}, "t_begin " + std::to_string(times.front()[0]), "yellow");
-    graphics_label({last[0], last[1], last[2]}, "t_end " + std::to_string(times.back()[1]), "yellow");
   }
   return storeGeometry({DrawFeature::Trajectory, id}, std::move(geometry), size);
 }
@@ -351,94 +241,48 @@ bool CoreDraw::draw_load_trajectory(int id, double size)
 bool CoreDraw::draw_load_film(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface ccx_draw_iface;
-
-    std::vector<std::vector<double>> draw_data;
-    draw_data = ccx_draw_iface.get_draw_data_for_load_film(id);
-
-    for (size_t i = 0; i < draw_data.size(); i++)
-    {
-        if (!draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "indianred", size))
-        {
-          return false;
-        }
-    }
-
-    return storeGeometry({DrawFeature::Film, id}, std::move(geometry), size);
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::Film, id}, size, geometry, error))
+  {
+    PRINT_ERROR("%s\n", error.c_str());
+    return false;
+  }
+  return storeGeometry({DrawFeature::Film, id}, std::move(geometry), size);
 }
 
 bool CoreDraw::draw_load_radiation(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface ccx_draw_iface;
-
-    std::vector<std::vector<double>> draw_data;
-    draw_data = ccx_draw_iface.get_draw_data_for_load_radiation(id);
-
-    for (size_t i = 0; i < draw_data.size(); i++)
-    {
-        if (!draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {draw_data[i][3],draw_data[i][4],draw_data[i][5]}, false, "tomato", size))
-        {
-          return false;
-        }
-    }
-
-    return storeGeometry({DrawFeature::Radiation, id}, std::move(geometry), size);
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::Radiation, id}, size, geometry, error))
+  {
+    PRINT_ERROR("%s\n", error.c_str());
+    return false;
+  }
+  return storeGeometry({DrawFeature::Radiation, id}, std::move(geometry), size);
 }
 
 bool CoreDraw::draw_load_surface_traction(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface ccx_draw_iface;
-
-    //std::string log = "Surface Traction ID " + std::to_string(id) + "  drawn with size " + std::to_string(size) +"\n";
-    //PRINT_INFO("%s", log.c_str());
-
-    std::vector<std::vector<double>> draw_data;
-    draw_data = ccx_draw_iface.get_draw_data_for_load_surface_traction(id);
-
-    for (size_t i = 0; i < draw_data.size(); i++)
-    {
-        if (!draw_arrow({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, {-draw_data[i][3],-draw_data[i][4],-draw_data[i][5]}, true, "darkgreen", size))
-        {
-          return false;
-        }
-    }
-
-    return storeGeometry({DrawFeature::SurfaceTraction, id}, std::move(geometry), size);
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::SurfaceTraction, id}, size, geometry, error))
+  {
+    PRINT_ERROR("%s\n", error.c_str());
+    return false;
+  }
+  return storeGeometry({DrawFeature::SurfaceTraction, id}, std::move(geometry), size);
 }
 
 
 bool CoreDraw::draw_load_bodyheatflux(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface drawing;
-  const auto data = drawing.get_draw_data_for_load_bodyheatflux(id);
-  if (data.size() != 2)
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::BodyHeatflux, id}, size, geometry, error))
   {
+    PRINT_ERROR("%s\n", error.c_str());
     return false;
-  }
-  for (int block : data[0])
-  {
-    if (!CoreDrawMeshGeometry::append("block", block, false, "purple", *currentGeometry))
-    {
-      return false;
-    }
-  }
-  for (int element : data[1])
-  {
-    if (!CoreDrawMeshGeometry::append("element", element, false, "purple", *currentGeometry))
-    {
-      return false;
-    }
   }
   return storeGeometry({DrawFeature::BodyHeatflux, id}, std::move(geometry), size);
 }
@@ -446,43 +290,25 @@ bool CoreDraw::draw_load_bodyheatflux(int id, double size)
 bool CoreDraw::draw_bc_displacement(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface ccx_draw_iface;
-
-    std::vector<std::vector<double>> draw_data;
-    draw_data = ccx_draw_iface.get_draw_data_for_bc_displacement(id);
-
-    for (size_t i = 0; i < draw_data.size(); i++)
-    {
-        if (!draw_dof({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, draw_data[i][3], "coral", size))
-        {
-          return false;
-        }
-    }
-
-    return storeGeometry({DrawFeature::Displacement, id}, std::move(geometry), size);
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::Displacement, id}, size, geometry, error))
+  {
+    PRINT_ERROR("%s\n", error.c_str());
+    return false;
+  }
+  return storeGeometry({DrawFeature::Displacement, id}, std::move(geometry), size);
 }
 
 bool CoreDraw::draw_bc_temperature(int id, double size)
 {
   DrawingGeometry geometry;
-  const QScopedValueRollback<DrawingGeometry*> targetGuard(currentGeometry, &geometry);
-
-  CalculiXDrawInterface ccx_draw_iface;
-
-    std::vector<std::vector<double>> draw_data;
-    draw_data = ccx_draw_iface.get_draw_data_for_bc_temperature(id);
-
-    for (size_t i = 0; i < draw_data.size(); i++)
-    {
-        if (!draw_dof({draw_data[i][0],draw_data[i][1],draw_data[i][2]}, draw_data[i][3], "red", size))
-        {
-          return false;
-        }
-    }
-
-    return storeGeometry({DrawFeature::Temperature, id}, std::move(geometry), size);
+  std::string error;
+  if (!CoreDrawEntityGeometry::build({DrawFeature::Temperature, id}, size, geometry, error))
+  {
+    PRINT_ERROR("%s\n", error.c_str());
+    return false;
+  }
+  return storeGeometry({DrawFeature::Temperature, id}, std::move(geometry), size);
 }
 
 bool CoreDraw::draw_orientation(int id, double size)
@@ -1068,50 +894,7 @@ void CoreDraw::shutdown_topology_animation()
 
 std::string CoreDraw::get_color(int color_id)
 {
-    std::vector<std::string> colors;
-    colors.push_back("red");
-    colors.push_back("orange");
-    colors.push_back("yellow");
-    colors.push_back("salmon");
-    colors.push_back("coral");
-    colors.push_back("pink");
-    colors.push_back("purple");
-    colors.push_back("paleturquoise");
-    colors.push_back("lightsalmon");
-    colors.push_back("springgreen");
-    colors.push_back("slateblue");
-    colors.push_back("sienna");
-    colors.push_back("seagreen");
-    colors.push_back("deepskyblue");
-    colors.push_back("lightblue");
-    colors.push_back("lightgreen");
-    colors.push_back("khaki");
-    colors.push_back("tomato");
-    colors.push_back("lightskyblue");
-    colors.push_back("turquoise");
-    colors.push_back("greenyellow");
-    colors.push_back("powderblue");
-    colors.push_back("mediumturquoise");
-    colors.push_back("skyblue");
-    colors.push_back("lightcyan");
-    colors.push_back("dodgerblue");
-    colors.push_back("aquamarine");
-    colors.push_back("lightgoldenrodyellow");
-    colors.push_back("darkgreen");
-    colors.push_back("lightcoral");
-    colors.push_back("green");
-    colors.push_back("magenta");
-    colors.push_back("cyan");
-    colors.push_back("blue");
-    colors.push_back("white");
-    colors.push_back("brown");
-    colors.push_back("gold");
-
-    if ((color_id>0)&&(color_id<38))
-    {
-        return colors[color_id];
-    }
-    return colors[0];
+  return CoreDrawEntityGeometry::color(color_id);
 }
 
 

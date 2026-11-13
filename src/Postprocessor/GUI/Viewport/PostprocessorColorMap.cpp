@@ -29,6 +29,12 @@ PostprocessorColorMap::PostprocessorColorMap(vtkRenderer* target) : renderer(tar
   legend->SetWidth(0.12);
   legend->SetHeight(0.65);
   legend->SetNumberOfLabels(5);
+  legend->SetLabelFormat("%.6g");
+  legend->UnconstrainedFontSizeOn();
+  legend->GetTitleTextProperty()->SetFontSize(12);
+  legend->GetLabelTextProperty()->SetFontSize(12);
+  legend->GetTitleTextProperty()->SetOpacity(1.0);
+  legend->GetLabelTextProperty()->SetOpacity(1.0);
   legend->SetVisibility(false);
   renderer->AddActor2D(legend);
   minimumLabel = vtkSmartPointer<vtkTextActor>::New();
@@ -53,12 +59,11 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
 {
   using namespace Postprocessor;
   const auto& c = display.coloring;
-  const bool changedField = !applied || !same_field(applied->field, c.field);
-  const double x = std::max(0.02, 0.84 - 0.16 * slot);
-  legend->SetPosition(x, 0.22);
-  minimumLabel->SetPosition(x, 0.04);
-  maximumLabel->SetPosition(x, 0.10);
-  if (!applied || !same_coloring(*applied, c) || allFrameRange != rangeAcrossFrames || hiddenDatasets != display.hidden_datasets)
+  const bool inputChanged = appliedData != &data || appliedFrame != display.increment_index ||
+    appliedDisplayName != display.name;
+  const bool changedField = inputChanged || !applied || !same_field(applied->field,c.field);
+  appliedSlot = slot;
+  if (inputChanged || !applied || !same_coloring(*applied, c) || allFrameRange != rangeAcrossFrames || hiddenDatasets != display.hidden_datasets)
   {
     if (changedField)
     {
@@ -142,7 +147,7 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
       }
       if (field)
       {
-        title += " / " + field->name + " / " + (c.field->magnitude ? "Magnitude" : c.field->component);
+        title += "\n" + field->name + " / " + (c.field->magnitude ? "Magnitude" : c.field->component);
       }
     }
     // Visibility changes only recombine cached per-surface extrema; geometry and
@@ -321,13 +326,12 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
     applied = c;
     allFrameRange = rangeAcrossFrames;
     hiddenDatasets = display.hidden_datasets;
+    appliedData = &data;
+    appliedFrame = display.increment_index;
+    appliedDisplayName = display.name;
+    legend->Modified();
   }
-  const auto* background = renderer->GetBackground();
-  const double ink = (background[0]+background[1]+background[2]) > 1.5 ? 0.0 : 1.0;
-  legend->GetTitleTextProperty()->SetColor(ink,ink,ink);
-  legend->GetTitleTextProperty()->ShadowOff();
-  legend->GetLabelTextProperty()->ShadowOff();
-  legend->GetLabelTextProperty()->SetColor(ink,ink,ink);
+  update_appearance();
   const bool visible = display.visible && c.field && c.legend_visible &&
     std::any_of(surfaces.begin(),surfaces.end(),[&](const PostprocessorColorSurface& surface)
     {
@@ -337,4 +341,43 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
   const bool valuesAvailable = actualRange.has_value() && (c.range_mode != ColorRangeMode::AllFrames || allFrameRange.has_value());
   minimumLabel->SetVisibility(visible && valuesAvailable && c.minimum.enabled);
   maximumLabel->SetVisibility(visible && valuesAvailable && c.maximum.enabled);
+}
+
+void PostprocessorColorMap::update_appearance()
+{
+  const int viewportWidth = std::max(1,renderer->GetSize()[0]);
+  const double legendWidth = std::clamp(150.0*captureScale/viewportWidth,0.12,0.45);
+  const double x = std::max(0.02,0.98-legendWidth-(legendWidth+0.02)*appliedSlot);
+  legend->SetWidth(legendWidth);
+  legend->SetPosition(x, 0.22);
+  minimumLabel->SetPosition(x, 0.04);
+  maximumLabel->SetPosition(x, 0.10);
+  // Scene appearance is applied after CPU-side source synchronization. Refresh
+  // text independently of coloring caches so initial white backgrounds cannot
+  // retain text colors chosen against VTK's default black background.
+  const auto* background = renderer->GetBackground();
+  const auto* top = renderer->GetGradientBackground() ? renderer->GetBackground2() : background;
+  const double brightness = (background[0]+background[1]+background[2]+top[0]+top[1]+top[2])/6.0;
+  const double ink = brightness > 0.5 ? 0.0 : 1.0;
+  for (auto* text : {legend->GetTitleTextProperty(),legend->GetLabelTextProperty()})
+  {
+    text->SetColor(ink,ink,ink);
+    text->SetOpacity(1.0);
+    text->ShadowOff();
+    // A light/dark backing keeps labels readable across gradient backgrounds.
+    text->SetBackgroundColor(1.0-ink,1.0-ink,1.0-ink);
+    text->SetBackgroundOpacity(renderer->GetGradientBackground() ? 0.75 : 0.0);
+  }
+}
+
+void PostprocessorColorMap::set_capture_scale(double scale)
+{
+  const double ratio = scale/captureScale;
+  for (auto* text : {legend->GetTitleTextProperty(),legend->GetLabelTextProperty(),
+      minimumLabel->GetTextProperty(),maximumLabel->GetTextProperty()})
+  {
+    text->SetFontSize(std::max(1,static_cast<int>(std::lround(text->GetFontSize()*ratio))));
+  }
+  captureScale = scale;
+  update_appearance();
 }

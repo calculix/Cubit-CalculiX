@@ -1,4 +1,8 @@
 #include "PostprocessorCommands.hpp"
+#include "capture/PostCaptureCommand.hpp"
+#include "plots/PostPlotCommand.hpp"
+#include "annotations/PostLabelCommand.hpp"
+#include "annotations/PostLabelsCommand.hpp"
 #include "tables/PostTableCommand.hpp"
 #include "tables/PostViewTypeCommand.hpp"
 #include "selection/PostPickCommand.hpp"
@@ -31,13 +35,29 @@ PostprocessorCommands::PostprocessorCommands(std::weak_ptr<PostprocessorApplicat
 
 std::vector<std::string> PostprocessorCommands::command_keys() const
 {
-  return {"PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
+  return {"PostCaptureCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
     "PostShowCommand", "PostHideCommand", "PostViewFitCommand", "PostViewCameraCommand",
     "PostViewRotateCommand", "PostViewPanCommand", "PostViewZoomCommand"};
 }
 
 CubitCommand* PostprocessorCommands::create_command(const std::string& key)
 {
+  if (key == "PostCaptureCommand")
+  {
+    return new PostCaptureCommand(application);
+  }
+  if (key == "PostPlotCommand")
+  {
+    return new PostPlotCommand(application);
+  }
+  if (key == "PostLabelCommand")
+  {
+    return new PostLabelCommand(application);
+  }
+  if (key == "PostLabelsCommand")
+  {
+    return new PostLabelsCommand(application);
+  }
   if (key == "PostRefreshCommand")
   {
     return new PostRefreshCommand(application);

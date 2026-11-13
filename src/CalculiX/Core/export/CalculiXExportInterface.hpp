@@ -13,6 +13,7 @@ public:
   std::vector<int> get_customline_ids(); // get all equationgroup ids
   bool prepare_export(); // prepares data for export like for trajectory
   bool clean_export(); // cleans data for export like for trajectory
+  void freeze_job_setup() noexcept;
   /// Write a flushed diagnostic event when CUBITSIM_TOPOLOGY_TRACE_FILE is set.
   void trace_export(const char* event);
   bool create_customline(std::vector<std::string> options); // adds a new customline

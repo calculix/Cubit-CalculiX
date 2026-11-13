@@ -1,5 +1,7 @@
 #include "CoreDrawScene.hpp"
 #include "CalculiXDrawingAdapter.hpp"
+#include "CalculiXDrawLabels.hpp"
+#include <algorithm>
 #include <utility>
 
 CoreDrawScene::CoreDrawScene()
@@ -19,9 +21,14 @@ void CoreDrawScene::bind(DrawingInterface* service) noexcept
   }
 }
 
-void CoreDrawScene::replace(DrawEntityKey entity, DrawingGeometry geometry)
+void CoreDrawScene::replace(DrawEntityKey entity, DrawingGeometry geometry, const DrawLabelData* label)
 {
   entities[entity] = std::move(geometry);
+  labels.erase(entity);
+  if (label != nullptr)
+  {
+    labels.emplace(entity, *label);
+  }
 }
 
 void CoreDrawScene::clear(DrawGroup group)
@@ -30,6 +37,7 @@ void CoreDrawScene::clear(DrawGroup group)
   {
     if (drawing_group(entry->first.feature) == group)
     {
+      labels.erase(entry->first);
       entry = entities.erase(entry);
     }
     else
@@ -46,6 +54,7 @@ void CoreDrawScene::clearAll()
     drawings->clear("calculix");
   }
   entities.clear();
+  labels.clear();
   selection = {};
   state = CalculiXDrawState{};
   for (auto group : {DrawGroup::BoundaryConditions, DrawGroup::Loads, DrawGroup::Constraints, DrawGroup::Orientations, DrawGroup::Topology})
@@ -115,7 +124,7 @@ void CoreDrawScene::setPickCallback(std::function<void(const CalculiXDrawSelecti
   }
 }
 
-bool CoreDrawScene::synchronize(std::string& error)
+bool CoreDrawScene::synchronize(std::string& error, const DrawLabelSettings* labelsOverride)
 {
   error.clear();
   if (drawings == nullptr)
@@ -127,6 +136,7 @@ bool CoreDrawScene::synchronize(std::string& error)
     error = "The CalculiX drawing service is unavailable.";
     return false;
   }
+  const auto& labelSettings = labelsOverride == nullptr ? state.labels : *labelsOverride;
   DrawingFrame frame;
   frame.style = {hoverColor, selectionColor};
   frame.overlayVisible = state.overlayVisible && workspaceActive;
@@ -144,8 +154,29 @@ bool CoreDrawScene::synchronize(std::string& error)
     {
       step = group->second.sourceScope.stepId;
     }
+    DrawingGeometry geometry = entity.second;
+    const auto label = labels.find(entity.first);
+    const auto category = drawing_group(entity.first.feature);
+    const bool enabled = category == DrawGroup::Loads ? labelSettings.loads :
+      category == DrawGroup::BoundaryConditions && labelSettings.boundaryConditions;
+    if ((category == DrawGroup::Loads || category == DrawGroup::BoundaryConditions) &&
+        (!enabled || !labelSettings.enabled || (labelSettings.selectedOnly && !isHighlighted(entity.first, selection))))
+    {
+      geometry.primitives.erase(std::remove_if(geometry.primitives.begin(), geometry.primitives.end(), [](const DrawingPrimitive& primitive)
+      {
+        return primitive.kind == DrawingPrimitiveKind::Label;
+      }), geometry.primitives.end());
+    }
+    if (enabled && labelSettings.enabled && group != state.groups.end() && group->second.enabled &&
+        (!labelSettings.selectedOnly || isHighlighted(entity.first, selection)) && label != labels.end())
+    {
+      if (!CalculiXDrawLabels::append(label->second, labelSettings, label->second.symbolSize, geometry, error))
+      {
+        return false;
+      }
+    }
     frame.entities.push_back({CalculiXDrawingAdapter::key(entity.first, step),
-      drawing_group_name(drawing_group(entity.first.feature)), entity.second, entity.first.feature != DrawFeature::Topology});
+      drawing_group_name(category), std::move(geometry), entity.first.feature != DrawFeature::Topology});
   }
   // Reset may have cleared the shared scene and its callback.
   setPickCallback(pickCallback);
@@ -166,6 +197,16 @@ void CoreDrawScene::detach() noexcept
   {
     drawings->clear("calculix");
   }
+}
+
+bool CoreDrawScene::capture(const DrawingFrame& frame, const DrawingCaptureRequest& request, QByteArray& png, std::string& error) const
+{
+  if (drawings == nullptr)
+  {
+    error = "The framework drawing capture service is unavailable.";
+    return false;
+  }
+  return drawings->capture(frame, request, png, error);
 }
 
 void CoreDrawScene::clearHover() noexcept

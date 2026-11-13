@@ -32,7 +32,7 @@ Saved definitions
 * Per-view source visibility, hidden datasets, frame identity, field/component,
   palette, contours, legend, range mode/manual bounds, independent limit values,
   colors and enabled flags, deformation settings and undeformed overlay.
-* Active native table or spatial field table, frame identity and pick mode.
+* Open native table or spatial field table in the side pane, frame identity and pick mode.
   Table rows retain source order; sorting remains deferred.
 * Animation rate and loop preference; playback always restores paused.
 
@@ -111,3 +111,40 @@ repeat with a missing or modified VTT and with result-array saving disabled.
 Also verify opening a legacy project, reset, and a subsequent save of unavailable
 sources. Allocation, HDF5 I/O failure and interrupted group replacement require
 native integration checks before claiming recovery guarantees.
+
+
+All-frame table presentation
+-----------------------------
+
+The existing table reference identifies a logical history and a zero-based active
+frame marker. Row indexes rebuild from restored immutable source snapshots;
+combined history rows are not persisted. Older saved single-frame table views
+now display all matching frames and highlight their previously saved frame.
+Global/step-summary tables keep their own scope. Histories exceeding the current
+Qt row limit display an unavailable status on restoration instead of truncating.
+
+Annotation extension
+--------------------
+
+Each saved view now has an optional ``annotations`` object. Schema-1 projects
+without it remain readable and receive Core defaults. Definitions contain
+case-sensitive names, original entity IDs encoded as decimal strings, fixed
+field/component selections, symbolic dataset identities (kind, model ID/name),
+visibility, normalized text positions, and extrema settings/positions. No result
+arrays or calculated extrema are copied. Dataset ordinals are resolved again
+against loaded source catalogues, and unavailable definitions retain their
+settings. The view annotation revision is reseeded during session publication.
+Explicit source removal deletes its labels; source refresh retains definitions.
+
+Plot extension
+--------------
+
+An optional plots array and active_plot ID store definitions. Views have optional
+plot IDs and a plot_active side-pane flag. Missing fields in older schema-1
+projects receive empty defaults. Curves save original IDs as decimal strings,
+durable dataset identities, fixed fields/components/reductions or native table,
+column and exact filter references. Visibility and optional linear bounds are
+saved; scalar buffers and runtime revisions are excluded. Source restoration
+still occurs after solver workspace loading. Unavailable references retain their
+settings. Definitions are validated before publication, cache revisions reseeded
+and restored cameras left intact.

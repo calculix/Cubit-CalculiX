@@ -1,4 +1,5 @@
 #include "CalculiXReportInputReader.hpp"
+#include "CalculiX/Core/jobs/CalculiXJobInputBundle.hpp"
 #include <utility>
 #include <QCryptographicHash>
 #include <QFile>
@@ -12,6 +13,21 @@
 CalculiXReportInputReader::CalculiXReportInputReader() = default;
 
 bool CalculiXReportInputReader::read(const ReportSource& source, std::string& error)
+{
+  return read_input(source, nullptr, error);
+}
+
+bool CalculiXReportInputReader::read_archive(const ReportSource& source, const CalculiXJobInputBundle& archive, std::string& error)
+{
+  if (source.input_files.empty() || source.input_files.front() != archive.rootFile)
+  {
+    error = "Report source does not match the archived root input.";
+    return false;
+  }
+  return read_input(source, &archive, error);
+}
+
+bool CalculiXReportInputReader::read_input(const ReportSource& source, const CalculiXJobInputBundle* archive, std::string& error)
 {
   if (source.input_files.empty())
   {
@@ -29,23 +45,47 @@ bool CalculiXReportInputReader::read(const ReportSource& source, std::string& er
   QString stepName;
   std::function<bool(QString, int)> readFile = [&](QString path, int depth)
   {
-    path = QFileInfo(path).canonicalFilePath();
-    QFile file(path);
-    if (path.isEmpty() || depth > 32 || stack.count(path) != 0 || !file.open(QIODevice::ReadOnly))
+    if (archive == nullptr)
+    {
+      path = QFileInfo(path).canonicalFilePath();
+    }
+    if (path.isEmpty() || depth > 32 || stack.count(path) != 0)
     {
       error = "Cannot read report input or cyclic INCLUDE: " + path.toStdString();
       return false;
     }
-    total += file.size();
+    QByteArray bytes;
+    if (archive != nullptr)
+    {
+      const auto found = archive->files.find(path.toStdString());
+      const auto fingerprint = archive->fingerprints.find(path.toStdString());
+      if (found == archive->files.end() || fingerprint == archive->fingerprints.end() ||
+          QCryptographicHash::hash(found->second, QCryptographicHash::Sha256).toHex().toStdString() != fingerprint->second)
+      {
+        error = "Missing or corrupt archived input file.";
+        return false;
+      }
+      bytes = found->second;
+    }
+    else
+    {
+      QFile file(path);
+      if (!file.open(QIODevice::ReadOnly) || file.size() > 128 * 1024 * 1024 - total)
+      {
+        error = "Cannot read report input or input exceeds the reading limit.";
+        return false;
+      }
+      bytes = file.readAll();
+      if (file.error() != QFileDevice::NoError)
+      {
+        error = "Cannot read CalculiX input bytes.";
+        return false;
+      }
+    }
+    total += bytes.size();
     if (total > 128 * 1024 * 1024)
     {
       error = "Report input exceeds the 128 MiB reading limit.";
-      return false;
-    }
-    const QByteArray bytes = file.readAll();
-    if (file.error() != QFileDevice::NoError)
-    {
-      error = "Cannot read CalculiX input bytes.";
       return false;
     }
     if (recorded.insert(path).second)
@@ -96,8 +136,24 @@ bool CalculiXReportInputReader::read(const ReportSource& source, std::string& er
           {
             included = included.mid(1, included.size() - 2);
           }
-          if (!match.hasMatch() || included.isEmpty() || included.contains('<') ||
-              !readFile(QDir(QFileInfo(path).absolutePath()).absoluteFilePath(included), depth + 1))
+          QString target;
+          if (archive != nullptr)
+          {
+            const auto parent = archive->includes.find(path.toStdString());
+            if (parent != archive->includes.end())
+            {
+              const auto child = parent->second.find(included.toStdString());
+              if (child != parent->second.end())
+              {
+                target = QString::fromStdString(child->second);
+              }
+            }
+          }
+          else
+          {
+            target = QDir(QFileInfo(path).absolutePath()).absoluteFilePath(included);
+          }
+          if (!match.hasMatch() || included.isEmpty() || included.contains('<') || target.isEmpty() || !readFile(target, depth + 1))
           {
             if (error.empty())
             {

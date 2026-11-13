@@ -293,7 +293,7 @@ bool PostprocessorApplicationInterface::color_field(const std::string& name, con
       return false;
     }
     settings->field = Postprocessor::FieldSelection{dataset, match->array_name, match->association, component, magnitude, Postprocessor::field_group_key(*match)};
-    return set_coloring(name, *settings, error);
+    return core.set_coloring(id,core.session().active_view_id,*settings,error,true);
   }
   error = "The source has no current result frame.";
   return false;
@@ -437,7 +437,7 @@ void PostprocessorApplicationInterface::shutdown_user_options() noexcept
 
 const Postprocessor::UserOptions& PostprocessorApplicationInterface::user_options() const noexcept
 {
-  return options.current();
+  return captureOptions ? *captureOptions : options.current();
 }
 
 const std::string& PostprocessorApplicationInterface::active_icons_path() const noexcept

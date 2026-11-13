@@ -1,6 +1,8 @@
 #include "CoreUserOptions.hpp"
 #include "Framework/Interfaces/UserOptionsInterface.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
+#include "Core/drawing/DrawLabelSettings.hpp"
+#include "Core/topology/CoreTopologyLevelSetQuadrature.hpp"
 #include "loadUserOptions.hpp"
 #include "CubitMessage.hpp"
 #include <QDir>
@@ -32,6 +34,8 @@ void swapOptions(UserOptions& first, UserOptions& second) noexcept
   first.mSolverThreadsName.swap(second.mSolverThreadsName);
   swap(first.mConverterThreads, second.mConverterThreads);
   first.mConverterThreadsName.swap(second.mConverterThreadsName);
+  swap(first.mTopologyQuadratureCacheMiB, second.mTopologyQuadratureCacheMiB);
+  first.mTopologyQuadratureCacheMiBName.swap(second.mTopologyQuadratureCacheMiBName);
   first.mPathIcons.swap(second.mPathIcons);
   first.mPathIconsName.swap(second.mPathIconsName);
   first.mPathPythonInterface.swap(second.mPathPythonInterface);
@@ -63,6 +67,12 @@ bool positiveReal(const UserOptionValue& value)
   return std::isfinite(std::get<double>(value)) && std::get<double>(value) > 0;
 }
 
+bool validQuadratureBudget(const UserOptionValue& value)
+{
+  const int mib = std::get<int>(value);
+  return mib > 0 && static_cast<std::size_t>(mib) <= (std::numeric_limits<std::size_t>::max)() / (1024 * 1024);
+}
+
 bool validColor(const UserOptionValue& value)
 {
   const std::array<std::string, 9> colors =
@@ -92,6 +102,7 @@ std::vector<UserOption> definitions()
 #else
   const char* solverDefault = "Solver/ccx_2.22_MT";
 #endif
+  const DrawLabelSettings labelDefaults;
   return {
     {"paths/solver", UserOptionKind::ComponentPath, std::string(solverDefault), validPath},
     {"paths/icons", UserOptionKind::ComponentPath, std::string("Icons/"), validPath},
@@ -99,7 +110,23 @@ std::vector<UserOption> definitions()
     {"paths/material_library", UserOptionKind::ComponentPath, std::string("libmaterial.hdf5"), validPath},
     {"execution/solver_threads", UserOptionKind::Integer, 8, positiveInteger},
     {"execution/converter_threads", UserOptionKind::Integer, 8, positiveInteger},
+    {"topology/quadrature_cache_mib", UserOptionKind::Integer, CoreTopologyLevelSetQuadrature::default_budget_mib, validQuadratureBudget},
     {"results/save_loaded_results", UserOptionKind::Boolean, true},
+    {"drawing/labels_enabled", UserOptionKind::Boolean, labelDefaults.enabled},
+    {"drawing/labels_loads", UserOptionKind::Boolean, labelDefaults.loads},
+    {"drawing/labels_bcs", UserOptionKind::Boolean, labelDefaults.boundaryConditions},
+    {"drawing/labels_selected_only", UserOptionKind::Boolean, labelDefaults.selectedOnly},
+    {"drawing/labels_ids", UserOptionKind::Boolean, labelDefaults.showId},
+    {"drawing/labels_names", UserOptionKind::Boolean, labelDefaults.showName},
+    {"drawing/labels_values", UserOptionKind::Boolean, labelDefaults.showValues},
+    {"drawing/labels_amplitudes", UserOptionKind::Boolean, labelDefaults.showAmplitude},
+    {"drawing/labels_leaders", UserOptionKind::Boolean, labelDefaults.leaderLines},
+    {"drawing/labels_offset", UserOptionKind::Real, labelDefaults.offsetFactor, [](const UserOptionValue& value)
+    {
+      const auto* factor = std::get_if<double>(&value);
+      return factor != nullptr && std::isfinite(*factor) && *factor >= 0 && *factor <= 100;
+    }},
+    {"drawing/labels_color", UserOptionKind::Text, labelDefaults.color, validColor},
     {"drawing/size_factor", UserOptionKind::Real, 1.0, positiveReal},
     {"drawing/overlay_visible", UserOptionKind::Boolean, true},
     {"drawing/boundary_conditions", UserOptionKind::Boolean, false},
@@ -127,7 +154,19 @@ UserOptions runtimeOptions(const UserOptionValues& values)
   result.mPathMaterialLibrary = resolvedPath(std::get<std::string>(values.at("paths/material_library")));
   result.mSolverThreads = std::get<int>(values.at("execution/solver_threads"));
   result.mConverterThreads = std::get<int>(values.at("execution/converter_threads"));
+  result.mTopologyQuadratureCacheMiB = std::get<int>(values.at("topology/quadrature_cache_mib"));
   result.mSaveLoadedResults = std::get<bool>(values.at("results/save_loaded_results"));
+  result.mDrawing.labelsEnabled = std::get<bool>(values.at("drawing/labels_enabled"));
+  result.mDrawing.labelsLoads = std::get<bool>(values.at("drawing/labels_loads"));
+  result.mDrawing.labelsBcs = std::get<bool>(values.at("drawing/labels_bcs"));
+  result.mDrawing.labelsSelectedOnly = std::get<bool>(values.at("drawing/labels_selected_only"));
+  result.mDrawing.labelsIds = std::get<bool>(values.at("drawing/labels_ids"));
+  result.mDrawing.labelsNames = std::get<bool>(values.at("drawing/labels_names"));
+  result.mDrawing.labelsValues = std::get<bool>(values.at("drawing/labels_values"));
+  result.mDrawing.labelsAmplitudes = std::get<bool>(values.at("drawing/labels_amplitudes"));
+  result.mDrawing.labelsLeaders = std::get<bool>(values.at("drawing/labels_leaders"));
+  result.mDrawing.labelsOffset = std::get<double>(values.at("drawing/labels_offset"));
+  result.mDrawing.labelsColor = std::get<std::string>(values.at("drawing/labels_color"));
   result.mDrawing.sizeFactor = std::get<double>(values.at("drawing/size_factor"));
   result.mDrawing.overlayVisible = std::get<bool>(values.at("drawing/overlay_visible"));
   result.mDrawing.boundaryConditions = std::get<bool>(values.at("drawing/boundary_conditions"));
@@ -139,6 +178,7 @@ UserOptions runtimeOptions(const UserOptionValues& values)
   result.mPathSolverName = "Path to CalculiX Solver";
   result.mSolverThreadsName = "Solver - Threads";
   result.mConverterThreadsName = "Converter - Threads";
+  result.mTopologyQuadratureCacheMiBName = "Topology quadrature cache (MiB)";
   result.mPathIconsName = "Path to Icons";
   result.mPathPythonInterfaceName = "Path to Python Interface";
   result.mSaveLoadedResultsName = "Save loaded FRD and DAT data";

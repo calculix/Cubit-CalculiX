@@ -5,6 +5,11 @@
 std::vector<std::string> ccxDisplayCommand::get_syntax()
 {
   return {
+    "ccx display labels {on|off}",
+    "ccx display labels {loads|bcs|ids|names|values|amplitudes|leaders} {on|off}",
+    "ccx display labels scope {all|selected}",
+    "ccx display labels offset <value:label='label_offset'>",
+    "ccx display labels color <string:type='unquoted',number='1',label='label_color'>",
     "ccx display scope model",
     "ccx display scope step <value:label='step_id',help='<step_id>'>",
     "ccx display {overlay|all|bcs|loads|constraints|orientations|topology} {on|off}",
@@ -17,7 +22,7 @@ std::vector<std::string> ccxDisplayCommand::get_syntax()
 
 std::vector<std::string> ccxDisplayCommand::get_syntax_help()
 {
-  return {"ccx display scope {model|step <id>}", "ccx display {overlay|all|bcs|loads|constraints|orientations|topology} {on|off}", "ccx display size <factor>", "ccx display picking {on|off}", "ccx display defaults", "ccx display refresh"};
+  return {"ccx display labels {on|off}", "ccx display labels {loads|bcs|ids|names|values|amplitudes|leaders} {on|off}", "ccx display labels scope {all|selected}", "ccx display labels offset <factor>", "ccx display labels color <name>", "ccx display scope {model|step <id>}", "ccx display {overlay|all|bcs|loads|constraints|orientations|topology} {on|off}", "ccx display size <factor>", "ccx display picking {on|off}", "ccx display defaults", "ccx display refresh"};
 }
 
 std::vector<std::string> ccxDisplayCommand::get_help()
@@ -30,7 +35,65 @@ bool ccxDisplayCommand::execute(CubitCommandData& data)
   CalculiXDrawInterface drawing;
   std::string error;
   bool success = false;
-  if (data.find_keyword("SCOPE"))
+  if (data.find_keyword("LABELS"))
+  {
+    auto settings = drawing.drawing_state().labels;
+    const bool enabled = data.find_keyword("ON");
+    if (data.find_keyword("SCOPE"))
+    {
+      settings.selectedOnly = data.find_keyword("SELECTED");
+    }
+    else if (data.find_keyword("OFFSET"))
+    {
+      if (!data.get_value("label_offset", settings.offsetFactor))
+      {
+        PRINT_ERROR("Label offset requires a number.\n");
+        return false;
+      }
+    }
+    else if (data.find_keyword("COLOR"))
+    {
+      if (!data.get_string("label_color", settings.color))
+      {
+        PRINT_ERROR("Label color requires a supported color name.\n");
+        return false;
+      }
+    }
+    else if (data.find_keyword("LOADS"))
+    {
+      settings.loads = enabled;
+    }
+    else if (data.find_keyword("BCS"))
+    {
+      settings.boundaryConditions = enabled;
+    }
+    else if (data.find_keyword("IDS"))
+    {
+      settings.showId = enabled;
+    }
+    else if (data.find_keyword("NAMES"))
+    {
+      settings.showName = enabled;
+    }
+    else if (data.find_keyword("VALUES"))
+    {
+      settings.showValues = enabled;
+    }
+    else if (data.find_keyword("AMPLITUDES"))
+    {
+      settings.showAmplitude = enabled;
+    }
+    else if (data.find_keyword("LEADERS"))
+    {
+      settings.leaderLines = enabled;
+    }
+    else
+    {
+      settings.enabled = enabled;
+    }
+    success = drawing.set_label_settings(settings, error);
+  }
+  else if (data.find_keyword("SCOPE"))
   {
     DrawScope scope;
     if (data.find_keyword("STEP"))

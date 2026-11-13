@@ -86,6 +86,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCX.svg"
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXCGALWrap.svg"
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXDrawingSize.svg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXDrawingLabels.svg"
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXTopologyThreshold.svg"
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXDisplay.svg"
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/CCXDisplayHidden.svg"
@@ -294,6 +295,8 @@ target_sources(calculix_core PRIVATE
   Core/reporting/CalculiXReportModelSnapshot.cpp Core/reporting/CalculiXReportModelSnapshot.hpp
   Core/reporting/CalculiXReportInputReader.cpp Core/reporting/CalculiXReportInputReader.hpp
   Core/reporting/CalculiXReportModelProvider.cpp Core/reporting/CalculiXReportModelProvider.hpp
+  Core/reporting/CalculiXReportImageProvider.cpp Core/reporting/CalculiXReportImageProvider.hpp
+  Core/reporting/CalculiXReportImageSettings.cpp Core/reporting/CalculiXReportImageSettings.hpp
   Core/reporting/CalculiXReportTemplateProvider.cpp Core/reporting/CalculiXReportTemplateProvider.hpp
 )
 target_link_libraries(calculix_core cubitsim_reporting)

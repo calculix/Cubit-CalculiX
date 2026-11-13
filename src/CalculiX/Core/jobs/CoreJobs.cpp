@@ -87,6 +87,10 @@ bool CoreJobs::reset()
     return false;
   }
   pending_result_jobs.clear();
+  runRecords.clear();
+  preparedRuns.clear();
+  preparedRunErrors.clear();
+  unsupportedPreparedRuns.clear();
   clear_job_progress();
   clear_monitor_executions();
   #ifdef WIN32
@@ -286,6 +290,8 @@ bool CoreJobs::delete_job(int job_id)
     jobs_iface.get_job_topology_context(job_id, topology_id, iteration_id);
     jobs_data.erase(jobs_data.begin() + jobs_data_id);
     monitorExecutions.erase(job_id);
+    runRecords.erase(job_id);
+    clear_prepared_setup(job_id);
     job_progress.erase(job_id);
     pending_result_jobs.erase(job_id);
     ccx_results_iface.delete_result(job_id);
@@ -304,6 +310,7 @@ bool CoreJobs::delete_job(int job_id)
 
 bool CoreJobs::run_job(int job_id,int option)
 {
+  CalculiXJobRunRecord pending_run;
   // Observe completed processes before another run can overwrite their input
   // or output files. This also covers a restart before the GUI timer ticks.
   if (!check_jobs() || !results_ready())
@@ -366,7 +373,10 @@ bool CoreJobs::run_job(int job_id,int option)
         //PRINT_INFO("%s", shellstr.c_str());
         std::string SourcePath = jobs_data[job_data_id][2];
         filepath = jobs_data[job_data_id][1] + ".inp";
-        CopyFileA( SourcePath.c_str(), filepath.c_str(), FALSE );
+        if (!copy_job_input(SourcePath, filepath))
+        {
+          return false;
+        }
       } else {
         filepath = jobs_data[job_data_id][1] + ".inp";
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
@@ -379,6 +389,7 @@ bool CoreJobs::run_job(int job_id,int option)
         }
       }
 
+      prepare_run_record(job_id, filepath, !jobs_data[job_data_id][2].empty(), pending_run);
       HANDLE g_hChildStd_OUT_Rd = NULL;
       HANDLE g_hChildStd_OUT_Wr = NULL;
       SECURITY_ATTRIBUTES saAttr; 
@@ -449,6 +460,7 @@ bool CoreJobs::run_job(int job_id,int option)
         // Retain the process handle so even fast solvers remain queryable.
         running_process_handles.insert_or_assign(job_id, piProcInfo.hProcess);
         capture_monitor_execution(job_id, piProcInfo.dwProcessId);
+        publish_run_record(std::move(pending_run));
         CloseHandle(piProcInfo.hThread);
         
         // Close handles to the stdin and stdout pipes no longer needed by the child process.
@@ -555,10 +567,11 @@ bool CoreJobs::run_job(int job_id,int option)
 
       if (jobs_data[job_data_id][2]!="")
       {
-        std::string shellstr;
-        shellstr = "cp '" + jobs_data[job_data_id][2] + "' '" +jobs_data[job_data_id][1] + ".inp'";
-        system(shellstr.c_str());
         filepath = jobs_data[job_data_id][1] + ".inp";
+        if (!copy_job_input(jobs_data[job_data_id][2], filepath))
+        {
+          return false;
+        }
       } else {
         filepath = jobs_data[job_data_id][1] + ".inp";
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
@@ -571,6 +584,7 @@ bool CoreJobs::run_job(int job_id,int option)
         }
       }
 
+      prepare_run_record(job_id, filepath, !jobs_data[job_data_id][2].empty(), pending_run);
       programm = ccx_uo.mPathSolver.toStdString().c_str();
       arguments[0] = "-i";
       arguments[1] = filepath.substr(0, filepath.size()-4);
@@ -596,6 +610,7 @@ bool CoreJobs::run_job(int job_id,int option)
       if (process_id!=0)
       { 
         capture_monitor_execution(job_id, process_id);
+        publish_run_record(std::move(pending_run));
         jobs_data[job_data_id][4] = std::to_string(process_id);
         jobs_data[job_data_id][3] = "1";
         jobs_data[job_data_id][6] = "-1";

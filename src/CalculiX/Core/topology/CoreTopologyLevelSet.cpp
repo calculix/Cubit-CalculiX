@@ -7,6 +7,22 @@
 #include <utility>
 #include <cmath>
 
+namespace
+{
+bool report_error(const std::string& message, std::string* error)
+{
+  if (error)
+  {
+    *error = message;
+  }
+  else
+  {
+    PRINT_ERROR("%s\n", message.c_str());
+  }
+  return false;
+}
+}
+
 TopologyLevelSetSettings CoreTopologyLevelSet::default_settings()
 {
   TopologyLevelSetSettings settings{};
@@ -21,7 +37,7 @@ TopologyLevelSetSettings CoreTopologyLevelSet::default_settings()
   return settings;
 }
 
-bool CoreTopologyLevelSet::validate_settings(const TopologyLevelSetSettings& settings)
+bool CoreTopologyLevelSet::validate_settings(const TopologyLevelSetSettings& settings, std::string* error)
 {
   if (!std::isfinite(settings.interface_width) || settings.interface_width <= 0.0 || settings.interface_width > 1.0 ||
       !std::isfinite(settings.regularization_length) || settings.regularization_length < 0.0 ||
@@ -32,13 +48,11 @@ bool CoreTopologyLevelSet::validate_settings(const TopologyLevelSetSettings& set
       !std::isfinite(settings.integration_tolerance) || settings.integration_tolerance <= 0.0 || settings.integration_tolerance >= 1.0 ||
       settings.integration_max_refinements < 1 || settings.integration_max_refinements > 5)
   {
-    PRINT_ERROR("Invalid level-set settings.\n");
-    return false;
+    return report_error("Invalid level-set settings.", error);
   }
   if (settings.seed_spacing > 0.0 && settings.seed_radius > 0.0 && settings.seed_radius >= 0.5 * settings.seed_spacing)
   {
-    PRINT_ERROR("Level-set seed radius must be smaller than half the seed spacing.\n");
-    return false;
+    return report_error("Level-set seed radius must be smaller than half the seed spacing.", error);
   }
   return true;
 }

@@ -1,12 +1,13 @@
 #include "ReportSettingsCommandText.hpp"
 #include "ReportCommandText.hpp"
 #include "Report/Core/ReportUserOptions.hpp"
+#include "Framework/Reporting/ReportTemplate.hpp"
 #include <map>
 #include <utility>
 #include <QRegularExpression>
 
 bool ReportSettingsCommandText::build(const ReportConfiguration& patch, const QString& logoFile,
-  std::string& output, std::string& error)
+  std::string& output, std::string& error, const ReportTemplate* definition)
 {
   std::map<std::string, std::string> kinds;
   for (const auto& option : ReportUserOptions::definitions())
@@ -15,13 +16,33 @@ bool ReportSettingsCommandText::build(const ReportConfiguration& patch, const QS
   }
   kinds.emplace("steps", "text");
   std::string command = "report configure settings";
+  std::string templateArguments;
   for (const auto& entry : patch.values)
   {
     const auto kind = kinds.find(entry.first);
     if (kind == kinds.end())
     {
-      error = "Unknown report settings command argument: " + entry.first;
-      return false;
+      bool known = false;
+      if (definition != nullptr)
+      {
+        for (const auto& option : definition->options)
+        {
+          known = known || option.key == entry.first;
+        }
+      }
+      std::string key, value;
+      if (!known)
+      {
+        error = "Unknown report settings command argument: " + entry.first;
+        return false;
+      }
+      if (!ReportCommandText::quote(QString::fromStdString(entry.first), key, error) ||
+          !ReportCommandText::quote(QString::fromStdString(entry.second), value, error))
+      {
+        return false;
+      }
+      templateArguments += " option " + key + " value " + value;
+      continue;
     }
     std::string value;
     if (kind->second == "boolean")
@@ -48,6 +69,7 @@ bool ReportSettingsCommandText::build(const ReportConfiguration& patch, const QS
     }
     command += " " + entry.first + " " + value;
   }
+  command += templateArguments;
   if (patch.replace_company_logo)
   {
     if (logoFile.isEmpty())

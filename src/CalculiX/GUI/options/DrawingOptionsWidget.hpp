@@ -14,6 +14,17 @@ public:
   void setOptions(const DrawingOptions& options);
   DrawingOptions options() const;
 private:
+  QCheckBox* labelsEnabled;
+  QCheckBox* labelsLoads;
+  QCheckBox* labelsBcs;
+  QCheckBox* labelsSelectedOnly;
+  QCheckBox* labelsIds;
+  QCheckBox* labelsNames;
+  QCheckBox* labelsValues;
+  QCheckBox* labelsAmplitudes;
+  QCheckBox* labelsLeaders;
+  QDoubleSpinBox* labelsOffset;
+  QComboBox* labelsColor;
   QDoubleSpinBox* sizeFactor;
   QCheckBox* overlayVisible;
   QCheckBox* boundaryConditions;

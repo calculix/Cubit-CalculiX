@@ -7,6 +7,7 @@
 #include <cstdint>
 #include "../selection/SelectionState.hpp"
 #include "../tables/ResultTables.hpp"
+#include "../annotations/AnnotationDefinition.hpp"
 
 namespace Postprocessor
 {
@@ -41,7 +42,10 @@ namespace Postprocessor
     std::uint64_t fit_request = 0;
     std::uint64_t camera_revision = 0;
     SelectionState selection;
+    AnnotationState annotations;
     std::optional<TableReference> table;
+    std::optional<std::string> plot_id;
+    bool plot_active = false;
   };
 }
 

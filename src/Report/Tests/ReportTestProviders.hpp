@@ -11,9 +11,12 @@ public:
   ~ReportTestProviders() override;
   bool fail_collection = false;
   bool changed_source = false;
+  bool changed_launch = false;
   bool fail_discovery = false;
   bool publish_sources = true;
   ReportProfileStoreInterface* profiles = nullptr;
+  ReportImageProviderInterface* images = nullptr;
+  bool image_options = false;
   bool available_sources(std::vector<ReportSourceEntry>& output, std::string& error) const override;
   bool available_report_sources(std::vector<ReportSourceEntry>& output, std::string& error) const override;
   bool resolve_model_reporting(const std::string& prefix, ReportTemplateProviderInterface*& templates,

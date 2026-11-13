@@ -42,6 +42,10 @@ bool validFeature(DrawFeature feature)
 
 bool validateSavedState(const DrawSavedState& saved, std::string& error)
 {
+  if (!saved.labels.validate(error))
+  {
+    return false;
+  }
   if (!std::isfinite(saved.sizeFactor) || saved.sizeFactor <= 0 || !validScope(saved.scope) || saved.groups.size() != 4)
   {
     error = "Invalid drawing size, scope or group count.";
@@ -83,6 +87,7 @@ DrawSavedState CoreDraw::savedState() const
 {
   DrawSavedState saved;
   saved.scope = scene.state.scope;
+  saved.labels = scene.state.labels;
   if (saved.scope.kind != DrawScopeKind::Step)
   {
     saved.scope.stepId = -1;
@@ -144,6 +149,7 @@ bool CoreDraw::restoreState(const DrawSavedState& saved, std::string& error)
     return false;
   }
   CalculiXDrawState candidate;
+  candidate.labels = saved.labels;
   candidate.scope = saved.scope;
   candidate.sizeFactor = saved.sizeFactor;
   candidate.overlayVisible = saved.overlayVisible;
@@ -236,6 +242,18 @@ void CoreDraw::resetToDefaults()
 {
   scene.clearAll();
   const auto& defaults = ccx_uo.mDrawing;
+  scene.state.labels.enabled = defaults.labelsEnabled;
+  scene.state.labels.loads = defaults.labelsLoads;
+  scene.state.labels.boundaryConditions = defaults.labelsBcs;
+  scene.state.labels.selectedOnly = defaults.labelsSelectedOnly;
+  scene.state.labels.showId = defaults.labelsIds;
+  scene.state.labels.showName = defaults.labelsNames;
+  scene.state.labels.showValues = defaults.labelsValues;
+  scene.state.labels.showAmplitude = defaults.labelsAmplitudes;
+  scene.state.labels.leaderLines = defaults.labelsLeaders;
+  scene.state.labels.offsetFactor = defaults.labelsOffset;
+  scene.state.labels.color = defaults.labelsColor;
+
   scene.state.sizeFactor = std::isfinite(defaults.sizeFactor) && defaults.sizeFactor > 0 ? defaults.sizeFactor : 1.0;
   scene.state.overlayVisible = defaults.overlayVisible;
   scene.state.groups[DrawGroup::BoundaryConditions].enabled = defaults.boundaryConditions;
@@ -262,6 +280,13 @@ bool CoreDraw::restorePendingDrawing(std::string& error)
 bool CoreDraw::applyDrawingOptions(std::string& error)
 {
   scene.setColors(ccx_uo.mDrawing.hoverColor, ccx_uo.mDrawing.selectionColor);
+  auto labels = scene.state.labels;
+  labels.color = ccx_uo.mDrawing.labelsColor;
+  if (!labels.validate(error))
+  {
+    return false;
+  }
+  scene.state.labels = std::move(labels);
   error.clear();
   auto* factory = GWindowFactory::get_window_factory();
   if (!scene.workspaceActive || factory == nullptr || factory->views().empty())

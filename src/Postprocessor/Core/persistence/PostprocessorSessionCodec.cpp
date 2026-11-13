@@ -1,4 +1,6 @@
 #include "PostprocessorSessionCodec.hpp"
+#include "../plots/PlotCodec.hpp"
+#include "../annotations/AnnotationCodec.hpp"
 #include "../views/CameraOperations.hpp"
 #include <QJsonArray>
 #include <QDir>
@@ -240,6 +242,9 @@ namespace Postprocessor
     {
       const auto& view = item.second;
       Object object{{"id",q(view.id)},{"name",q(view.name)},{"pick_mode",static_cast<int>(view.selection.mode)}};
+      object.insert("annotations",annotations_to_json(view.annotations));
+      object.insert("plot",view.plot_id ? QJsonValue(q(*view.plot_id)) : QJsonValue(QJsonValue::Null));
+      object.insert("plot_active",view.plot_active);
       QJsonValue camera(QJsonValue::Null), table(QJsonValue::Null);
       if (view.camera)
       {
@@ -305,7 +310,7 @@ namespace Postprocessor
       }
       catalogues.append(Object{{"source",q(item.first)},{"datasets",datasets}});
     }
-    return {{"sources",sources},{"views",views},{"representations",displays},{"layout",layout},{"root",q(state.layout.root_node_id)},
+    return {{"plots",plots_to_json(state.plots)},{"active_plot",q(state.active_plot_id)},{"sources",sources},{"views",views},{"representations",displays},{"layout",layout},{"root",q(state.layout.root_node_id)},
       {"active_source",q(state.active_source_id)},{"active_view",q(state.active_view_id)},
       {"active_representation",q(state.active_representation_id)},{"catalogues",catalogues}};
   }
@@ -321,6 +326,11 @@ namespace Postprocessor
         !records(json,"layout",layout) || !records(json,"catalogues",catalogues) || !text(json,"root",state.layout.root_node_id) ||
         !text(json,"active_source",state.active_source_id) || !text(json,"active_view",state.active_view_id) ||
         !text(json,"active_representation",state.active_representation_id))
+    {
+      return false;
+    }
+    if (!plots_from_json(json.value("plots"),state.plots) ||
+        (json.contains("active_plot") && !text(json,"active_plot",state.active_plot_id)))
     {
       return false;
     }
@@ -429,6 +439,30 @@ namespace Postprocessor
         return false;
       }
       view.selection.mode = static_cast<EntityKind>(mode);
+      if (object.contains("plot_active") && !boolean(object,"plot_active",view.plot_active))
+      {
+        return false;
+      }
+      if (object.contains("plot") && !object.value("plot").isNull())
+      {
+        std::string id;
+        if (!text(object,"plot",id) || state.plots.count(id) == 0)
+        {
+          return false;
+        }
+        view.plot_id = id;
+      }
+      if (!annotations_from_json(object.value("annotations"),view.annotations))
+      {
+        return false;
+      }
+      for (const auto& label : view.annotations.labels)
+      {
+        if (state.sources.count(label.second.entity.source_id) == 0)
+        {
+          return false;
+        }
+      }
       if (!object.value("camera").isNull())
       {
         if (!object.value("camera").isObject())
@@ -668,7 +702,57 @@ namespace Postprocessor
         return false;
       }
     }
+    std::map<std::string,PlotDefinition> validatedPlots;
+    if (!plots_from_json(plots_to_json(state.plots),validatedPlots))
+    {
+      return false;
+    }
+    if (state.plots.size() > PlotDefaults::maximum_plots ||
+        (!state.active_plot_id.empty() && state.plots.count(state.active_plot_id) == 0))
+    {
+      return false;
+    }
+    for (const auto& entry : state.plots)
+    {
+      if (entry.first != entry.second.id || !valid_plot_name(entry.second.name) || !valid_plot_axes(entry.second.axes) ||
+          entry.second.curves.size() > PlotDefaults::maximum_curves)
+      {
+        return false;
+      }
+      for (const auto& curve : entry.second.curves)
+      {
+        if (!valid_plot_name(curve.name) || state.sources.count(plot_curve_source(curve)) == 0)
+        {
+          return false;
+        }
+      }
+    }
+    for (const auto& entry : state.views)
+    {
+      if ((entry.second.plot_id && state.plots.count(*entry.second.plot_id) == 0) || (entry.second.plot_active && !entry.second.plot_id))
+      {
+        return false;
+      }
+    }
     std::set<std::pair<std::string,std::string>> connections;
+    for (const auto& item : state.views)
+    {
+      const auto& annotations = item.second.annotations;
+      if (annotations.labels.size() > PersistenceDefaults::maximum_records ||
+          !valid_annotation_position(annotations.minimum_position) || !valid_annotation_position(annotations.maximum_position))
+      {
+        return false;
+      }
+      for (const auto& entry : annotations.labels)
+      {
+        const auto& label = entry.second;
+        if (entry.first != label.name || !valid_annotation_name(label.name) || !valid_annotation_position(label.position) ||
+            state.sources.count(label.entity.source_id) == 0 || label.entity.entity_id < 0)
+        {
+          return false;
+        }
+      }
+    }
     for (const auto& item : state.representations)
     {
       const auto& value = item.second;

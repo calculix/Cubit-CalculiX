@@ -624,3 +624,114 @@ manual collapse retention and retained-source visibility preservation. The
 category persistence fixture explicitly enables node sets before testing bulk
 hide operations. Cases were added but not compiled or executed; native GUI and
 journal replay verification remain outstanding.
+
+
+Table side pane and legend initialization
+------------------------------------------
+
+``TablePaneTests.cpp`` adds non-rendering checks for background/legend text
+contrast after initial synchronization, distinct job legend ranges, atomic
+spatial-field activation (including an unchanged field), failed-activation table
+retention, table column sizing/tooltips, manual width retention and one close
+callback. These cases were added without compiling or running them.
+Native GUI checks must confirm the horizontal pane split, close/reopen behavior,
+viewport navigation while the pane is visible, camera retention, final legend
+labels on light/dark/gradient backgrounds, high-DPI resizing, large-table sampling
+and growth while scrolling. Frame navigation keeps its existing table scope;
+this change does not add a second independent render view or synchronized time
+controls. Splitter proportions are not added to project persistence.
+
+
+All-frame table histories
+--------------------------
+
+TableTests now covers concatenated native frames, exact 64-bit identifiers after
+metadata columns, active-frame role changes without model reset, pane selection
+retention, missing frames and union columns, global tables retained once, and
+flattened table tree entries. Spatial-table checks account for the metadata
+prefix and retain validity-mask/ID assertions. These cases have not been compiled
+or executed. Native verification must include large histories, frame navigation
+while manually scrolled/selected, schema changes, standalone VTT, step summaries,
+and saved/restored active-frame highlighting. Plotting and render/annotation
+features remain independent work and are not implemented by this patch.
+
+Annotation patch: pending build and native verification
+------------------------------------------------------
+
+No build, compilation or native execution was performed for this patch.
+``AnnotationTests.cpp`` adds cases to the selection fixture for automatic names,
+conflicting renames, invalid/masked entities, reserved names, fixed field binding,
+current-frame extrema, element anchors, unavailable frame samples, exact 64-bit
+ID persistence, invalid saved definitions, position validation and drag
+preview/commit/cancel dispatch. These cases have been added but not run.
+
+Native acceptance checks:
+
+* Verify the three approved SVG buttons appear after picking controls.
+* Create node, element and IP labels from toolbar selection and right-click.
+* Change field/component and frame: existing labels retain their own field and
+  update values/anchors; extrema follow the active result and visible datasets.
+* Drag text: mouse events must not rotate the camera; previews must not journal;
+  release must journal one explicit position command. Esc/focus loss restore the
+  baseline. Right-button panning must not open a context menu afterward.
+* Hide/show all labels and extrema independently, rename/hide/remove individual
+  labels, and check hidden labels remain accessible in the context menu.
+* Save/reopen, refresh sources, remove a source and reset. Preserve cameras and
+  durable label bindings; show missing references as unavailable. Check old
+  projects without annotation definitions still open.
+* Confirm camera movement does not rescan result arrays or introduce timing
+  spikes with annotations enabled. Verify text/leader placement on HiDPI screens,
+  resize, split table panes and both Windows and Linux builds.
+
+Plotting patch: pending build and native verification
+----------------------------------------------------
+
+No configure, compilation, SDK preparation or native execution was run for this
+patch. Static inspection of installed Cubit 2026.11 Windows binaries confirmed
+chart/context/OpenGL exports and all 59 DLLs in their actual runtime closure.
+ChartsCore import metadata existed; chart headers and ViewsContext2D plus
+RenderingContextOpenGL2 targets were missing. Preparation sources now request
+charts-qt; the next user configuration must regenerate the development adapter.
+Linux requires an explicit compatible 9.4.2 SDK with those chart components.
+Static exports do not certify C++ ABI or native rendering compatibility.
+
+PlotTests.cpp adds unrun cases to the selection suite: exact IDs, missing-frame
+gaps, explicit element reduction, IP identity, unsorted times, CSV escaping and
+overwrite refusal, persistence, exact table filters, mixed-entity rejection,
+pane close/show, and silent/final/cancelled axis commands.
+
+Native acceptance:
+
+* Create node, element and IP histories by commands, toolbar and context menu.
+  Verify masks/gaps, explicit reductions and independent mesh/plot navigation.
+* Compare sources, check axes/legend/current-frame marker, and switch Table/Plot
+  tabs. Pan/wheel/F/Esc must journal final commands only, retain automatic-axis
+  cancellation semantics and avoid rescanning data during axis-only changes.
+* Plot DAT/VTT columns with exact filters; reject mixed entity histories instead
+  of joining unrelated rows. Resize on normal/HiDPI screens and switch workspaces.
+* Close/reopen/rename/remove plots and hide/remove curves. Save/reopen, refresh,
+  remove sources and reset. Retain unavailable project references and cameras.
+* Export CSV and verify exact large IDs/invalid flags. Repeating a destination
+  must refuse without modification. Check both Windows and Linux chart contexts.
+* Image capture and Report insertion are deferred, independent features.
+
+PNG capture acceptance (not run)
+-------------------------------
+
+See :doc:`../postprocessor/capture`. Build/compilation remain disabled by user
+instruction. Before release, validate the three capture toolbar buttons and both
+command targets on Windows and Linux with the installed Cubit VTK backend:
+
+* Compare live and captured frame, camera/projection, mesh, coloring/limits,
+  deformation/undeformed overlays, legend, triad and annotation text/leaders.
+* Capture a plot with automatic and fixed axes, several curves, missing samples,
+  curve visibility and current-frame marker; include white/current/transparent PNG.
+* Verify high-DPI screenshot sizes and larger output scaling, without resizing or
+  activating a live widget and without changing any live session definitions.
+* Verify existing output files survive failed overwrite attempts; missing graphics
+  backends, absent references and dimensions beyond limits fail without publication.
+* Add a viewport and plot to an existing Report. Change the source/frame/camera,
+  update/regenerate the report, save/reopen the project, and export PDF/ODT: embedded
+  user Figures must remain identical to the original snapshots and retain provenance.
+* Reject insertion without a generated Report; provider/validation failures must
+  preserve the old document. Check figure-count and report-session size limits.

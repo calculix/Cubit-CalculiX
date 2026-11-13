@@ -38,6 +38,31 @@ DrawingOptionsWidget::DrawingOptionsWidget(QWidget* parent) : QWidget(parent)
   form->addRow(QString(), orientations);
   form->addRow(tr("Hover color"), hoverColor);
   form->addRow(tr("Selection color"), selectionColor);
+  labelsEnabled = new QCheckBox(tr("Display labels"), group);
+  form->addRow(QString(), labelsEnabled);
+  labelsLoads = new QCheckBox(tr("Load labels"), group);
+  form->addRow(QString(), labelsLoads);
+  labelsBcs = new QCheckBox(tr("BC labels"), group);
+  form->addRow(QString(), labelsBcs);
+  labelsSelectedOnly = new QCheckBox(tr("Selected entities only"), group);
+  form->addRow(QString(), labelsSelectedOnly);
+  labelsIds = new QCheckBox(tr("Show IDs"), group);
+  form->addRow(QString(), labelsIds);
+  labelsNames = new QCheckBox(tr("Show names"), group);
+  form->addRow(QString(), labelsNames);
+  labelsValues = new QCheckBox(tr("Show defined values"), group);
+  form->addRow(QString(), labelsValues);
+  labelsAmplitudes = new QCheckBox(tr("Show amplitude references"), group);
+  form->addRow(QString(), labelsAmplitudes);
+  labelsLeaders = new QCheckBox(tr("Leader lines"), group);
+  form->addRow(QString(), labelsLeaders);
+  labelsOffset = new QDoubleSpinBox(group);
+  labelsOffset->setRange(0, 100);
+  labelsOffset->setDecimals(3);
+  labelsColor = new QComboBox(group);
+  labelsColor->addItems(colors);
+  form->addRow(tr("Label offset factor"), labelsOffset);
+  form->addRow(tr("Label color"), labelsColor);
   auto* hint = new QLabel(tr("Size and visibility defaults apply to new or reset models. Colors apply to the current view."), group);
   hint->setWordWrap(true);
   form->addRow(hint);
@@ -47,6 +72,17 @@ DrawingOptionsWidget::DrawingOptionsWidget(QWidget* parent) : QWidget(parent)
 
 void DrawingOptionsWidget::setOptions(const DrawingOptions& options)
 {
+  labelsEnabled->setChecked(options.labelsEnabled);
+  labelsLoads->setChecked(options.labelsLoads);
+  labelsBcs->setChecked(options.labelsBcs);
+  labelsSelectedOnly->setChecked(options.labelsSelectedOnly);
+  labelsIds->setChecked(options.labelsIds);
+  labelsNames->setChecked(options.labelsNames);
+  labelsValues->setChecked(options.labelsValues);
+  labelsAmplitudes->setChecked(options.labelsAmplitudes);
+  labelsLeaders->setChecked(options.labelsLeaders);
+  labelsOffset->setValue(options.labelsOffset);
+  labelsColor->setCurrentText(QString::fromStdString(options.labelsColor));
   sizeFactor->setValue(options.sizeFactor);
   overlayVisible->setChecked(options.overlayVisible);
   boundaryConditions->setChecked(options.boundaryConditions);
@@ -60,6 +96,17 @@ void DrawingOptionsWidget::setOptions(const DrawingOptions& options)
 DrawingOptions DrawingOptionsWidget::options() const
 {
   DrawingOptions result;
+  result.labelsEnabled = labelsEnabled->isChecked();
+  result.labelsLoads = labelsLoads->isChecked();
+  result.labelsBcs = labelsBcs->isChecked();
+  result.labelsSelectedOnly = labelsSelectedOnly->isChecked();
+  result.labelsIds = labelsIds->isChecked();
+  result.labelsNames = labelsNames->isChecked();
+  result.labelsValues = labelsValues->isChecked();
+  result.labelsAmplitudes = labelsAmplitudes->isChecked();
+  result.labelsLeaders = labelsLeaders->isChecked();
+  result.labelsOffset = labelsOffset->value();
+  result.labelsColor = labelsColor->currentText().toStdString();
   result.sizeFactor = sizeFactor->value();
   result.overlayVisible = overlayVisible->isChecked();
   result.boundaryConditions = boundaryConditions->isChecked();

@@ -34,7 +34,7 @@ ReportResultProviderInterface* ReportTestProviders::report_results() const noexc
 
 ReportImageProviderInterface* ReportTestProviders::report_images(const std::string&) const noexcept
 {
-  return nullptr;
+  return images;
 }
 
 std::string ReportTestProviders::command_prefix() const
@@ -52,6 +52,24 @@ bool ReportTestProviders::describe(ReportTemplate& output, std::string& error) c
   option.kind = "boolean";
   option.default_value = "true";
   result.options.push_back(option);
+  if (image_options)
+  {
+    ReportOption camera;
+    camera.key = "test.images.camera";
+    camera.label = "Fixture camera";
+    camera.kind = "choice";
+    camera.choices = {"iso", "front"};
+    camera.default_value = "iso";
+    result.options.push_back(camera);
+    ReportOption width;
+    width.key = "test.images.width";
+    width.label = "Fixture width";
+    width.kind = "integer";
+    width.minimum = 64;
+    width.maximum = 8192;
+    width.default_value = "1920";
+    result.options.push_back(width);
+  }
   result.defaults.values[option.key] = option.default_value;
   ReportOption steps;
   steps.key = "steps";
@@ -81,6 +99,11 @@ bool ReportTestProviders::resolve_source(const ReportRequest& request, ReportSou
     source.snapshot_fingerprint = std::string(64, changed_source ? '2' : '1');
   }
   source.provenance = "Test fixture";
+  if (request.kind == "job")
+  {
+    source.solver_launch_id = changed_launch ? "fixture-launch-b" : "fixture-launch-a";
+    source.setup_snapshot_id = "fixture-setup";
+  }
   output = std::move(source);
   error.clear();
   return true;

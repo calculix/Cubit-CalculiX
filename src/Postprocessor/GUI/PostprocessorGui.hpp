@@ -3,9 +3,14 @@
 
 #include <QPointer>
 #include <functional>
+#include <array>
 #include <memory>
 #include <string>
 
+namespace Postprocessor
+{
+  enum class CaptureTarget;
+}
 class QWidget;
 class PostprocessorWorkspace;
 class PostprocessorApplicationInterface;
@@ -21,6 +26,7 @@ public:
   ~PostprocessorGui();
   bool start(QWidget* host, std::string& error);
   void stop() noexcept;
+  std::array<int,2> capture_reference_size(Postprocessor::CaptureTarget target,const std::string& id) const;
   void refresh();
   bool workspace_view(WorkspaceView& view, std::string& error);
 

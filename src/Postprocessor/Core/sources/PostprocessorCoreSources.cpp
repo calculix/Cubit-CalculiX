@@ -669,6 +669,25 @@ namespace Postprocessor
         staged_state.active_representation_id.clear();
       }
 
+      for (auto& view : staged_state.views)
+      {
+        auto& labels = view.second.annotations.labels;
+        for (auto label = labels.begin(); label != labels.end();)
+        {
+          if (label->second.entity.source_id == source_id)
+          {
+            label = labels.erase(label);
+          }
+          else
+          {
+            ++label;
+          }
+        }
+      }
+      if (!prune_plot_sources(staged_state,source_id,error))
+      {
+        return false;
+      }
       staged_state.sources.erase(source_id);
       if (!clear_source_selection(staged_state,source_id,error))
       {
@@ -695,7 +714,8 @@ namespace Postprocessor
   bool PostprocessorCore::reset(std::string& error)
   {
     error.clear();
-    if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max())
+    if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max() ||
+        state.plot_revision == std::numeric_limits<std::uint64_t>::max())
     {
       error = "Cannot reset Postprocessor during a source operation or after revision exhaustion.";
       return false;
@@ -704,6 +724,7 @@ namespace Postprocessor
     try
     {
       PostprocessorSession staged;
+      staged.plot_revision = state.plot_revision+1;
       std::uint64_t cameraRevision = 0;
       std::uint64_t fitRequest = 0;
       std::uint64_t selectionRevision = 0;
@@ -748,7 +769,8 @@ namespace Postprocessor
   {
     error.clear();
 
-    if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max())
+    if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max() ||
+        state.plot_revision == std::numeric_limits<std::uint64_t>::max())
     {
       error = "Cannot close sources during a Postprocessor source operation.";
       return false;
@@ -759,8 +781,16 @@ namespace Postprocessor
     {
       return false;
     }
+    if (!prune_plot_sources(state,"",error))
+    {
+      return false;
+    }
     state.representations.clear();
     state.sources.clear();
+    for (auto& view : state.views)
+    {
+      view.second.annotations.labels.clear();
+    }
     runtime.clear();
     saved_bindings.clear();
     saved_table_frames.clear();

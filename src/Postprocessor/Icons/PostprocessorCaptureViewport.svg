@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" role="img" stroke-linecap="round" stroke-linejoin="round">
+<title>Screenshot</title>
+<path d="M2.5 7h5l2-3h6l2 3h4v13h-19Z" fill="white" stroke="#263238" stroke-width="1.5"/>
+<circle cx="12" cy="13.5" r="4" fill="#EAF2FF" stroke="#4D89F5" stroke-width="1.5"/>
+<circle cx="12" cy="13.5" r="1.8" fill="#4D89F5"/>
+<circle cx="18.5" cy="9.5" r="1" fill="#DD284C"/>
+</svg>

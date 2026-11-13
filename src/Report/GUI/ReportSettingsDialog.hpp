@@ -36,6 +36,8 @@ private:
   QLabel* message;
   std::map<std::string, QLineEdit*> decorationFields;
   std::map<std::string, QCheckBox*> decorationFlags;
+  std::map<std::string, QComboBox*> captureChoices;
+  std::map<std::string, QSpinBox*> captureIntegers;
   QComboBox* logoPlacement;
   QSpinBox* logoWidth;
   QLabel* logoThumbnail;

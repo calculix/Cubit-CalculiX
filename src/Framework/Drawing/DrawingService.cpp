@@ -1,4 +1,5 @@
 #include "DrawingService.hpp"
+#include "DrawingCaptureRenderer.hpp"
 #include "CubitMessage.hpp"
 #include "CubitColorTable.hpp"
 #include <QCoreApplication>
@@ -255,4 +256,13 @@ void DrawingService::clear(const std::string& workspace) noexcept
     picker.shutdown();
     graphics.detach();
   }
+}
+
+bool DrawingService::capture(const DrawingFrame& frame, const DrawingCaptureRequest& request, QByteArray& png, std::string& error)
+{
+  if (!guiThread(error))
+  {
+    return false;
+  }
+  return DrawingCaptureRenderer().render(frame, request, png, error);
 }

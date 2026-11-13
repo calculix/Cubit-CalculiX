@@ -1,4 +1,5 @@
 #include "PostprocessorWorkspace.hpp"
+#include "Postprocessor/GUI/Capture/PostprocessorCaptureDialog.hpp"
 #include "PostprocessorToolbar.hpp"
 #include "Postprocessor/GUI/Sources/PostprocessorSourceControls.hpp"
 #include "Postprocessor/GUI/Sources/PostprocessorImportDialog.hpp"
@@ -9,6 +10,7 @@
 #include "Postprocessor/GUI/Navigation/PostprocessorFrameNavigation.hpp"
 #include "Postprocessor/GUI/Navigation/PostprocessorDeformationControls.hpp"
 #include "Postprocessor/GUI/Selection/PostprocessorPickControls.hpp"
+#include "Postprocessor/GUI/Annotations/PostprocessorAnnotationControls.hpp"
 #include "Postprocessor/GUI/Properties/PostprocessorProperties.hpp"
 #include "Postprocessor/GUI/Properties/PostprocessorColorControls.hpp"
 #include "Postprocessor/GUI/Resources/PostprocessorIconLoader.hpp"
@@ -22,10 +24,19 @@
 #include <QIcon>
 #include <QMainWindow>
 #include <QMenu>
+#include <QTabWidget>
+#include <QSignalBlocker>
+#include <QToolButton>
+#include <QInputDialog>
+#include <QLineEdit>
+#include "Postprocessor/GUI/Plots/PostprocessorPlotPane.hpp"
+#include "Postprocessor/GUI/Plots/PostprocessorPlotControls.hpp"
+#include "Postprocessor/Commands/plots/PlotCommandText.hpp"
+#include "Postprocessor/GUI/Resources/PostprocessorIconLoader.hpp"
 #include <QMenuBar>
 #include <QPointer>
 #include <QStyle>
-#include <QStackedWidget>
+#include <QSplitter>
 #include <QFileDialog>
 #include "Postprocessor/GUI/Tables/PostprocessorTableView.hpp"
 #include <QToolBar>
@@ -46,7 +57,6 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   auto* layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   viewTitle = new QLabel(tr("3D View 1"),this);
-  layout->addWidget(viewTitle);
   const auto activeApplication = this->application.lock();
   viewport = new PostprocessorViewport(activeApplication ? activeApplication->session().active_view_id : std::string(),
     this->application,
@@ -58,11 +68,90 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     {
       return dispatch && dispatch(command.toUtf8().toStdString(), error);
     }, this);
-  viewStack = new QStackedWidget(this);
-  viewStack->addWidget(viewport);
-  tableView = new PostprocessorTableView(viewStack);
-  viewStack->addWidget(tableView);
-  layout->addWidget(viewStack,1);
+  viewSplitter = new QSplitter(Qt::Horizontal,this);
+  viewSplitter->setObjectName("Postprocessor.ViewTableSplitter");
+  viewSplitter->setChildrenCollapsible(false);
+  auto* viewportPane = new QWidget(viewSplitter);
+  auto* viewportLayout = new QVBoxLayout(viewportPane);
+  viewportLayout->setContentsMargins(0,0,0,0);
+  viewportLayout->addWidget(viewTitle);
+  viewportLayout->addWidget(viewport,1);
+  viewportPane->setMinimumWidth(150);
+  resultTabs = new QTabWidget(viewSplitter);
+  resultTabs->setObjectName("Postprocessor.ResultTabs");
+  resultTabs->setMinimumWidth(200);
+  plotPane = new PostprocessorPlotPane(this->application,
+    [this](const QString& command,std::string& error)
+    {
+      const bool accepted = submitCommand && submitCommand(command.toUtf8().toStdString(),error);
+      QTimer::singleShot(0,this,[this]()
+      {
+        refresh();
+      });
+      return accepted;
+    },[dispatch = silent](const QString& command,std::string& error)
+    {
+      return dispatch && dispatch(command.toUtf8().toStdString(),error);
+    },resultTabs);
+  tableView = new PostprocessorTableView([this]()
+  {
+    this->submit("post view type 3d");
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+      viewport->request_redraw();
+    });
+  },resultTabs,[this](const Postprocessor::TableReference& reference,const Postprocessor::ResultTableData& data,std::size_t row,std::size_t column)
+  {
+    const auto active = this->application.lock();
+    if (active)
+    {
+      plot_table_dialog(this,*active,reference,data,row,column,[this](const QString& command)
+      {
+        this->submit(command);
+        refresh();
+      });
+    }
+  });
+  tableView->setMinimumWidth(150);
+  tableView->hide();
+  plotPane->hide();
+  viewSplitter->addWidget(viewportPane);
+  viewSplitter->addWidget(resultTabs);
+  viewSplitter->setStretchFactor(0,2);
+  viewSplitter->setStretchFactor(1,1);
+  resultTabs->hide();
+  connect(resultTabs,&QTabWidget::currentChanged,this,[this](int index)
+  {
+    const auto active = this->application.lock();
+    if (!active || index < 0)
+    {
+      return;
+    }
+    const auto& state = active->session();
+    const auto view = state.views.find(state.active_view_id);
+    if (view == state.views.end())
+    {
+      return;
+    }
+    if (resultTabs->widget(index) == plotPane && view->second.plot_id)
+    {
+      this->submit(QStringLiteral("post plot show ")+Postprocessor::plot_quote(state.plots.at(*view->second.plot_id).name));
+    }
+    else if (resultTabs->widget(index) == tableView && view->second.table)
+    {
+      const auto reference = *view->second.table;
+      const auto source = state.sources.find(reference.source_id);
+      if (source != state.sources.end())
+      {
+        this->submit(QString(reference.field ? "post table field " : "post table open ")+Postprocessor::plot_quote(reference.key)+
+          " source "+Postprocessor::plot_quote(source->second.name));
+      }
+    }
+    refresh();
+  });
+  layout->addWidget(viewSplitter,1);
   navigationToolbar = new QToolBar(tr("Result navigation"),host);
   navigationToolbar->setObjectName("Postprocessor.NavigationToolbar");
   navigationToolbar->setAllowedAreas(Qt::TopToolBarArea);
@@ -382,6 +471,18 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     viewport->fit_view();
   });
   toolbar->addAction(fit);
+  const char* captureIcons[] = {"PostprocessorCaptureViewport","PostprocessorRenderImage","PostprocessorAddToReport"};
+  const QString captureTips[] = {tr("Save viewport screenshot"),tr("Render PNG image"),tr("Add image to Report")};
+  for (int index = 0; index < 3; ++index)
+  {
+    const auto app = this->application.lock();
+    auto* action = toolbar->addAction(app ? PostprocessorIconLoader::load(app->active_icons_path(),captureIcons[index]) : QIcon(),captureTips[index]);
+    action->setToolTip(captureTips[index]);
+    connect(action,&QAction::triggered,this,[this,index]()
+    {
+      capture_dialog(index == 2,index == 0);
+    });
+  }
   pickControls = new PostprocessorPickControls(this->application,[this](const QString& command)
   {
     this->submit(command);
@@ -392,6 +493,92 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     });
   },toolbar);
   toolbar->addWidget(pickControls);
+  toolbar->addSeparator();
+  annotationControls = new PostprocessorAnnotationControls(this->application,[this](const QString& command)
+  {
+    this->submit(command);
+    viewport->request_redraw();
+    annotationControls->refresh();
+  },toolbar);
+  toolbar->addWidget(annotationControls);
+  auto* plotHistory = new QToolButton(toolbar);
+  plotHistory->setObjectName("Postprocessor.PlotHistory");
+  plotHistory->setAccessibleName(tr("Plot result history"));
+  const auto plotApplication = this->application.lock();
+  if (plotApplication)
+  {
+    plotHistory->setIcon(PostprocessorIconLoader::load(plotApplication->active_icons_path(),"PostprocessorPlotHistory"));
+  }
+  plotHistory->setIconSize(toolbar->iconSize());
+  connect(toolbar,&QToolBar::iconSizeChanged,plotHistory,&QToolButton::setIconSize);
+  plotHistory->setAutoRaise(true);
+  plotHistory->setPopupMode(QToolButton::MenuButtonPopup);
+  plotHistory->setToolTip(tr("Plot selected entity or open a saved plot"));
+  auto* plotsMenu = new QMenu(plotHistory);
+  plotHistory->setMenu(plotsMenu);
+  connect(plotsMenu,&QMenu::aboutToShow,this,[this,plotsMenu]()
+  {
+    plotsMenu->clear();
+    const auto active = this->application.lock();
+    if (!active)
+    {
+      return;
+    }
+    auto* create = plotsMenu->addAction(tr("New plot…"));
+    connect(create,&QAction::triggered,this,[this]()
+    {
+      bool ok = false;
+      const auto name = QInputDialog::getText(this,tr("New plot"),tr("Name"),QLineEdit::Normal,{},&ok);
+      if (ok && !Postprocessor::plot_quote(name.toUtf8().toStdString()).isEmpty())
+      {
+        this->submit(QStringLiteral("post plot create ")+Postprocessor::plot_quote(name.toUtf8().toStdString()));
+        refresh();
+      }
+    });
+    for (const auto& entry : active->session().plots)
+    {
+      const auto name = entry.second.name;
+      auto* action = plotsMenu->addAction(QString::fromUtf8(name.c_str()));
+      connect(action,&QAction::triggered,this,[this,name]()
+      {
+        this->submit(QStringLiteral("post plot show ")+Postprocessor::plot_quote(name));
+        refresh();
+      });
+    }
+  });
+  connect(plotHistory,&QToolButton::clicked,this,[this,plotHistory,plotsMenu]()
+  {
+    const auto active = this->application.lock();
+    if (!active)
+    {
+      return;
+    }
+    const auto view = active->session().views.find(active->session().active_view_id);
+    if (view == active->session().views.end() || !view->second.selection.entity)
+    {
+      plotsMenu->exec(plotHistory->mapToGlobal(QPoint(0,plotHistory->height())));
+      return;
+    }
+    const auto entity = *view->second.selection.entity;
+    const auto commands = Postprocessor::plot_entity_commands(*active,entity);
+    if (commands.empty())
+    {
+      QMenu menu(this);
+      add_plot_context_actions(menu,*active,entity,[this](const QString& command)
+      {
+        this->submit(command);
+        refresh();
+      });
+      menu.exec(plotHistory->mapToGlobal(QPoint(0,plotHistory->height())));
+      return;
+    }
+    for (const auto& command : commands)
+    {
+      this->submit(command);
+    }
+    refresh();
+  });
+  toolbar->addWidget(plotHistory);
   fieldToolbar = new QToolBar(tr("Field selection"),host);
   fieldToolbar->setObjectName("Postprocessor.FieldToolbar");
   fieldToolbar->setAllowedAreas(Qt::TopToolBarArea);
@@ -469,6 +656,7 @@ PostprocessorWorkspace::~PostprocessorWorkspace()
 void PostprocessorWorkspace::submit(const QString& command)
 {
   viewport->cancel_interaction();
+  plotPane->cancel();
   std::string error;
 
   if (!submitCommand || !submitCommand(command.toUtf8().toStdString(), error))
@@ -622,6 +810,7 @@ bool PostprocessorWorkspace::camera_command_active() const noexcept
 
 void PostprocessorWorkspace::refresh()
 {
+  annotationControls->refresh();
   try
   {
     const auto active = application.lock();
@@ -634,8 +823,16 @@ void PostprocessorWorkspace::refresh()
     const auto& state = active->session();
     const auto currentView = state.views.find(state.active_view_id);
     const auto selectionRevision = currentView == state.views.end() ? 0 : currentView->second.selection.revision;
-    if (!panelSelectionRevision || *panelSelectionRevision != selectionRevision ||
-        !panelRevision || *panelRevision != active->display_revision() || panelSource != state.active_source_id || panelView != state.active_view_id)
+    const bool plotChanged = !panelPlotRevision || *panelPlotRevision != state.plot_revision;
+    const bool plotActive = currentView != state.views.end() && currentView->second.plot_active;
+    const bool dataChanged = panelPlotActive != plotActive || !panelSelectionRevision || *panelSelectionRevision != selectionRevision ||
+        !panelRevision || *panelRevision != active->display_revision() || panelSource != state.active_source_id || panelView != state.active_view_id;
+    if (dataChanged || plotChanged)
+    {
+      refresh_result_panes(active,dataChanged);
+      panelPlotRevision = state.plot_revision;
+    }
+    if (dataChanged)
     {
       tree->refresh(state, [active](const std::string& id)
       {
@@ -656,18 +853,8 @@ void PostprocessorWorkspace::refresh()
       {
         return active->source_unavailable_reason(id);
       });
-      const bool table = currentView != state.views.end() && currentView->second.table.has_value();
-      if (table)
-      {
-        viewport->cancel_interaction();
-        tableView->show_data(active->table_data());
-      }
-      else
-      {
-        tableView->show_data({});
-      }
-      viewStack->setCurrentWidget(table ? static_cast<QWidget*>(tableView) : static_cast<QWidget*>(viewport));
-      viewTitle->setText(table ? tr("Table view") : tr("3D View 1"));
+      const bool table = currentView != state.views.end() && currentView->second.table.has_value() && !currentView->second.plot_active;
+      viewTitle->setText(tr("3D View 1"));
       const auto source = state.sources.find(state.active_source_id);
       properties->show_source(source == state.sources.end() ? nullptr : &source->second);
       closeSelected->setEnabled(source != state.sources.end());
@@ -675,9 +862,12 @@ void PostprocessorWorkspace::refresh()
       colorControls->refresh();
       deformationControls->refresh();
       pickControls->refresh();
-      pickControls->setEnabled(!table);
-      colorControls->setEnabled(!table);
-      deformationControls->setEnabled(!table);
+      pickControls->setEnabled(true);
+      const bool spatialSource = active->source_has_mesh(state.active_source_id);
+      colorControls->setEnabled(spatialSource);
+      deformationControls->setEnabled(spatialSource);
+      panelPlotActive = plotActive;
+      panelPlotRevision = state.plot_revision;
       panelSelectionRevision = selectionRevision;
       panelRevision = active->display_revision();
       panelSource = state.active_source_id;
@@ -704,6 +894,7 @@ void PostprocessorWorkspace::refresh()
         return active->frame_available(id, index);
       },panelSource+":"+panelView,animation,!table);
     }
+    plotPane->synchronize();
     viewport->synchronize(active);
   }
   catch (const std::exception& exception)
@@ -820,5 +1011,124 @@ void PostprocessorWorkspace::import_results()
       panelRevision.reset();
       refresh();
     });
+  }
+}
+
+void PostprocessorWorkspace::refresh_result_panes(const std::shared_ptr<PostprocessorApplicationInterface>& active,bool dataChanged)
+{
+  const auto& state = active->session();
+  const auto currentView = state.views.find(state.active_view_id);
+  const bool table = currentView != state.views.end() && currentView->second.table.has_value();
+  if (table && dataChanged)
+  {
+    viewport->cancel_interaction();
+    tableView->show_data(active->table_data());
+    tableView->set_plot_reference(currentView->second.table);
+  }
+  else if (!table)
+  {
+    tableView->show_data({});
+    tableView->set_plot_reference(std::nullopt);
+  }
+  const QSignalBlocker blockTabs(resultTabs);
+  const bool plot = currentView != state.views.end() && currentView->second.plot_id.has_value();
+  const bool paneChanged = resultTabs->isHidden() == (table || plot);
+  if (table && resultTabs->indexOf(tableView) < 0)
+  {
+    resultTabs->addTab(tableView,tr("Table"));
+    resultTabs->setCurrentWidget(tableView);
+  }
+  if (!table && resultTabs->indexOf(tableView) >= 0)
+  {
+    resultTabs->removeTab(resultTabs->indexOf(tableView));
+    tableView->hide();
+  }
+  if (plot && resultTabs->indexOf(plotPane) < 0)
+  {
+    resultTabs->addTab(plotPane,tr("Plot"));
+    resultTabs->setCurrentWidget(plotPane);
+  }
+  if (!plot && resultTabs->indexOf(plotPane) >= 0)
+  {
+    resultTabs->removeTab(resultTabs->indexOf(plotPane));
+    plotPane->hide();
+  }
+  if (plot && (!table || currentView->second.plot_active))
+  {
+    resultTabs->setCurrentWidget(plotPane);
+  }
+  else if (table)
+  {
+    resultTabs->setCurrentWidget(tableView);
+  }
+  resultTabs->setVisible(table || plot);
+  viewport->setVisible(true);
+  if ((table || plot) && !tablePaneInitialized)
+  {
+    const int available = std::max(450,viewSplitter->width());
+    viewSplitter->setSizes({available*2/3,available/3});
+    tablePaneInitialized = true;
+  }
+  if (paneChanged)
+  {
+    QTimer::singleShot(0,viewport,[page = QPointer<PostprocessorViewport>(viewport)]()
+    {
+      if (page)
+      {
+        page->request_redraw();
+      }
+    });
+  }
+}
+
+std::array<int,2> PostprocessorWorkspace::capture_reference_size(Postprocessor::CaptureTarget target,const std::string& id) const
+{
+  const auto active = application.lock();
+  if (active && target == Postprocessor::CaptureTarget::View && id == active->session().active_view_id)
+  {
+    return {viewport->width(),viewport->height()};
+  }
+  if (active && target == Postprocessor::CaptureTarget::Plot)
+  {
+    const auto view = active->session().views.find(active->session().active_view_id);
+    if (view != active->session().views.end() && view->second.plot_id == id)
+    {
+      const auto size = plotPane->chart_size();
+      return {size.width(),size.height()};
+    }
+  }
+  return {Postprocessor::CaptureDefaults::width,Postprocessor::CaptureDefaults::height};
+}
+void PostprocessorWorkspace::capture_dialog(bool report,bool quick)
+{
+  const auto active = application.lock();
+  if (!active)
+  {
+    return;
+  }
+  QString command;
+  if (quick)
+  {
+    auto file = QFileDialog::getSaveFileName(this,tr("Save viewport screenshot"),{},tr("PNG images (*.png)"),nullptr,QFileDialog::DontConfirmOverwrite);
+    if (file.isEmpty())
+    {
+      return;
+    }
+    if (!file.endsWith(".png",Qt::CaseInsensitive))
+    {
+      file += ".png";
+    }
+    const int width = qRound(viewport->width()*viewport->devicePixelRatioF());
+    const int height = qRound(viewport->height()*viewport->devicePixelRatioF());
+    command = "post capture view " + Postprocessor::plot_quote(active->session().active_view_id) +
+      " file " + Postprocessor::plot_quote(file.toUtf8().toStdString()) + QString(" width %1 height %2").arg(width).arg(height);
+  }
+  else
+  {
+    command = postprocessor_capture_dialog(this,*active,report);
+  }
+  if (!command.isEmpty())
+  {
+    submit(command);
   }
 }

@@ -1,7 +1,8 @@
 #include "CoreTopologyLevelSetEvaluation.hpp"
 #include "CoreTopologyLevelSet.hpp"
 #include "CoreTopologyLevelSetGeometry.hpp"
-#include "CoreTopologyLevelSetQuadrature.hpp"
+#include "CoreTopologyLevelSetPipeline.hpp"
+#include "loadUserOptions.hpp"
 #include "CoreTopologyLevelSetGeometryCache.hpp"
 #include "CoreTopologyProgress.hpp"
 #include "CoreTopologyStructs.hpp"
@@ -11,6 +12,8 @@
 #include <chrono>
 #include <cmath>
 #include <functional>
+#include <limits>
+#include <exception>
 #include <set>
 #include <utility>
 
@@ -73,50 +76,111 @@ bool valid_domain(const std::map<int, bool>& preserved, const std::map<int, doub
   return true;
 }
 
-bool element_geometry(const TopologyLevelSetDesign& design, int element, double volume, bool preserved, std::vector<int>& nodes, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll, double& query_ms, double& integration_ms, double& cache_ms, CoreTopologyLevelSetGeometryCache* cache, CoreTopologyLevelSetQuadrature& quadrature)
+// Only this coordinator accesses Cubit and the transient source cache. A batch
+// owns its queried inputs until all numerical workers have completed.
+bool evaluate_elements(const TopologyLevelSetDesign& design, const std::map<int, bool>& preserved,
+  const std::map<int, double>& volumes, CoreTopologyLevelSetGeometryCache* cache,
+  CoreTopologyProgress& progress, CoreTopologyLevelSetPipeline& pipeline, double& query_ms, double& cache_ms,
+  const std::function<bool(const CoreTopologyLevelSetPipeline::Element&)>& append)
 {
-  std::string type;
-  int cubit_type = -1;
-  std::vector<std::array<double, 3>> coordinates;
-  const auto query_begin = std::chrono::steady_clock::now();
-  const bool queried = CoreTopologyLevelSetGeometry::query_element(element, type, cubit_type, nodes, coordinates);
-  query_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - query_begin).count();
-  if (!queried)
+  auto next = volumes.begin();
+  std::size_t progressed = 0;
+  try
   {
+    while (next != volumes.end())
+    {
+      std::vector<CoreTopologyLevelSetPipeline::Element> batch;
+      batch.reserve(CoreTopologyLevelSetPipeline::maximum_batch_elements);
+      while (next != volumes.end() && batch.size() < CoreTopologyLevelSetPipeline::maximum_batch_elements)
+      {
+        CoreTopologyLevelSetPipeline::Element input;
+        input.id = next->first;
+        input.volume = next->second;
+        input.preserved = preserved.at(input.id);
+        const auto query_begin = std::chrono::steady_clock::now();
+        const bool queried = CoreTopologyLevelSetGeometry::query_element(input.id, input.calculix_type,
+          input.cubit_type, input.nodes, input.coordinates);
+        query_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - query_begin).count();
+        if (!queried)
+        {
+          return false;
+        }
+        input.values.reserve(input.nodes.size());
+        for (int node : input.nodes)
+        {
+          const auto found = design.node_values.find(node);
+          if (found == design.node_values.end())
+          {
+            PRINT_ERROR("Missing level-set coefficient for node %d.\n", node);
+            return false;
+          }
+          input.values.push_back(found->second);
+        }
+        if (cache)
+        {
+          const auto cache_begin = std::chrono::steady_clock::now();
+          const bool valid = cache->lookup(design.iteration_id, input.id, input.calculix_type, input.cubit_type,
+            input.nodes, input.coordinates, input.values, input.volume, input.preserved, design.settings, input.geometry, input.cached);
+          cache_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - cache_begin).count();
+          if (!valid)
+          {
+            return false;
+          }
+        }
+        batch.push_back(std::move(input));
+        ++next;
+        if (!progress.poll())
+        {
+          return false;
+        }
+      }
+      const std::size_t before = progressed;
+      const auto poll = [&](std::size_t completed)
+      {
+        while (progressed < before + completed)
+        {
+          ++progressed;
+          if (!progress.advance())
+          {
+            return false;
+          }
+        }
+        return progress.poll();
+      };
+      std::string error;
+      if (!pipeline.integrate(batch, design.settings, poll, error))
+      {
+        PRINT_ERROR("Level-set integration failed: %s\n", error.c_str());
+        return false;
+      }
+      for (const auto& input : batch)
+      {
+        if (cache && !input.cached)
+        {
+          const auto cache_begin = std::chrono::steady_clock::now();
+          const bool stored = cache->store(design.iteration_id, input.id, input.calculix_type, input.cubit_type,
+            input.nodes, input.coordinates, input.values, input.volume, input.preserved, design.settings, input.geometry, input.integration_ms);
+          cache_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - cache_begin).count();
+          if (!stored)
+          {
+            return false;
+          }
+        }
+        if (!append(input) || !progress.poll())
+        {
+          return false;
+        }
+      }
+    }
+  }
+  catch (const std::exception& failure)
+  {
+    PRINT_ERROR("Level-set evaluation failed: %s\n", failure.what());
     return false;
   }
-  std::vector<double> values;
-  values.reserve(nodes.size());
-  for (int node : nodes)
+  catch (...)
   {
-    const auto found = design.node_values.find(node);
-    if (found == design.node_values.end())
-    {
-      PRINT_ERROR("Missing level-set coefficient for node %d.\n", node);
-      return false;
-    }
-    values.push_back(found->second);
-  }
-  bool integrated = false;
-  if (cache)
-  {
-    const double before = cache->integration_time_ms();
-    const auto begin = std::chrono::steady_clock::now();
-    integrated = cache->evaluate(design.iteration_id, element, type, cubit_type, nodes, coordinates, values, volume, preserved, design.settings, geometry, poll, &quadrature);
-    const double elapsed = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
-    const double integrated_ms = cache->integration_time_ms() - before;
-    integration_ms += integrated_ms;
-    cache_ms += (std::max)(0.0, elapsed - integrated_ms);
-  }
-  else
-  {
-    const auto integration_begin = std::chrono::steady_clock::now();
-    integrated = CoreTopologyLevelSetGeometry::evaluate_element(type, cubit_type, coordinates, values, volume, preserved, design.settings, geometry, poll, &quadrature);
-    integration_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - integration_begin).count();
-  }
-  if (!integrated)
-  {
-    PRINT_ERROR("Unable to evaluate level-set geometry for element %d.\n", element);
+    PRINT_ERROR("Unexpected level-set evaluation failure.\n");
     return false;
   }
   return true;
@@ -135,10 +199,13 @@ bool valid_node_domain(const TopologyLevelSetDesign& design, const std::set<int>
 
 bool CoreTopologyLevelSetEvaluation::build_geometry(TopologyLevelSetDesign& design, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, CoreTopologyLevelSetGeometryCache* cache)
 {
-  CoreTopologyLevelSetQuadrature quadrature;
+  const int configured_workers = ccx_uo.mConverterThreads;
+  const int configured_budget_mib = ccx_uo.mTopologyQuadratureCacheMiB;
+  const bool valid_budget = configured_budget_mib > 0 && static_cast<std::size_t>(configured_budget_mib) <= (std::numeric_limits<std::size_t>::max)() / (1024 * 1024);
+  const std::size_t budget_bytes = valid_budget ? static_cast<std::size_t>(configured_budget_mib) * 1024 * 1024 : 0;
+  CoreTopologyLevelSetPipeline pipeline(configured_workers > 0 ? static_cast<std::size_t>(configured_workers) : 0, budget_bytes);
   const auto begin = std::chrono::steady_clock::now();
   double query_ms = 0.0;
-  double integration_ms = 0.0;
   double cache_ms = 0.0;
   const std::size_t hits_before = cache ? cache->hit_count() : 0;
   const std::size_t misses_before = cache ? cache->miss_count() : 0;
@@ -151,48 +218,52 @@ bool CoreTopologyLevelSetEvaluation::build_geometry(TopologyLevelSetDesign& desi
   const auto report_timing = qScopeGuard([&]()
   {
     const double total_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
-    const double other_ms = (std::max)(0.0, total_ms - query_ms - integration_ms - cache_ms);
-    PRINT_INFO("Level-set iteration %d geometry [ms]: total %.3f; mesh queries %.3f; integration %.3f; other %.3f; status %s.\n",
-      design.iteration_id, total_ms, query_ms, integration_ms, other_ms, succeeded ? "complete" : "incomplete");
+    const auto statistics = pipeline.statistics();
+    const double other_ms = (std::max)(0.0, total_ms - query_ms - statistics.wall_ms - cache_ms);
+    PRINT_INFO("Level-set iteration %d geometry [ms]: total %.3f; mesh queries %.3f; integration wall %.3f; other %.3f; status %s.\n",
+      design.iteration_id, total_ms, query_ms, statistics.wall_ms, other_ms, succeeded ? "complete" : "incomplete");
     PRINT_INFO("Level-set iteration %d geometry cache: hits %zu; misses %zu; lookup/copy/validation %.3f ms.\n",
       design.iteration_id, cache ? cache->hit_count() - hits_before : 0, cache ? cache->miss_count() - misses_before : 0, cache_ms);
     PRINT_INFO("Level-set iteration %d geometry quadrature: rule hits %zu; builds %zu; budget fallbacks %zu; retained bytes %zu.\n",
-      design.iteration_id, quadrature.hit_count(), quadrature.build_count(), quadrature.fallback_count(), quadrature.retained_bytes());
+      design.iteration_id, statistics.rule_hits, statistics.rule_builds, statistics.rule_fallbacks, statistics.retained_bytes);
+    PRINT_INFO("Level-set iteration %d integration workers: configured %d; active %zu; aggregate integration %.3f ms.\n",
+      design.iteration_id, configured_workers, statistics.workers, statistics.worker_ms);
+    PRINT_INFO("Level-set iteration %d shared quadrature: budget %d MiB; preparation %.3f ms; preparation budget fallbacks %zu.\n",
+      design.iteration_id, configured_budget_mib, statistics.preparation_ms, statistics.preparation_fallbacks);
     PRINT_INFO("Level-set iteration %d geometry: elements %zu/%zu; slowest element %d: %.3f ms; maximum subdivisions %d; incomplete element %d.\n",
       design.iteration_id, completed, element_volumes.size(), slowest_element, slowest_element_ms, maximum_subdivisions, current_element);
   });
+  if (!valid_budget)
+  {
+    PRINT_ERROR("Topology quadrature cache budget must be positive MiB and fit in the address space.\n");
+    return false;
+  }
+  if (configured_workers < 1)
+  {
+    PRINT_ERROR("Topology integration requires at least one converter thread.\n");
+    return false;
+  }
   if (!valid_design(design) || !valid_domain(preserved, element_volumes))
   {
     return false;
   }
   CoreTopologyProgress progress("Integrating Level-Set Geometry", element_volumes.size());
-  const auto poll = [&progress]()
-  {
-    return progress.poll();
-  };
   std::map<int, double> fractions;
   TopologyVolumeEvaluation volume;
   std::set<int> touched;
   std::set<int> fixed;
   bool interface_available = false;
   double fully_fixed_volume = 0.0;
-  for (const auto& entry : element_volumes)
+  const auto append = [&](const CoreTopologyLevelSetPipeline::Element& input)
   {
-    const bool is_preserved = preserved.at(entry.first);
-    std::vector<int> nodes;
-    TopologyLevelSetElementGeometry geometry;
-    current_element = entry.first;
-    const auto element_begin = std::chrono::steady_clock::now();
-    const bool integrated = element_geometry(design, entry.first, entry.second, is_preserved, nodes, geometry, poll, query_ms, integration_ms, cache_ms, cache, quadrature);
-    const double element_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - element_begin).count();
-    if (slowest_element < 0 || element_ms > slowest_element_ms)
+    const bool is_preserved = preserved.at(input.id);
+    const auto& nodes = input.nodes;
+    const auto& geometry = input.geometry;
+    current_element = input.id;
+    if (slowest_element < 0 || input.integration_ms > slowest_element_ms)
     {
-      slowest_element_ms = element_ms;
-      slowest_element = entry.first;
-    }
-    if (!integrated)
-    {
-      return false;
+      slowest_element_ms = input.integration_ms;
+      slowest_element = input.id;
     }
     maximum_subdivisions = (std::max)(maximum_subdivisions, geometry.subdivisions);
     bool fully_fixed = true;
@@ -211,21 +282,22 @@ bool CoreTopologyLevelSetEvaluation::build_geometry(TopologyLevelSetDesign& desi
     }
     if (fully_fixed)
     {
-      fully_fixed_volume += entry.second;
+      fully_fixed_volume += input.volume;
     }
-    fractions.emplace(entry.first, geometry.solid_fraction);
-    volume.total_volume += entry.second;
+    fractions.emplace(input.id, geometry.solid_fraction);
+    volume.total_volume += input.volume;
     volume.solid_volume += geometry.solid_volume;
     if (is_preserved)
     {
-      volume.preserved_volume += entry.second;
+      volume.preserved_volume += input.volume;
     }
     ++completed;
     current_element = -1;
-    if (!progress.advance())
-    {
-      return false;
-    }
+    return true;
+  };
+  if (!evaluate_elements(design, preserved, element_volumes, cache, progress, pipeline, query_ms, cache_ms, append))
+  {
+    return false;
   }
   if (!valid_node_domain(design, touched, fixed) || !std::isfinite(volume.total_volume) || volume.total_volume <= 0.0 ||
       !std::isfinite(volume.solid_volume) || !std::isfinite(volume.preserved_volume) || !std::isfinite(fully_fixed_volume))
@@ -287,10 +359,13 @@ bool CoreTopologyLevelSetEvaluation::build_factors(const TopologyLevelSetDesign&
 
 bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetDesign& design, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, const std::map<int, double>& element_energies, const std::map<int, double>& applied_factors, TopologyLevelSetEvaluation& evaluation, CoreTopologyLevelSetGeometryCache* cache)
 {
-  CoreTopologyLevelSetQuadrature quadrature;
+  const int configured_workers = ccx_uo.mConverterThreads;
+  const int configured_budget_mib = ccx_uo.mTopologyQuadratureCacheMiB;
+  const bool valid_budget = configured_budget_mib > 0 && static_cast<std::size_t>(configured_budget_mib) <= (std::numeric_limits<std::size_t>::max)() / (1024 * 1024);
+  const std::size_t budget_bytes = valid_budget ? static_cast<std::size_t>(configured_budget_mib) * 1024 * 1024 : 0;
+  CoreTopologyLevelSetPipeline pipeline(configured_workers > 0 ? static_cast<std::size_t>(configured_workers) : 0, budget_bytes);
   const auto begin = std::chrono::steady_clock::now();
   double query_ms = 0.0;
-  double integration_ms = 0.0;
   double cache_ms = 0.0;
   const std::size_t hits_before = cache ? cache->hit_count() : 0;
   const std::size_t misses_before = cache ? cache->miss_count() : 0;
@@ -303,17 +378,32 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
   const auto report_timing = qScopeGuard([&]()
   {
     const double total_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
-    const double other_ms = (std::max)(0.0, total_ms - query_ms - integration_ms - cache_ms);
-    PRINT_INFO("Level-set iteration %d sensitivities [ms]: total %.3f; mesh queries %.3f; integration %.3f; other %.3f; status %s.\n",
-      design.iteration_id, total_ms, query_ms, integration_ms, other_ms, succeeded ? "complete" : "incomplete");
+    const auto statistics = pipeline.statistics();
+    const double other_ms = (std::max)(0.0, total_ms - query_ms - statistics.wall_ms - cache_ms);
+    PRINT_INFO("Level-set iteration %d sensitivities [ms]: total %.3f; mesh queries %.3f; integration wall %.3f; other %.3f; status %s.\n",
+      design.iteration_id, total_ms, query_ms, statistics.wall_ms, other_ms, succeeded ? "complete" : "incomplete");
     PRINT_INFO("Level-set iteration %d sensitivities cache: hits %zu; misses %zu; lookup/copy/validation %.3f ms.\n",
       design.iteration_id, cache ? cache->hit_count() - hits_before : 0, cache ? cache->miss_count() - misses_before : 0, cache_ms);
     PRINT_INFO("Level-set iteration %d sensitivities quadrature: rule hits %zu; builds %zu; budget fallbacks %zu; retained bytes %zu.\n",
-      design.iteration_id, quadrature.hit_count(), quadrature.build_count(), quadrature.fallback_count(), quadrature.retained_bytes());
+      design.iteration_id, statistics.rule_hits, statistics.rule_builds, statistics.rule_fallbacks, statistics.retained_bytes);
+    PRINT_INFO("Level-set iteration %d integration workers: configured %d; active %zu; aggregate integration %.3f ms.\n",
+      design.iteration_id, configured_workers, statistics.workers, statistics.worker_ms);
+    PRINT_INFO("Level-set iteration %d shared quadrature: budget %d MiB; preparation %.3f ms; preparation budget fallbacks %zu.\n",
+      design.iteration_id, configured_budget_mib, statistics.preparation_ms, statistics.preparation_fallbacks);
     PRINT_INFO("Level-set iteration %d sensitivities: elements %zu/%zu; slowest element %d: %.3f ms; maximum subdivisions %d; incomplete element %d.\n",
       design.iteration_id, completed, element_volumes.size(), slowest_element, slowest_element_ms, maximum_subdivisions, current_element);
   });
   evaluation = {};
+  if (!valid_budget)
+  {
+    PRINT_ERROR("Topology quadrature cache budget must be positive MiB and fit in the address space.\n");
+    return false;
+  }
+  if (configured_workers < 1)
+  {
+    PRINT_ERROR("Topology integration requires at least one converter thread.\n");
+    return false;
+  }
   if (!valid_design(design) || !valid_domain(preserved, element_volumes) || !design.volume.available ||
       element_volumes.size() != design.element_solid_fractions.size() || element_energies.size() != element_volumes.size() || applied_factors.size() != element_volumes.size())
   {
@@ -321,10 +411,6 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
     return false;
   }
   CoreTopologyProgress progress("Evaluating Level-Set Compliance Sensitivities", element_volumes.size());
-  const auto poll = [&progress]()
-  {
-    return progress.poll();
-  };
   TopologyLevelSetEvaluation candidate;
   candidate.iteration_id = design.iteration_id;
   for (const auto& node : design.node_values)
@@ -334,44 +420,37 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
   }
   std::set<int> touched;
   std::set<int> fixed;
-  for (const auto& entry : element_volumes)
+  const auto append = [&](const CoreTopologyLevelSetPipeline::Element& input)
   {
-    const auto energy = element_energies.find(entry.first);
-    const auto factor = applied_factors.find(entry.first);
-    const auto fraction = design.element_solid_fractions.find(entry.first);
-    const bool is_preserved = preserved.at(entry.first);
+    const auto energy = element_energies.find(input.id);
+    const auto factor = applied_factors.find(input.id);
+    const auto fraction = design.element_solid_fractions.find(input.id);
+    const bool is_preserved = preserved.at(input.id);
     if (energy == element_energies.end() || factor == applied_factors.end() || fraction == design.element_solid_fractions.end() ||
         !std::isfinite(energy->second) || energy->second < 0.0 || !std::isfinite(factor->second) || factor->second <= 0.0 || factor->second > 1.0 ||
         !std::isfinite(fraction->second) || fraction->second < 0.0 || fraction->second > 1.0 ||
         (is_preserved && (factor->second != 1.0 || fraction->second != 1.0)))
     {
-      PRINT_ERROR("Invalid solved level-set data for element %d.\n", entry.first);
+      PRINT_ERROR("Invalid solved level-set data for element %d.\n", input.id);
       return false;
     }
-    std::vector<int> nodes;
-    TopologyLevelSetElementGeometry geometry;
-    current_element = entry.first;
-    const auto element_begin = std::chrono::steady_clock::now();
-    const bool integrated = element_geometry(design, entry.first, entry.second, is_preserved, nodes, geometry, poll, query_ms, integration_ms, cache_ms, cache, quadrature);
-    const double element_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - element_begin).count();
-    if (slowest_element < 0 || element_ms > slowest_element_ms)
+    const auto& nodes = input.nodes;
+    const auto& geometry = input.geometry;
+    current_element = input.id;
+    if (slowest_element < 0 || input.integration_ms > slowest_element_ms)
     {
-      slowest_element_ms = element_ms;
-      slowest_element = entry.first;
-    }
-    if (!integrated)
-    {
-      return false;
+      slowest_element_ms = input.integration_ms;
+      slowest_element = input.id;
     }
     maximum_subdivisions = (std::max)(maximum_subdivisions, geometry.subdivisions);
     if (std::abs(geometry.solid_fraction - fraction->second) > design.settings.integration_tolerance)
     {
-      PRINT_ERROR("Stored level-set fraction disagrees with the current geometry for element %d.\n", entry.first);
+      PRINT_ERROR("Stored level-set fraction disagrees with the current geometry for element %d.\n", input.id);
       return false;
     }
     const double requested = design.void_ratio + (1.0 - design.void_ratio) * fraction->second;
     candidate.factor_approximation = candidate.factor_approximation || std::abs(requested - factor->second) > 1.0e-12;
-    if (!accumulate_compliance(design, nodes, geometry, entry.second, energy->second, factor->second, candidate))
+    if (!accumulate_compliance(design, nodes, geometry, input.volume, energy->second, factor->second, candidate))
     {
       return false;
     }
@@ -386,10 +465,11 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
     }
     ++completed;
     current_element = -1;
-    if (!progress.advance())
-    {
-      return false;
-    }
+    return true;
+  };
+  if (!evaluate_elements(design, preserved, element_volumes, cache, progress, pipeline, query_ms, cache_ms, append))
+  {
+    return false;
   }
   if (!valid_node_domain(design, touched, fixed) || !finalize_compliance(candidate))
   {

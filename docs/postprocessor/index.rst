@@ -17,6 +17,9 @@ See :doc:`../developer/postprocessor-verification` for the acceptance checklist.
    commands
    workspace
    selection
+   annotations
+   plots
+   capture
    tables
    ../developer/postprocessor
    ../developer/postprocessor-project-persistence

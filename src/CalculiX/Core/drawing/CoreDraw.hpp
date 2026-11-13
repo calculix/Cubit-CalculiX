@@ -9,6 +9,8 @@
 #include <functional>
 
 class TopologyAnimation;
+class CalculiXCaptureRequest;
+class CalculiXJobSetupSnapshot;
 // why it's not in the gui section, because we control it over the commands
 // class for drawing of loads and bcs
 
@@ -17,6 +19,8 @@ class CoreDraw
 
 public:
   void bindDrawing(DrawingInterface* drawings) noexcept;
+  bool capturePNG(const CalculiXCaptureRequest& request, QByteArray& png, std::string& error);
+  bool captureSnapshotPNG(const CalculiXJobSetupSnapshot& snapshot, const CalculiXCaptureRequest& request, QByteArray& png, std::string& error);
   bool drawForStep(int stepId, const std::vector<DrawFeature>& features, double size, std::string& error, const std::vector<DrawEntityKey>& entities = {});
   bool setAllVisible(bool visible, std::string& error);
   bool setScope(const DrawScope& scope, std::string& error);
@@ -24,6 +28,7 @@ public:
   bool setSizeFactor(double factor, std::string& error);
   bool drawScopeAll(std::string& error);
   bool refreshDrawing(std::string& error);
+  bool setLabelSettings(const DrawLabelSettings& settings, std::string& error);
   DrawSavedState savedState() const;
   bool restoreState(const DrawSavedState& state, std::string& error);
   void resetToDefaults();

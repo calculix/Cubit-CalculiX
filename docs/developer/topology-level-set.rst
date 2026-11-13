@@ -617,7 +617,8 @@ evaluate_physical. Scratch output-vector capacity is reused; no new candidate
 shape vector is allocated per point in the prepared path. The ordinary wrapper
 still evaluates reference interpolation itself and remains available as fallback.
 
-The Core helper defaults to a 32 MiB retained point/vector-payload budget.
+The Core helper now defaults to a 128 MiB retained point/vector-payload budget,
+shared across workers as described under Parallel element integration below.
 Map/key overhead and temporary interpolation scratch are excluded. It estimates
 rule size before allocation and checks actual vector capacities before publishing.
 Oversized rules return a successful no-table result and use ordinary point-wise
@@ -714,3 +715,108 @@ grouped control, relative to that control. This is neither a general accuracy
 bound nor a global-optimality certificate. Six-formulation convergence/reanalysis
 matrix playback remains pending. Existing convergence criteria, six-decimal
 export formatting, default cap, GUI and save format are unchanged.
+
+Parallel element integration
+----------------------------
+
+CoreTopologyLevelSetPipeline.hpp/.cpp now coordinates Boost.Asio integration
+for build_geometry and evaluate_compliance. Their shared path also covers
+initialization, proposal/source reconstruction and candidate backtracking.
+This is a source implementation; native numerical and GUI verification after
+the change is pending. It does not claim measured speedup.
+
+The calling thread captures the existing Converter Threads setting once per
+pass. It queries current Cubit inputs, checks the transient source cache and
+prepares at most 256 volume elements per batch, with at most 20 nodes each.
+Independent numerical integrations use boost::asio::thread_pool, reused across
+batches in that pass. A dynamic element index distributes expensive refinements
+among workers. Each worker exclusively owns its scratch and quadrature counters,
+but borrows the same immutable reference rules. One owner holds a total default
+budget of 128 MiB per pass, independent of the worker count. The user-options
+key topology/quadrature_cache_mib controls this budget; its authoritative default
+comes from the numerical Core. The option is captured once per pass and changes
+apply to the next pass. It is not a per-case numerical parameter or saved model
+version. Allocator overhead, thread stacks and other scratch are outside it.
+The budget is a ceiling, not an up-front reservation. Rules that do not fit
+retain the same uncached integration path and accuracy.
+
+The calling thread prepares subdivisions 1 and 2 for uncached element types;
+both are required by the existing refinement comparison. Workers record finer
+missing-rule requests in their exclusive reader instances while evaluating
+through the unchanged fallback. Before a subsequent batch, the calling thread
+builds requested finer levels once, in coarse-first order. Thus the first batch
+can report fine-rule fallbacks even when the rule will fit. Unused fine levels
+are not prebuilt. Rejected budget requests are remembered for the pass, because
+no eviction or budget growth can make them fit later. Rules are never inserted
+while workers are reading; std::map insertion between batches preserves existing
+rule pointers. Readers and workers finish before the owner is destroyed.
+
+Workers never query Cubit, print messages, update progress, modify the source
+cache or assemble shared nodal maps. Numerical settings, geometry, quadrature
+and interpolation helpers accept an optional error destination. The pipeline
+supplies it to defer messages to the calling thread. Default serial callers
+retain their usual Cubit error messages. Exceptions arising inside workers are
+collected, and no new runtime_error exceptions are introduced.
+
+The caller inserts successful cache results and accumulates volume/compliance
+and nodal derivatives in the original ascending element order. Quadrature point
+and refinement order within each element are unchanged. There is no unordered
+parallel floating-point reduction and no change to tolerance, interpolation,
+integration weights, element ordering or the factor of two in compliance.
+Failed batches are not assembled or published as designs/evaluations. Earlier
+valid entries in the transient source cache can remain available.
+
+Cubit progress and interruption are serviced only on the calling thread, with
+the existing 200 ms display/interrupt throttle. Workers poll an atomic flag
+inside subdivision loops. The one-worker direct path retains a calling-thread
+callback inside slow elements. All submitted tasks finish before their batch
+data or callbacks can be released, including after partial submission, worker
+failure, progress callback failure or interruption. A batch can report partial
+progress, but 100 percent remains reserved for successful final validation.
+
+Timing distinguishes pass wall time, calling-thread mesh/cache work, integration
+wall time and aggregate per-element worker integration time. Aggregate worker
+time can exceed wall time and is never subtracted from it. Configured/active
+worker counts and aggregate quadrature hits/builds/fallbacks/retained bytes are
+reported. Shared rule preparation time and budget-rejected preparation requests
+are reported separately; retained rule memory and builds are counted only once,
+not once per reader. Integration wall time includes preparation, so those two
+times must not be added. An entirely cached pass need not construct a pool. A fresh pool is
+closed at the end of the evaluation pass; no global worker/model state is added.
+
+Prepared physical element mapping
+---------------------------------
+
+ElementPhysicalMapping.hpp/.cpp prepares one element's coordinate validation,
+CalculiX-to-Cubit source positions and coordinate offsets before numerical
+integration. Each evaluate_element call owns one mapping on its executing
+worker and reuses it for every point and refinement level. Shared reference
+rules and the uncached fallback both use the same prepared physical mapping.
+No mapping survives that element evaluation and no live Cubit data is retained.
+
+For CalculiX position a and physical component i, preparation stores
+X[cubit_source(a), i] - X[0, i]. The Jacobian at a reference point remains
+J[i,j] = sum_a(offset[a,i] * dN_a/dxi_j). The node/row/column accumulation order,
+Eigen determinant evaluation and output permutation are unchanged. No constant
+Jacobian assumption is introduced, including for quadratic tets, wedges and
+hexes. Curved/distorted elements still recompute and validate each point's
+Jacobian. Reference sizes, finite values/gradients and positive finite
+determinants are checked at every point. This removes repeated coordinate
+validation, node-order lookup and coordinate subtraction, without weakening
+sampled validity checks or changing integration/refinement tolerances.
+
+The object owns at most 20 offsets/source positions and its type identifier.
+It is private scratch for one worker, outside the shared reference-rule budget.
+Input coordinates may be released or edited after preparation without changing
+the prepared offsets. A changed physical element requires preparation again;
+the calling code still queries current Cubit coordinates for each evaluation.
+Failed preparation invalidates the object; later evaluation clears outputs and
+fails until preparation succeeds. Overflowing offsets from finite coordinates
+are rejected during preparation. Inverted/singular Jacobians are rejected at
+point evaluation, not by a global element-validity claim at preparation.
+
+Existing ElementInterpolation physical functions remain single-point wrappers
+with their previous signatures and direct-alias/output-clearing contracts.
+The new mapping also supports deferred error strings for worker callers, with
+Cubit messages retained for ordinary callers. Native numerical verification
+and measured performance after this change remain pending.

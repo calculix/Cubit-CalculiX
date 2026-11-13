@@ -22,6 +22,7 @@ public:
   bool synchronize(const PostprocessorApplicationInterface& application, std::string& error);
   void apply_camera(const Postprocessor::CameraDefinition& camera);
   bool prepare_camera_fit(const std::array<double, 6>& bounds, Postprocessor::CameraDefinition& camera, std::string& error);
+  void scale_capture(double scale);
   void clear();
   bool pick(double x, double y, Postprocessor::EntityKind kind,
     std::optional<Postprocessor::EntityReference>& entity, std::string& error);

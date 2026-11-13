@@ -17,6 +17,8 @@ class PostprocessorApplicationInterface;
 class CameraInteraction;
 class PostprocessorTriad;
 class QTimer;
+class PostprocessorAnnotationDisplay;
+class PostprocessorAnnotationInteraction;
 
 // Independent scene and command-driven input. No Cubit scene objects are reused.
 class PostprocessorViewport : public QVTKOpenGLNativeWidget
@@ -29,6 +31,7 @@ public:
   ~PostprocessorViewport() override;
   void synchronize(const std::shared_ptr<PostprocessorApplicationInterface>& application);
   void cancel_interaction();
+  void request_redraw();
   void fit_view();
   bool camera_command_active() const noexcept;
 
@@ -62,6 +65,12 @@ private:
   CameraTimings timings;
   std::unique_ptr<CameraInteraction> interaction;
   std::unique_ptr<PostprocessorTriad> triad;
+  std::unique_ptr<PostprocessorAnnotationDisplay> annotationDisplay;
+  std::unique_ptr<PostprocessorAnnotationInteraction> annotationInteraction;
+  std::optional<std::uint64_t> renderedAnnotations;
+  std::string renderedAnnotationSource, renderedAnnotationRepresentation;
+  QPointF contextPress;
+  bool contextClick = true;
   std::weak_ptr<PostprocessorApplicationInterface> application;
   std::string viewId;
   std::string lastError;

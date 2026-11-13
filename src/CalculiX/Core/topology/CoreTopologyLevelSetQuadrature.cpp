@@ -4,26 +4,55 @@
 #include <cmath>
 #include <utility>
 
-CoreTopologyLevelSetQuadrature::CoreTopologyLevelSetQuadrature(std::size_t budget_bytes)
-  : budget_bytes(budget_bytes)
+namespace
+{
+bool report_error(const std::string& message, std::string* error)
+{
+  if (error)
+  {
+    *error = message;
+  }
+  else
+  {
+    PRINT_ERROR("%s\n", message.c_str());
+  }
+  return false;
+}
+}
+
+CoreTopologyLevelSetQuadrature::CoreTopologyLevelSetQuadrature(std::size_t budget_bytes, const CoreTopologyLevelSetQuadrature* reference_rules)
+  : budget_bytes(budget_bytes), reference_rules(reference_rules)
 {
 }
 
-bool CoreTopologyLevelSetQuadrature::acquire(const std::string& calculix_type, int cubit_type, int subdivisions, const std::function<bool()>& poll, const Rule*& rule)
+bool CoreTopologyLevelSetQuadrature::acquire(const std::string& calculix_type, int cubit_type, int subdivisions, const std::function<bool()>& poll, const Rule*& rule, std::string* error)
 {
   rule = nullptr;
   const auto count = ElementInterpolation::node_count(calculix_type);
   if (!ElementInterpolation::matches_cubit_type(calculix_type, cubit_type) ||
       subdivisions < 1 || subdivisions > 32 || (subdivisions & (subdivisions - 1)) != 0)
   {
-    PRINT_ERROR("Invalid level-set reference quadrature request.\n");
-    return false;
+    return report_error("Invalid level-set reference quadrature request.", error);
   }
   if (poll && !poll())
   {
     return false;
   }
   const Key key(calculix_type, cubit_type, subdivisions);
+  if (reference_rules)
+  {
+    rule = reference_rules->find(calculix_type, cubit_type, subdivisions);
+    if (rule)
+    {
+      ++hits;
+    }
+    else
+    {
+      requests.insert(key);
+      ++fallbacks;
+    }
+    return true;
+  }
   const auto found = rules.find(key);
   if (found != rules.end())
   {
@@ -45,8 +74,7 @@ bool CoreTopologyLevelSetQuadrature::acquire(const std::string& calculix_type, i
 
   if (building)
   {
-    PRINT_ERROR("Level-set reference quadrature construction cannot be reentered.\n");
-    return false;
+    return report_error("Level-set reference quadrature construction cannot be reentered.", error);
   }
   const QScopedValueRollback<bool> guard(building, true);
   Rule candidate;
@@ -99,15 +127,14 @@ bool CoreTopologyLevelSetQuadrature::acquire(const std::string& calculix_type, i
                 point = {{2.0 * u - 1.0, 2.0 * v - 1.0, 2.0 * w - 1.0}};
               }
               Point sample;
-              if (!ElementInterpolation::evaluate_reference(calculix_type, point, sample.values, sample.gradients))
+              if (!ElementInterpolation::evaluate_reference(calculix_type, point, sample.values, sample.gradients, error))
               {
                 return false;
               }
               sample.reference_weight = half * half * half * weights[i] * weights[j] * weights[k] * mapping;
               if (!std::isfinite(sample.reference_weight) || sample.reference_weight <= 0.0)
               {
-                PRINT_ERROR("Invalid level-set reference quadrature weight.\n");
-                return false;
+                return report_error("Invalid level-set reference quadrature weight.", error);
               }
               const std::size_t dynamic_bytes = sample.values.capacity() * sizeof(double) +
                 sample.gradients.capacity() * sizeof(ElementInterpolation::Coordinates);
@@ -133,6 +160,17 @@ bool CoreTopologyLevelSetQuadrature::acquire(const std::string& calculix_type, i
   ++builds;
   rule = &inserted.first->second;
   return true;
+}
+
+const CoreTopologyLevelSetQuadrature::Rule* CoreTopologyLevelSetQuadrature::find(const std::string& calculix_type, int cubit_type, int subdivisions) const
+{
+  const auto found = rules.find(Key(calculix_type, cubit_type, subdivisions));
+  return found == rules.end() ? nullptr : &found->second;
+}
+
+const std::set<CoreTopologyLevelSetQuadrature::Key>& CoreTopologyLevelSetQuadrature::requested_rules() const
+{
+  return requests;
 }
 
 std::size_t CoreTopologyLevelSetQuadrature::hit_count() const

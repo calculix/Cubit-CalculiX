@@ -1,6 +1,7 @@
 #include "CalculiXModule.hpp"
 #include "Core/reporting/CalculiXReportTemplateProvider.hpp"
 #include "Core/reporting/CalculiXReportModelProvider.hpp"
+#include "Core/reporting/CalculiXReportImageProvider.hpp"
 #include "Core/jobs/CalculiXJobMonitorProvider.hpp"
 #include "Commands/CalculiXCommands.hpp"
 #include "GUI/CalculiXGui.hpp"
@@ -103,6 +104,7 @@ bool CalculiXModule::initialize(UserOptionsInterface& options, DrawingInterface&
   monitorProvider = std::make_unique<CalculiXJobMonitorProvider>();
   reportTemplates = std::make_unique<CalculiXReportTemplateProvider>();
   reportModels = std::make_unique<CalculiXReportModelProvider>();
+  reportImages = std::make_unique<CalculiXReportImageProvider>();
   application.core_observer().register_observer();
   observer_registered = true;
   return true;
@@ -112,6 +114,7 @@ void CalculiXModule::shutdown() noexcept
 {
   stop_component();
   reportModels.reset();
+  reportImages.reset();
   reportTemplates.reset();
   monitorProvider.reset();
   resultProvider.reset();
@@ -245,6 +248,11 @@ ReportTemplateProviderInterface* CalculiXModule::report_template_provider() noex
 ReportModelProviderInterface* CalculiXModule::report_model_provider() noexcept
 {
   return reportModels.get();
+}
+
+ReportImageProviderInterface* CalculiXModule::report_image_provider() noexcept
+{
+  return reportImages.get();
 }
 
 ProjectStateProviderInterface* CalculiXModule::project_state_provider() noexcept

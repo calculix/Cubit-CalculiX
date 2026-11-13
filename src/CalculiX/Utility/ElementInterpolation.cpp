@@ -1,12 +1,24 @@
 #include "ElementInterpolation.hpp"
-#include "ElementNodeOrdering.hpp"
+#include "ElementPhysicalMapping.hpp"
 #include "CubitMessage.hpp"
-#include "Eigen/Dense"
 #include <cmath>
 #include <utility>
 
 namespace
 {
+  bool report_error(const std::string& message, std::string* error)
+  {
+    if (error)
+    {
+      *error = message;
+    }
+    else
+    {
+      PRINT_ERROR("%s\n", message.c_str());
+    }
+    return false;
+  }
+
   using Coordinates = ElementInterpolation::Coordinates;
 
   std::size_t calculix_node_count(const std::string& type)
@@ -353,7 +365,7 @@ bool ElementInterpolation::matches_cubit_type(const std::string& calculix_type, 
   return count != 0 && count == cubit_node_count(cubit_type);
 }
 
-bool ElementInterpolation::evaluate_reference(const std::string& calculix_type, const Coordinates& point, std::vector<double>& values, std::vector<Coordinates>& gradients)
+bool ElementInterpolation::evaluate_reference(const std::string& calculix_type, const Coordinates& point, std::vector<double>& values, std::vector<Coordinates>& gradients, std::string* error)
 {
   values.clear();
   gradients.clear();
@@ -379,8 +391,7 @@ bool ElementInterpolation::evaluate_reference(const std::string& calculix_type, 
   }
   if (!valid)
   {
-    PRINT_ERROR("Unsupported element type or invalid reference interpolation point.\n");
-    return false;
+    return report_error("Unsupported element type or invalid reference interpolation point.", error);
   }
   if (tet)
   {
@@ -400,86 +411,31 @@ bool ElementInterpolation::evaluate_reference(const std::string& calculix_type, 
   return true;
 }
 
-bool ElementInterpolation::evaluate_physical(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const Coordinates& point, std::vector<double>& values, double& determinant)
+bool ElementInterpolation::evaluate_physical(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const Coordinates& point, std::vector<double>& values, double& determinant, std::string* error)
 {
   values.clear();
   determinant = 0.0;
   std::vector<double> shape;
   std::vector<Coordinates> gradients;
-  if (!evaluate_reference(calculix_type, point, shape, gradients))
+  if (!evaluate_reference(calculix_type, point, shape, gradients, error))
   {
     return false;
   }
-  return evaluate_physical_from_reference(calculix_type, cubit_type, node_coordinates, shape, gradients, values, determinant);
+  return evaluate_physical_from_reference(calculix_type, cubit_type, node_coordinates, shape, gradients, values, determinant, error);
 }
 
-bool ElementInterpolation::evaluate_physical_from_reference(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const std::vector<double>& reference_values, const std::vector<Coordinates>& reference_gradients, std::vector<double>& values, double& determinant)
+bool ElementInterpolation::evaluate_physical_from_reference(const std::string& calculix_type, int cubit_type, const std::vector<Coordinates>& node_coordinates, const std::vector<double>& reference_values, const std::vector<Coordinates>& reference_gradients, std::vector<double>& values, double& determinant, std::string* error)
 {
   if (&values == &reference_values)
   {
-    PRINT_ERROR("Reference interpolation inputs must not alias output values.\n");
-    return false;
+    return report_error("Reference interpolation inputs must not alias output values.", error);
   }
   values.clear();
   determinant = 0.0;
-  const auto count = node_count(calculix_type);
-  if (!matches_cubit_type(calculix_type, cubit_type) || count > 20 || node_coordinates.size() != count ||
-      reference_values.size() != count || reference_gradients.size() != count)
+  ElementPhysicalMapping mapping;
+  if (!mapping.prepare(calculix_type, cubit_type, node_coordinates, error))
   {
-    PRINT_ERROR("Incompatible connectivity or reference data in element interpolation.\n");
     return false;
   }
-  for (const auto& coordinates : node_coordinates)
-  {
-    for (double value : coordinates)
-    {
-      if (!std::isfinite(value))
-      {
-        PRINT_ERROR("Non-finite element coordinates in interpolation.\n");
-        return false;
-      }
-    }
-  }
-  Eigen::Matrix3d jacobian = Eigen::Matrix3d::Zero();
-  // All supported formulations have at most 20 nodes; avoid point-wise allocations.
-  std::array<std::size_t, 20> sources{};
-  for (std::size_t node = 0; node < count; ++node)
-  {
-    const auto source = ElementNodeOrdering::cubit_source_index(cubit_type, node);
-    if (source >= node_coordinates.size() || !std::isfinite(reference_values[node]))
-    {
-      PRINT_ERROR("Invalid node ordering or reference values in element interpolation.\n");
-      return false;
-    }
-    sources[node] = source;
-    for (double gradient : reference_gradients[node])
-    {
-      if (!std::isfinite(gradient))
-      {
-        PRINT_ERROR("Non-finite reference gradients in element interpolation.\n");
-        return false;
-      }
-    }
-    for (std::size_t row = 0; row < 3; ++row)
-    {
-      const double coordinate = node_coordinates[source][row] - node_coordinates[0][row];
-      for (std::size_t column = 0; column < 3; ++column)
-      {
-        jacobian(row, column) += coordinate * reference_gradients[node][column];
-      }
-    }
-  }
-  const double value = jacobian.determinant();
-  if (!std::isfinite(value) || value <= 0.0)
-  {
-    PRINT_ERROR("Invalid Jacobian determinant in element interpolation.\n");
-    return false;
-  }
-  values.resize(count);
-  for (std::size_t node = 0; node < count; ++node)
-  {
-    values[sources[node]] = reference_values[node];
-  }
-  determinant = value;
-  return true;
+  return mapping.map_reference(reference_values, reference_gradients, values, determinant, error);
 }

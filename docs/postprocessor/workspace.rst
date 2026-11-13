@@ -429,3 +429,52 @@ Results and its result-variant branches expand when first created, and the activ
 coloring field is selected in the tree. Later refreshes preserve manual branch
 expansion/collapse choices. Reopening an already retained source does not reset
 its coloring or visibility. Project restoration keeps saved settings.
+
+
+Side-by-side table pane and legend updates
+-------------------------------------------
+
+Opening a table reveals a resizable pane on the right of the existing viewport.
+The command dock remains below both. The viewport retains its camera and meshes.
+The title close button uses ``post view type 3d``; activating a spatial result also
+closes the pane atomically with its field selection. Field controls stay usable
+for mesh sources while a table is open. Initial pane proportions are two parts
+viewport to one part table and may be resized by dragging the separator.
+
+The legend explicitly invalidates source/frame-dependent text and extrema.
+Readable text sizes and numeric formatting are set independently of automatic
+long-title font scaling. Text contrast is refreshed after the actual background
+is applied, including first opening and background-option changes. Legend layout
+is recomputed against the current viewport width when the table pane changes it.
+
+
+All-frame tables
+-----------------
+
+The Tables tree branch lists each logical table directly, without a Frame tables
+layer. Native frame tables and spatial results opened as tables show their full
+history with Frame/Step/Increment/Time columns. Rows of the active frame receive a
+light-blue background and bold text, independently of the user's row selection.
+Navigation changes the highlight, retaining table contents and layout. Global
+and step-summary tables appear once and do not acquire an invented frame/time.
+Plotting, image capture and viewport labels remain separate planned features.
+
+Result annotations
+------------------
+
+The main Postprocessor toolbar includes Min/Max, Add result label and Show labels
+buttons after the picking controls. They use standalone configurable SVGs.
+Create labels from the current selection or the viewport context menu. Drag text
+with the left button while its leader remains on the displayed entity; Esc
+cancels the drag. Right-click menus also provide per-label show/hide, rename and
+remove actions, including entries for hidden labels. See :doc:`annotations`.
+
+Plot pane
+---------
+
+The result-history toolbar button opens saved plots or plots selected entities.
+Right-click also provides history actions; nodal element results require an
+explicit minimum/maximum. Table cells offer Plot columns. Plots occupy the
+right side beside the viewport, sharing Table/Plot tabs with an open table.
+Closing preserves the definition. Axis-only changes do not rebuild the source
+tree or re-extract table histories. See :doc:`plots` for commands and CSV export.

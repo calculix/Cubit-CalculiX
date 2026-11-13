@@ -26,10 +26,13 @@ class PostprocessorColorMap
 public:
   explicit PostprocessorColorMap(vtkRenderer* renderer);
   ~PostprocessorColorMap();
+  void update_appearance();
+  void set_capture_scale(double scale);
   void apply(const Postprocessor::Representation& display, const SimResults::VtkResultsData& data,
     std::vector<PostprocessorColorSurface>& surfaces, unsigned int slot,
     const std::optional<std::array<double,2>>& rangeAcrossFrames, std::string& error);
 private:
+  double captureScale = 1;
   vtkRenderer* renderer;
   vtkSmartPointer<vtkScalarBarActor> legend;
   vtkSmartPointer<vtkTextActor> minimumLabel;
@@ -39,5 +42,9 @@ private:
   std::optional<std::array<double, 2>> allFrameRange;
   std::set<std::size_t> hiddenDatasets;
   std::string title;
+  const SimResults::VtkResultsData* appliedData = nullptr;
+  std::optional<std::size_t> appliedFrame;
+  std::string appliedDisplayName;
+  unsigned int appliedSlot = 0;
 };
 #endif

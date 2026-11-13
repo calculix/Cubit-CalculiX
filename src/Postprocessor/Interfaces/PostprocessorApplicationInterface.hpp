@@ -6,6 +6,7 @@
 #include "Postprocessor/Core/options/PostprocessorUserOptions.hpp"
 
 #include <optional>
+#include <functional>
 #include <string>
 #include <variant>
 #include "Framework/Results/ResultJobEntry.hpp"
@@ -18,6 +19,13 @@ class ResultSourceRegistryInterface;
 class PostprocessorApplicationInterface
 {
 public:
+  using CaptureRenderer = std::function<bool(const Postprocessor::CaptureSnapshot&,
+    const std::shared_ptr<PostprocessorApplicationInterface>&,QByteArray&,QJsonObject&,std::string&)>;
+  using CaptureSizer = std::function<std::array<int,2>(Postprocessor::CaptureTarget,const std::string&)>;
+  void set_capture_renderer(CaptureRenderer renderer,CaptureSizer sizer = {});
+  std::array<int,2> capture_reference_size(Postprocessor::CaptureTarget target,const std::string& id) const;
+  bool render_capture(const Postprocessor::CaptureDefinition& request,QByteArray& png,QJsonObject& provenance,std::string& error) const;
+  bool capture_file(const Postprocessor::CaptureDefinition& request,const std::string& path,std::string& error) const;
   using DatasetSelector = std::variant<std::size_t,std::string>;
   explicit PostprocessorApplicationInterface(ResultSourceRegistryInterface& providers);
   bool read_project_definitions(const std::string& filename, std::string& error);
@@ -53,6 +61,27 @@ public:
     std::string& error);
 
   const Postprocessor::PostprocessorSession& session() const noexcept;
+  bool create_plot(const std::string& name,std::string& error);
+  bool add_plot_entity(const std::string& plot,const std::string& name,const std::string& source,
+    const std::optional<DatasetSelector>& dataset,Postprocessor::EntityKind kind,std::int64_t id,
+    std::optional<std::int64_t> ip,const std::string& field,const std::string& component,bool magnitude,
+    Postprocessor::PlotReduction reduction,std::string& error);
+  bool add_plot_table(const std::string& plot,const std::string& name,const std::string& source,
+    const std::string& table,const std::string& x,const std::string& y,const std::string& column,
+    const std::string& value,std::string& error);
+  bool change_plot(const std::string& name,const std::string& action,const std::string& value,std::string& error);
+  bool change_plot_curve(const std::string& plot,const std::string& curve,const std::string& action,std::string& error);
+  bool set_plot_axes(const std::string& name,const Postprocessor::PlotAxes& axes,std::string& error);
+  bool plot_data(const std::string& id,Postprocessor::PlotData& data,std::string& error) const;
+  bool export_plot(const std::string& name,const std::string& path,std::string& error) const;
+  bool add_label(const std::string& view, const std::string& name, const std::string& source,
+    const std::optional<DatasetSelector>& dataset, Postprocessor::EntityKind kind, std::int64_t id,
+    std::optional<std::int64_t> ip, const std::string& field, const std::string& component,
+    bool magnitude, std::string& assigned, std::string& error);
+  bool change_label(const std::string& view, const std::string& name, const std::string& action,
+    const std::string& replacement, const std::array<double,2>& position, std::string& error);
+  bool set_labels(const std::string& view, bool extrema, bool visible, std::string& error);
+  std::vector<Postprocessor::EvaluatedAnnotation> annotations(const std::string& view) const;
   bool set_pick_mode(Postprocessor::EntityKind kind, std::string& error);
   bool clear_pick(std::string& error);
   bool pick_entity(const std::string& source_name, const DatasetSelector& dataset,
@@ -103,6 +132,9 @@ public:
     std::uint64_t revision, const Postprocessor::CameraDefinition& camera, std::string& error);
 
 private:
+  CaptureRenderer captureRenderer;
+  CaptureSizer captureSizer;
+  std::optional<Postprocessor::UserOptions> captureOptions;
   std::optional<std::size_t> resolve_dataset(const std::string& source_id, const DatasetSelector& dataset, std::string& error) const;
   ResultSourceRegistryInterface& providers;
   Postprocessor::PostprocessorCore core;

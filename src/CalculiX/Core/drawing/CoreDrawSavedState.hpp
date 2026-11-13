@@ -18,6 +18,7 @@ struct DrawSavedGroup
 struct DrawSavedState
 {
   DrawScope scope;
+  DrawLabelSettings labels;
   double sizeFactor = 1.0;
   bool overlayVisible = true;
   std::vector<DrawSavedGroup> groups;

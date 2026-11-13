@@ -5,6 +5,17 @@
 
 struct DrawingOptions
 {
+  bool labelsEnabled = true;
+  bool labelsLoads = true;
+  bool labelsBcs = true;
+  bool labelsSelectedOnly = false;
+  bool labelsIds = true;
+  bool labelsNames = true;
+  bool labelsValues = false;
+  bool labelsAmplitudes = false;
+  bool labelsLeaders = true;
+  double labelsOffset = 0.75;
+  std::string labelsColor = "black";
   double sizeFactor;
   bool overlayVisible;
   bool boundaryConditions;

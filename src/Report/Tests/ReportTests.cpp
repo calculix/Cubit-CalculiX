@@ -62,6 +62,8 @@ QByteArray contents(const QString& filename)
 }
 }
 
+int reportImageTests(const QString& directory, ReportProfileStoreInterface& profiles);
+
 int main(int argc, char** argv)
 {
   QApplication application(argc, argv);
@@ -618,6 +620,7 @@ int main(int argc, char** argv)
   check(fullCore.session().documents.size() == 1000 && fullCore.generate("test", 1, "", error) &&
     fullCore.session().documents.size() == 1000 && fullCore.document()->id == sourceId,
     "The report-count limit allows replacement of an existing source");
+  failures += reportImageTests(directory.path(), profiles);
   std::cout << failures << " report test failures\n";
   return failures == 0 ? 0 : 1;
 }

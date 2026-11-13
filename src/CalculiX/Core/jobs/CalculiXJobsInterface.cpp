@@ -137,10 +137,34 @@ bool CalculiXJobsInterface::get_report_source(int id, ReportSource& output, std:
     error = "Cannot resolve the CalculiX report job.";
     return false;
   }
-  if (get_job_status(id) == 1)
+  if (get_job_status(id) == 1 || get_job_status(id) == 5)
   {
     error = "Cannot read report input while the CalculiX job is running.";
     return false;
+  }
+  std::shared_ptr<const CalculiXJobRunRecord> archived;
+  if (ccx_core.jobs->get_run_record(id, archived, error))
+  {
+    if (archived->input.files.empty())
+    {
+      error = "The latest solver launch has no archived input: " + archived->setupUnavailableReason;
+      return false;
+    }
+    ReportSource source;
+    source.workspace_id = "calculix";
+    source.job_id = id;
+    source.solver_launch_id = archived->launchId;
+    source.setup_snapshot_id = archived->setup ? archived->setup->id : "";
+    source.snapshot_fingerprint = archived->setup ? archived->setup->fingerprint : archived->input.manifestFingerprint;
+    source.input_files = archived->input.order;
+    for (const auto& path : source.input_files)
+    {
+      source.fingerprints.push_back(archived->input.fingerprints.at(path));
+    }
+    source.provenance = "Archived input bound to a successful solver launch. Setup coverage is recorded per scene; result-conversion identity remains separate.";
+    output = std::move(source);
+    error.clear();
+    return true;
   }
   // Solver execution writes <job name>.inp in its working directory. Prefer
   // that actual run input over an imported source deck when both exist.
@@ -163,4 +187,14 @@ bool CalculiXJobsInterface::get_report_source(int id, ReportSource& output, std:
   output = std::move(source);
   error.clear();
   return true;
+}
+
+bool CalculiXJobsInterface::get_run_record(int jobId, std::shared_ptr<const CalculiXJobRunRecord>& output, std::string& error) const
+{
+  return ccx_core.jobs->get_run_record(jobId, output, error);
+}
+
+void CalculiXJobsInterface::freeze_prepared_setup(int jobId, const std::string& filename, bool supportedContext) noexcept
+{
+  ccx_core.jobs->freeze_prepared_setup(jobId, filename, supportedContext);
 }

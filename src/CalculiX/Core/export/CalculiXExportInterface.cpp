@@ -1,4 +1,5 @@
 #include "Core/loads/CoreLoadsTrajectory.hpp"
+#include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "CalculiXExportInterface.hpp"
 #include <string>
 #include <vector>
@@ -20,6 +21,15 @@ bool CalculiXExportInterface::prepare_export()
 bool CalculiXExportInterface::clean_export()
 {
   return ccx_core.loadstrajectory->clean_export_if_needed();
+}
+
+void CalculiXExportInterface::freeze_job_setup() noexcept
+{
+  const auto& context = ccx_core.job_export_context;
+  if (context.job_id > 0)
+  {
+    CalculiXJobsInterface().freeze_prepared_setup(context.job_id, context.filename, context.topology_id < 0 && !context.adjoint);
+  }
 }
 
 void CalculiXExportInterface::trace_export(const char* event)

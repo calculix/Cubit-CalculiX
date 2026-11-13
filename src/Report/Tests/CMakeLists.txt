@@ -1,5 +1,6 @@
 add_executable(report_tests
   ReportTests.cpp ReportTestProviders.cpp ReportTestProviders.hpp
+  ReportImageTests.cpp ReportTestImages.cpp ReportTestImages.hpp
   ${CUBITSIM_SOURCE_ROOT}/CalculiX/Core/reporting/CalculiXReportInputReader.cpp
 )
 target_compile_features(report_tests PRIVATE cxx_std_17)

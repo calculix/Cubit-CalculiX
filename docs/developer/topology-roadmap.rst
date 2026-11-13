@@ -108,10 +108,21 @@ Remaining implementation
   41 and preserved history after reopen. Frozen C3D8 reanalysis gave grouped
   compliance 6305.0011384 and exact-factor compliance 6297.077716, a -0.125669
   percent difference relative to the grouped control, with history unchanged.
-* Next: execute verify_level_set_matrix.jou for all six formulations. Shared
-  fixture/deck/history helpers and offline tests are prepared; actual matrix
-  playback is pending. Keep execution, convergence and approximation accuracy
-  separate. Then expand default-width scope using the documented numerical gates.
+* Initial matrix playback reached C3D4 convergence at iteration 52 but exposed
+  quadratic post-run energy checks and large duplicate snapshots. The harness
+  now scans each DAT file once and reuses captured history, with 200 ms progress
+  reporting. Eleven offline Python tests and 18 archived-file comparisons passed;
+  complete playback and GUI responsiveness remain unverified after this change.
+* C3D20 diagnostic 20261113T124243Z_2c79ac2d passed all 60 history checks,
+  native reopen and grouped/exact reanalysis, but remained unconverged at the
+  iteration limit. All 60 physical export and cleanup trace pairs completed;
+  the earlier intermittent C3D20 export exception remains unresolved.
+* Next: run verify_level_set_matrix.jou for C3D4, C3D10, C3D6 and C3D15 with
+  tracing enabled. Retain prior C3D8/C3D20 evidence separately. The journal saves
+  native state before postprocessing and supports explicit same-build recovery
+  with new attempt reports/paired-job filenames; native recovery remains to be
+  verified in Cubit. Keep execution, convergence and approximation accuracy
+  separate. Then resolve default-width scope using the documented numerical gates.
 * Remaining: kill after completed iterations, solver-process failure cleanup,
   mixed/curved meshes, narrow-band refinement, larger-model performance, GUI
   lifecycle and Linux evidence. The standalone cache-suite result is separate.

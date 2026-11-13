@@ -1,0 +1,5 @@
+add_executable(drawing_label_tests LabelTests.cpp CaptureTests.cpp ReportImageSettingsTests.cpp JobSnapshotTests.cpp LabelTestDrawing.cpp LabelTestDrawing.hpp)
+target_compile_features(drawing_label_tests PRIVATE cxx_std_17)
+target_include_directories(drawing_label_tests PRIVATE "${CUBITSIM_SOURCE_ROOT}" "${CUBITSIM_SOURCE_ROOT}/CalculiX")
+target_link_libraries(drawing_label_tests PRIVATE calculix_core cubitsim_drawing cubitsim_storage Qt6::Core Qt6::Gui)
+add_test(NAME drawing_labels COMMAND drawing_label_tests)

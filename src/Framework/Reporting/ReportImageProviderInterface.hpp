@@ -21,5 +21,8 @@ class ReportImageProviderInterface
 {
 public:
   virtual ~ReportImageProviderInterface();
+  // Collect workspace-owned images into a local document candidate. Invalid
+  // settings fail atomically; unavailable captures may add diagnostics.
+  virtual bool collect(const ReportImageRequest& request, ReportDocument& output, std::string& error) = 0;
   virtual bool render(const ReportImageRequest& request, ReportImage& output, std::string& error) = 0;
 };

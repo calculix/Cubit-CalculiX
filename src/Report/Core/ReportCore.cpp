@@ -7,6 +7,8 @@
 #include "Framework/Reporting/ReportProfileStoreInterface.hpp"
 #include "Framework/Reporting/ReportResultProviderInterface.hpp"
 #include "Framework/Reporting/ReportResultRequest.hpp"
+#include "Framework/Reporting/ReportImageProviderInterface.hpp"
+#include "Framework/Reporting/ReportImageRequest.hpp"
 #include <QDateTime>
 #include <QUuid>
 #include <functional>
@@ -216,6 +218,14 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
   {
     candidate->id = previous->id;
     candidate->notes = previous->notes;
+    // User figures are immutable snapshots, independent of generated content.
+    for (const auto& section : previous->sections)
+    {
+      if (section.id == "user.figures")
+      {
+        candidate->sections.push_back(section);
+      }
+    }
   }
   if (updating && previous != nullptr)
   {
@@ -224,7 +234,10 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
         candidate->source.job_id != previous->source.job_id ||
         candidate->source.input_files != previous->source.input_files ||
         (request.kind == "job" && candidate->source.fingerprints != previous->source.fingerprints) ||
-        candidate->source.run_identity != previous->source.run_identity)
+        candidate->source.run_identity != previous->source.run_identity ||
+        candidate->source.solver_launch_id != previous->source.solver_launch_id ||
+        candidate->source.setup_snapshot_id != previous->source.setup_snapshot_id ||
+        (request.kind == "job" && candidate->source.snapshot_fingerprint != previous->source.snapshot_fingerprint))
     {
       error = "Report sources changed. Generate again explicitly to replace the report using the current job files.";
       return false;
@@ -255,12 +268,23 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
     }
   }
   const auto imageSelection = resolved.overrides.values.find("post.images");
+  if (auto* images = registry.report_images(resolved.provider))
+  {
+    ReportImageRequest imageRequest;
+    imageRequest.provider = resolved.provider;
+    imageRequest.source = candidate->source;
+    imageRequest.settings = resolved.overrides;
+    if (!images->collect(imageRequest, *candidate, error))
+    {
+      return false;
+    }
+  }
   if (imageSelection != resolved.overrides.values.end() && imageSelection->second == "true")
   {
     ReportDiagnostic issue;
     issue.section_id = "post.images";
     issue.severity = "unavailable";
-    issue.message = "Model images and result images require their owning workspace image providers (Batch B).";
+    issue.message = "Result images require the Postprocessor image provider; CalculiX setup images are collected separately.";
     candidate->diagnostics.push_back(std::move(issue));
   }
   if (!candidate->validate(error))

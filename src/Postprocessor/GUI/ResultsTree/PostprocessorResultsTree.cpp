@@ -544,17 +544,11 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
     if (!tableList.empty())
     {
       auto* tableRoot = make(root,tr("Tables"),ResultTreeItemKind::MeshGroup,"tables");
-      std::map<std::string,QTreeWidgetItem*> categories;
       for (const auto& table : tableList)
       {
-        auto& category = categories[table.category];
-        if (!category)
-        {
-          category = make(tableRoot,QString::fromUtf8(table.category.c_str()),ResultTreeItemKind::MeshGroup,"tables:"+QString::fromStdString(table.category));
-        }
-        auto* item = make(category,QString::fromUtf8(table.name.c_str()),ResultTreeItemKind::Table,"table:"+QString::fromStdString(table.key));
+        auto* item = make(tableRoot,QString::fromUtf8(table.name.c_str()),ResultTreeItemKind::Table,"table:"+QString::fromStdString(table.key));
         item->setData(0,TableKey,QString::fromStdString(table.key));
-        item->setToolTip(0,QString::fromStdString(table.key));
+        item->setToolTip(0,QString::fromStdString(table.category)+"\n"+QString::fromStdString(table.key));
       }
     }
   }

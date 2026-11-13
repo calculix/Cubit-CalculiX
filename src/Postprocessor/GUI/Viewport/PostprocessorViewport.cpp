@@ -2,6 +2,10 @@
 #include "PostprocessorScene.hpp"
 #include "CameraInteraction.hpp"
 #include "PostprocessorTriad.hpp"
+#include "Postprocessor/GUI/Annotations/PostprocessorAnnotationDisplay.hpp"
+#include "Postprocessor/GUI/Annotations/PostprocessorAnnotationInteraction.hpp"
+#include "Postprocessor/GUI/Annotations/PostprocessorAnnotationMenu.hpp"
+#include <QContextMenuEvent>
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
 #include "Postprocessor/Commands/selection/PickCommandText.hpp"
@@ -43,6 +47,12 @@ PostprocessorViewport::PostprocessorViewport(const std::string& view_id,
   setRenderWindow(sceneWindow.GetPointer());
   scene = std::make_unique<PostprocessorScene>(renderer, viewId);
   triad = std::make_unique<PostprocessorTriad>(sceneWindow);
+  annotationDisplay = std::make_unique<PostprocessorAnnotationDisplay>(renderer,viewId,this);
+  annotationInteraction = std::make_unique<PostprocessorAnnotationInteraction>(this,annotationDisplay.get(),viewId,
+    active,submit,silent,[this]()
+    {
+      queue_render();
+    });
   hoverTimer = new QTimer(this);
   hoverTimer->setSingleShot(true);
   hoverTimer->setInterval(Postprocessor::SelectionDefaults::hover_interval_ms);
@@ -75,6 +85,7 @@ PostprocessorViewport::~PostprocessorViewport()
 
 void PostprocessorViewport::cancel_interaction()
 {
+  annotationInteraction->cancel();
   interaction->cancel();
 }
 
@@ -252,10 +263,68 @@ void PostprocessorViewport::resizeGL(int width, int height)
 
 bool PostprocessorViewport::event(QEvent* event)
 {
+  if (event->type() == QEvent::MouseButtonPress && static_cast<QMouseEvent*>(event)->button() == Qt::RightButton)
+  {
+    contextPress = static_cast<QMouseEvent*>(event)->position();
+    contextClick = true;
+  }
+  if (event->type() == QEvent::MouseMove && static_cast<QMouseEvent*>(event)->buttons().testFlag(Qt::RightButton) &&
+      (static_cast<QMouseEvent*>(event)->position()-contextPress).manhattanLength() >= QApplication::startDragDistance())
+  {
+    contextClick = false;
+  }
+  if (annotationInteraction && annotationInteraction->handle(event))
+  {
+    clear_hover();
+    event->accept();
+    return true;
+  }
+  if (annotationDisplay && (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease) &&
+      static_cast<QMouseEvent*>(event)->button() == Qt::RightButton &&
+      !annotationDisplay->label_at(static_cast<QMouseEvent*>(event)->position()).empty())
+  {
+    setFocus(Qt::MouseFocusReason);
+    event->accept();
+    return true;
+  }
+  if (event->type() == QEvent::ContextMenu && annotationDisplay)
+  {
+    const auto active = application.lock();
+    if (active)
+    {
+      auto* context = static_cast<QContextMenuEvent*>(event);
+      if (context->reason() == QContextMenuEvent::Mouse && !contextClick)
+      {
+        event->accept();
+        return true;
+      }
+      const auto label = annotationDisplay->label_at(context->pos());
+      const auto view = active->session().views.find(viewId);
+      std::optional<Postprocessor::EntityReference> entity;
+      std::string error;
+      if (label.empty() && view != active->session().views.end())
+      {
+        const double ratio = devicePixelRatioF();
+        scene->pick(context->pos().x()*ratio,(height()-1-context->pos().y())*ratio,view->second.selection.mode,entity,error);
+      }
+      show_annotation_menu(this,context->globalPos(),*active,viewId,label,entity,[this](const QString& command)
+      {
+        std::string error;
+        if (!submitCommand(command,error))
+        {
+          report_error(error);
+        }
+        queue_render();
+      });
+    }
+    event->accept();
+    return true;
+  }
   if (event->type() == QEvent::MouseMove && hoverTimer)
   {
     auto* mouse = static_cast<QMouseEvent*>(event);
-    if (mouse->buttons() == Qt::NoButton && mouse->modifiers() == Qt::NoModifier)
+    if (mouse->buttons() == Qt::NoButton && mouse->modifiers() == Qt::NoModifier &&
+        annotationDisplay->label_at(mouse->position()).empty())
     {
       hoverPosition = mouse->position();
       if (!hoverTimer->isActive())
@@ -322,6 +391,7 @@ void PostprocessorViewport::synchronize(const std::shared_ptr<PostprocessorAppli
   if (!active)
   {
     scene->clear();
+    annotationDisplay->hide();
     renderedGeometry.reset();
     renderedCamera.reset();
     renderedSelection.reset();
@@ -344,6 +414,13 @@ void PostprocessorViewport::synchronize(const std::shared_ptr<PostprocessorAppli
   report_warning();
   const auto view = active->session().views.find(viewId);
   const auto& options = active->user_options();
+  if (view != active->session().views.end() &&
+      (!renderedAnnotations || *renderedAnnotations != view->second.annotations.revision ||
+        renderedAnnotationSource != active->session().active_source_id ||
+        renderedAnnotationRepresentation != active->session().active_representation_id))
+  {
+    queue_render();
+  }
   if (!renderedGeometry || *renderedGeometry != active->display_revision() ||
       view == active->session().views.end() || !renderedCamera || *renderedCamera != view->second.camera_revision ||
       !renderedSelection || *renderedSelection != view->second.selection.revision ||
@@ -388,6 +465,7 @@ void PostprocessorViewport::render_frame()
   }
   QScopedValueRollback<bool> guard(renderingFrame, true);
   timings.begin_frame();
+  annotationInteraction->flush_preview();
   interaction->flush_preview();
   frameDirty = false;
   awaitingPresentation = true;
@@ -403,7 +481,7 @@ void PostprocessorViewport::on_frame_presented()
   timings.presented();
   queue_timing_report();
   awaitingPresentation = false;
-  if (frameDirty || interaction->preview_pending())
+  if (frameDirty || interaction->preview_pending() || annotationInteraction->preview_pending())
   {
     request_frame();
   }
@@ -481,6 +559,8 @@ void PostprocessorViewport::render_scene()
     timings.record(CameraTimingStage::TriadUpdate, triadStarted);
     const auto renderStarted = timings.frame_stamp();
     sceneWindow->Render();
+    annotationDisplay->show();
+    annotationDisplay->synchronize(*active);
     timings.record(CameraTimingStage::RenderCall, renderStarted);
     if (completed)
     {
@@ -490,6 +570,9 @@ void PostprocessorViewport::render_scene()
       {
         renderedCamera = current->second.camera_revision;
         renderedSelection = current->second.selection.revision;
+        renderedAnnotations = current->second.annotations.revision;
+        renderedAnnotationSource = active->session().active_source_id;
+        renderedAnnotationRepresentation = active->session().active_representation_id;
       }
       // Copy only display scalars, never paths or complete session registries.
       renderedOptions.backgroundTop = options.backgroundTop;
@@ -547,4 +630,9 @@ void PostprocessorViewport::report_timings()
     // One console emission per completed/cancelled gesture, never per frame.
     PRINT_INFO("%s", text.str().c_str());
   }
+}
+
+void PostprocessorViewport::request_redraw()
+{
+  queue_render();
 }

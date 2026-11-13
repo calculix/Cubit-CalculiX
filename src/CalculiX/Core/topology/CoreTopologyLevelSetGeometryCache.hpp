@@ -27,10 +27,17 @@ public:
   /// Output cleared on entry/failure. Poll false aborts without publishing an entry.
   bool evaluate(int iteration_id, int element_id, const std::string& calculix_type, int cubit_type, const std::vector<int>& nodes, const std::vector<std::array<double, 3>>& coordinates, const std::vector<double>& values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll, CoreTopologyLevelSetQuadrature* quadrature = nullptr);
 
+  /// Calling-thread lookup; true/hit=false requests integration.
+  bool lookup(int iteration_id, int element_id, const std::string& calculix_type, int cubit_type, const std::vector<int>& nodes, const std::vector<std::array<double, 3>>& coordinates, const std::vector<double>& values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, bool& hit);
+
+  /// Publish an exclusively computed successful result on the calling thread.
+  bool store(int iteration_id, int element_id, const std::string& calculix_type, int cubit_type, const std::vector<int>& nodes, const std::vector<std::array<double, 3>>& coordinates, const std::vector<double>& values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, const TopologyLevelSetElementGeometry& geometry, double elapsed_ms);
+
   /// Cumulative calling-thread counters; snapshot differences give per-pass totals.
   std::size_t hit_count() const;
   std::size_t miss_count() const;
-  /// Wall time inside actual evaluate_element calls, excluding comparisons/copies.
+  /// Sum of actual evaluate_element durations, excluding comparisons/copies.
+  /// Parallel insertions contribute aggregate worker time, not pass wall time.
   double integration_time_ms() const;
 
 private:

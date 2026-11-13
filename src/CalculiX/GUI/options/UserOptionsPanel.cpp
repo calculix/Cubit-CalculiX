@@ -59,6 +59,16 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
   VBoxLayout->addLayout(HBoxLayout_1);
   VBoxLayout->addLayout(HBoxLayout_2);
   VBoxLayout->addLayout(HBoxLayout_3);
+  auto* topologyBudgetLayout = new QHBoxLayout();
+  topologyQuadratureBudgetLabel = new QLabel(this);
+  topologyQuadratureBudgetLabel->setFixedWidth(labelWidth);
+  topologyQuadratureBudget = new QLineEdit(this);
+  topologyQuadratureBudget->setObjectName("CalculiX.Options.TopologyQuadratureCacheMiB");
+  topologyQuadratureBudget->setValidator(new QIntValidator(1, (std::numeric_limits<int>::max)(), topologyQuadratureBudget));
+  topologyQuadratureBudget->setToolTip(tr("Maximum retained reference quadrature data in MiB, shared by all topology integration workers. Allocated as rules are needed; thread stacks, mesh data and scratch are additional. Changes apply to the next integration pass."));
+  topologyBudgetLayout->addWidget(topologyQuadratureBudgetLabel);
+  topologyBudgetLayout->addWidget(topologyQuadratureBudget);
+  VBoxLayout->addLayout(topologyBudgetLayout);
   VBoxLayout->addLayout(HBoxLayout_6);
   VBoxLayout->addLayout(HBoxLayout_7);
   VBoxLayout->addLayout(HBoxLayout_8);
@@ -83,11 +93,23 @@ UserOptionsPanel::UserOptionsPanel(QWidget *parent) :
     lineEdit_1->setText(QString::fromStdString(std::get<std::string>(defaults.at("paths/solver"))));
     lineEdit_2->setText(QString::number(std::get<int>(defaults.at("execution/solver_threads"))));
     lineEdit_3->setText(QString::number(std::get<int>(defaults.at("execution/converter_threads"))));
+    topologyQuadratureBudget->setText(QString::number(std::get<int>(defaults.at("topology/quadrature_cache_mib"))));
     lineEdit_6->setText(QString::fromStdString(std::get<std::string>(defaults.at("paths/icons"))));
     lineEdit_7->setText(QString::fromStdString(std::get<std::string>(defaults.at("paths/python_interface"))));
     checkBox_8->setChecked(std::get<bool>(defaults.at("results/save_loaded_results")));
     lineEdit_9->setText(QString::fromStdString(std::get<std::string>(defaults.at("paths/material_library"))));
     DrawingOptions drawing;
+    drawing.labelsEnabled = std::get<bool>(defaults.at("drawing/labels_enabled"));
+    drawing.labelsLoads = std::get<bool>(defaults.at("drawing/labels_loads"));
+    drawing.labelsBcs = std::get<bool>(defaults.at("drawing/labels_bcs"));
+    drawing.labelsSelectedOnly = std::get<bool>(defaults.at("drawing/labels_selected_only"));
+    drawing.labelsIds = std::get<bool>(defaults.at("drawing/labels_ids"));
+    drawing.labelsNames = std::get<bool>(defaults.at("drawing/labels_names"));
+    drawing.labelsValues = std::get<bool>(defaults.at("drawing/labels_values"));
+    drawing.labelsAmplitudes = std::get<bool>(defaults.at("drawing/labels_amplitudes"));
+    drawing.labelsLeaders = std::get<bool>(defaults.at("drawing/labels_leaders"));
+    drawing.labelsOffset = std::get<double>(defaults.at("drawing/labels_offset"));
+    drawing.labelsColor = std::get<std::string>(defaults.at("drawing/labels_color"));
     drawing.sizeFactor = std::get<double>(defaults.at("drawing/size_factor"));
     drawing.overlayVisible = std::get<bool>(defaults.at("drawing/overlay_visible"));
     drawing.boundaryConditions = std::get<bool>(defaults.at("drawing/boundary_conditions"));
@@ -129,6 +151,7 @@ void UserOptionsPanel::refresh_settings()
   label_1->setText(options.mPathSolverName);
   label_2->setText(options.mSolverThreadsName);
   label_3->setText(options.mConverterThreadsName);
+  topologyQuadratureBudgetLabel->setText(options.mTopologyQuadratureCacheMiBName);
   label_6->setText(options.mPathIconsName);
   label_7->setText(options.mPathPythonInterfaceName);
   label_8->setText(options.mSaveLoadedResultsName);
@@ -137,6 +160,7 @@ void UserOptionsPanel::refresh_settings()
   lineEdit_1->setText(options.mPathSolver);
   lineEdit_2->setText(QString::number(options.mSolverThreads));
   lineEdit_3->setText(QString::number(options.mConverterThreads));
+  topologyQuadratureBudget->setText(QString::number(options.mTopologyQuadratureCacheMiB));
   lineEdit_6->setText(options.mPathIcons);
   lineEdit_7->setText(options.mPathPythonInterface);
   checkBox_8->setChecked(options.mSaveLoadedResults);
@@ -158,11 +182,23 @@ QJsonObject UserOptionsPanel::option_values() const
   values["paths/solver"] = lineEdit_1->text();
   values["execution/solver_threads"] = lineEdit_2->text().toInt();
   values["execution/converter_threads"] = lineEdit_3->text().toInt();
+  values["topology/quadrature_cache_mib"] = topologyQuadratureBudget->text().toInt();
   values["paths/icons"] = lineEdit_6->text();
   values["paths/python_interface"] = lineEdit_7->text();
   values["results/save_loaded_results"] = checkBox_8->isChecked();
   values["paths/material_library"] = lineEdit_9->text();
   const auto drawing = drawingOptions->options();
+  values["drawing/labels_enabled"] = drawing.labelsEnabled;
+  values["drawing/labels_loads"] = drawing.labelsLoads;
+  values["drawing/labels_bcs"] = drawing.labelsBcs;
+  values["drawing/labels_selected_only"] = drawing.labelsSelectedOnly;
+  values["drawing/labels_ids"] = drawing.labelsIds;
+  values["drawing/labels_names"] = drawing.labelsNames;
+  values["drawing/labels_values"] = drawing.labelsValues;
+  values["drawing/labels_amplitudes"] = drawing.labelsAmplitudes;
+  values["drawing/labels_leaders"] = drawing.labelsLeaders;
+  values["drawing/labels_offset"] = drawing.labelsOffset;
+  values["drawing/labels_color"] = QString::fromStdString(drawing.labelsColor);
   values["drawing/size_factor"] = drawing.sizeFactor;
   values["drawing/overlay_visible"] = drawing.overlayVisible;
   values["drawing/boundary_conditions"] = drawing.boundaryConditions;
@@ -184,6 +220,13 @@ bool UserOptionsPanel::save_settings(std::string& error)
   if (!validSolver || !validConverter || solverThreads < 1 || converterThreads < 1)
   {
     error = "Thread counts must be positive integers.";
+    return false;
+  }
+  bool validBudget = false;
+  const int budgetMiB = topologyQuadratureBudget->text().toInt(&validBudget);
+  if (!validBudget || budgetMiB < 1)
+  {
+    error = "Topology quadrature cache size must be a positive integer in MiB.";
     return false;
   }
   const auto edited = option_values();

@@ -8,6 +8,7 @@ struct ResolvedDrawScope
 {
   std::vector<DrawEntityKey> entities;
   std::map<DrawEntityKey, DrawingGeometry> geometry;
+  std::map<DrawEntityKey, DrawLabelData> labels;
 };
 
 class CoreDrawScope

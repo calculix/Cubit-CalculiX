@@ -19,6 +19,8 @@ public:
    * expanded connectivity of preserved elements, with coefficients exactly +1.
    * Initial designs require a resolved free interface. Cubit volumes, not
    * geometric normalization volumes, define the constraint. No model store changes.
+   * Mesh/cache operations and ordered assembly stay on the calling thread;
+   * independent integrations use the configured Converter Threads Boost pool.
    */
   static bool build_geometry(TopologyLevelSetDesign& design, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, CoreTopologyLevelSetGeometryCache* cache = nullptr);
 
@@ -41,6 +43,8 @@ public:
    * bin assignment or input text rounding. Fixed-node derivatives are zero.
    * The caller verifies physical job completion and unchanged mesh before use.
    * No stored evaluation, material or job is changed by this helper.
+   * Element integration is parallel; nodal accumulation retains ascending
+   * element order. GUI progress/interrupt polling remains on the calling thread.
    */
   static bool evaluate_compliance(const TopologyLevelSetDesign& design, const std::map<int, bool>& preserved, const std::map<int, double>& element_volumes, const std::map<int, double>& element_energies, const std::map<int, double>& applied_factors, TopologyLevelSetEvaluation& evaluation, CoreTopologyLevelSetGeometryCache* cache = nullptr);
 

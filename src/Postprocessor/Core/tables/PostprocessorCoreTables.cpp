@@ -58,18 +58,8 @@ namespace Postprocessor
         return false;
       }
       reference.key = matches.front().first;
-      // A table-only source may first publish its table after an empty frame.
-      if (!field && !result_table_data(data,reference).table)
-      {
-        for (std::size_t index = 0; index < data->increments.size(); ++index)
-        {
-          reference.frame = index;
-          if (result_table_data(data,reference).table)
-          {
-            break;
-          }
-        }
-      }
+      // The reference frame marks active rows; the adapter includes the full
+      // history even when this particular frame has no matching records.
       const auto table = result_table_data(data,reference);
       if (table.rows > static_cast<std::size_t>(std::numeric_limits<int>::max()))
       {
@@ -78,6 +68,7 @@ namespace Postprocessor
       }
       auto staged = state;
       staged.views.at(view_id).table = reference;
+      staged.views.at(view_id).plot_active = false;
       staged.active_source_id = source_id;
       staged.active_representation_id.clear();
       for (auto& item : staged.representations)
@@ -120,6 +111,16 @@ namespace Postprocessor
     {
       return {};
     }
-    return result_table_data(result_data(view->second.table->source_id),*view->second.table);
+    auto table = result_table_data(result_data(view->second.table->source_id),*view->second.table);
+    // A legacy saved view may now exceed the limit when all frames are combined.
+    // Show an unavailable status rather than silently truncating the history.
+    if (table.rows > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+    {
+      table.parts.clear();
+      table.table.reset();
+      table.rows = 0;
+      table.status = "Combined table history exceeds the current table view row limit";
+    }
+    return table;
   }
 }

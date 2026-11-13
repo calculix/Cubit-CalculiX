@@ -1,6 +1,8 @@
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/jobs/CoreJobsPersistence.hpp"
 #include "Core/jobs/CoreJobs.hpp"
+#include "Core/jobs/CoreJobRunPersistence.hpp"
+#include <set>
 #include "HDF5Tool.hpp"
 #include "CubitMessage.hpp"
 #include "PersistenceTable.hpp"
@@ -118,7 +120,31 @@ bool CoreJobsPersistence::read(HDF5Tool& file, CoreJobs& jobs)
         return false;
       }
     }
+    std::map<int, std::shared_ptr<const CalculiXJobRunRecord>> saved_runs;
+    std::string runError;
+    if (!CoreJobRunPersistence::read(file, saved_runs, runError))
+    {
+      PRINT_ERROR("Cannot read job run archive: %s\n", runError.c_str());
+      return false;
+    }
+    std::set<int> ids;
+    for (const auto& row : saved_jobs_data)
+    {
+      ids.insert(std::stoi(row[0]));
+    }
+    for (const auto& run : saved_runs)
+    {
+      if (ids.count(run.first) == 0)
+      {
+        PRINT_ERROR("Archived launch refers to a missing job.\n");
+        return false;
+      }
+    }
     jobs.jobs_data.swap(saved_jobs_data);
+    jobs.runRecords.swap(saved_runs);
+    jobs.preparedRuns.clear();
+    jobs.preparedRunErrors.clear();
+    jobs.unsupportedPreparedRuns.clear();
     jobs.clear_monitor_executions();
     jobs.clear_job_progress();
     jobs.output_console.swap(saved_output_console);
@@ -221,6 +247,12 @@ bool CoreJobsPersistence::write(HDF5Tool& file, const CoreJobs& jobs)
         PRINT_ERROR("Cannot save CalculiX job sta: %s\n", file.last_error().c_str());
         return false;
       }
+    }
+    std::string runError;
+    if (!CoreJobRunPersistence::write(file, jobs.runRecords, runError))
+    {
+      PRINT_ERROR("Cannot save job run archive: %s\n", runError.c_str());
+      return false;
     }
     return true;
   }

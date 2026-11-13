@@ -1,4 +1,5 @@
 #include "CalculiXReportModelSnapshot.hpp"
+#include "CalculiXReportImageSettings.hpp"
 #include "CalculiXReportTemplateProvider.hpp"
 #include "Framework/Reporting/ReportDocument.hpp"
 #include "Framework/Reporting/ReportTemplate.hpp"
@@ -702,8 +703,10 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
 
   groups["ccx.model.sets"].tables.push_back(listing("Node sets", mesh.get_nodeset_tree_data()));
   groups["ccx.model.sets"].tables.push_back(listing("Side sets", mesh.get_sideset_tree_data()));
+  int stepOrdinal = 0;
   for (int id : steps.get_steps_ids())
   {
+    ++stepOrdinal;
     StepsSettings settings;
     if (!steps.get_step_settings(id, settings, error))
     {
@@ -711,7 +714,7 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     }
     ReportSection step;
     step.id = "ccx.steps." + std::to_string(id);
-    step.title = "Step " + std::to_string(id) + " - " + settings.name;
+    step.title = "Analysis step " + std::to_string(stepOrdinal) + " (ID " + std::to_string(id) + "): " + settings.name;
     ReportTable parameters;
     parameters.title = "Procedure and parameters";
     parameters.columns = {"Property", "Value"};
@@ -778,21 +781,13 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
   };
   std::set<int> selected;
   const auto selection = request.overrides.values.find("steps");
-  if (selection != request.overrides.values.end() && selection->second != "all")
+  std::vector<int> selectedIds;
+  if (!CalculiXReportImageSettings::select_steps(steps.get_steps_ids(),
+        selection == request.overrides.values.end() ? "all" : selection->second, selectedIds, error))
   {
-    for (const auto& value : QString::fromStdString(selection->second).split(','))
-    {
-      selected.insert(value.toInt());
-    }
-    for (int id : selected)
-    {
-      if (!steps.check_step_exists(id))
-      {
-        error = "Selected model step does not exist: " + std::to_string(id);
-        return false;
-      }
-    }
+    return false;
   }
+  selected.insert(selectedIds.begin(), selectedIds.end());
   auto& stepSections = groups["ccx.steps"].children;
   stepSections.erase(std::remove_if(stepSections.begin(), stepSections.end(), [&](ReportSection& step)
   {

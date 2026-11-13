@@ -40,6 +40,15 @@ CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
     submit(enabled ? "ccx display picking on" : "ccx display picking off");
   });
   addSeparator();
+  labelVisibility = addAction(resources.getIcon2("CCXDrawingLabels"), tr("Labels"));
+  labelVisibility->setObjectName("CalculiX.DrawingLabels");
+  labelVisibility->setCheckable(true);
+  labelVisibility->setToolTip(tr("Show or hide load and boundary-condition labels without changing symbols"));
+  connect(labelVisibility, &QAction::triggered, this, [this](bool visible)
+  {
+    submit(visible ? "ccx display labels on" : "ccx display labels off");
+  });
+  addSeparator();
   scope = new QComboBox(this);
   scope->setObjectName("CalculiX.DrawingScope");
   scope->setMinimumWidth(90);
@@ -147,6 +156,8 @@ void CalculiXDrawingToolbar::refreshSteps()
 void CalculiXDrawingToolbar::synchronize(const CalculiXDrawState& state)
 {
   CalculiXGuiResourcesInterface resources;
+  const QSignalBlocker labelBlocker(labelVisibility);
+  labelVisibility->setChecked(state.labels.enabled);
   const bool allOn = allGroupsEnabled(state);
   const QSignalBlocker drawAllBlocker(drawAll);
   drawAll->setChecked(allOn);

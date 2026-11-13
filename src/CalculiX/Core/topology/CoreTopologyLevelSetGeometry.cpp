@@ -2,6 +2,7 @@
 #include "CoreTopologyLevelSetQuadrature.hpp"
 #include "CoreTopologyLevelSet.hpp"
 #include "ElementInterpolation.hpp"
+#include "ElementPhysicalMapping.hpp"
 #include "CubitMessage.hpp"
 #include "CubitInterface.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
@@ -12,6 +13,19 @@
 
 namespace
 {
+bool report_error(const std::string& message, std::string* error)
+{
+  if (error)
+  {
+    *error = message;
+  }
+  else
+  {
+    PRINT_ERROR("%s\n", message.c_str());
+  }
+  return false;
+}
+
 struct Integral
 {
   double volume = 0.0;
@@ -40,12 +54,12 @@ void heaviside(double phi, double width, double& value, double& derivative)
   }
 }
 
-bool integrate(const std::string& type, int cubit_type, const std::vector<ElementInterpolation::Coordinates>& coordinates, const std::vector<double>& phi, double width, bool preserved, int subdivisions, Integral& integral, const std::function<bool()>& poll, CoreTopologyLevelSetQuadrature* quadrature)
+bool integrate(const std::string& type, int cubit_type, const ElementPhysicalMapping& physical_mapping, const std::vector<double>& phi, double width, bool preserved, int subdivisions, Integral& integral, const std::function<bool()>& poll, CoreTopologyLevelSetQuadrature* quadrature, std::string* error)
 {
   integral = {};
   integral.derivatives.assign(phi.size(), 0.0);
   const CoreTopologyLevelSetQuadrature::Rule* rule = nullptr;
-  if (quadrature && !quadrature->acquire(type, cubit_type, subdivisions, poll, rule))
+  if (quadrature && !quadrature->acquire(type, cubit_type, subdivisions, poll, rule, error))
   {
     return false;
   }
@@ -79,7 +93,7 @@ bool integrate(const std::string& type, int cubit_type, const std::vector<Elemen
               if (rule)
               {
                 const auto& sample = rule->points[sample_index++];
-                if (!ElementInterpolation::evaluate_physical_from_reference(type, cubit_type, coordinates, sample.values, sample.gradients, shape, determinant))
+                if (!physical_mapping.map_reference(sample.values, sample.gradients, shape, determinant, error))
                 {
                   return false;
                 }
@@ -106,7 +120,7 @@ bool integrate(const std::string& type, int cubit_type, const std::vector<Elemen
                 {
                   point = {{2.0 * u - 1.0, 2.0 * v - 1.0, 2.0 * w - 1.0}};
                 }
-                if (!ElementInterpolation::evaluate_physical(type, cubit_type, coordinates, point, shape, determinant))
+                if (!physical_mapping.evaluate_at(point, shape, determinant, error))
                 {
                   return false;
                 }
@@ -115,8 +129,7 @@ bool integrate(const std::string& type, int cubit_type, const std::vector<Elemen
               const double weight = reference_weight * determinant;
               if (!std::isfinite(weight) || weight <= 0.0)
               {
-                PRINT_ERROR("Invalid level-set geometry integration weight.\n");
-                return false;
+                return report_error("Invalid level-set geometry integration weight.", error);
               }
               double field = 0.0;
               for (std::size_t node = 0; node < phi.size(); ++node)
@@ -125,8 +138,7 @@ bool integrate(const std::string& type, int cubit_type, const std::vector<Elemen
               }
               if (!std::isfinite(field))
               {
-                PRINT_ERROR("Non-finite interpolated level-set field.\n");
-                return false;
+                return report_error("Non-finite interpolated level-set field.", error);
               }
               double value = 1.0;
               double derivative = 0.0;
@@ -148,8 +160,7 @@ bool integrate(const std::string& type, int cubit_type, const std::vector<Elemen
   }
   if (!std::isfinite(integral.volume) || integral.volume <= 0.0 || !std::isfinite(integral.solid))
   {
-    PRINT_ERROR("Invalid integrated level-set volume.\n");
-    return false;
+    return report_error("Invalid integrated level-set volume.", error);
   }
   integral.solid /= integral.volume;
   for (double& derivative : integral.derivatives)
@@ -157,14 +168,12 @@ bool integrate(const std::string& type, int cubit_type, const std::vector<Elemen
     derivative /= integral.volume;
     if (!std::isfinite(derivative))
     {
-      PRINT_ERROR("Non-finite level-set fraction derivative.\n");
-      return false;
+      return report_error("Non-finite level-set fraction derivative.", error);
     }
   }
   if (!std::isfinite(integral.solid) || integral.solid < 0.0 || integral.solid > 1.0)
   {
-    PRINT_ERROR("Invalid integrated level-set solid fraction.\n");
-    return false;
+    return report_error("Invalid integrated level-set solid fraction.", error);
   }
   return true;
 }
@@ -181,10 +190,10 @@ bool converged(const Integral& previous, const Integral& current, const Topology
 }
 }
 
-bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_type, int cubit_type, const std::vector<std::array<double, 3>>& node_coordinates, const std::vector<double>& node_values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll, CoreTopologyLevelSetQuadrature* quadrature)
+bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_type, int cubit_type, const std::vector<std::array<double, 3>>& node_coordinates, const std::vector<double>& node_values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll, CoreTopologyLevelSetQuadrature* quadrature, std::string* error)
 {
   geometry = {};
-  if (!CoreTopologyLevelSet::validate_settings(settings))
+  if (!CoreTopologyLevelSet::validate_settings(settings, error))
   {
     return false;
   }
@@ -192,19 +201,22 @@ bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_
       node_coordinates.size() != ElementInterpolation::node_count(calculix_type) || node_values.size() != node_coordinates.size() ||
       !std::isfinite(cubit_volume) || cubit_volume <= 0.0)
   {
-    PRINT_ERROR("Invalid level-set element geometry request.\n");
-    return false;
+    return report_error("Invalid level-set element geometry request.", error);
   }
   for (double value : node_values)
   {
     if (!std::isfinite(value) || value < -1.0 || value > 1.0)
     {
-      PRINT_ERROR("Level-set nodal values must be finite and in [-1,1].\n");
-      return false;
+      return report_error("Level-set nodal values must be finite and in [-1,1].", error);
     }
   }
+  ElementPhysicalMapping physical_mapping;
+  if (!physical_mapping.prepare(calculix_type, cubit_type, node_coordinates, error))
+  {
+    return false;
+  }
   Integral previous;
-  if (!integrate(calculix_type, cubit_type, node_coordinates, node_values, settings.interface_width, preserved, 1, previous, poll, quadrature))
+  if (!integrate(calculix_type, cubit_type, physical_mapping, node_values, settings.interface_width, preserved, 1, previous, poll, quadrature, error))
   {
     return false;
   }
@@ -213,7 +225,7 @@ bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_
   {
     subdivisions *= 2;
     Integral current;
-    if (!integrate(calculix_type, cubit_type, node_coordinates, node_values, settings.interface_width, preserved, subdivisions, current, poll, quadrature))
+    if (!integrate(calculix_type, cubit_type, physical_mapping, node_values, settings.interface_width, preserved, subdivisions, current, poll, quadrature, error))
     {
       return false;
     }
@@ -230,8 +242,7 @@ bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_
         const double volume_derivative = cubit_volume * derivative;
         if (!std::isfinite(volume_derivative))
         {
-          PRINT_ERROR("Non-finite level-set volume derivative.\n");
-          return false;
+          return report_error("Non-finite level-set volume derivative.", error);
         }
         candidate.volume_derivatives.push_back(volume_derivative);
       }
@@ -241,8 +252,7 @@ bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_
     }
     previous = std::move(current);
   }
-  PRINT_ERROR("Level-set element geometry integration did not converge within %d refinements.\n", settings.integration_max_refinements);
-  return false;
+  return report_error("Level-set element geometry integration did not converge within " + std::to_string(settings.integration_max_refinements) + " refinements.", error);
 }
 
 bool CoreTopologyLevelSetGeometry::query_element(int element_id, std::string& calculix_type, int& cubit_type, std::vector<int>& nodes, std::vector<std::array<double, 3>>& coordinates)

@@ -5,6 +5,8 @@
 #include "../persistence/PostprocessorProjectState.hpp"
 #include "../sources/SourceRuntime.hpp"
 #include "../selection/ResultProbe.hpp"
+#include "../plots/PlotData.hpp"
+#include "../capture/CaptureDefinition.hpp"
 #include "Framework/Results/ResultSourceReference.hpp"
 
 #include <cstdint>
@@ -34,6 +36,21 @@ namespace Postprocessor
     PostprocessorCore& operator=(const PostprocessorCore&) = delete;
 
     const PostprocessorSession& session() const noexcept;
+    bool capture_snapshot(const CaptureDefinition& request,CaptureSnapshot& output,std::string& error) const;
+    // Private rendering copies definitions and shares immutable result handles.
+    void install_capture_snapshot(const CaptureSnapshot& snapshot);
+    std::string plot_id_from_name(const std::string& name) const;
+    bool create_plot(const std::string& name, std::string& error);
+    bool add_plot_curve(const std::string& plot, const PlotCurveDefinition& curve, std::string& error);
+    bool change_plot(const std::string& plot, const std::string& action, const std::string& value, std::string& error);
+    bool change_plot_curve(const std::string& plot, const std::string& curve, const std::string& action, std::string& error);
+    bool set_plot_axes(const std::string& plot, const PlotAxes& axes, std::string& error);
+    bool plot_data(const std::string& plot, PlotData& output, std::string& error) const;
+    bool add_label(const std::string& view_id, const ResultAnnotation& requested, std::string& assigned_name, std::string& error);
+    bool change_label(const std::string& view_id, const std::string& name, const std::string& action,
+      const std::string& replacement, const std::array<double,2>& position, std::string& error);
+    bool set_labels(const std::string& view_id, bool extrema, bool visible, std::string& error);
+    std::vector<EvaluatedAnnotation> annotations(const std::string& view_id) const;
     bool set_pick_mode(const std::string& view_id, EntityKind kind, std::string& error);
     bool pick_entity(const std::string& view_id, const EntityReference& entity, std::string& error);
     bool clear_pick(const std::string& view_id, std::string& error);
@@ -67,7 +84,7 @@ namespace Postprocessor
       const Postprocessor::FieldSelection& selection,std::string& error,
       const std::set<std::size_t>& hidden = {}) const;
     bool set_coloring(const std::string& source_id, const std::string& view_id,
-      const ResultColoring& coloring, std::string& error);
+      const ResultColoring& coloring, std::string& error, bool activateResult = false);
     bool set_deformation(const std::string& source_id, const std::string& view_id,
       const ResultDeformation& deformation, std::string& error);
     std::vector<SimResults::Dataset> mesh_datasets(const std::string& source_id) const;

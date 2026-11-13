@@ -1,4 +1,6 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetPipeline.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetPipeline.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetMoves.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetMoves.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetQuadrature.hpp

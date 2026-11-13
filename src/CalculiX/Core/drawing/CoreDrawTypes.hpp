@@ -1,6 +1,7 @@
 #ifndef COREDRAWTYPES_HPP
 #define COREDRAWTYPES_HPP
 
+#include "DrawLabelSettings.hpp"
 #include <map>
 #include <string>
 #include <vector>
@@ -51,6 +52,7 @@ struct DrawGroupState
 
 struct CalculiXDrawState
 {
+  DrawLabelSettings labels;
   DrawScope scope;
   double sizeFactor = 1.0;
   bool overlayVisible = true;

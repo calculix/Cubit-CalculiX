@@ -1,4 +1,5 @@
 #include "CalculiXReportTemplateProvider.hpp"
+#include "CalculiXReportImageSettings.hpp"
 #include <utility>
 #include "Framework/Reporting/ReportTemplate.hpp"
 
@@ -15,7 +16,7 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
   ReportTemplate candidate;
   candidate.id = "calculix.standard";
   candidate.workspace_id = "calculix";
-  candidate.revision = 1;
+  candidate.revision = 2;
   const std::vector<std::pair<std::string, std::string>> categories =
   {
     {"ccx.model.overview", "Model overview"}, {"ccx.model.materials", "Materials"},
@@ -24,7 +25,7 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
     {"ccx.model.interactions", "Interactions and constraints"},
     {"ccx.model.initial_conditions", "Initial conditions"},
     {"ccx.steps", "Analysis steps"}, {"ccx.other", "Additional input definitions"},
-    {"post.results", "Postprocessor results"}, {"post.images", "Model and result images"}
+    {"post.results", "Postprocessor results"}, {"post.images", "Postprocessor result images"}
   };
   for (const auto& entry : categories)
   {
@@ -61,6 +62,7 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
   steps.default_value = "all";
   candidate.options.push_back(steps);
   candidate.defaults.values[steps.key] = steps.default_value;
+  CalculiXReportImageSettings::add_options(candidate);
   output = std::move(candidate);
   error.clear();
   return true;

@@ -1,4 +1,7 @@
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
+#include "AnnotationTests.hpp"
+#include "PlotTests.hpp"
+#include "CaptureTests.hpp"
 #include "Postprocessor/Commands/selection/PickCommandText.hpp"
 #include "Postprocessor/GUI/Viewport/PostprocessorScene.hpp"
 #include "Postprocessor/GUI/Viewport/CameraInteraction.hpp"
@@ -207,6 +210,9 @@ int main(int argc,char** argv)
   std::string error;
   check(app->open_job("fake",1,std::nullopt,error),"Cannot open probe fixture");
   check(app->color_field("Model","stress","SXX",false,0,error),"Cannot set probe field");
+  failures += annotation_cases(app);
+  failures += plot_cases(app);
+  failures += capture_cases(app);
   const auto source = app->session().active_source_id;
   const auto view = app->session().active_view_id;
   auto renderer = vtkSmartPointer<vtkOpenGLRenderer>::New();
@@ -229,8 +235,8 @@ int main(int argc,char** argv)
     app->session().views.at(view).selection.revision == hoverRevision,"Read-only hover probe changed selection");
   check(app->open_table("Model","stress",true,error),"Cannot open spatial field as table");
   const auto fieldRows = app->table_data();
-  check(fieldRows.rows == 4 && result_table_cell(fieldRows,0,1) == "9007199254740993" &&
-    result_table_cell(fieldRows,1,2) == "Unavailable","Spatial table lost original identity or validity mask");
+  check(fieldRows.rows == 4 && result_table_cell(fieldRows,0,5) == "9007199254740993" &&
+    result_table_cell(fieldRows,1,6) == "Unavailable","Spatial table lost original identity or validity mask");
   check(app->show_3d(error),"Cannot return from field table to 3D");
   check(scene.synchronize(*app,error),"Cannot highlight selected node");
   renderer->GetActors()->InitTraversal();

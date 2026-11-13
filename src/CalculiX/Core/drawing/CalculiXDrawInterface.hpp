@@ -3,6 +3,7 @@
 
 #include "CoreDrawTypes.hpp"
 class DrawingInterface;
+class CalculiXJobSetupScene;
 #include <string>
 #include <functional>
 #include <vector>
@@ -10,7 +11,9 @@ class DrawingInterface;
 class CalculiXDrawInterface
 {
 public:
+  bool freeze_setup_scenes(double symbolSize, std::vector<CalculiXJobSetupScene>& output, std::string& error);
   void bind_drawing(DrawingInterface* drawings) noexcept;
+  bool set_label_settings(const DrawLabelSettings& settings, std::string& error);
   bool draw_step(int stepId, const std::vector<DrawFeature>& features, double size, std::string& error, const std::vector<DrawEntityKey>& entities = {});
   bool restore_pending_drawing(std::string& error);
   bool apply_drawing_options(std::string& error);

@@ -558,3 +558,25 @@ dataset overrides, as documented under dataset visibility.
 Source removal uses the existing ``post close "name"`` and ``post close all``
 commands. GUI menus label these operations Remove; solver jobs and external files
 are retained.
+
+Result labels
+-------------
+
+Label creation, renaming, visibility, removal, dragging and extrema controls use
+``post label`` / ``post labels`` commands. See :doc:`annotations` for complete
+syntax, scope resolution and journal behavior. The toolbar and viewport context
+menu use these same handlers; drag previews use ``silent_cmd`` and release
+records one final position command.
+
+Plotting
+--------
+
+The post plot commands create/manage entity histories and numeric native-table
+curves. Pane switching, axis previews, final ranges and CSV export use the same
+handlers as GUI actions. See :doc:`plots` for syntax and numerical contracts.
+
+PNG captures
+------------
+
+See :doc:`capture` for ``post capture view``, ``post capture plot`` and
+``report image add postprocessor`` command options and snapshot guarantees.

@@ -1,3 +1,8 @@
+#include "CoreDrawScope.hpp"
+#include "CoreDrawEntityGeometry.hpp"
+#include "CalculiXDrawLabels.hpp"
+#include "Core/jobs/CalculiXJobSetupScene.hpp"
+#include "Core/steps/CalculiXStepsInterface.hpp"
 #include "CoreDraw.hpp"
 #include "CalculiXDrawInterface.hpp"
 #include <utility>
@@ -443,4 +448,80 @@ void CalculiXDrawInterface::bind_drawing(DrawingInterface* drawings) noexcept
   {
     ccx_core.draw->bindDrawing(drawings);
   }
+}
+
+bool CalculiXDrawInterface::set_label_settings(const DrawLabelSettings& settings, std::string& error)
+{
+  if (ccx_core.draw == nullptr)
+  {
+    error = "CalculiX drawing core is not initialized.";
+    return false;
+  }
+  return ccx_core.draw->setLabelSettings(settings, error);
+}
+
+bool CalculiXDrawInterface::freeze_setup_scenes(double symbolSize, std::vector<CalculiXJobSetupScene>& output, std::string& error)
+{
+  std::vector<CalculiXJobSetupScene> candidate;
+  CalculiXStepsInterface steps;
+  const auto ids = steps.get_steps_ids();
+  if (ids.size() > 256)
+  {
+    error = "Setup snapshots support at most 256 analysis steps.";
+    return false;
+  }
+  for (int id : ids)
+  {
+    CalculiXJobSetupScene scene;
+    scene.stepId = id;
+    scene.ordinal = static_cast<int>(candidate.size()) + 1;
+    StepsSettings settings;
+    if (!steps.get_step_settings(id, settings, error))
+    {
+      return false;
+    }
+    scene.name = settings.name;
+    ResolvedDrawScope resolved;
+    scene.available = CoreDrawScope::resolveStep(ccx_core, id, symbolSize, resolved, scene.unavailableReason);
+    if (scene.available)
+    {
+      scene.symbols = std::move(resolved.geometry);
+      scene.labels = std::move(resolved.labels);
+      for (const auto& entity : resolved.entities)
+      {
+        const auto group = drawing_group(entity.feature);
+        if (group != DrawGroup::Loads && group != DrawGroup::BoundaryConditions)
+        {
+          continue;
+        }
+        if (entity.feature == DrawFeature::Trajectory)
+        {
+          scene.available = false;
+          scene.unavailableReason = "Moving trajectory setup snapshots are not supported yet.";
+          break;
+        }
+        DrawingGeometry geometry;
+        DrawLabelData label;
+        if (!CoreDrawEntityGeometry::build(entity, symbolSize, geometry, scene.unavailableReason) ||
+            !CalculiXDrawLabels::read(entity, label, scene.unavailableReason))
+        {
+          scene.available = false;
+          break;
+        }
+        label.stepId = id;
+        label.symbolSize = symbolSize;
+        scene.symbols[entity] = std::move(geometry);
+        scene.labels[entity] = std::move(label);
+      }
+    }
+    if (!scene.available)
+    {
+      scene.symbols.clear();
+      scene.labels.clear();
+    }
+    candidate.push_back(std::move(scene));
+  }
+  output = std::move(candidate);
+  error.clear();
+  return true;
 }

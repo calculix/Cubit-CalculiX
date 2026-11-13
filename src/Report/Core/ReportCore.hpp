@@ -1,4 +1,5 @@
 #pragma once
+#include "Framework/Reporting/ReportImageRequest.hpp"
 #include "ReportSession.hpp"
 #include "Framework/Reporting/ReportSourceEntry.hpp"
 #include "Framework/Reporting/ReportTemplate.hpp"
@@ -24,6 +25,7 @@ public:
   bool update(std::string& error);
   bool configure(const std::string& key, const std::string& value, std::string& error);
   bool profile(const std::string& action, const std::string& name, std::vector<ReportProfile>& output, std::string& error);
+  bool add_image(const ReportImageRequest& request,const std::string& caption,std::string& error);
   bool note(const std::string& section, const std::string& text, std::string& error);
   void restore(ReportSession session);
   void reset();

@@ -1,4 +1,5 @@
 #include "CalculiXReportModelProvider.hpp"
+#include "CalculiX/Core/jobs/CalculiXJobRunRecord.hpp"
 #include "CalculiXReportModelSnapshot.hpp"
 #include "Framework/Reporting/ReportSourceEntry.hpp"
 #include <utility>
@@ -105,7 +106,22 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
     return CalculiXReportModelSnapshot().collect(request, source, output, error);
   }
   CalculiXReportInputReader reader;
-  if (!reader.read(source, error))
+  bool inputReady = false;
+  if (!source.solver_launch_id.empty())
+  {
+    std::shared_ptr<const CalculiXJobRunRecord> record;
+    if (!CalculiXJobsInterface().get_run_record(source.job_id, record, error) || record->launchId != source.solver_launch_id)
+    {
+      error = "The requested archived solver launch is no longer the job's latest launch.";
+      return false;
+    }
+    inputReady = reader.read_archive(source, record->input, error);
+  }
+  else
+  {
+    inputReady = reader.read(source, error);
+  }
+  if (!inputReady)
   {
     return false;
   }

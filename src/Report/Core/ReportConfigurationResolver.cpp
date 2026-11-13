@@ -64,6 +64,16 @@ bool ReportConfigurationResolver::resolve(const ReportTemplate& definition, cons
       const int digits = value.toInt(&ok);
       valid = valid && ok && digits >= 2 && digits <= 12;
     }
+    else if (found->kind == "integer")
+    {
+      bool ok = false;
+      const int number = value.toInt(&ok);
+      valid = valid && ok && found->minimum <= found->maximum && number >= found->minimum && number <= found->maximum;
+    }
+    else if (found->kind == "choice")
+    {
+      valid = valid && !found->choices.empty() && std::find(found->choices.begin(), found->choices.end(), entry.second) != found->choices.end();
+    }
     else if (found->kind == "page_size")
     {
       valid = valid && (value == "A4" || value == "Letter");
