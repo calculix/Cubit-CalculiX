@@ -57,8 +57,9 @@ namespace
       }
       const auto identity = std::string(global ? "global:" : "frame:")+std::to_string(name.size())+":"+name+
         std::to_string(type.size())+":"+type;
-      const auto key = identity+":"+std::to_string(++occurrences[identity]);
-      result.push_back({key,name,scope == "StepSummary" ? "Summaries" : global ? "Global tables" : "Frame tables",global});
+      const auto occurrence = ++occurrences[identity];
+      const auto key = identity+":"+std::to_string(occurrence);
+      result.push_back({key,name,scope == "StepSummary" ? "Summaries" : global ? "Global tables" : "Frame tables",global,type,occurrence});
     }
     return result;
   }

@@ -44,8 +44,7 @@ namespace Postprocessor
       auto staged = state;
       auto found = std::find_if(staged.representations.begin(),staged.representations.end(),[&](const auto& entry)
       {
-        return entry.second.input.owner == OutputOwner::Source && entry.second.input.object_id == source_id &&
-          entry.second.input.port == 0 && entry.second.view_id == view_id;
+        return display_matches_source(entry.second,source_id,view_id);
       });
       const bool created = found == staged.representations.end();
       if (created)
@@ -56,8 +55,7 @@ namespace Postprocessor
         }
         found = std::find_if(staged.representations.begin(),staged.representations.end(),[&](const auto& entry)
         {
-          return entry.second.input.owner == OutputOwner::Source && entry.second.input.object_id == source_id &&
-            entry.second.input.port == 0 && entry.second.view_id == view_id;
+          return display_matches_source(entry.second,source_id,view_id);
         });
       }
       auto& display = found->second;

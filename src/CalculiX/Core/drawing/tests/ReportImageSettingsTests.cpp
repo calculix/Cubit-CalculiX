@@ -26,6 +26,8 @@ int reportImageSettingsTests()
   request.context = "step:7";
   request.settings.values = {{"ccx.images.camera", "front"}, {"ccx.images.labels", "false"}};
   CalculiXCaptureRequest capture;
+  check(capture.image.view == DrawingCaptureView::Workspace && CalculiXReportImageSettings().camera == "workspace",
+    "Capture and report defaults use the workspace camera");
   std::string id, caption;
   check(CalculiXReportImageSettings::decode_capture(request, capture, id, caption, error) &&
       capture.scope.stepId == 7 && capture.image.view == DrawingCaptureView::Front && !capture.labels.enabled &&

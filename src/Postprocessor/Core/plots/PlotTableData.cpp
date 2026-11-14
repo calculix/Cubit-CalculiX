@@ -27,7 +27,7 @@ namespace Postprocessor
     output.x_title.clear();
     output.y_title.clear();
     output.time_axis = output.frame_axis = false;
-    const auto table = result_table_data(data,TableReference{reference.source_id,reference.key,false,0});
+    const auto table = result_table_data(data,TableReference{reference.source_id,reference.key,reference.field,0});
     if (!table.status.empty())
     {
       output.status = table.status;
@@ -78,12 +78,14 @@ namespace Postprocessor
     std::optional<std::string> identityValue;
     for (const auto& name : table.columns)
     {
-      identity = identity || name == "NodeId" || name == "ElementId" || name == "IntegrationPointId" || name == "SlaveElementId";
+      identity = identity || name == "NodeId" || name == "ElementId" || name == "IntegrationPointId" || name == "SlaveElementId" ||
+        (reference.field && (name == "Node ID" || name == "Element ID" || name == "IP"));
     }
     for (std::size_t index = 0; index < table.columns.size(); ++index)
     {
       const auto& name = table.columns[index];
-      if (name == "NodeId" || name == "ElementId" || name == "IntegrationPointId" || name == "SlaveElementId" || name == "SlaveFace")
+      if (name == "NodeId" || name == "ElementId" || name == "IntegrationPointId" || name == "SlaveElementId" || name == "SlaveFace" ||
+          (reference.field && (name == "Dataset" || name == "Node ID" || name == "Element ID" || name == "IP")))
       {
         identityColumns.push_back(index);
       }

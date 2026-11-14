@@ -1,3 +1,4 @@
+#include "Postprocessor/Commands/FieldCommandOptions.hpp"
 #include "PostDeformCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -14,7 +15,7 @@ std::vector<std::string> PostDeformCommand::get_syntax()
   const std::string source = " [source <string:type='quoted',number='1',label='source_name'>]";
   return {"post deform {on|off}"+source,
     "post deform field auto"+source,
-    "post deform field <string:type='quoted',number='1',label='field_name'> [dataset <value:label='dataset_id'>]"+source,
+    "post deform field <string:type='quoted',number='1',label='field_name'>"+Postprocessor::field_qualifier_syntax()+" [dataset <value:label='dataset_id'>]"+source,
     "post deform scale <value:label='scale'>"+source,
     "post deform overlay {on|off}"+source};
 }
@@ -22,7 +23,7 @@ std::vector<std::string> PostDeformCommand::get_syntax_help()
 {
   return {"post deform {on|off|scale VALUE|overlay on/off} [source \"name\"]",
     "post deform field auto [source \"name\"]",
-    "post deform field \"name\" [dataset N] [source \"name\"]"};
+    "post deform field \"name\" [origin \"FRD\"] [association node|integrationpoint] [dataset N] [source \"name\"]"};
 }
 std::vector<std::string> PostDeformCommand::get_help()
 {
@@ -67,7 +68,13 @@ bool PostDeformCommand::execute(CubitCommandData& data)
         }
         dataset = static_cast<std::size_t>(number);
       }
-      if (!data.get_string("field_name",field) || !active->deform_field(name,field,dataset,error))
+      Postprocessor::FieldQualifiers qualifiers;
+      if (!Postprocessor::read_field_qualifiers(data,qualifiers,error))
+      {
+        PRINT_ERROR("Cannot select displacement field: %s\n",error.c_str());
+        return false;
+      }
+      if (!data.get_string("field_name",field) || !active->deform_field(name,field,dataset,error,qualifiers))
       {
         PRINT_ERROR("Cannot select displacement field: %s\n",error.c_str());
         return false;

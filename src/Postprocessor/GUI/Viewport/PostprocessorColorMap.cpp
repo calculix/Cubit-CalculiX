@@ -135,7 +135,18 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
           input->GetPointData()->AddArray(scalar);
           if (surface.node_data)
           {
-            surface.node_data->GetPointData()->AddArray(scalar);
+            std::vector<double> nodeValues;
+            std::string nodeError;
+            if (color_values(surface.node_data,*partField,selected,nodeValues,nodeError))
+            {
+              auto nodeScalar = vtkSmartPointer<vtkDoubleArray>::New();
+              nodeScalar->SetName(scalarName);
+              for (double value : nodeValues)
+              {
+                nodeScalar->InsertNextValue(value);
+              }
+              surface.node_data->GetPointData()->AddArray(nodeScalar);
+            }
           }
         }
         auto filter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
@@ -307,7 +318,8 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
     legend->SetLookupTable(table);
     legend->SetMaximumNumberOfColors(static_cast<int>(count));
     const bool rangeAvailable = actualRange.has_value() && (c.range_mode != ColorRangeMode::AllFrames || rangeAcrossFrames.has_value());
-    const auto caption = title + (rangeAvailable ? "" : " (unavailable)");
+    const auto caption = title + (rangeAvailable ? "" : " (unavailable)") +
+      (display.input.owner == OutputOwner::Feature && c.range_mode == ColorRangeMode::AllFrames ? "\nSource all frames" : "");
     legend->SetTitle(caption.c_str());
     legend->SetDrawColorBar(rangeAvailable);
     legend->SetDrawTickLabels(rangeAvailable);

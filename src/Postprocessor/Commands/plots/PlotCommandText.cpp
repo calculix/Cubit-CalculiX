@@ -1,4 +1,5 @@
 #include "PlotCommandText.hpp"
+#include "Postprocessor/Commands/FieldCommandText.hpp"
 #include <utility>
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/Commands/selection/PickCommandText.hpp"
@@ -38,8 +39,12 @@ namespace Postprocessor
     return QStringLiteral("post plot axes range ")+QString::fromStdString(numbers.str())+" plot "+plot_quote(plot);
   }
   std::vector<QString> plot_entity_commands(const PostprocessorApplicationInterface& application,
-    const EntityReference& entity,PlotReduction reduction)
+    const EntityReference& entity,PlotReduction reduction,std::string* issue)
   {
+    if (issue)
+    {
+      issue->clear();
+    }
     const auto& state = application.session();
     std::string pick, error;
     if (!pick_command_text(application,entity,pick,error))
@@ -49,8 +54,7 @@ namespace Postprocessor
     std::optional<FieldSelection> field;
     for (const auto& item : state.representations)
     {
-      if (item.second.view_id == state.active_view_id && item.second.input.owner == OutputOwner::Source &&
-          item.second.input.object_id == entity.source_id)
+      if (application.display_matches_source(item.second,entity.source_id,state.active_view_id))
       {
         field = item.second.coloring.field;
         break;
@@ -61,7 +65,17 @@ namespace Postprocessor
     {
       return {};
     }
-    const auto key = plot_quote(field->group_key.empty() ? field->array_name : field->group_key);
+    field->dataset_id = entity.dataset_id;
+    ResultFieldSelector selector;
+    if (!application.readable_field(entity.source_id,*field,selector,error))
+    {
+      if (issue)
+      {
+        *issue = error;
+      }
+      return {};
+    }
+    const auto key = field_command_text(selector);
     const auto component = field->magnitude ? QStringLiteral("magnitude") : plot_quote(field->component);
     if (key.isEmpty() || component.isEmpty())
     {
@@ -96,7 +110,7 @@ namespace Postprocessor
       ++number;
     }
     QString command = QStringLiteral("post plot add ")+QString::fromStdString(pick.substr(10))+
-      " field "+key+" component "+component;
+      " "+key+" component "+component;
     if (reduction != PlotReduction::None)
     {
       command += reduction == PlotReduction::Minimum ? " reduction minimum" : " reduction maximum";

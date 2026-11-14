@@ -4,7 +4,8 @@
 namespace Postprocessor
 {
   bool PostprocessorCore::open_table(const std::string& source_id, const std::string& view_id,
-    const std::string& name, bool field, std::string& error)
+    const std::string& name, bool field, std::string& error,
+    const TableQualifiers& tableQualifiers,const FieldQualifiers& fieldQualifiers)
   {
     error.clear();
     const auto data = result_data(source_id);
@@ -27,37 +28,35 @@ namespace Postprocessor
           break;
         }
       }
-      std::vector<std::pair<std::string,std::string>> matches;
       if (field)
       {
-        for (const auto& group : result_field_groups(*data,std::nullopt))
+        ResultFieldGroup selected;
+        if (tableQualifiers.global || tableQualifiers.type || tableQualifiers.entry)
         {
-          if (group.field.association != SimResults::Association::Table && (group.key == name || group.field.name == name))
-          {
-            matches.emplace_back(group.key,group.field.name);
-          }
+          error = "Scope/type/entry apply to native tables, not spatial field tables.";
+          return false;
         }
+        if (!resolve_result_field(result_field_groups(*data,std::nullopt),{name,fieldQualifiers},
+            std::nullopt,{},false,false,selected,error))
+        {
+          return false;
+        }
+        reference.key = selected.key;
       }
       else
       {
-        for (const auto& table : result_tables(*data,std::nullopt))
+        ResultTableDescriptor selected;
+        if (fieldQualifiers.origin || fieldQualifiers.association)
         {
-          if (table.key == name || table.name == name)
-          {
-            matches.emplace_back(table.key,table.name);
-          }
+          error = "Origin/association apply to spatial field tables.";
+          return false;
         }
-      }
-      if (matches.size() != 1)
-      {
-        error = matches.empty() ? "No matching table/result field is available." : "Ambiguous table/result field. Use one of these exact keys:";
-        for (const auto& match : matches)
+        if (!resolve_result_table(result_tables(*data,std::nullopt),{name,tableQualifiers},selected,error))
         {
-          error += "\n"+match.first;
+          return false;
         }
-        return false;
+        reference.key = selected.key;
       }
-      reference.key = matches.front().first;
       // The reference frame marks active rows; the adapter includes the full
       // history even when this particular frame has no matching records.
       const auto table = result_table_data(data,reference);

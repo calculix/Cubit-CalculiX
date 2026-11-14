@@ -2,6 +2,7 @@
 #define CUBITSIM_DRAWINGTYPES_HPP
 
 #include "DrawingGeometry.hpp"
+#include "DrawingCaptureCamera.hpp"
 #include <functional>
 #include <map>
 #include <string>
@@ -51,6 +52,9 @@ struct DrawingStyle
 
 struct DrawingFrame
 {
+  DrawingCaptureCamera camera;
+  // Capture-only style for the model layer; overlays retain their own colors.
+  bool shadedModelMesh = false;
   std::map<std::string, DrawingLayerState> layers;
   std::vector<DrawingEntity> entities;
   DrawingSelection selection;

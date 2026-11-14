@@ -24,6 +24,8 @@ bool CoreDrawSnapshotCapture::buildFrame(const CalculiXJobSetupSnapshot& snapsho
     return false;
   }
   DrawingFrame frame;
+  frame.shadedModelMesh = true;
+  frame.camera = snapshot.camera;
   frame.style = {"black", "black"};
   frame.layers["model"] = {true, false};
   frame.layers[drawing_group_name(DrawGroup::Loads)] = {true, false};

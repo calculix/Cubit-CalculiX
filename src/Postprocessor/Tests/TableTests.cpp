@@ -1,3 +1,6 @@
+#include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
+#include "Postprocessor/Commands/tables/TableCommandText.hpp"
+#include "Framework/Interfaces/ResultSourceRegistryInterface.hpp"
 #include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "Postprocessor/Core/sources/VtkFileSourceProvider.hpp"
 #include "Postprocessor/GUI/Tables/PostprocessorTableModel.hpp"
@@ -75,6 +78,23 @@ namespace
       return open(request,output,error);
     }
   };
+  class Registry : public ResultSourceRegistryInterface
+  {
+  public:
+    explicit Registry(Provider& value) : provider(value)
+    {
+    }
+    bool resolve_result_provider(const std::string&,ResolvedResultSourceProvider& output,std::string& error) const override
+    {
+      output.application_id = "test";
+      output.provider = &provider;
+      error.clear();
+      return true;
+    }
+  private:
+    Provider& provider;
+  };
+
 }
 int main(int argc, char** argv)
 {
@@ -91,6 +111,19 @@ int main(int argc, char** argv)
   const auto source = core.session().active_source_id;
   check(core.session().representations.empty(),"Table-only source fabricated a mesh representation");
   check(core.open_table(source,"view1","Forces",false,error),"Cannot open native DAT table");
+  const auto catalogue = result_tables(*provider.data,std::nullopt);
+  ResultTableSelector readable;
+  const auto forcesKey = core.session().views.at("view1").table->key;
+  check(forcesKey == "frame:6:Forces0::1", "Table metadata extension changed a legacy key");
+  check(readable_result_table(catalogue,forcesKey,readable,error) && readable.name == "Forces" &&
+      !readable.qualifiers.entry && !readable.qualifiers.global,"Frame catalogue did not produce a unique readable family name");
+  Registry registry(provider);
+  auto api = std::make_shared<PostprocessorApplicationInterface>(registry);
+  check(api->open_job("test",1,std::nullopt,error),"Cannot prepare native table command fixture");
+  const TableReference native{api->session().active_source_id,forcesKey,false,0};
+  const auto journal = table_open_command_text(*api,native,error);
+  check(journal == "post table open \"Forces\" source \"Tables\"" && !journal.contains(QString::fromStdString(forcesKey)),
+    "Native table GUI journal still contains an encoded key");
   auto data = core.table_data("view1");
   check(data.rows == 2 && result_table_cell(data,0,4) == "9007199254740993", "History table lost rows or exact 64-bit identifier");
   check(result_table_cell(data,0,6) == "load_target", "Table string column changed");

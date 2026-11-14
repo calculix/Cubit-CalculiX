@@ -1,5 +1,6 @@
 #include "Postprocessor/Core/representations/ResultReferenceMesh.hpp"
 #include "PostprocessorScene.hpp"
+#include "Postprocessor/GUI/Filters/PostprocessorPlaneOverlay.hpp"
 #include "Postprocessor/GUI/Selection/PostprocessorPicking.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/Core/representations/DisplayDefaults.hpp"
@@ -37,9 +38,13 @@ namespace
   }
 }
 
-PostprocessorScene::PostprocessorScene(vtkRenderer* renderer, const std::string& view_id)
+PostprocessorScene::PostprocessorScene(vtkRenderer* renderer, const std::string& view_id,bool showPlane)
   : renderer(renderer), viewId(view_id)
 {
+  if (showPlane)
+  {
+    planeOverlay = std::make_unique<PostprocessorPlaneOverlay>(renderer);
+  }
 }
 
 PostprocessorScene::~PostprocessorScene()
@@ -70,7 +75,7 @@ const std::string& PostprocessorScene::warning() const noexcept
 
 std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::build(
   const std::shared_ptr<const SimResults::VtkResultsData>& data,
-  const Postprocessor::Representation& display, std::string& error)
+  const Postprocessor::Representation& display, std::string& error,const Postprocessor::EvaluatedOutput* evaluated)
 {
   const auto increment = display.increment_index;
   if (!data || increment >= data->increments.size())
@@ -84,6 +89,10 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
   group->increment = increment;
   group->deformation = display.deformation;
   group->coloring = std::make_unique<PostprocessorColorMap>(renderer);
+  if (evaluated)
+  {
+    group->warnings = evaluated->warnings;
+  }
   for (const auto& part : Postprocessor::result_mesh_parts(data->increments[increment].dataset.get()))
   {
     std::shared_ptr<vtkDataSet> transformed;
@@ -102,6 +111,15 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
     if (transformed)
     {
       group->transformed.push_back(transformed);
+    }
+    const auto filtered = evaluated ? std::find_if(evaluated->parts.begin(),evaluated->parts.end(),[&](const auto& value)
+    {
+      return value.dataset == part.first;
+    }) : std::vector<Postprocessor::FilteredPart>::const_iterator{};
+    const auto* derived = evaluated && filtered != evaluated->parts.end() ? &*filtered : nullptr;
+    if (mesh->GetNumberOfCells() == 0)
+    {
+      continue;
     }
     auto surface = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
     Postprocessor::configure_pick_provenance(surface);
@@ -142,10 +160,11 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
     group->surfaces.push_back({part.first, mesh, actor, surface->GetOutput(), nullptr});
     // Keep original points, including higher-order midside nodes, separate from
     // the tessellated surface. Tuple order and integral solver IDs stay intact.
-    if (mesh->GetPointData()->HasArray("OriginalNodeId") && !mesh->GetPointData()->HasArray("IntegrationPointId"))
+    auto* nodeMesh = derived && derived->nodes ? static_cast<vtkDataSet*>(derived->nodes.get()) : mesh;
+    if (nodeMesh->GetPointData()->HasArray("OriginalNodeId") && !nodeMesh->GetPointData()->HasArray("IntegrationPointId"))
     {
       auto nodes = vtkSmartPointer<vtkPolyData>::New();
-      if (auto* pointSet = vtkPointSet::SafeDownCast(mesh))
+      if (auto* pointSet = vtkPointSet::SafeDownCast(nodeMesh))
       {
         nodes->SetPoints(pointSet->GetPoints());
       }
@@ -153,22 +172,22 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
       {
         auto points = vtkSmartPointer<vtkPoints>::New();
         points->SetDataTypeToDouble();
-        points->SetNumberOfPoints(mesh->GetNumberOfPoints());
-        for (vtkIdType i = 0; i < mesh->GetNumberOfPoints(); ++i)
+        points->SetNumberOfPoints(nodeMesh->GetNumberOfPoints());
+        for (vtkIdType i = 0; i < nodeMesh->GetNumberOfPoints(); ++i)
         {
           double position[3];
-          mesh->GetPoint(i,position);
+          nodeMesh->GetPoint(i,position);
           points->SetPoint(i,position);
         }
         nodes->SetPoints(points);
       }
       auto vertices = vtkSmartPointer<vtkCellArray>::New();
-      for (vtkIdType i = 0; i < mesh->GetNumberOfPoints(); ++i)
+      for (vtkIdType i = 0; i < nodeMesh->GetNumberOfPoints(); ++i)
       {
         vertices->InsertNextCell(1,&i);
       }
       nodes->SetVerts(vertices);
-      nodes->GetPointData()->ShallowCopy(mesh->GetPointData());
+      nodes->GetPointData()->ShallowCopy(nodeMesh->GetPointData());
       auto nodeMapper = vtkSmartPointer<vtkOpenGLPolyDataMapper>::New();
       nodeMapper->SetInputData(nodes);
       nodeMapper->ScalarVisibilityOff();
@@ -219,17 +238,21 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
       edges->SetInputData(edgeMesh);
       edges->UseAllPointsOn();
       const auto edgeTag = edges->AddObserver(vtkCommand::ErrorEvent, observer);
-      edges->Update();
+      if (!derived)
+      {
+        edges->Update();
+      }
       edges->RemoveObserver(edgeTag);
-      if (failed || edges->GetOutput() == nullptr)
+      auto* edgeGeometry = derived && derived->edges ? derived->edges.get() : edges->GetOutput();
+      if (failed || edgeGeometry == nullptr)
       {
         error = "VTK could not extract the original mesh edges.";
         return {};
       }
-      if (edges->GetOutput()->GetNumberOfCells() != 0)
+      if (edgeGeometry->GetNumberOfCells() != 0)
       {
         auto edgeMapper = vtkSmartPointer<vtkOpenGLPolyDataMapper>::New();
-        edgeMapper->SetInputConnection(edges->GetOutputPort());
+        edgeMapper->SetInputData(edgeGeometry);
         edgeMapper->ScalarVisibilityOff();
         // Apply only a mapper-local line bias; never change the host-wide
         // coincident-topology mode. Opaque surfaces occlude interior edges.
@@ -253,8 +276,21 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
         group->actors.push_back({part.first,edgeActor});
       }
     }
+    if (derived && derived->reference_edges && derived->reference_edges->GetNumberOfCells())
+    {
+      auto mapper = vtkSmartPointer<vtkOpenGLPolyDataMapper>::New();
+      mapper->SetInputData(derived->reference_edges.get());
+      mapper->ScalarVisibilityOff();
+      auto actor = vtkSmartPointer<vtkOpenGLActor>::New();
+      actor->SetMapper(mapper);
+      actor->PickableOff();
+      const auto& color = Postprocessor::DeformationDefaults::overlay_color;
+      actor->GetProperty()->SetColor(color[0],color[1],color[2]);
+      actor->GetProperty()->LightingOff();
+      group->actors.push_back({part.first,actor});
+    }
   }
-  if (group->actors.empty())
+  if (group->actors.empty() && !evaluated)
   {
     error = "The display has no supported nonempty mesh partitions.";
     return {};
@@ -284,15 +320,26 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
       for (const auto& entry : state.representations)
       {
         const auto& display = entry.second;
-        if (display.view_id != viewId || display.input.owner != Postprocessor::OutputOwner::Source || display.input.port != 0)
+        if (display.input.owner == Postprocessor::OutputOwner::Feature && !display.visible)
         {
           continue;
         }
-        const auto data = application.result_data(display.input.object_id);
-        if (!data)
+        if (display.view_id != viewId || display.input.port != 0)
         {
           continue;
         }
+        std::shared_ptr<const Postprocessor::EvaluatedOutput> evaluated;
+        std::string evaluationError;
+        if (!application.evaluate_output(display,evaluated,evaluationError))
+        {
+          if (application.result_data(application.output_source(display.input)))
+          {
+            error += (error.empty() ? "" : "\n")+display.name+": "+evaluationError;
+          }
+          continue;
+        }
+        const auto data = evaluated->data;
+        const bool feature = display.input.owner == Postprocessor::OutputOwner::Feature;
         const auto existing = displays.find(entry.first);
         std::shared_ptr<RepresentationActors> group;
         if (existing != displays.end() && existing->second->data == data && existing->second->increment == display.increment_index &&
@@ -309,7 +356,19 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
             continue;
           }
           std::string buildError;
-          group = build(data,display,buildError);
+          auto geometryDisplay = display;
+          if (feature)
+          {
+            geometryDisplay.deformation.enabled = false;
+            geometryDisplay.deformation.overlay = false;
+          }
+          group = build(data,geometryDisplay,buildError,feature ? evaluated.get() : nullptr);
+          if (group)
+          {
+            group->deformation = display.deformation;
+            group->source_id = evaluated->source_id;
+            group->evaluated = evaluated;
+          }
           if (!group)
           {
             error += (error.empty() ? "" : "\n") + display.name + ": " + buildError;
@@ -320,7 +379,7 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
         if (display.visible && display.coloring.field && display.coloring.range_mode == Postprocessor::ColorRangeMode::AllFrames)
         {
           std::string rangeError;
-          allFrames = application.all_frame_range(display.input.object_id,*display.coloring.field,rangeError,display.hidden_datasets);
+          allFrames = application.all_frame_range(evaluated->source_id,*display.coloring.field,rangeError,display.hidden_datasets);
           if (!rangeError.empty())
           {
             error += (error.empty() ? "" : "\n")+display.name+": "+rangeError;
@@ -410,6 +469,14 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
       apply_camera(initial);
     }
     update_selection(application);
+    if (planeOverlay)
+    {
+      const auto active = state.representations.find(state.active_representation_id);
+      const auto found = active != state.representations.end() && active->second.view_id == viewId && active->second.visible &&
+        active->second.input.owner == Postprocessor::OutputOwner::Feature ? state.filters.find(active->second.input.object_id) : state.filters.end();
+      const double extent = visibleBounds ? std::hypot((*visibleBounds)[1]-(*visibleBounds)[0],(*visibleBounds)[3]-(*visibleBounds)[2],(*visibleBounds)[5]-(*visibleBounds)[4]) : 1;
+      planeOverlay->update(found == state.filters.end() ? nullptr : &found->second,extent);
+    }
     return error.empty();
   }
   catch (const std::exception& exception)

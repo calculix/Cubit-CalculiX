@@ -16,7 +16,7 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
   ReportTemplate candidate;
   candidate.id = "calculix.standard";
   candidate.workspace_id = "calculix";
-  candidate.revision = 2;
+  candidate.revision = 3;
   const std::vector<std::pair<std::string, std::string>> categories =
   {
     {"ccx.model.overview", "Model overview"}, {"ccx.model.materials", "Materials"},

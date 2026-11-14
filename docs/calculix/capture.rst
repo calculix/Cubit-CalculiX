@@ -3,8 +3,10 @@ Model setup captures
 
 CalculiX can render a PNG of the current undeformed finite-element mesh and its
 load/BC setup independently of the visible workspace. Factory defaults are
-**1920 x 1080 pixels (Full HD)**, white background, black labels and a fitted
-isometric camera. PNG captures are separate from the topology animation feature.
+**1920 x 1080 pixels (Full HD)**, white background, black labels and the current
+workspace camera. Block colors come directly from Cubit, with shaded faces and
+black element edges. Block membership matches ``draw block all``; unassigned
+mesh is excluded. PNG captures are separate from the topology animation feature.
 
 Commands
 --------
@@ -20,13 +22,15 @@ Commands
 
 ``model`` captures only the mesh. ``setup`` adds both loads and BCs; ``loads``
 and ``bcs`` add the corresponding group. ``step`` identifies a model step, not a
-result increment. Omit it for entire-model definitions. Views are ``iso``,
+result increment. Omit it for entire-model definitions. Views are ``workspace``, ``iso``,
 ``front``, ``back``, ``left``, ``right``, ``top`` and ``bottom``.
 
 Existing files require ``overwrite``. File output uses a temporary file and
 commit, preserving the previous destination on write failure. Parent directories
 must exist. Width and height must be integers in 64..8192, with at most 32 million
-pixels. Other settings use capture defaults, not the current viewport settings.
+pixels. ``workspace`` preserves camera position, target, up vector, projection,
+scale, angle and window center. Image aspect ratio follows the requested output
+dimensions; the camera is not refitted. Explicit standard views fit the scene.
 
 Capture does not activate CalculiX or change the user's camera, displayed
 groups, selection, picking mode or drawing settings. It requires the live Cubit
@@ -52,8 +56,8 @@ but does not add its conditions.
 Mesh faces use existing corner connectivity; curved/high-order faces are
 approximated by corner polygons. Unmeshed CAD and unsupported elements are not
 rendered as substitutes. The image contains no result deformation or contours.
-Symbol size is 10% of the largest mesh extent in world coordinates. Cameras use
-parallel projection with Z up, except top/bottom views. Front looks from -Y;
+Symbol size is 10% of the largest mesh extent in world coordinates. Explicit
+standard views use parallel projection with Z up, except top/bottom. Front looks from -Y;
 right looks from +X; top looks from +Z. Labels overlay the image after readback;
 text occlusion, collision avoidance and automatic text wrapping are not provided.
 
@@ -76,6 +80,8 @@ Optional regression cases are included in the existing
 while builds were prohibited. When builds are permitted, verify:
 
 * Default PNG dimensions are 1920 x 1080 and labels are black.
+* Differently colored blocks retain their native colors and visible element edges.
+* Workspace mode preserves rotated orthographic/perspective cameras and zoom.
 * Every camera and content mode; labels on/off; mixed force/moment and BC symbols.
 * Model/step parity with interactive drawings, including inherited conditions.
 * Capturing while Report or Postprocessor is active preserves their view and picks.

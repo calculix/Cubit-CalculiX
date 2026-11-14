@@ -228,8 +228,7 @@ bool PostprocessorDisplayProperties::current_context(Context& context) const
   for (const auto& entry : session.representations)
   {
     const auto& display = entry.second;
-    if (display.input.owner == Postprocessor::OutputOwner::Source && display.input.object_id == source->first &&
-        display.input.port == 0 && display.view_id == selectedView->first)
+    if (active->display_matches_source(display,source->first,selectedView->first))
     {
       context = {source->first,source->second.name,selectedView->first,selectedView->second.name,
         entry.first,display.increment_index,active->result_data(source->first),display.coloring};

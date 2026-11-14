@@ -25,8 +25,7 @@ namespace Postprocessor
       for (auto& entry : staged.representations)
       {
         auto& display = entry.second;
-        if (display.input.owner != OutputOwner::Source || display.input.object_id != source_id ||
-            display.input.port != 0 || display.view_id != view_id)
+        if (!display_matches_source(display,source_id,view_id))
         {
           continue;
         }

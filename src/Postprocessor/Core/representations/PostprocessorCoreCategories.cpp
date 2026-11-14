@@ -35,8 +35,7 @@ namespace Postprocessor
       {
         return std::find_if(staged.representations.begin(),staged.representations.end(),[&](const auto& item)
         {
-          return item.second.view_id == view && item.second.input.owner == OutputOwner::Source &&
-            item.second.input.object_id == source && item.second.input.port == 0;
+          return display_matches_source(item.second,source,view);
         });
       };
       bool created = find() == staged.representations.end();

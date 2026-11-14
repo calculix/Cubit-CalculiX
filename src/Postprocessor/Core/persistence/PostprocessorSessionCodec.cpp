@@ -1,4 +1,5 @@
 #include "PostprocessorSessionCodec.hpp"
+#include "../filters/FilterCodec.hpp"
 #include "../plots/PlotCodec.hpp"
 #include "../annotations/AnnotationCodec.hpp"
 #include "../views/CameraOperations.hpp"
@@ -279,7 +280,7 @@ namespace Postprocessor
         {"minimum",limit_json(color.minimum)},{"maximum",limit_json(color.maximum)}};
       Object deformation{{"enabled",deform.enabled},{"field",field_json(deform.field)},{"mode",static_cast<int>(deform.field_mode)},
         {"scale",deform.scale},{"overlay",deform.overlay}};
-      displays.append(Object{{"id",q(display.id)},{"name",q(display.name)},{"source",q(display.input.object_id)},
+      displays.append(Object{{"id",q(display.id)},{"name",q(display.name)},{"source",q(display.input.object_id)},{"feature",display.input.owner == OutputOwner::Feature},
         {"view",q(display.view_id)},{"visible",display.visible},{"frame",frame_json(binding.frame)},{"hidden",hidden},
         {"color_dataset",binding.color_dataset ? QJsonValue(dataset_json(*binding.color_dataset)) : QJsonValue(QJsonValue::Null)},
         {"deformation_dataset",binding.deformation_dataset ? QJsonValue(dataset_json(*binding.deformation_dataset)) : QJsonValue(QJsonValue::Null)},
@@ -310,7 +311,7 @@ namespace Postprocessor
       }
       catalogues.append(Object{{"source",q(item.first)},{"datasets",datasets}});
     }
-    return {{"plots",plots_to_json(state.plots)},{"active_plot",q(state.active_plot_id)},{"sources",sources},{"views",views},{"representations",displays},{"layout",layout},{"root",q(state.layout.root_node_id)},
+    return {{"plots",plots_to_json(state.plots)},{"active_plot",q(state.active_plot_id)},{"sources",sources},{"views",views},{"representations",displays},{"filters",filters_to_json(state.filters)},{"layout",layout},{"root",q(state.layout.root_node_id)},
       {"active_source",q(state.active_source_id)},{"active_view",q(state.active_view_id)},
       {"active_representation",q(state.active_representation_id)},{"catalogues",catalogues}};
   }
@@ -502,6 +503,10 @@ namespace Postprocessor
         return false;
       }
     }
+    if (!filters_from_json(json.value("filters"),state.filters,error))
+    {
+      return false;
+    }
     for (const auto& value : displays)
     {
       if (!value.isObject())
@@ -518,6 +523,11 @@ namespace Postprocessor
       {
         return false;
       }
+      if (object.contains("feature") && !object.value("feature").isBool())
+      {
+        return false;
+      }
+      display.input.owner = object.value("feature").toBool(false) ? OutputOwner::Feature : OutputOwner::Source;
       for (const auto& item : hidden)
       {
         SavedDatasetReference data;
@@ -675,7 +685,10 @@ namespace Postprocessor
     if (!state.active_representation_id.empty())
     {
       const auto& active = state.representations.at(state.active_representation_id);
-      if (active.input.object_id != state.active_source_id || active.view_id != state.active_view_id)
+      const auto filter = state.filters.find(active.input.object_id);
+      const auto source = active.input.owner == OutputOwner::Source ? active.input.object_id :
+        filter == state.filters.end() ? std::string{} : filter->second.input.object_id;
+      if (source != state.active_source_id || active.view_id != state.active_view_id)
       {
         return false;
       }
@@ -753,12 +766,26 @@ namespace Postprocessor
         }
       }
     }
+    std::set<std::string> filterNames;
+    if (state.filters.size() > FilterDefaults::maximum_filters)
+    {
+      return false;
+    }
+    for (const auto& item : state.filters)
+    {
+      if (item.first != item.second.id || !valid_filter(item.second,error) || state.sources.count(item.second.input.object_id) == 0 ||
+          !filterNames.insert(item.second.name).second)
+      {
+        return false;
+      }
+    }
     for (const auto& item : state.representations)
     {
       const auto& value = item.second;
-      if (item.first.empty() || item.first != value.id || value.input.owner != OutputOwner::Source || value.input.port != 0 ||
-          state.sources.count(value.input.object_id) == 0 || state.views.count(value.view_id) == 0 ||
-          !connections.emplace(value.input.object_id,value.view_id).second || project.bindings.count(value.id) == 0 ||
+      const bool inputValid = value.input.owner == OutputOwner::Source ? state.sources.count(value.input.object_id) != 0 :
+        value.input.owner == OutputOwner::Feature && state.filters.count(value.input.object_id) != 0;
+      if (item.first.empty() || item.first != value.id || !inputValid || value.input.port != 0 || state.views.count(value.view_id) == 0 ||
+          !connections.emplace(std::to_string(static_cast<int>(value.input.owner))+":"+value.input.object_id,value.view_id).second || project.bindings.count(value.id) == 0 ||
           !valid_coloring(value.coloring,error) || !valid_deformation(value.deformation,error))
       {
         return false;

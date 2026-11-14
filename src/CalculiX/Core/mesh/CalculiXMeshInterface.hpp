@@ -8,6 +8,8 @@
 class CalculiXMeshInterface
 {
 public:
+  // Exact native block RGB, encoded as #RRGGBB for immutable capture scenes.
+  bool get_block_capture_color(int id, std::string& color, std::string& error);
   bool get_block_properties(int id, MeshProperties& properties, std::string& error);
   bool get_nodeset_properties(int id, MeshProperties& properties, std::string& error);
   bool get_sideset_properties(int id, MeshProperties& properties, std::string& error);

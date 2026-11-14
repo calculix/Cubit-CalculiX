@@ -10,6 +10,7 @@
 #include "Core/results/CalculiXResultsInterface.hpp"
 #include "Core/results/vtk/CoreResultsVtkStructs.hpp"
 #include <QScopedValueRollback>
+#include <QScopeGuard>
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "StopWatch.hpp"
@@ -948,12 +949,27 @@ bool CoreJobs::complete_job_results(int job_id)
   {
     return false;
   }
+  CalculiXApplicationInterface application;
+  const bool previous_core_block = application.block_core_update();
+  const bool previous_gui_block = application.block_gui_update();
+  const auto restore_updates = qScopeGuard([&]()
+  {
+    application.set_block_core_update(previous_core_block);
+    application.set_block_gui_update(previous_gui_block);
+    // Refresh through the normal GUI path after reader/conversion cleanup.
+    application.set_gui_updated(false);
+  });
+  application.set_block_core_update(true);
+  application.set_block_gui_update(true);
+
   CalculiXResultsInterface results;
   bool readers_loaded = false;
   try
   {
     jobs_data[index][6] = "-1";
+    application.trace_event("job.results.load.enter");
     readers_loaded = results.load_result(job_id);
+    application.trace_event(readers_loaded ? "job.results.load.success" : "job.results.load.failure");
     if (!readers_loaded)
     {
       jobs_data[index][3] = "4";
@@ -970,7 +986,10 @@ bool CoreJobs::complete_job_results(int job_id)
     }
 
     pending_result_jobs.insert(job_id);
-    if (!results.build_vtk_result(job_id, CoreResultsVtkOptions{}))
+    application.trace_event("job.results.vtk.enter");
+    const bool converted = results.build_vtk_result(job_id, CoreResultsVtkOptions{});
+    application.trace_event(converted ? "job.results.vtk.success" : "job.results.vtk.failure");
+    if (!converted)
     {
       PRINT_ERROR("VTK conversion failed for job %d. Retry conversion before the next job.\n", job_id);
       return false;
@@ -980,6 +999,7 @@ bool CoreJobs::complete_job_results(int job_id)
   }
   catch (const std::exception& failure)
   {
+    application.trace_event("job.results.exception");
     if (!readers_loaded)
     {
       jobs_data[index][3] = "4";
@@ -990,6 +1010,7 @@ bool CoreJobs::complete_job_results(int job_id)
   }
   catch (...)
   {
+    application.trace_event("job.results.unexpected_exception");
     if (!readers_loaded)
     {
       jobs_data[index][3] = "4";

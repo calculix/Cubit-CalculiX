@@ -255,7 +255,11 @@ add_subdirectory(GUI)
 
 # Result readers use header-only Boost.Asio on both platforms.
 find_package(Threads REQUIRED)
-target_include_directories(calculix_core PRIVATE "${BOOST_ROOT}")
+target_include_directories(calculix_core PRIVATE
+  "${BOOST_ROOT}"
+  "${CUBIT_ROOT}/include/mesh"
+  "${CMAKE_CURRENT_SOURCE_DIR}/SDK"
+)
 target_compile_features(calculix_core PRIVATE cxx_std_17)
 target_link_libraries(calculix_core Threads::Threads)
 target_link_libraries(calculix_core showviz_base showviz_cubit showviz_mesh showviz_geom)

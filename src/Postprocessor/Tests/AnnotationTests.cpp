@@ -206,6 +206,10 @@ int annotation_cases(const std::shared_ptr<PostprocessorApplicationInterface>& a
   check(command.contains("post label add \"label_1\"") && command.contains("9007199254740993") &&
     command.contains(" field ") && command.contains(" component ") && command.contains(" view "),
     "GUI label creation did not encode explicit replayable identity and field");
+  const auto labelColoring = app->coloring("Model",error);
+  check(labelColoring && labelColoring->field && !labelColoring->field->group_key.empty() &&
+      !command.contains(QString::fromStdString(labelColoring->field->group_key)),
+    "GUI label journal still contains an encoded field identity");
   check(app->change_label(view,"tip","remove","",{},error),"Cannot clear annotation fixture");
   return failures;
 }

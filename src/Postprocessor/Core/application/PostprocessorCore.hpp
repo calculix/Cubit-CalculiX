@@ -7,6 +7,9 @@
 #include "../selection/ResultProbe.hpp"
 #include "../plots/PlotData.hpp"
 #include "../capture/CaptureDefinition.hpp"
+#include "../filters/FilterRuntime.hpp"
+#include "../tables/ResultTableSelector.hpp"
+#include "../representations/ResultFieldSelector.hpp"
 #include "Framework/Results/ResultSourceReference.hpp"
 
 #include <cstdint>
@@ -31,6 +34,14 @@ namespace Postprocessor
   {
   public:
     PostprocessorCore() = default;
+    std::string output_source(const OutputReference& input) const;
+    bool display_matches_source(const Representation& display,const std::string& source,const std::string& view) const;
+    bool create_filter(FilterDefinition requested,const std::string& view,std::string& error);
+    bool change_filter(const std::string& name,const std::string& action,const std::string& view,
+      const PlaneDefinition& plane,const std::string& value,std::string& error);
+    std::shared_ptr<vtkPolyData> filtered_entity_edges(const Representation& display,const EntityReference& entity,std::string& error) const;
+    std::optional<std::array<double,3>> filtered_entity_position(const Representation& display,const EntityReference& entity) const;
+    bool evaluate_output(const Representation& display,std::shared_ptr<const EvaluatedOutput>& output,std::string& error) const;
 
     PostprocessorCore(const PostprocessorCore&) = delete;
     PostprocessorCore& operator=(const PostprocessorCore&) = delete;
@@ -129,7 +140,8 @@ namespace Postprocessor
 
     // Selects a registered source, clearing stale active representation context.
     bool select_source(const std::string& source_id, std::string& error);
-    bool open_table(const std::string& source_id, const std::string& view_id, const std::string& name, bool field, std::string& error);
+    bool open_table(const std::string& source_id, const std::string& view_id, const std::string& name, bool field, std::string& error,
+      const TableQualifiers& tableQualifiers = {},const FieldQualifiers& fieldQualifiers = {});
     bool show_3d(const std::string& view_id, std::string& error);
     ResultTableData table_data(const std::string& view_id) const;
 
@@ -146,6 +158,7 @@ namespace Postprocessor
       const std::string& view_id, std::size_t increment, bool visible, std::string& error) const;
     bool prepare_initial_display(PostprocessorSession& staged, const std::string& source_id,
       const std::optional<std::size_t>& increment, std::string& error) const;
+    mutable std::map<std::string,CachedFilterOutput> filter_cache;
     PostprocessorSession state;
     std::map<std::string,SavedRepresentationBinding> saved_bindings;
     std::map<std::string,SavedFrameReference> saved_table_frames;

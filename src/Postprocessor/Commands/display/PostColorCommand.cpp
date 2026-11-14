@@ -1,3 +1,4 @@
+#include "Postprocessor/Commands/FieldCommandOptions.hpp"
 #include "PostColorCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -12,7 +13,7 @@ PostColorCommand::PostColorCommand(std::weak_ptr<PostprocessorApplicationInterfa
 std::vector<std::string> PostColorCommand::get_syntax()
 {
   const std::string source = " [source <string:type='quoted',number='1',label='source_name'>]";
-  const std::string field = "post color field <string:type='quoted',number='1',label='field_name'> component ";
+  const std::string field = "post color field <string:type='quoted',number='1',label='field_name'>" + Postprocessor::field_qualifier_syntax() + " component ";
   const std::string dataset = " [dataset <value:label='dataset_id'>]";
   return {
     field + "magnitude" + dataset + source,
@@ -30,7 +31,7 @@ std::vector<std::string> PostColorCommand::get_syntax()
 }
 std::vector<std::string> PostColorCommand::get_syntax_help()
 {
-  return {"post color field \"name\" component {magnitude|\"component\"} [dataset N] [source \"name\"]",
+  return {"post color field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] component {magnitude|\"component\"} [dataset N] [source \"name\"]",
     "post color {solid|palette NAME|reverse on/off|bands continuous/N|range auto/allframes/symmetric/MIN MAX} [source \"name\"]",
     "post color limit minimum/maximum {on|off|VALUE color R G B} [source \"name\"]"};
 }
@@ -65,9 +66,15 @@ bool PostColorCommand::execute(CubitCommandData& data)
         }
         dataset = static_cast<std::size_t>(domain);
       }
+      Postprocessor::FieldQualifiers qualifiers;
+      if (!Postprocessor::read_field_qualifiers(data,qualifiers,error))
+      {
+        PRINT_ERROR("Cannot select color field: %s\n",error.c_str());
+        return false;
+      }
       const bool magnitude = data.find_keyword("MAGNITUDE");
       if (!data.get_string("field_name", field) || (!magnitude && !data.get_string("component_name", component)) ||
-          !active->color_field(name, field, component, magnitude, dataset, error))
+          !active->color_field(name, field, component, magnitude, dataset, error, qualifiers))
       {
         PRINT_ERROR("Cannot select result color field: %s\n", error.c_str());
         return false;

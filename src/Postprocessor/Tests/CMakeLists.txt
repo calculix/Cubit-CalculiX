@@ -10,6 +10,19 @@ include("${CUBITSIM_SOURCE_ROOT}/cmake/CubitVtkSDK.cmake")
 add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Results" results)
 
 add_library(postprocessor_display_code STATIC
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/PlaneOperations.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/ClipFilter.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/SectionFilter.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/FilterRuntime.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/PostprocessorCoreFilters.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/FilterCodec.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorFiltersInterface.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Filters/PostprocessorPlaneOverlay.cpp"
+
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/tables/ResultTableSelector.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/tables/TableCommandText.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/ResultFieldSelector.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/FieldCommandText.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/capture/CaptureSnapshot.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/capture/CaptureFileWriter.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorCaptureInterface.cpp"
@@ -75,7 +88,7 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Navigation/PostprocessorDeformationControls.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/ResultsTree/PostprocessorResultsTree.cpp")
 target_link_libraries(postprocessor_display_code PUBLIC cubitsim_results VTK::IOXML VTK::CommonDataModel
-  VTK::FiltersCore VTK::FiltersGeometry VTK::RenderingCore VTK::RenderingAnnotation VTK::RenderingOpenGL2 Qt6::Core Qt6::Widgets)
+  VTK::FiltersGeneral VTK::FiltersCore VTK::FiltersGeometry VTK::RenderingCore VTK::RenderingAnnotation VTK::RenderingOpenGL2 Qt6::Core Qt6::Widgets)
 target_compile_features(postprocessor_display_code PUBLIC cxx_std_17)
 add_executable(postprocessor_display_tests DisplayTests.cpp)
 target_link_libraries(postprocessor_display_tests PRIVATE postprocessor_display_code)
@@ -188,3 +201,15 @@ target_sources(postprocessor_selection_tests PRIVATE AnnotationTests.cpp)
 target_sources(postprocessor_selection_tests PRIVATE PlotTests.cpp)
 
 target_sources(postprocessor_selection_tests PRIVATE CaptureTests.cpp)
+
+target_sources(postprocessor_selection_tests PRIVATE FieldSelectorTests.cpp)
+
+target_sources(postprocessor_selection_tests PRIVATE TableSelectorTests.cpp)
+
+add_executable(postprocessor_filter_tests FilterTests.cpp)
+target_link_libraries(postprocessor_filter_tests PRIVATE postprocessor_display_code)
+add_test(NAME postprocessor_filters COMMAND postprocessor_filter_tests)
+set_tests_properties(postprocessor_filters PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+if (WIN32)
+  set_property(TEST postprocessor_filters APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
+endif ()

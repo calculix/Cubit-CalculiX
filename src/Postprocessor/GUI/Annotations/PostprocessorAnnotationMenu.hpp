@@ -8,7 +8,7 @@ class QWidget;
 class PostprocessorApplicationInterface;
 QString annotation_quote(const std::string& value);
 QString annotation_add_command(const PostprocessorApplicationInterface& application,
-  const std::string& view, const Postprocessor::EntityReference& entity);
+  const std::string& view, const Postprocessor::EntityReference& entity,std::string* error = nullptr);
 void show_annotation_menu(QWidget* parent, const QPoint& globalPosition,
   const PostprocessorApplicationInterface& application, const std::string& view,
   const std::string& label, const std::optional<Postprocessor::EntityReference>& entity,

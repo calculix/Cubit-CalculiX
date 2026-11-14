@@ -122,7 +122,7 @@ bool PostprocessorCaptureRenderer::render(const Postprocessor::CaptureSnapshot& 
   std::optional<double> marker;
   if (request.target == CaptureTarget::View)
   {
-    scene = std::make_unique<PostprocessorScene>(renderer,snapshot.target_id);
+    scene = std::make_unique<PostprocessorScene>(renderer,snapshot.target_id,false);
     if (!scene->synchronize(*frozen,error))
     {
       return false;

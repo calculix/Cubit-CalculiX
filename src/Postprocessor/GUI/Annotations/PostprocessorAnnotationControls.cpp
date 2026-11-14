@@ -86,6 +86,8 @@ void PostprocessorAnnotationControls::refresh()
   const QSignalBlocker blockExtrema(extrema), blockVisible(visible);
   extrema->setChecked(view->second.annotations.extrema_visible);
   visible->setChecked(view->second.annotations.visible);
+  std::string fieldError;
   add->setEnabled(view->second.selection.entity &&
-    !annotation_add_command(*app,view->first,*view->second.selection.entity).isEmpty());
+    !annotation_add_command(*app,view->first,*view->second.selection.entity,&fieldError).isEmpty());
+  add->setToolTip(fieldError.empty() ? tr("Label the selected result entity") : QString::fromUtf8(fieldError.c_str()));
 }

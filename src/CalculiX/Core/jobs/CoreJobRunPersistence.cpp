@@ -321,7 +321,7 @@ bool writeRecord(HDF5Tool& file, const std::string& path, const CalculiXJobRunRe
       }
     }
     metadata["snapshot"] = QJsonObject{{"id", QString::fromStdString(setup.id)}, {"hash", QString::fromStdString(setup.fingerprint)},
-      {"size", setup.symbolSize}, {"steps", static_cast<int>(setup.steps.size())}};
+      {"size", setup.symbolSize}, {"steps", static_cast<int>(setup.steps.size())}, {"camera", setup.camera.toJson()}};
   }
   return writeJson(file, path, metadata);
 }
@@ -375,7 +375,8 @@ bool readRecord(HDF5Tool& file, const std::string& path, CalculiXJobRunRecord& r
     int steps = -1;
     hsize_t budget = 24000000;
     if (!ReportJson::text(object, "id", setup->id, error) || !ReportJson::text(object, "hash", setup->fingerprint, error) ||
-        !object.value("size").isDouble() || !ReportJson::integer(object, "steps", steps, error) || steps < 0 || steps > 256 ||
+        !object.value("size").isDouble() || !setup->camera.fromJson(object.value("camera").toObject()) || !setup->camera.valid() ||
+        !ReportJson::integer(object, "steps", steps, error) || steps < 0 || steps > 256 ||
         !readGeometry(file, path + "/Setup/Model", setup->model, budget, error) || !readScene(file, path + "/Setup/Definitions", setup->modelDefinitions, budget, error))
     {
       return false;
@@ -416,7 +417,7 @@ bool CoreJobRunPersistence::read(HDF5Tool& file, std::map<int, std::shared_ptr<c
     }
     QJsonObject metadata;
     int version = 0;
-    if (!readJson(file, Root, metadata) || !ReportJson::integer(metadata, "version", version, error) || version != 1 || !metadata.value("jobs").isArray())
+    if (!readJson(file, Root, metadata) || !ReportJson::integer(metadata, "version", version, error) || version != 2 || !metadata.value("jobs").isArray())
     {
       error = "Invalid job run archive schema.";
       return false;
@@ -493,7 +494,7 @@ bool CoreJobRunPersistence::write(HDF5Tool& file, const std::map<int, std::share
         return false;
       }
     }
-    if (!writeJson(file, pending, {{"version", 1}, {"jobs", jobs}}))
+    if (!writeJson(file, pending, {{"version", 2}, {"jobs", jobs}}))
     {
       error = "Cannot write run archive manifest.";
       return false;

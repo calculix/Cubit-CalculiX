@@ -1,6 +1,8 @@
 #include "CoreJobSnapshotBuilder.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
 #include "Core/export/CalculiXExportInterface.hpp"
+#include "Core/mesh/CalculiXMeshInterface.hpp"
+#include <QJsonDocument>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
@@ -90,10 +92,13 @@ void sceneHash(QCryptographicHash& hash, const CalculiXJobSetupScene& scene)
 
 // Reads exactly the emitted node/connectivity records, never the live Cubit
 // mesh. Corner faces approximate high-order geometry, as in normal captures.
-bool emittedMesh(const CalculiXJobInputBundle& input, DrawingGeometry& output, double& size, int& stepCount, std::string& error)
+bool emittedMesh(const CalculiXJobInputBundle& input, const std::map<std::string, std::string>& blockColors,
+  DrawingGeometry& output, double& size, int& stepCount, std::string& error)
 {
   std::map<int, std::array<double, 3>> nodes;
   std::vector<std::pair<std::string, std::vector<int>>> elements;
+  std::vector<std::string> elementColors;
+  std::string elementColor;
   const std::map<std::string, std::pair<int, std::string>> types = {
     {"C3D4", {4, "tet"}}, {"C3D10", {10, "tet"}}, {"C3D6", {6, "wedge"}}, {"C3D15", {15, "wedge"}},
     {"C3D8", {8, "hex"}}, {"C3D8R", {8, "hex"}}, {"C3D8I", {8, "hex"}}, {"C3D20", {20, "hex"}}, {"C3D20R", {20, "hex"}},
@@ -149,6 +154,14 @@ bool emittedMesh(const CalculiXJobInputBundle& input, DrawingGeometry& output, d
         }
         if (card == "ELEMENT")
         {
+          const auto block = QRegularExpression("(?:^|,)\\s*ELSET\\s*=\\s*([^,]+)", QRegularExpression::CaseInsensitiveOption).match(line);
+          const auto color = blockColors.find(block.captured(1).trimmed().toUpper().toStdString());
+          if (color == blockColors.end())
+          {
+            error = "Cannot associate exported element set with a native block color: " + block.captured(1).toStdString();
+            return false;
+          }
+          elementColor = color->second;
           const auto match = QRegularExpression("(?:^|,)\\s*TYPE\\s*=\\s*([^,]+)", QRegularExpression::CaseInsensitiveOption).match(line);
           const auto type = types.find(match.captured(1).trimmed().toUpper().toStdString());
           if (type == types.end())
@@ -220,6 +233,7 @@ bool emittedMesh(const CalculiXJobInputBundle& input, DrawingGeometry& output, d
         if (connectivity.size() == static_cast<std::size_t>(expected))
         {
           elements.push_back({shape, connectivity});
+          elementColors.push_back(elementColor);
           connectivity.clear();
         }
       }
@@ -238,8 +252,9 @@ bool emittedMesh(const CalculiXJobInputBundle& input, DrawingGeometry& output, d
   const double largest = (std::numeric_limits<double>::max)();
   const double lowest = (std::numeric_limits<double>::lowest)();
   std::array<double, 3> minimum = {largest, largest, largest}, maximum = {lowest, lowest, lowest};
-  for (const auto& element : elements)
+  for (std::size_t index = 0; index < elements.size(); ++index)
   {
+    const auto& element = elements[index];
     std::vector<std::vector<int>> faces;
     if (element.first == "hex")
     {
@@ -276,7 +291,7 @@ bool emittedMesh(const CalculiXJobInputBundle& input, DrawingGeometry& output, d
           maximum[axis] = (std::max)(maximum[axis], found->second[axis]);
         }
       }
-      const bool valid = points.size() == 2 ? geometry.line(points[0], points[1], "lightgray") : geometry.polygon(points, "lightgray");
+      const bool valid = points.size() == 2 ? geometry.line(points[0], points[1], elementColors[index]) : geometry.polygon(points, elementColors[index]);
       if (!valid || geometry.primitives.size() > 1000000)
       {
         error = "Snapshot mesh is invalid or exceeds one million primitives.";
@@ -332,10 +347,11 @@ std::string CoreJobSnapshotBuilder::inputFingerprint(const CalculiXJobInputBundl
 std::string CoreJobSnapshotBuilder::setupFingerprint(const CalculiXJobSetupSnapshot& setup)
 {
   QCryptographicHash hash(QCryptographicHash::Sha256);
-  token(hash, "calculix.setup.1");
+  token(hash, "calculix.setup.2");
   token(hash, setup.id);
   number(hash, setup.symbolSize);
   geometryHash(hash, setup.model);
+  token(hash, QJsonDocument(setup.camera.toJson()).toJson(QJsonDocument::Compact).toStdString());
   sceneHash(hash, setup.modelDefinitions);
   token(hash, std::to_string(setup.steps.size()));
   for (const auto& step : setup.steps)
@@ -451,7 +467,24 @@ bool CoreJobSnapshotBuilder::prepare(int jobId, const std::string& filename,
     auto setup = std::make_shared<CalculiXJobSetupSnapshot>();
     setup->id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
     int emittedSteps = 0;
-    if (!emittedMesh(candidate.input, setup->model, setup->symbolSize, emittedSteps, error))
+    std::map<std::string, std::string> blockColors;
+    CalculiXMeshInterface mesh;
+    for (int block : mesh.get_blocks())
+    {
+      std::string color;
+      if (!mesh.get_block_capture_color(block, color, error))
+      {
+        return false;
+      }
+      const auto name = QString::fromStdString(mesh.get_block_name(block)).trimmed().toUpper().toStdString();
+      if (!blockColors.emplace(name, color).second)
+      {
+        error = "Cannot freeze ambiguous exported block names: " + name;
+        return false;
+      }
+    }
+    if (!DrawingCaptureCamera::current(setup->camera, error) ||
+        !emittedMesh(candidate.input, blockColors, setup->model, setup->symbolSize, emittedSteps, error))
     {
       return false;
     }
@@ -541,7 +574,7 @@ bool CoreJobSnapshotBuilder::validate(const CalculiXJobRunRecord& record, std::s
     return true;
   }
   const auto& setup = *record.setup;
-  if (setup.id.empty() || !std::isfinite(setup.symbolSize) || setup.symbolSize <= 0 || setup.model.primitives.empty() || setup.steps.size() > 256)
+  if (setup.id.empty() || !setup.camera.valid() || !std::isfinite(setup.symbolSize) || setup.symbolSize <= 0 || setup.model.primitives.empty() || setup.steps.size() > 256)
   {
     return fail("Invalid setup snapshot metadata.");
   }

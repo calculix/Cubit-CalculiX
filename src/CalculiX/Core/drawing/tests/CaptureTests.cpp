@@ -2,6 +2,7 @@
 #include "Core/drawing/CoreDrawScene.hpp"
 #include "Core/drawing/CalculiXCaptureRequest.hpp"
 #include "Framework/Drawing/DrawingCaptureRenderer.hpp"
+#include "CubitColorTable.hpp"
 #include <QGuiApplication>
 #include <iostream>
 #include <limits>
@@ -27,6 +28,14 @@ int captureTests(int argc, char** argv)
   CalculiXCaptureRequest request;
   DrawingCaptureRenderer renderer;
   DrawingFrame frame;
+  frame.camera.available = true;
+  DrawingCaptureCamera restored;
+  check(restored.fromJson(frame.camera.toJson()) && restored.valid(), "Camera metadata round-trips independently of the viewport");
+  auto corruptCamera = frame.camera.toJson();
+  corruptCamera["scale"] = -1;
+  check(!restored.fromJson(corruptCamera) && restored.valid(), "Invalid camera metadata preserves the previous camera");
+  restored.up = {0, 0, 1};
+  check(!restored.valid(), "A camera view-up parallel to its viewing direction is rejected");
   QByteArray output = "previous image";
   auto invalid = request.image;
   invalid.width = 0;
@@ -50,6 +59,15 @@ int captureTests(int argc, char** argv)
   frame.entities.push_back({{"calculix", "model", 0, ""}, "model", geometry, false});
   check(!renderer.render(frame, request.image, output, error) && output == "previous image",
     "Invalid visible geometry is rejected before VTK rendering");
+  int colorId = -1;
+  double color[3] = {};
+  check(CubitColorTable::string_to_color_id("grey", colorId) && CubitColorTable::color_id_to_rgb(colorId, color),
+    "The capture mesh color resolves through the host Cubit color table");
+  frame.entities.front().geometry.primitives.front().points.front()[0] = 0;
+  frame.entities.front().geometry.primitives.front().color = "unsupported_capture_test_color";
+  check(!renderer.render(frame, request.image, output, error) && output == "previous image" &&
+      error.find("unsupported_capture_test_color") != std::string::npos && error.find("model 0") != std::string::npos,
+    "Unknown capture colors identify the color and owning entity without replacing the previous image");
   LabelTestDrawing service;
   CoreDrawScene scene;
   scene.bind(&service);

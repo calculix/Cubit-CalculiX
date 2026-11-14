@@ -17,7 +17,8 @@ Create a named plot and add original-entity histories::
   post plot add element 12 field "STRESS" component "SXX" reduction maximum
 
 Entity additions accept optional qualifiers in this order: ``dataset ID|"name"``,
-``source "name"``, ``field "key"``, ``component magnitude|"name"``,
+``source "name"``, ``field "name"``, optional ``origin "FRD"`` and
+``association node|element|integrationpoint``, ``component magnitude|"name"``,
 ``reduction minimum|maximum``, ``name "curve"`` and ``plot "name"``. Omission
 uses the active source/field/plot; an omitted dataset must resolve uniquely.
 Quote decimal IDs above 9007199254740991 for exact 64-bit transport. Element
@@ -32,8 +33,9 @@ an optional exact-value filter and an existing/new plot::
   post plot add table "forces / LOAD_TARGET" x "Time" y "fy" where "NodeId" equals "9"
 
 Table additions accept trailing ``source "name"``, ``name "curve"`` and
-``plot "name"``. Names or exact table keys are accepted; ambiguity requires an
-exact key. Columns must be uniquely named. Filters compare exact source cell
+``plot "name"``. Native names accept optional scope/type/entry qualifiers;
+old exact keys remain accepted. Ambiguity reports readable candidates. Columns
+must be uniquely named. Filters compare exact source cell
 text without converting identifiers through floating point. An unambiguous
 Valid column controls row validity. Time/Frame plots with mixed known entity
 identities or multiple records per frame require a narrower filter. Use entity
@@ -104,3 +106,20 @@ Invalid values remain gaps. Existing files or symlinks are refused; a temporary
 file in the target directory is completed before publication. Plots without any
 sample rows cannot be exported. PNG capture and embedded Report insertion are
 described in :doc:`capture`. Direct SVG/PDF plot export remains deferred.
+
+Human-readable history journals
+-------------------------------
+
+History actions now journal the field's metadata name, e.g. ``field "CONTACT"``,
+with origin/association qualifiers only when required. Internal group keys remain
+in saved plot definitions and are accepted when replaying existing journals.
+See :doc:`commands` for selector resolution and ambiguity handling.
+
+Spatial field-table plots
+-------------------------
+
+``post plot add field "STRESS" [origin "FRD"] [association node] x "Time" y "SXX"``
+uses spatial field rows rather than a native DAT/VTT table. Use an exact identity
+filter for a time history, e.g. ``where "Node ID" equals "1171"``. Native
+``post plot add table`` uses readable names and optional scope/type/entry
+qualifiers. See :doc:`tables` for the shared selector and row-identity contracts.

@@ -1,3 +1,5 @@
+#include "Postprocessor/Commands/tables/TableCommandOptions.hpp"
+#include "Postprocessor/Commands/FieldCommandOptions.hpp"
 #include "PostPlotCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -16,14 +18,17 @@ std::vector<std::string> PostPlotCommand::get_syntax()
   const std::string id = "{<value:label='entity_id'>|<string:type='quoted',number='1',label='entity_text'>}";
   const std::string target = "<string:type='quoted',number='1',label='target'>";
   const std::string tail = " [dataset {<value:label='dataset_id'>|<string:type='quoted',number='1',label='dataset_name'>}]"+source+
-    " [field <string:type='quoted',number='1',label='field_name'>]"
+    " [field <string:type='quoted',number='1',label='field_name'>]"+Postprocessor::field_qualifier_syntax()+
     " [component {magnitude|<string:type='quoted',number='1',label='component_name'>}]"
     " [reduction {minimum|maximum}]"+name+plot;
   return {"post plot create "+target,"post plot {show|remove} "+target,"post plot close",
     "post plot rename "+target+" <string:type='quoted',number='1',label='replacement'>",
     "post plot add node "+id+tail,"post plot add element "+id+tail,
     "post plot add integrationpoint <value:label='ip'> element "+id+tail,
-    "post plot add table <string:type='quoted',number='1',label='table_name'>"
+    "post plot add table <string:type='quoted',number='1',label='table_name'>"+Postprocessor::table_qualifier_syntax()+
+    " x <string:type='quoted',number='1',label='x_column'> y <string:type='quoted',number='1',label='y_column'>"
+    " [where <string:type='quoted',number='1',label='filter_column'> equals <string:type='quoted',number='1',label='filter_value'>]"+source+name+plot,
+    "post plot add field <string:type='quoted',number='1',label='table_name'>"+Postprocessor::field_qualifier_syntax()+
     " x <string:type='quoted',number='1',label='x_column'> y <string:type='quoted',number='1',label='y_column'>"
     " [where <string:type='quoted',number='1',label='filter_column'> equals <string:type='quoted',number='1',label='filter_value'>]"+source+name+plot,
     "post plot curve {hide|show|remove} <string:type='quoted',number='1',label='curve_name'>"+plot,
@@ -35,8 +40,9 @@ std::vector<std::string> PostPlotCommand::get_syntax_help()
 {
   return {"post plot create \"name\"","post plot {show|remove} \"name\"","post plot close",
     "post plot rename \"name\" \"replacement\"",
-    "post plot add {node ID|element ID|integrationpoint N element ID} [dataset ID|\"name\"] [source \"name\"] [field \"key\"] [component magnitude|\"name\"] [reduction minimum|maximum] [name \"curve\"] [plot \"name\"]",
-    "post plot add table \"key\" x \"column\" y \"column\" [where \"column\" equals \"exact value\"] [source \"name\"] [name \"curve\"] [plot \"name\"]",
+    "post plot add {node ID|element ID|integrationpoint N element ID} [dataset ID|\"name\"] [source \"name\"] [field \"name\"] [origin \"FRD\"] [association node|element|integrationpoint] [component magnitude|\"name\"] [reduction minimum|maximum] [name \"curve\"] [plot \"name\"]",
+    "post plot add table \"name\" [scope frame|global] [type \"type\"] [entry N] x \"column\" y \"column\" [where \"column\" equals \"exact value\"] [source \"name\"] [name \"curve\"] [plot \"name\"]",
+    "post plot add field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] x \"column\" y \"column\" [where \"column\" equals \"value\"] [source \"name\"] [name \"curve\"] [plot \"name\"]",
     "post plot curve {show|hide|remove} \"curve\" [plot \"name\"]",
     "post plot axes auto [plot \"name\"]","post plot axes range x MIN MAX y MIN MAX [plot \"name\"]",
     "post plot export csv \"new-file.csv\" [plot \"name\"]"};
@@ -62,6 +68,8 @@ bool PostPlotCommand::execute(CubitCommandData& data)
     data.get_string("target",target);
     data.get_string("curve_name",name);
     data.get_string("source_name",source);
+    std::string tableTarget;
+    const bool tableInput = data.get_string("table_name",tableTarget);
     bool accepted = false;
     if (data.find_keyword("CREATE"))
     {
@@ -95,7 +103,7 @@ bool PostPlotCommand::execute(CubitCommandData& data)
       accepted = active->change_plot_curve(plot,name,data.find_keyword("REMOVE") ? "remove" :
         data.find_keyword("HIDE") ? "hide" : "show",error);
     }
-    else if (data.find_keyword("ADD") && data.find_keyword("TABLE"))
+    else if (data.find_keyword("ADD") && tableInput)
     {
       std::string table, x, y, column, value;
       data.get_string("table_name",table);
@@ -103,7 +111,16 @@ bool PostPlotCommand::execute(CubitCommandData& data)
       data.get_string("y_column",y);
       data.get_string("filter_column",column);
       data.get_string("filter_value",value);
-      accepted = active->add_plot_table(plot,name,source,table,x,y,column,value,error);
+      const bool field = data.find_keyword("FIELD");
+      Postprocessor::TableQualifiers tableQualifiers;
+      Postprocessor::FieldQualifiers fieldQualifiers;
+      if (!(field ? Postprocessor::read_field_qualifiers(data,fieldQualifiers,error) :
+            Postprocessor::read_table_qualifiers(data,tableQualifiers,error)))
+      {
+        PRINT_ERROR("Cannot select table: %s\n",error.c_str());
+        return false;
+      }
+      accepted = active->add_plot_table(plot,name,source,table,x,y,column,value,error,tableQualifiers,field,fieldQualifiers);
     }
     else if (data.find_keyword("ADD"))
     {
@@ -159,6 +176,12 @@ bool PostPlotCommand::execute(CubitCommandData& data)
       }
       data.get_string("field_name",field);
       data.get_string("component_name",component);
+      Postprocessor::FieldQualifiers qualifiers;
+      if (!Postprocessor::read_field_qualifiers(data,qualifiers,error))
+      {
+        PRINT_ERROR("Cannot select field: %s\n",error.c_str());
+        return false;
+      }
       const bool magnitude = data.find_keyword("MAGNITUDE");
       if (magnitude)
       {
@@ -166,7 +189,7 @@ bool PostPlotCommand::execute(CubitCommandData& data)
       }
       const auto reduction = data.find_keyword("MINIMUM") ? Postprocessor::PlotReduction::Minimum :
         data.find_keyword("MAXIMUM") ? Postprocessor::PlotReduction::Maximum : Postprocessor::PlotReduction::None;
-      accepted = active->add_plot_entity(plot,name,source,dataset,kind,id,ip,field,component,magnitude,reduction,error);
+      accepted = active->add_plot_entity(plot,name,source,dataset,kind,id,ip,field,component,magnitude,reduction,error,qualifiers);
     }
     else
     {

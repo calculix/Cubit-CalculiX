@@ -6,6 +6,7 @@
 #include "../representations/Representation.hpp"
 #include "../views/ViewDefinition.hpp"
 #include "../plots/PlotDefinition.hpp"
+#include "../filters/FilterDefinition.hpp"
 
 #include <map>
 #include <utility>
@@ -30,6 +31,7 @@ namespace Postprocessor
       {"view1", ViewDefinition{"view1", "3D View 1", std::nullopt}}
     };
     std::map<std::string, Representation> representations;
+    std::map<std::string, FilterDefinition> filters;
     std::map<std::string, PlotDefinition> plots;
     std::string active_plot_id;
     std::uint64_t plot_revision = 1;
@@ -49,6 +51,7 @@ namespace Postprocessor
       noexcept(sources.swap(other.sources)) &&
       noexcept(views.swap(other.views)) &&
       noexcept(representations.swap(other.representations)) &&
+      noexcept(filters.swap(other.filters)) &&
       noexcept(plots.swap(other.plots)) &&
       noexcept(active_plot_id.swap(other.active_plot_id)) &&
       noexcept(layout.root_node_id.swap(other.layout.root_node_id)) &&
@@ -60,6 +63,7 @@ namespace Postprocessor
       sources.swap(other.sources);
       views.swap(other.views);
       representations.swap(other.representations);
+      filters.swap(other.filters);
       plots.swap(other.plots);
       active_plot_id.swap(other.active_plot_id);
       std::swap(plot_revision,other.plot_revision);

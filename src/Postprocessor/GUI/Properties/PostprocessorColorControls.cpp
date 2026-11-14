@@ -1,4 +1,5 @@
 #include "PostprocessorColorControls.hpp"
+#include "Postprocessor/Commands/FieldCommandText.hpp"
 #include <QComboBox>
 #include <utility>
 #include <QHBoxLayout>
@@ -94,14 +95,38 @@ void PostprocessorColorControls::publish()
     return;
   }
   const auto& field = catalogue[static_cast<std::size_t>(entry)].field;
-  const auto fieldArg = quote(field.array_name);
+  const auto active = application.lock();
+  if (!active)
+  {
+    return;
+  }
+  std::string sourceId, error;
+  for (const auto& entry : active->session().sources)
+  {
+    if (entry.second.name == source)
+    {
+      sourceId = entry.first;
+      break;
+    }
+  }
+  const bool magnitude = components->currentData().toBool();
+  const auto& group = catalogue[static_cast<std::size_t>(entry)];
+  Postprocessor::FieldSelection selected{std::nullopt,field.array_name,field.association,
+    magnitude ? std::string{} : components->currentText().toUtf8().toStdString(),magnitude,group.key};
+  Postprocessor::ResultFieldSelector selector;
+  if (!active->readable_field(sourceId,selected,selector,error))
+  {
+    PRINT_ERROR("Cannot journal result field: %s\n",error.c_str());
+    return;
+  }
+  const auto fieldArg = Postprocessor::field_command_text(selector);
   const auto componentArg = components->currentData().toBool() ? QStringLiteral("magnitude") : quote(components->currentText().toUtf8().toStdString());
   if (fieldArg.isEmpty() || componentArg.isEmpty())
   {
     PRINT_ERROR("This field/component cannot be represented as a quoted command argument.\n");
     return;
   }
-  submit("post color field " + fieldArg + " component " + componentArg + " source " + sourceArg);
+  submit("post color " + fieldArg + " component " + componentArg + " source " + sourceArg);
 }
 void PostprocessorColorControls::refresh()
 {
@@ -123,8 +148,7 @@ void PostprocessorColorControls::refresh()
       for (const auto& entry : session.representations)
       {
         const auto& display = entry.second;
-        if (display.input.owner == Postprocessor::OutputOwner::Source && display.input.object_id == item->first &&
-            display.input.port == 0 && display.view_id == session.active_view_id && data && display.increment_index < data->increments.size())
+        if (active->display_matches_source(display,item->first,session.active_view_id) && data && display.increment_index < data->increments.size())
         {
           catalogue = active->field_groups(item->first,display.increment_index);
           coloring = display.coloring;
@@ -224,8 +248,7 @@ void PostprocessorColorControls::apply_field(const QString& name, std::size_t fi
     for (const auto& item : session.representations)
     {
       const auto& display = item.second;
-      if (display.input.owner != Postprocessor::OutputOwner::Source || display.input.object_id != entry.first ||
-          display.input.port != 0 || display.view_id != session.active_view_id || !data ||
+      if (!active->display_matches_source(display,entry.first,session.active_view_id) || !data ||
           display.increment_index >= data->increments.size())
       {
         continue;
@@ -245,7 +268,17 @@ void PostprocessorColorControls::apply_field(const QString& name, std::size_t fi
       {
         return;
       }
-      const auto fieldArg = quote(field.array_name);
+      const bool magnitude = field.vector_components.has_value();
+      Postprocessor::FieldSelection selected{std::nullopt,field.array_name,field.association,
+        magnitude ? std::string{} : field.components.front(),magnitude,group.key};
+      Postprocessor::ResultFieldSelector selector;
+      std::string error;
+      if (!active->readable_field(entry.first,selected,selector,error))
+      {
+        PRINT_ERROR("Cannot journal result field: %s\n",error.c_str());
+        return;
+      }
+      const auto fieldArg = Postprocessor::field_command_text(selector);
       const auto sourceArg = quote(entry.second.name);
       const auto componentArg = field.vector_components ? QStringLiteral("magnitude") : quote(field.components.front());
       if (fieldArg.isEmpty() || sourceArg.isEmpty() || componentArg.isEmpty())
@@ -253,7 +286,7 @@ void PostprocessorColorControls::apply_field(const QString& name, std::size_t fi
         PRINT_ERROR("The field/source/component cannot be represented as a quoted command argument.\n");
         return;
       }
-      submit("post color field " + fieldArg + " component " + componentArg + " source " + sourceArg);
+      submit("post color " + fieldArg + " component " + componentArg + " source " + sourceArg);
       return;
     }
   }

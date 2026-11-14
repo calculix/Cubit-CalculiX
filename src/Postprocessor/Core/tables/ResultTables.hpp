@@ -23,6 +23,8 @@ namespace Postprocessor
   {
     std::string key, name, category;
     bool global = false;
+    std::string type;
+    std::size_t entry = 1;
   };
   struct ResultTablePart
   {

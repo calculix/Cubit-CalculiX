@@ -22,8 +22,7 @@ namespace Postprocessor
       for (const auto& entry : state.representations)
       {
         const auto& display = entry.second;
-        if (display.input.owner != OutputOwner::Source || display.input.object_id != source_id ||
-            display.input.port != 0 || display.view_id != view_id)
+        if (!display_matches_source(display,source_id,view_id))
         {
           continue;
         }
@@ -46,6 +45,16 @@ namespace Postprocessor
             {
               error = "Deformation requires an available point-associated displacement vector.";
             }
+            return false;
+          }
+        }
+        auto candidate = display;
+        candidate.deformation = value;
+        if (candidate.input.owner == OutputOwner::Feature)
+        {
+          std::shared_ptr<const EvaluatedOutput> evaluated;
+          if (!evaluate_output(candidate,evaluated,error))
+          {
             return false;
           }
         }

@@ -19,6 +19,7 @@ See :doc:`../developer/postprocessor-verification` for the acceptance checklist.
    selection
    annotations
    plots
+   filters
    capture
    tables
    ../developer/postprocessor

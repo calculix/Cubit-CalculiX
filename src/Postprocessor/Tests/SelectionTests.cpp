@@ -1,6 +1,8 @@
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "AnnotationTests.hpp"
 #include "PlotTests.hpp"
+#include "FieldSelectorTests.hpp"
+#include "TableSelectorTests.hpp"
 #include "CaptureTests.hpp"
 #include "Postprocessor/Commands/selection/PickCommandText.hpp"
 #include "Postprocessor/GUI/Viewport/PostprocessorScene.hpp"
@@ -210,6 +212,8 @@ int main(int argc,char** argv)
   std::string error;
   check(app->open_job("fake",1,std::nullopt,error),"Cannot open probe fixture");
   check(app->color_field("Model","stress","SXX",false,0,error),"Cannot set probe field");
+  failures += field_selector_cases(app);
+  failures += table_selector_cases(app);
   failures += annotation_cases(app);
   failures += plot_cases(app);
   failures += capture_cases(app);

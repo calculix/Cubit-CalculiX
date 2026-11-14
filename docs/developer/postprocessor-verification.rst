@@ -735,3 +735,66 @@ command targets on Windows and Linux with the installed Cubit VTK backend:
   user Figures must remain identical to the original snapshots and retain provenance.
 * Reject insertion without a generated Report; provider/validation failures must
   preserve the old document. Check figure-count and report-session size limits.
+
+User-reported capture verification
+----------------------------------
+
+On 2026-11-14 the user confirmed viewport capture with deformation, legend, triad
+and result labels; plot capture with legend and active-frame marker; and insertion
+of both into Report, project save/reopen and regeneration with unchanged figures.
+This is user-reported native verification of the exercised build, not an agent-run
+build/test or confirmation of every backend/export option on both platforms.
+
+Readable spatial field journals (not built or run)
+-------------------------------------------------
+
+Regression cases cover name-only commands, minimal origin/association qualifiers,
+component and dataset scoping, catalogue reordering, ambiguous-selector rejection,
+old encoded-key/array-name replay, unchanged coloring identity, and history command
+generation without internal group keys. Native acceptance should replay generated
+plot/label/color/deformation commands after changing frames and reopening sources,
+including duplicate FRD/DAT names and element histories with nodal reduction.
+
+Human-readable table journals (not built or run)
+----------------------------------------------
+
+Regression cases cover unique table-family names, scope/type/entry collisions,
+empty type metadata, catalogue reordering, unchanged legacy key spelling and
+replay, readable native and field-table command generation, failed resolution
+leaving the view intact, spatial row plotting with exact IDs, mixed-entity history
+rejection, cache identity and strict optional field-table flag persistence.
+
+Native acceptance should exercise tree context menus, table double-click and
+switching from Plot back to Table. Repeat after frame changes and project reopen.
+Plot a native DAT/VTT table and a spatial field table: journal targets must use
+names and only the necessary qualifiers, and replay must select the same identity.
+Duplicate native tables must request explicit qualifiers; invalid/missing targets
+must not create a new plot. Test both Windows and Linux. No build, compilation or
+C++ tests were run for this patch.
+
+Plane filter acceptance (not yet executed)
+-----------------------------------------
+
+* Open a linear and a quadratic hexahedral result. Create a positive clip,
+  reverse its side and create a section. Check original mesh edges without
+  subdivision diagonals. Moving the plane beyond the model produces an empty
+  output without modifying the input.
+* Check original node/element IDs, hover, labels and history plots on retained
+  entities. Generated intersection vertices must not acquire solver node IDs.
+  Invalid nodal values remain invalid after interpolation.
+* Enable deformation, change frames/scale and compare viewport, fit bounds and
+  PNG capture. The plane remains in displayed coordinates. Confirm integration
+  points clip as points and produce no section surface.
+* Change filter visibility in a second view. Plane parameters are shared, while
+  frame, display settings and visibility remain per view.
+* Save/reopen, including a project with an unavailable external source. Preserve
+  filter settings and cameras. Close the source and reset; no derived actors or
+  cached outputs should remain.
+* Check numeric GUI actions produce readable journal commands and can be replayed.
+  Editing plane outlines must not appear in saved PNG/report figures.
+* Run ``postprocessor_filters`` when compilation is authorized. It covers plane
+  validation, linear/quadratic clipping and sections, empty output, exact 64-bit
+  identities, immutable input, caching, persistence, visibility and lifecycle.
+
+No native build, SDK adapter preparation or native test execution was performed
+for this patch. Windows and Linux runtime verification remain required.

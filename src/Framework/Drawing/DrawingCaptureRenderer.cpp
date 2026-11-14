@@ -2,6 +2,7 @@
 #include "CubitColorTable.hpp"
 #include <QBuffer>
 #include <QCoreApplication>
+#include <QColor>
 #include <QGuiApplication>
 #include <QImage>
 #include <QPainter>
@@ -26,6 +27,7 @@
 #include <cstring>
 #include <limits>
 #include <map>
+#include <tuple>
 #include <utility>
 
 namespace
@@ -41,6 +43,18 @@ void vtkFailure(vtkObject*, unsigned long, void* client, void* message)
 
 bool rgb(const std::string& name, double* color)
 {
+  if (name.size() == 7 && name.front() == '#')
+  {
+    const QColor value(QString::fromStdString(name));
+    if (!value.isValid())
+    {
+      return false;
+    }
+    color[0] = value.redF();
+    color[1] = value.greenF();
+    color[2] = value.blueF();
+    return true;
+  }
   int id = -1;
   return CubitColorTable::string_to_color_id(name.c_str(), id) && CubitColorTable::color_id_to_rgb(id, color);
 }
@@ -70,8 +84,7 @@ bool validPrimitive(const DrawingPrimitive& primitive)
       return false;
     }
   }
-  double color[3];
-  return rgb(primitive.color, color);
+  return true;
 }
 
 bool cameraDirection(DrawingCaptureView view, std::array<double, 3>& direction, std::array<double, 3>& up)
@@ -86,6 +99,7 @@ bool cameraDirection(DrawingCaptureView view, std::array<double, 3>& direction, 
     case DrawingCaptureView::Right: direction = {1, 0, 0}; return true;
     case DrawingCaptureView::Top: direction = {0, 0, 1}; up = {0, 1, 0}; return true;
     case DrawingCaptureView::Bottom: direction = {0, 0, -1}; up = {0, -1, 0}; return true;
+    case DrawingCaptureView::Workspace: return true;
   }
   return false;
 }
@@ -116,8 +130,13 @@ bool DrawingCaptureRenderer::render(const DrawingFrame& frame, const DrawingCapt
     error = "Invalid capture dimensions, camera or background. Use 64..8192 pixels per side, at most 32 million pixels.";
     return false;
   }
+  if (request.view == DrawingCaptureView::Workspace && !frame.camera.valid())
+  {
+    error = "The capture has no valid saved workspace camera. Select an explicit view or regenerate the setup snapshot.";
+    return false;
+  }
   // Group by kind and color: actor count does not grow with mesh element count.
-  std::map<std::pair<DrawingPrimitiveKind, std::string>, std::vector<const DrawingPrimitive*>> batches;
+  std::map<std::tuple<DrawingPrimitiveKind, std::string, bool>, std::vector<const DrawingPrimitive*>> batches;
   std::vector<const DrawingPrimitive*> labels;
   double bounds[6] = {std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(),
     std::numeric_limits<double>::max(), std::numeric_limits<double>::lowest(),
@@ -136,7 +155,13 @@ bool DrawingCaptureRenderer::render(const DrawingFrame& frame, const DrawingCapt
       {
         if (!validPrimitive(primitive))
         {
-          error = "Capture scene contains invalid geometry, text or colors.";
+          error = "Capture entity " + entity.key.kind + " " + std::to_string(entity.key.id) + " contains invalid geometry or text.";
+          return false;
+        }
+        double color[3];
+        if (!rgb(primitive.color, color))
+        {
+          error = "Unknown capture color '" + primitive.color + "' in entity " + entity.key.kind + " " + std::to_string(entity.key.id) + ".";
           return false;
         }
         if (primitive.kind == DrawingPrimitiveKind::Label)
@@ -145,7 +170,7 @@ bool DrawingCaptureRenderer::render(const DrawingFrame& frame, const DrawingCapt
         }
         else
         {
-          batches[{primitive.kind, primitive.color}].push_back(&primitive);
+          batches[{primitive.kind, primitive.color, frame.shadedModelMesh && entity.layer == "model"}].push_back(&primitive);
           haveGeometry = true;
         }
         for (const auto& point : primitive.points)
@@ -198,7 +223,7 @@ bool DrawingCaptureRenderer::render(const DrawingFrame& frame, const DrawingCapt
     }
     vtkNew<vtkPolyData> data;
     data->SetPoints(points);
-    switch (batch.first.first)
+    switch (std::get<0>(batch.first))
     {
       case DrawingPrimitiveKind::Point: data->SetVerts(cells); break;
       case DrawingPrimitiveKind::Line: data->SetLines(cells); break;
@@ -212,23 +237,49 @@ bool DrawingCaptureRenderer::render(const DrawingFrame& frame, const DrawingCapt
     vtkNew<vtkActor> actor;
     actor->SetMapper(mapper);
     double color[3];
-    rgb(batch.first.second, color);
+    rgb(std::get<1>(batch.first), color);
     actor->GetProperty()->SetColor(color);
-    actor->GetProperty()->LightingOff();
+    if (std::get<2>(batch.first) && std::get<0>(batch.first) == DrawingPrimitiveKind::Polygon)
+    {
+      actor->GetProperty()->LightingOn();
+      actor->GetProperty()->SetInterpolationToFlat();
+      actor->GetProperty()->SetAmbient(0.3);
+      actor->GetProperty()->SetDiffuse(0.7);
+      actor->GetProperty()->EdgeVisibilityOn();
+      actor->GetProperty()->SetEdgeColor(0, 0, 0);
+    }
+    else
+    {
+      actor->GetProperty()->LightingOff();
+    }
     actor->GetProperty()->SetPointSize(4);
     actor->GetProperty()->SetLineWidth(1.5);
     renderer->AddActor(actor);
   }
-  // Parallel projection produces reproducible engineering views. Direction
-  // vectors are camera positions relative to the model center; Z is up except
-  // for top/bottom. ResetCamera fits the supplied bounds to the image aspect.
+  // Workspace mode preserves pose/projection/scale. Explicit standard views
+  // use a fitted parallel camera; neither path changes the native viewport.
   auto* camera = renderer->GetActiveCamera();
-  camera->ParallelProjectionOn();
-  camera->SetPosition(direction.data());
-  camera->SetFocalPoint(0, 0, 0);
-  camera->SetViewUp(up.data());
-  renderer->ResetCamera(bounds);
-  camera->SetParallelScale(camera->GetParallelScale() * 1.15);
+  if (request.view == DrawingCaptureView::Workspace)
+  {
+    const auto& saved = frame.camera;
+    camera->SetPosition(saved.position.data());
+    camera->SetFocalPoint(saved.focalPoint.data());
+    camera->SetViewUp(saved.up.data());
+    camera->SetParallelProjection(saved.parallel);
+    camera->SetParallelScale(saved.parallelScale);
+    camera->SetViewAngle(saved.viewAngle);
+    camera->SetUseHorizontalViewAngle(saved.horizontalAngle);
+    camera->SetWindowCenter(saved.windowCenter[0], saved.windowCenter[1]);
+  }
+  else
+  {
+    camera->ParallelProjectionOn();
+    camera->SetPosition(direction.data());
+    camera->SetFocalPoint(0, 0, 0);
+    camera->SetViewUp(up.data());
+    renderer->ResetCamera(bounds);
+    camera->SetParallelScale(camera->GetParallelScale() * 1.15);
+  }
   renderer->ResetCameraClippingRange(bounds);
   window->Render();
   if (!error.empty() || !gl->GetInitialized())

@@ -10,7 +10,7 @@ std::vector<std::string> ccxCaptureCommand::get_syntax()
 {
   return {"ccx capture {model|setup|loads|bcs}"
     " [step <value:label='capture_step'>]"
-    " [view {iso|front|back|left|right|top|bottom}]"
+    " [view {workspace|iso|front|back|left|right|top|bottom}]"
     " [labels {on|off}]"
     " [width <value:label='capture_width'>]"
     " [height <value:label='capture_height'>]"
@@ -19,14 +19,14 @@ std::vector<std::string> ccxCaptureCommand::get_syntax()
 
 std::vector<std::string> ccxCaptureCommand::get_syntax_help()
 {
-  return {"ccx capture {model|setup|loads|bcs} [step <id>] [view {iso|front|back|left|right|top|bottom}]"
+  return {"ccx capture {model|setup|loads|bcs} [step <id>] [view {workspace|iso|front|back|left|right|top|bottom}]"
     " [labels {on|off}] [width <pixels>] [height <pixels>] file \"<path.png>\" [overwrite]"};
 }
 
 std::vector<std::string> ccxCaptureCommand::get_help()
 {
   return {"Capture the current undeformed meshed model and its load/BC setup without changing the visible workspace."
-    " Defaults: 1920 x 1080, white background, fitted isometric view and black labels."
+    " Defaults: 1920 x 1080, white background, workspace camera, block colors, mesh edges and black labels."
     " Step uses resolved reference conditions; amplitudes are not evaluated."
     " Dimensions must be integers in 64..8192, at most 32 million pixels."
     " Existing PNG files require overwrite. This does not capture a historical job model or results."};
@@ -76,7 +76,7 @@ bool ccxCaptureCommand::execute(CubitCommandData& data)
     PRINT_ERROR("Capture supports at most 32 million pixels.\n");
     return false;
   }
-  for (const auto& view : {std::pair<const char*, DrawingCaptureView>{"ISO", DrawingCaptureView::Isometric},
+  for (const auto& view : {std::pair<const char*, DrawingCaptureView>{"WORKSPACE", DrawingCaptureView::Workspace}, {"ISO", DrawingCaptureView::Isometric},
       {"FRONT", DrawingCaptureView::Front}, {"BACK", DrawingCaptureView::Back}, {"LEFT", DrawingCaptureView::Left},
       {"RIGHT", DrawingCaptureView::Right}, {"TOP", DrawingCaptureView::Top}, {"BOTTOM", DrawingCaptureView::Bottom}})
   {

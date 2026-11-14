@@ -79,6 +79,34 @@ void PostprocessorScene::build_highlight(const Postprocessor::EntityReference& e
   const PostprocessorApplicationInterface& application, vtkSmartPointer<vtkActor>& actor,
   const std::array<double,3>& color)
 {
+  const auto active = application.session().representations.find(application.session().active_representation_id);
+  if (entity.kind == Postprocessor::EntityKind::Element && active != application.session().representations.end() &&
+      active->second.view_id == viewId && active->second.input.owner == Postprocessor::OutputOwner::Feature &&
+      application.output_source(active->second.input) == entity.source_id)
+  {
+    std::string error;
+    const auto lines = application.filtered_entity_edges(active->second,entity,error);
+    if (!lines || lines->GetNumberOfCells() == 0)
+    {
+      return;
+    }
+    auto mapper = vtkSmartPointer<vtkOpenGLPolyDataMapper>::New();
+    mapper->SetInputData(lines.get());
+    mapper->ScalarVisibilityOff();
+    if (!actor)
+    {
+      actor = vtkSmartPointer<vtkOpenGLActor>::New();
+      actor->PickableOff();
+      actor->UseBoundsOff();
+      renderer->AddActor(actor);
+    }
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetColor(color[0],color[1],color[2]);
+    actor->GetProperty()->SetLineWidth(Postprocessor::SelectionDefaults::highlight_line_width);
+    actor->GetProperty()->LightingOff();
+    actor->VisibilityOn();
+    return;
+  }
   auto points = vtkSmartPointer<vtkPoints>::New();
   points->SetDataTypeToDouble();
   auto vertices = vtkSmartPointer<vtkCellArray>::New();
@@ -100,12 +128,13 @@ void PostprocessorScene::build_highlight(const Postprocessor::EntityReference& e
         continue;
       }
       std::string error;
-      for (auto index : Postprocessor::entity_indices(surface.input,entity,error))
+      auto* input = entity.kind == Postprocessor::EntityKind::Node && surface.node_data ? static_cast<vtkDataSet*>(surface.node_data.GetPointer()) : surface.input;
+      for (auto index : Postprocessor::entity_indices(input,entity,error))
       {
         if (entity.kind != Postprocessor::EntityKind::Element)
         {
           double position[3];
-          surface.input->GetPoint(static_cast<vtkIdType>(index),position);
+          input->GetPoint(static_cast<vtkIdType>(index),position);
           const auto id = points->InsertNextPoint(position);
           vertices->InsertNextCell(1,&id);
         }

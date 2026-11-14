@@ -1,4 +1,6 @@
 #include "PostprocessorPlotControls.hpp"
+#include "Postprocessor/Commands/tables/TableCommandText.hpp"
+#include <QMessageBox>
 #include <utility>
 #include "Postprocessor/Commands/plots/PlotCommandText.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -15,9 +17,11 @@ void add_plot_context_actions(QMenu& menu,const PostprocessorApplicationInterfac
   using namespace Postprocessor;
   const auto add = [&](const QString& title,PlotReduction reduction)
   {
-    const auto commands = plot_entity_commands(application,entity,reduction);
+    std::string error;
+    const auto commands = plot_entity_commands(application,entity,reduction,&error);
     auto* action = menu.addAction(title);
     action->setEnabled(!commands.empty());
+    action->setToolTip(QString::fromUtf8(error.c_str()));
     QObject::connect(action,&QAction::triggered,&menu,[commands,submit]()
     {
       for (const auto& command : commands)
@@ -105,6 +109,21 @@ void plot_table_dialog(QWidget* parent,const PostprocessorApplicationInterface& 
   {
     return;
   }
+  std::string error;
+  const auto selector = table_selector_text(application,reference,error);
+  const auto sourceArg = plot_quote(sourceName);
+  const auto xArg = plot_quote(x->currentText().toUtf8().toStdString());
+  const auto yArg = plot_quote(y->currentText().toUtf8().toStdString());
+  const auto filterArg = filter->currentIndex() > 0 ? plot_quote(filter->currentText().toUtf8().toStdString()) : QString();
+  const auto valueArg = value->text().isEmpty() ? QStringLiteral("\"\"") : plot_quote(value->text().toUtf8().toStdString());
+  if (selector.isEmpty() || sourceArg.isEmpty() || xArg.isEmpty() || yArg.isEmpty() ||
+      (filter->currentIndex() > 0 && (filterArg.isEmpty() || valueArg.isEmpty())) ||
+      application.result_data(reference.source_id) != data.owner)
+  {
+    QMessageBox::warning(parent,QObject::tr("Plot table columns"),error.empty() ?
+      QObject::tr("The table changed or its command arguments cannot be quoted. Reopen it before plotting.") : QString::fromUtf8(error.c_str()));
+    return;
+  }
   std::string plotName;
   const auto id = plot->currentData().toString().toStdString();
   if (!id.empty())
@@ -126,11 +145,11 @@ void plot_table_dialog(QWidget* parent,const PostprocessorApplicationInterface& 
     }
     submit(QStringLiteral("post plot create ")+plot_quote(plotName));
   }
-  auto command = QStringLiteral("post plot add table ")+plot_quote(reference.key)+
-    " x "+plot_quote(x->currentText().toUtf8().toStdString())+" y "+plot_quote(y->currentText().toUtf8().toStdString());
+  auto command = QString(reference.field ? "post plot add field " : "post plot add table ")+selector+
+    " x "+xArg+" y "+yArg;
   if (filter->currentIndex() > 0)
   {
-    command += " where "+plot_quote(filter->currentText().toUtf8().toStdString())+" equals "+plot_quote(value->text().toUtf8().toStdString());
+    command += " where "+filterArg+" equals "+valueArg;
   }
   std::size_t number = 1;
   const auto selectedPlot = plots.find(id);
@@ -141,6 +160,6 @@ void plot_table_dialog(QWidget* parent,const PostprocessorApplicationInterface& 
   {
     ++number;
   }
-  command += " source "+plot_quote(sourceName)+" name "+plot_quote("curve_"+std::to_string(number))+" plot "+plot_quote(plotName);
+  command += " source "+sourceArg+" name "+plot_quote("curve_"+std::to_string(number))+" plot "+plot_quote(plotName);
   submit(command);
 }

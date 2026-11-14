@@ -128,7 +128,7 @@ namespace Postprocessor
       {
         auto& display = item.second;
         display.animation.playing = false;
-        const auto loaded = runtime.find(display.input.object_id);
+        const auto loaded = runtime.find(output_source(display.input));
         const auto previous = saved_bindings.find(item.first);
         auto binding = previous == saved_bindings.end() ? SavedRepresentationBinding{} : previous->second;
         if (loaded != runtime.end() && loaded->second.data)
@@ -198,7 +198,9 @@ namespace Postprocessor
     for (auto& item : project.session.representations)
     {
       auto& display = item.second;
-      auto& loaded = prepared.runtime.at(display.input.object_id);
+      const auto source = display.input.owner == OutputOwner::Source ? display.input.object_id :
+        project.session.filters.at(display.input.object_id).input.object_id;
+      auto& loaded = prepared.runtime.at(source);
       display.animation.playing = false;
       if (!loaded.data)
       {
@@ -360,6 +362,7 @@ namespace Postprocessor
     }
     // Every allocation and validation is complete before publishing containers.
     next_source_number = next;
+    filter_cache.clear();
     state.swap(prepared.definitions.session);
     runtime.swap(prepared.runtime);
     saved_bindings.swap(prepared.definitions.bindings);

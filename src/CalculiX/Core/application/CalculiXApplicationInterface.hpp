@@ -33,6 +33,8 @@ public:
   bool init_completed(); // returns true after every init is true otherwise false
   bool gui_updated(); //returns if gui is updated, necessary because of time check in the observer
   bool set_gui_updated(bool status); //sets the bool if core the gui was updated
+  /// Opt-in flushed diagnostic event; disabled without the trace-file environment.
+  void trace_event(const char* event) const;
   bool block_core_update(); //returns the bool if the core should be updated
   bool set_block_core_update(bool status); //sets the bool if the should be updated
   bool block_gui_update(); //returns the bool if the gui should be updated

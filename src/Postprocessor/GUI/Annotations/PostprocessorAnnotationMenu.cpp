@@ -1,4 +1,5 @@
 #include "PostprocessorAnnotationMenu.hpp"
+#include "Postprocessor/Commands/FieldCommandText.hpp"
 #include "Postprocessor/GUI/Plots/PostprocessorPlotControls.hpp"
 #include <utility>
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -22,8 +23,12 @@ QString annotation_quote(const std::string& value)
   return QString::fromStdString(std::string(1,delimiter)+value+delimiter);
 }
 QString annotation_add_command(const PostprocessorApplicationInterface& application,
-  const std::string& viewId, const Postprocessor::EntityReference& entity)
+  const std::string& viewId, const Postprocessor::EntityReference& entity,std::string* issue)
 {
+  if (issue)
+  {
+    issue->clear();
+  }
   const auto view = application.session().views.find(viewId);
   if (view == application.session().views.end())
   {
@@ -47,18 +52,28 @@ QString annotation_add_command(const PostprocessorApplicationInterface& applicat
   for (const auto& item : application.session().representations)
   {
     const auto& display = item.second;
-    if (display.view_id == viewId && display.input.owner == Postprocessor::OutputOwner::Source &&
-        display.input.object_id == entity.source_id && display.coloring.field)
+    if (application.display_matches_source(display,entity.source_id,viewId) && display.coloring.field)
     {
       const auto& field = *display.coloring.field;
-      const auto fieldName = annotation_quote(field.group_key.empty() ? field.array_name : field.group_key);
+      auto selected = field;
+      selected.dataset_id = entity.dataset_id;
+      Postprocessor::ResultFieldSelector selector;
+      if (!application.readable_field(entity.source_id,selected,selector,error))
+      {
+        if (issue)
+        {
+          *issue = error;
+        }
+        return {};
+      }
+      const auto fieldName = Postprocessor::field_command_text(selector);
       const auto component = field.magnitude ? QStringLiteral("magnitude") : annotation_quote(field.component);
       if (fieldName.isEmpty() || component.isEmpty() || annotation_quote(viewId).isEmpty())
       {
         return {};
       }
       return QStringLiteral("post label add ")+annotation_quote(name)+" "+QString::fromStdString(pick.substr(10))+
-        " field "+fieldName+" component "+component+" view "+annotation_quote(viewId);
+        " "+fieldName+" component "+component+" view "+annotation_quote(viewId);
     }
   }
   return {};
@@ -80,9 +95,11 @@ void show_annotation_menu(QWidget* parent, const QPoint& globalPosition,
   if (entity)
   {
     add_plot_context_actions(menu,application,*entity,submit);
-    const auto command = annotation_add_command(application,viewId,*entity);
+    std::string fieldError;
+    const auto command = annotation_add_command(application,viewId,*entity,&fieldError);
     auto* add = menu.addAction(QObject::tr("Create result label"));
     add->setEnabled(!command.isEmpty());
+    add->setToolTip(QString::fromUtf8(fieldError.c_str()));
     QObject::connect(add,&QAction::triggered,&menu,[submit,command]()
     {
       submit(command);

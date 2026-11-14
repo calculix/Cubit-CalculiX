@@ -39,9 +39,14 @@ also supported::
    report profile save "Standard"
    report update
 
-Camera values are ``iso``, ``front``, ``back``, ``left``, ``right``, ``top`` and
+Camera values are ``workspace`` (the default), ``iso``, ``front``, ``back``, ``left``, ``right``, ``top`` and
 ``bottom``. Dimensions must be integers in 64..8192; the combined limit is 32
 million pixels. The image provider checks that combined limit before collection.
+Current-model images use the current workspace camera and native Cubit block
+colors, shaded faces and mesh edges. Job images use colors and camera frozen at
+launch, alongside the exported mesh. Explicit camera choices override the saved
+camera. Existing profiles that specify ``iso`` continue to request that view;
+select ``workspace`` in the image settings to use the new behavior.
 The report supports at most 256 setup captures and 128 MiB of their embedded
 base64 image data.
 
@@ -91,7 +96,7 @@ Implementation and verification
 mapping. ``CalculiXReportImageProvider`` implements collection and single-image
 rendering through the existing framework provider registry. Generic Report option
 metadata describes choices and integer ranges; Report GUI/Core do not interpret
-CalculiX step or feature types. The CalculiX template revision is 2; no development
+CalculiX step or feature types. The CalculiX template revision is 3; no development
 profile migration is added.
 
 Regression cases cover image-provider collection failure, replacement without

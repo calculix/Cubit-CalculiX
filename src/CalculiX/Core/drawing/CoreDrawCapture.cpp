@@ -5,6 +5,7 @@
 #include "CalculiXDrawLabels.hpp"
 #include "CalculiXDrawingAdapter.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
+#include "Core/mesh/CalculiXMeshInterface.hpp"
 #include "CubitInterface.hpp"
 #include <QCoreApplication>
 #include <QThread>
@@ -70,23 +71,36 @@ bool CoreDrawCapture::buildFrame(CalculiXCore& core, const CalculiXCaptureReques
   try
   {
     DrawingFrame frame;
+    frame.shadedModelMesh = true;
     frame.style = {"black", "black"};
     frame.layers["model"] = {true, false};
     frame.layers[drawing_group_name(DrawGroup::Loads)] = {true, false};
     frame.layers[drawing_group_name(DrawGroup::BoundaryConditions)] = {true, false};
     frame.selection = {};
     frame.pickingEnabled = false;
-    DrawingGeometry mesh;
-    // Current undeformed FE mesh only. Reuse the existing element corner-face
-    // builder; curved/high-order faces are represented by corner polygons.
-    for (const auto* type : {"hex", "tet", "wedge", "pyramid", "face", "edge"})
+    if (request.image.view == DrawingCaptureView::Workspace && !DrawingCaptureCamera::current(frame.camera, error))
     {
-      for (int id : CubitInterface::parse_cubit_list(type, "all"))
+      return false;
+    }
+    DrawingGeometry mesh;
+    // Same membership and native colors as draw block all. Unassigned mesh is
+    // intentionally excluded. High-order faces still use corner polygons.
+    for (int block : CubitInterface::parse_cubit_list("block", "all"))
+    {
+      std::string color;
+      if (!CalculiXMeshInterface().get_block_capture_color(block, color, error))
       {
-        if (!CoreDrawMeshGeometry::append(type, id, false, "lightgray", mesh))
+        return false;
+      }
+      for (const auto* type : {"hex", "tet", "wedge", "pyramid", "face", "edge"})
+      {
+        for (int id : CubitInterface::parse_cubit_list(type, "in block " + std::to_string(block)))
         {
-          error = std::string("Cannot capture mesh entity ") + type + " " + std::to_string(id) + ".";
-          return false;
+          if (!CoreDrawMeshGeometry::append(type, id, false, color, mesh))
+          {
+            error = std::string("Cannot capture mesh entity ") + type + " " + std::to_string(id) + ".";
+            return false;
+          }
         }
       }
     }

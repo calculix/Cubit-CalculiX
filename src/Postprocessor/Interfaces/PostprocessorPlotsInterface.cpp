@@ -7,7 +7,7 @@ bool PostprocessorApplicationInterface::create_plot(const std::string& name,std:
 bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotName,const std::string& name,
   const std::string& sourceName,const std::optional<DatasetSelector>& selector,Postprocessor::EntityKind kind,
   std::int64_t id,std::optional<std::int64_t> ip,const std::string& fieldName,const std::string& component,
-  bool magnitude,Postprocessor::PlotReduction reduction,std::string& error)
+  bool magnitude,Postprocessor::PlotReduction reduction,std::string& error,const Postprocessor::FieldQualifiers& qualifiers)
 {
   using namespace Postprocessor;
   error.clear();
@@ -35,6 +35,11 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
     }
   }
   std::optional<FieldSelection> field;
+  if (fieldName.empty() && (qualifiers.origin || qualifiers.association))
+  {
+    error = "Origin/association requires an explicit field name.";
+    return false;
+  }
   if (fieldName.empty())
   {
     const auto settings = coloring(sourceName,error);
@@ -45,22 +50,16 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
   }
   else
   {
-    for (const auto& group : core.field_groups(source,std::nullopt))
+    ResultFieldGroup group;
+    if (!resolve_result_field(core.field_groups(source,std::nullopt),{fieldName,qualifiers},dataset,
+        component,magnitude,false,group,error))
     {
-      if ((group.key == fieldName || group.field.name == fieldName || group.field.array_name == fieldName) &&
-          (!dataset || std::find(group.datasets.begin(),group.datasets.end(),*dataset) != group.datasets.end()))
-      {
-        if (field && field->group_key != group.key)
-        {
-          error = "Ambiguous field; specify its exact key and dataset.";
-          return false;
-        }
-        const bool useMagnitude = component.empty() ? group.field.vector_components.has_value() : magnitude;
-        field = FieldSelection{dataset,group.field.array_name,group.field.association,
-          useMagnitude ? std::string{} : component.empty() && !group.field.components.empty() ? group.field.components.front() : component,
-          useMagnitude,group.key};
-      }
+      return false;
     }
+    const bool useMagnitude = component.empty() ? group.field.vector_components.has_value() : magnitude;
+    field = FieldSelection{dataset,group.field.array_name,group.field.association,
+      useMagnitude ? std::string{} : component.empty() && !group.field.components.empty() ? group.field.components.front() : component,
+      useMagnitude,group.key};
   }
   if (!field)
   {
@@ -119,30 +118,43 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
 }
 bool PostprocessorApplicationInterface::add_plot_table(const std::string& plotName,const std::string& name,
   const std::string& sourceName,const std::string& tableName,const std::string& x,const std::string& y,
-  const std::string& column,const std::string& value,std::string& error)
+  const std::string& column,const std::string& value,std::string& error,
+  const Postprocessor::TableQualifiers& tableQualifiers,bool field,const Postprocessor::FieldQualifiers& fieldQualifiers)
 {
   const auto source = sourceName.empty() ? core.session().active_source_id : core.source_id_from_name(sourceName);
-  std::optional<std::string> key;
-  for (const auto& table : tables(source))
+  std::string key;
+  if (field)
   {
-    if (table.key == tableName || table.name == tableName)
+    Postprocessor::ResultFieldGroup selected;
+    if (tableQualifiers.global || tableQualifiers.type || tableQualifiers.entry ||
+        !Postprocessor::resolve_result_field(core.field_groups(source,std::nullopt),{tableName,fieldQualifiers},
+          std::nullopt,{},false,false,selected,error))
     {
-      if (key)
+      if (error.empty())
       {
-        error = "The table name is ambiguous; use its exact key.";
-        return false;
+        error = "Scope/type/entry apply to native tables.";
       }
-      key = table.key;
+      return false;
     }
+    key = selected.key;
   }
-  if (!key)
+  else
   {
-    error = "No table has that name/key.";
-    return false;
+    Postprocessor::ResultTableDescriptor selected;
+    if (fieldQualifiers.origin || fieldQualifiers.association ||
+        !Postprocessor::resolve_result_table(tables(source),{tableName,tableQualifiers},selected,error))
+    {
+      if (error.empty())
+      {
+        error = "Origin/association apply to spatial field tables.";
+      }
+      return false;
+    }
+    key = selected.key;
   }
   Postprocessor::PlotCurveDefinition curve;
   curve.name = name;
-  curve.input = Postprocessor::PlotTableReference{source,*key,x,y,column,value};
+  curve.input = Postprocessor::PlotTableReference{source,key,x,y,column,value,field};
   return core.add_plot_curve(core.plot_id_from_name(plotName),curve,error);
 }
 bool PostprocessorApplicationInterface::change_plot(const std::string& name,const std::string& action,

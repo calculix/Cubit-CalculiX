@@ -3,6 +3,7 @@
 
 #include "Framework/Interfaces/UserOption.hpp"
 #include "Postprocessor/Core/application/PostprocessorCore.hpp"
+#include "Postprocessor/Core/representations/ResultFieldSelector.hpp"
 #include "Postprocessor/Core/options/PostprocessorUserOptions.hpp"
 
 #include <optional>
@@ -41,7 +42,8 @@ public:
   bool refresh_source(const std::string& name, std::string& error);
   bool show_only_source(const std::string& name, std::string& error);
   bool open_vtt(const std::string& path, const std::optional<std::string>& name, std::string& error);
-  bool open_table(const std::string& source, const std::string& name, bool field, std::string& error);
+  bool open_table(const std::string& source, const std::string& name, bool field, std::string& error,
+    const Postprocessor::TableQualifiers& tableQualifiers = {},const Postprocessor::FieldQualifiers& fieldQualifiers = {});
   bool show_3d(std::string& error);
   Postprocessor::ResultTableData table_data() const;
   std::vector<Postprocessor::ResultTableDescriptor> tables(const std::string& source_id) const;
@@ -61,14 +63,25 @@ public:
     std::string& error);
 
   const Postprocessor::PostprocessorSession& session() const noexcept;
+  std::string suggested_filter_name(Postprocessor::FilterKind kind) const;
+  std::string output_source(const Postprocessor::OutputReference& input) const;
+  bool display_matches_source(const Postprocessor::Representation& display,const std::string& source,const std::string& view) const;
+  bool create_filter(Postprocessor::FilterDefinition requested,const std::string& sourceName,std::string& error);
+  bool change_filter(const std::string& name,const std::string& action,const std::string& view,
+    const Postprocessor::PlaneDefinition& plane,const std::string& value,std::string& error);
+  std::shared_ptr<vtkPolyData> filtered_entity_edges(const Postprocessor::Representation& display,const Postprocessor::EntityReference& entity,std::string& error) const;
+  bool evaluate_output(const Postprocessor::Representation& display,std::shared_ptr<const Postprocessor::EvaluatedOutput>& output,std::string& error) const;
+  bool readable_field(const std::string& source_id,const Postprocessor::FieldSelection& field,
+    Postprocessor::ResultFieldSelector& output,std::string& error) const;
   bool create_plot(const std::string& name,std::string& error);
   bool add_plot_entity(const std::string& plot,const std::string& name,const std::string& source,
     const std::optional<DatasetSelector>& dataset,Postprocessor::EntityKind kind,std::int64_t id,
     std::optional<std::int64_t> ip,const std::string& field,const std::string& component,bool magnitude,
-    Postprocessor::PlotReduction reduction,std::string& error);
+    Postprocessor::PlotReduction reduction,std::string& error,const Postprocessor::FieldQualifiers& qualifiers = {});
   bool add_plot_table(const std::string& plot,const std::string& name,const std::string& source,
     const std::string& table,const std::string& x,const std::string& y,const std::string& column,
-    const std::string& value,std::string& error);
+    const std::string& value,std::string& error,const Postprocessor::TableQualifiers& tableQualifiers = {},
+    bool field = false,const Postprocessor::FieldQualifiers& fieldQualifiers = {});
   bool change_plot(const std::string& name,const std::string& action,const std::string& value,std::string& error);
   bool change_plot_curve(const std::string& plot,const std::string& curve,const std::string& action,std::string& error);
   bool set_plot_axes(const std::string& name,const Postprocessor::PlotAxes& axes,std::string& error);
@@ -77,7 +90,7 @@ public:
   bool add_label(const std::string& view, const std::string& name, const std::string& source,
     const std::optional<DatasetSelector>& dataset, Postprocessor::EntityKind kind, std::int64_t id,
     std::optional<std::int64_t> ip, const std::string& field, const std::string& component,
-    bool magnitude, std::string& assigned, std::string& error);
+    bool magnitude, std::string& assigned, std::string& error,const Postprocessor::FieldQualifiers& qualifiers = {});
   bool change_label(const std::string& view, const std::string& name, const std::string& action,
     const std::string& replacement, const std::array<double,2>& position, std::string& error);
   bool set_labels(const std::string& view, bool extrema, bool visible, std::string& error);
@@ -102,10 +115,10 @@ public:
   std::optional<Postprocessor::ResultDeformation> deformation(const std::string& source_name, std::string& error) const;
   bool set_deformation(const std::string& source_name, const Postprocessor::ResultDeformation& deformation, std::string& error);
   bool deform_field(const std::string& source_name, const std::string& field,
-    std::optional<std::size_t> dataset, std::string& error);
+    std::optional<std::size_t> dataset, std::string& error,const Postprocessor::FieldQualifiers& qualifiers = {});
   bool deform_auto(const std::string& source_name, std::string& error);
   bool color_field(const std::string& source_name, const std::string& field, const std::string& component,
-    bool magnitude, std::optional<std::size_t> dataset, std::string& error);
+    bool magnitude, std::optional<std::size_t> dataset, std::string& error,const Postprocessor::FieldQualifiers& qualifiers = {});
   // User-facing ordinal (1-based). Empty source_name uses the active source.
   bool set_frame(const std::string& source_name, std::size_t frame_number, std::string& error);
   bool frame_has_mesh(const std::string& source_id, std::size_t increment_index) const;

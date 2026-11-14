@@ -13,6 +13,8 @@
 #include "Framework/Results/ResultJobEntry.hpp"
 
 class PostprocessorApplicationInterface;
+class PostprocessorClipControls;
+class PostprocessorSectionControls;
 class PostprocessorAnnotationControls;
 class PostprocessorResultsTree;
 class PostprocessorProperties;
@@ -86,6 +88,9 @@ private:
   QToolBar* deformationToolbar = nullptr;
   QDockWidget* resultsDock = nullptr;
   QDockWidget* propertiesDock = nullptr;
+  QDockWidget* filtersDock = nullptr;
+  PostprocessorClipControls* clipControls = nullptr;
+  PostprocessorSectionControls* sectionControls = nullptr;
   QToolBar* toolbar = nullptr;
   PostprocessorToolbar* nativeToolbar = nullptr;
   QToolBar* sourceToolbar = nullptr;

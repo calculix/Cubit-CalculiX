@@ -54,7 +54,7 @@ def module_info(source):
 
 
 def closure(modules):
-    pending = ["VTK::CommonCore", "VTK::CommonDataModel", "VTK::IOParallelXML", "VTK::FiltersCore", "VTK::FiltersGeometry", "VTK::RenderingAnnotation", "VTK::GUISupportQt", "VTK::ChartsCore", "VTK::ViewsContext2D", "VTK::RenderingContextOpenGL2"]
+    pending = ["VTK::CommonCore", "VTK::CommonDataModel", "VTK::IOParallelXML", "VTK::FiltersCore", "VTK::FiltersGeneral", "VTK::FiltersGeometry", "VTK::RenderingAnnotation", "VTK::GUISupportQt", "VTK::ChartsCore", "VTK::ViewsContext2D", "VTK::RenderingContextOpenGL2"]
     result = set()
     while pending:
         name = pending.pop()
@@ -146,7 +146,7 @@ def write_sdk(output, source, report, modules):
         raise ValueError("CMake did not generate the Release CXX SDK include metadata")
     lines = ["# Generated development adapter; runtime DLLs remain owned by Cubit.",
              'set(CUBIT_VTK_SDK_VERSION "9.4.2")', 'set(CUBIT_VTK_SDK_COMPATIBILITY "unvalidated")',
-             'set(CUBIT_VTK_SDK_FEATURES "results;viewport-qt;charts-qt")',
+             'set(CUBIT_VTK_SDK_FEATURES "results;viewport-qt;charts-qt;plane-filters")',
              "set(CUBIT_VTK_SDK_HOST_ROOT " + bracket(report["cubit_root"]) + ")",
              "set(CUBIT_VTK_SDK_SOURCE_ROOT " + bracket(source) + ")",
              "include(" + bracket(include_file) + ")", "list(REMOVE_DUPLICATES CUBIT_VTK_GENERATED_INCLUDE_DIRECTORIES)"]

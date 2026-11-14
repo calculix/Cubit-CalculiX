@@ -129,11 +129,20 @@ namespace Postprocessor
       for (auto& entry : state.representations)
       {
         auto& display = entry.second;
-        if (display.input.owner == OutputOwner::Source && display.input.object_id == source_id &&
-            display.input.port == 0 && display.view_id == view_id)
+        if (display_matches_source(display,source_id,view_id))
         {
           if (display.increment_index != increment_index)
           {
+            auto candidate = display;
+            candidate.increment_index = increment_index;
+            if (candidate.input.owner == OutputOwner::Feature)
+            {
+              std::shared_ptr<const EvaluatedOutput> evaluated;
+              if (!evaluate_output(candidate,evaluated,error))
+              {
+                return false;
+              }
+            }
             display.increment_index = increment_index;
             ++scene_revision;
           }
@@ -178,8 +187,7 @@ namespace Postprocessor
     for (auto& entry : state.representations)
     {
       auto& display = entry.second;
-      if (display.input.owner == OutputOwner::Source && display.input.object_id == source_id &&
-          display.input.port == 0 && display.view_id == view_id)
+      if (display_matches_source(display,source_id,view_id))
       {
         try
         {

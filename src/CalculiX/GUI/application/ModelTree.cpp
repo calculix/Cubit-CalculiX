@@ -3,6 +3,7 @@
 #include <QTreeWidgetItemIterator>
 #include <QVariant>
 #include "ModelTree.hpp"
+#include "Core/application/CalculiXApplicationInterface.hpp"
 #include "GUI/common/TreeContextMenu.hpp"
 #include "GUI/mesh/BlocksTree.hpp"
 #include "GUI/mesh/NodesetTree.hpp"
@@ -483,14 +484,26 @@ void ModelTree::openTopologyManagement(int topologyId, int iterationId)
   myTopologyManagement->activateWindow();
 }
 
-void ModelTree::update(){
+void ModelTree::update()
+{
+  CalculiXApplicationInterface application;
+  application.trace_event("gui.material_management.enter");
   myMaterialManagement->update();
+  application.trace_event("gui.material_management.leave");
+  application.trace_event("gui.hbcs_management.enter");
   myHBCsManagement->update();
+  application.trace_event("gui.hbcs_management.leave");
+  application.trace_event("gui.steps_management.enter");
   myStepsManagement->update();
+  application.trace_event("gui.steps_management.leave");
+  application.trace_event("gui.jobs_monitor.enter");
   myJobsMonitor->update();
+  application.trace_event("gui.jobs_monitor.leave");
   if (myTopologyManagement != nullptr && myTopologyManagement->isVisible())
   {
+    application.trace_event("gui.topology_management.enter");
     myTopologyManagement->refresh();
+    application.trace_event("gui.topology_management.leave");
   }
 }
 

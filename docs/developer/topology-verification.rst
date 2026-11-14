@@ -1213,6 +1213,86 @@ matching fixture/iteration timings before claiming a performance improvement.
 No C++ build, compilation, native tests or Cubit playback were performed while
 implementing the prepared mapping.
 
+Passing matrix after mapping and command/result guards
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Windows run 20261114T111858Z_b4776b97 completed all four selected formulations
+with prepared physical mapping, the shared 128 MiB reference-rule cache, export
+completion guards and result-loading Core/GUI guards. C3D4 converged at iteration
+52; C3D10, C3D6 and C3D15 reached the 60-iteration limit. Each case passed history
+validation, native save/reopen, grouped control and exact-factor reanalysis,
+with topology history unchanged. Execution PASS is separate from convergence
+and approximation accuracy, which remains NOT_ASSESSED.
+
+.. csv-table:: Archived four-formulation matrix summary
+   :file: topology-matrix-20261114.csv
+   :header-rows: 1
+
+The flushed native trace contains 232 matched physical-export enter/success
+pairs, 240 matched result-load enter/success pairs, 56 matched GUI-update
+enter/leave pairs, and no exception markers. All four iterations.csv files are
+byte-identical to the pre-mapping baseline 20261113T143115Z_95e8e00e; their final
+grouped/exact compliances and convergence outcomes also match exactly. This is
+positive regression evidence. A single passing campaign does not prove the
+earlier intermittent export exception or GUI stall can never recur. The report
+does not identify the loaded plugin revision, and this Windows evidence does
+not establish Linux behavior or Core-default-width operation.
+
+Consolidated release-check journal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Run tests/topology/verify_level_set_release.jou in an already built/restarted
+Cubit with the developer controller option ON. It loads only standard-library
+helpers and the existing Cubit/CalculiX Python interfaces, starts no build or
+viewer, and resets models. Save current work first::
+
+   playback "C:/Users/offic/Desktop/Git/Cubit-CalculiX/tests/topology/verify_level_set_release.jou"
+
+The journal creates a unique tests/release_topology_runs/<token> directory. It
+runs six cases using all numerical settings from a newly created Core level-set
+compliance case, followed by the existing broad-band C3D8/C3D20 baseline profile.
+The default profile first deletes the density case created by the reviewed mesh
+fixture and recreates it with only name, method and objective supplied. It does
+not inherit cap, target, iteration limit, seed, width or tolerance overrides.
+Current Core defaults include volume 0.3, maximum 100 iterations, cap 1024,
+interface width 0.1 and maximum refinements 4. Captured settings determine the
+validation limits; no default is silently relaxed after a failure. These cases
+can take substantially longer than the broad-band matrix and can expose a
+default-settings blocker. Nonconvergence remains explicit, even if execution
+checks pass. A default preparation failure stops the batch with evidence intact.
+
+Each completed numerical case saves its native checkpoint before snapshot and
+validation work. Snapshots use streaming JSON output; history energy validation
+scans raw DAT files rather than querying every element through repeated scans.
+Native reopen and grouped/exact reanalysis use the same reviewed numerical
+checks as the matrix. Reports distinguish profile/case IDs and record commands,
+entry/return events, expected failures, selected native-trace path and settings.
+
+Lifecycle stages reopen the verified broad-band C3D8 checkpoint into separate
+working directories: rerun/case isolation; nonblocking start, immediate kill and
+restart; infeasible preparation and restart; history selection/reopen, silent
+preview and exact threshold deletion; ordinary exported-job result loading;
+case deletion and reset during an active run. Preserved elements must remain
+after projection, and preview must leave mesh IDs unchanged. Destructive stages
+use disposable reopened models and do not modify the source checkpoints.
+Normal-job checks disable VTK conversion, validate raw DAT energy results and
+verify topology history is unchanged; they do not certify the conversion path.
+
+The journal stops at the first unexpected failure or interruption, keeps later
+stages NOT EXECUTED, restores the trace environment/working directory/playback
+pause setting, and retains completed evidence. Every playback is a fresh run;
+automatic checkpoint resume is not implemented in this separate release journal.
+The existing matrix journal and its explicit same-build resume behavior remain
+unchanged.
+
+The report always keeps release_ready false. Manual entries remain PENDING for
+kill after a completed iteration, an actual solver-process failure, GUI visual
+and navigation checks, and Linux runtime verification. An immediate kill and
+infeasible-preparation rejection must not be counted as those stronger checks.
+Native standalone suite results are also separate evidence. The release-check
+journal has not been executed in Cubit during preparation; its orchestration
+and fixture profile paths are covered by offline Python harness tests.
+
 Cubit progress display
 ~~~~~~~~~~~~~~~~~~~~~~
 

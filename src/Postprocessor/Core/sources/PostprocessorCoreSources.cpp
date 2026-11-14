@@ -527,7 +527,7 @@ namespace Postprocessor
       for (auto display = staged_state.representations.begin(); display != staged_state.representations.end();)
       {
         auto& definition = display->second;
-        if (definition.input.owner == OutputOwner::Source && definition.input.object_id == source_id)
+        if (output_source(definition.input) == source_id)
         {
           definition.animation.playing = false;
           definition.hidden_datasets.clear();
@@ -548,6 +548,7 @@ namespace Postprocessor
         }
         ++display;
       }
+      filter_cache.clear();
       state.swap(staged_state);
       runtime.swap(staged_runtime);
       ++scene_revision;
@@ -646,10 +647,23 @@ namespace Postprocessor
     {
       auto staged_state = state;
       auto staged_runtime = runtime;
+      for (auto item = staged_state.filters.begin(); item != staged_state.filters.end();)
+      {
+        if (item->second.input.object_id == source_id)
+        {
+          item = staged_state.filters.erase(item);
+        }
+        else
+        {
+          ++item;
+        }
+      }
+      filter_cache.clear();
+
 
       for (auto display = staged_state.representations.begin(); display != staged_state.representations.end();)
       {
-        if (display->second.input.owner == OutputOwner::Source && display->second.input.object_id == source_id)
+        if (output_source(display->second.input) == source_id)
         {
           if (staged_state.active_representation_id == display->first)
           {
@@ -723,6 +737,7 @@ namespace Postprocessor
     SourceOperationGuard guard(source_operation_active);
     try
     {
+      filter_cache.clear();
       PostprocessorSession staged;
       staged.plot_revision = state.plot_revision+1;
       std::uint64_t cameraRevision = 0;
@@ -785,6 +800,8 @@ namespace Postprocessor
     {
       return false;
     }
+    state.filters.clear();
+    filter_cache.clear();
     state.representations.clear();
     state.sources.clear();
     for (auto& view : state.views)

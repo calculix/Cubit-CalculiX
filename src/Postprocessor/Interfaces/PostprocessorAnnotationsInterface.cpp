@@ -5,9 +5,15 @@
 bool PostprocessorApplicationInterface::add_label(const std::string& view, const std::string& name,
   const std::string& sourceName, const std::optional<DatasetSelector>& selector, Postprocessor::EntityKind kind,
   std::int64_t id, std::optional<std::int64_t> ip, const std::string& fieldName,
-  const std::string& component, bool magnitude, std::string& assigned, std::string& error)
+  const std::string& component, bool magnitude, std::string& assigned, std::string& error,
+  const Postprocessor::FieldQualifiers& qualifiers)
 {
   error.clear();
+  if (fieldName.empty() && (qualifiers.origin || qualifiers.association))
+  {
+    error = "Origin/association requires an explicit field name.";
+    return false;
+  }
   const auto& state = core.session();
   const auto viewId = view.empty() ? state.active_view_id : view;
   const auto source = sourceName.empty() ? state.active_source_id : core.source_id_from_name(sourceName);
@@ -24,8 +30,7 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
   for (const auto& entry : state.representations)
   {
     const auto& display = entry.second;
-    if (display.view_id != viewId || display.input.owner != Postprocessor::OutputOwner::Source ||
-        display.input.object_id != source || !data || display.increment_index >= data->increments.size())
+    if (!core.display_matches_source(display,source,viewId) || !data || display.increment_index >= data->increments.size())
     {
       continue;
     }
@@ -33,23 +38,17 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
     if (!fieldName.empty())
     {
       field.reset();
-      for (const auto& group : core.field_groups(source,display.increment_index))
+      Postprocessor::ResultFieldGroup group;
+      if (!Postprocessor::resolve_result_field(core.field_groups(source,std::nullopt),{fieldName,qualifiers},dataset,
+          component,magnitude,false,group,error))
       {
-        const auto& value = group.field;
-        if ((group.key == fieldName || value.name == fieldName || value.array_name == fieldName) &&
-            (!dataset || std::find(group.datasets.begin(),group.datasets.end(),*dataset) != group.datasets.end()))
-        {
-          if (field && field->group_key != group.key)
-          {
-            error = "The label field is ambiguous; use its exact field key.";
-            return false;
-          }
-          const bool useMagnitude = component.empty() ? value.vector_components.has_value() : magnitude;
-          field = Postprocessor::FieldSelection{dataset,value.array_name,value.association,
-            component.empty() && !useMagnitude && !value.components.empty() ? value.components.front() : component,
-            useMagnitude,group.key};
-        }
+        return false;
       }
+      const auto& value = group.field;
+      const bool useMagnitude = component.empty() ? value.vector_components.has_value() : magnitude;
+      field = Postprocessor::FieldSelection{dataset,value.array_name,value.association,
+        component.empty() && !useMagnitude && !value.components.empty() ? value.components.front() : component,
+        useMagnitude,group.key};
     }
     else if (field && !component.empty())
     {

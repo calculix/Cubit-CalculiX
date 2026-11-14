@@ -1,4 +1,7 @@
 #include "PostprocessorCommands.hpp"
+#include "filters/PostClipCommand.hpp"
+#include "filters/PostSectionCommand.hpp"
+#include "filters/PostFilterCommand.hpp"
 #include "capture/PostCaptureCommand.hpp"
 #include "plots/PostPlotCommand.hpp"
 #include "annotations/PostLabelCommand.hpp"
@@ -35,13 +38,25 @@ PostprocessorCommands::PostprocessorCommands(std::weak_ptr<PostprocessorApplicat
 
 std::vector<std::string> PostprocessorCommands::command_keys() const
 {
-  return {"PostCaptureCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
+  return {"PostClipCommand", "PostSectionCommand", "PostFilterCommand", "PostCaptureCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
     "PostShowCommand", "PostHideCommand", "PostViewFitCommand", "PostViewCameraCommand",
     "PostViewRotateCommand", "PostViewPanCommand", "PostViewZoomCommand"};
 }
 
 CubitCommand* PostprocessorCommands::create_command(const std::string& key)
 {
+  if (key == "PostClipCommand")
+  {
+    return new PostClipCommand(application);
+  }
+  if (key == "PostSectionCommand")
+  {
+    return new PostSectionCommand(application);
+  }
+  if (key == "PostFilterCommand")
+  {
+    return new PostFilterCommand(application);
+  }
   if (key == "PostCaptureCommand")
   {
     return new PostCaptureCommand(application);

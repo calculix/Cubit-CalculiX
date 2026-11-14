@@ -1,4 +1,5 @@
 #include "PostprocessorDeformationControls.hpp"
+#include "Postprocessor/Commands/FieldCommandText.hpp"
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleValidator>
@@ -133,8 +134,7 @@ std::optional<PostprocessorDeformationControls::Context> PostprocessorDeformatio
   for (const auto& entry : state.representations)
   {
     const auto& display = entry.second;
-    if (display.input.owner == Postprocessor::OutputOwner::Source && display.input.port == 0 &&
-        display.input.object_id == source->first && display.view_id == state.active_view_id)
+    if (active->display_matches_source(display,source->first,state.active_view_id))
     {
       const auto data = active->result_data(source->first);
       if (data && display.increment_index < data->increments.size())
@@ -347,7 +347,7 @@ void PostprocessorDeformationControls::select_field(int index)
   const auto owner = *baseline;
   auto selection = owner.settings;
   const int item = fields->itemData(index).toInt();
-  std::string operation;
+  std::string operation, error;
   if (item == -1)
   {
     selection.field_mode = Postprocessor::DeformationFieldMode::Automatic;
@@ -365,19 +365,26 @@ void PostprocessorDeformationControls::select_field(int index)
     {
       dataset = group.field.dataset_id;
     }
-    const auto argument = quote(group.field.array_name);
-    if (!argument.empty())
+    const auto active = application.lock();
+    selection.field_mode = Postprocessor::DeformationFieldMode::Explicit;
+    selection.field = Postprocessor::FieldSelection{dataset,group.field.array_name,group.field.association,{},true,group.key};
+    Postprocessor::ResultFieldSelector selector;
+    if (active && active->readable_field(owner.source,*selection.field,selector,error))
     {
-      selection.field_mode = Postprocessor::DeformationFieldMode::Explicit;
-      selection.field = Postprocessor::FieldSelection{dataset,group.field.array_name,group.field.association,{},true,group.key};
-      operation = "field "+argument+(dataset ? " dataset "+std::to_string(*dataset) : "");
+      const auto argument = Postprocessor::field_command_text(selector);
+      if (!argument.isEmpty())
+      {
+        operation = argument.toUtf8().toStdString()+(dataset ? " dataset "+std::to_string(*dataset) : "");
+      }
     }
   }
   finish_scale();
-  std::string error;
   if (operation.empty())
   {
-    error = "Choose an available vector with a representable quoted name.";
+    if (error.empty())
+    {
+      error = "Choose an available vector with a readable, representable name.";
+    }
   }
   else if (baseline && same_context(owner,*baseline) && owned())
   {

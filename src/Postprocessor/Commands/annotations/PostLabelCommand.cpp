@@ -1,3 +1,4 @@
+#include "Postprocessor/Commands/FieldCommandOptions.hpp"
 #include "PostLabelCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -16,7 +17,7 @@ std::vector<std::string> PostLabelCommand::get_syntax()
   const std::string view = " [view <string:type='quoted',number='1',label='view_id'>]";
   const std::string tail = " [dataset {<value:label='dataset_id'>|<string:type='quoted',number='1',label='dataset_name'>}]"
     " [source <string:type='quoted',number='1',label='source_name'>]"
-    " [field <string:type='quoted',number='1',label='field_name'>]"
+    " [field <string:type='quoted',number='1',label='field_name'>]"+Postprocessor::field_qualifier_syntax()+
     " [component {magnitude|<string:type='quoted',number='1',label='component_name'>}]"+view;
   return {"post label add ["+name+"] node "+id+tail,
     "post label add ["+name+"] element "+id+tail,
@@ -27,7 +28,7 @@ std::vector<std::string> PostLabelCommand::get_syntax()
 }
 std::vector<std::string> PostLabelCommand::get_syntax_help()
 {
-  return {"post label add [\"name\"] {node ID|element ID|integrationpoint N element ID} [dataset ID|\"name\"] [source \"name\"] [field \"key\"] [component magnitude|\"name\"] [view \"id\"]",
+  return {"post label add [\"name\"] {node ID|element ID|integrationpoint N element ID} [dataset ID|\"name\"] [source \"name\"] [field \"name\"] [origin \"FRD\"] [association node|element|integrationpoint] [component magnitude|\"name\"] [view \"id\"]",
     "post label rename \"name\" \"replacement\"", "post label position \"name\" X Y",
     "post label {show|hide|remove} \"name\""};
 }
@@ -105,12 +106,18 @@ bool PostLabelCommand::execute(CubitCommandData& data)
       data.get_string("source_name",source);
       data.get_string("field_name",field);
       data.get_string("component_name",component);
+      Postprocessor::FieldQualifiers qualifiers;
+      if (!Postprocessor::read_field_qualifiers(data,qualifiers,error))
+      {
+        PRINT_ERROR("Cannot select field: %s\n",error.c_str());
+        return false;
+      }
       const bool magnitude = data.find_keyword("MAGNITUDE");
       if (magnitude)
       {
         component = "magnitude";
       }
-      accepted = active->add_label(view,name,source,dataset,kind,id,ip,field,component,magnitude,assigned,error);
+      accepted = active->add_label(view,name,source,dataset,kind,id,ip,field,component,magnitude,assigned,error,qualifiers);
     }
     else
     {

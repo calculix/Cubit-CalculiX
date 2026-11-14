@@ -1,5 +1,7 @@
 #include "CubitInterface.hpp"
 #include "MeshExportInterface.hpp"
+#include "ElementOutputGroup.hpp"
+#include <QString>
 #include "CoreMeshElementMapping.hpp"
 #include "CalculiXMeshInterface.hpp"
 #include "CoreMeshQuery.hpp"
@@ -10,6 +12,20 @@
 #include <vector>
 
 #include "Core/loadCalculiXCore.hpp"
+
+bool CalculiXMeshInterface::get_block_capture_color(int id, std::string& color, std::string& error)
+{
+  BlockHandle block = nullptr;
+  if (ccx_core.me_iface == nullptr || !ccx_core.me_iface->get_block_handle(id, block) || block == nullptr)
+  {
+    error = "Cannot read native color for block " + std::to_string(id) + ".";
+    return false;
+  }
+  const auto rgb = block->color();
+  color = QString("#%1%2%3").arg(rgb.red, 2, 16, QLatin1Char('0')).arg(rgb.green, 2, 16, QLatin1Char('0')).arg(rgb.blue, 2, 16, QLatin1Char('0')).toStdString();
+  error.clear();
+  return true;
+}
 
 bool CalculiXMeshInterface::get_assignment_entity_name(const std::string& type, int id, std::string& name)
 {

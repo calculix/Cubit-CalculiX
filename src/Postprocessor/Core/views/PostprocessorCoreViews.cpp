@@ -23,11 +23,22 @@ namespace Postprocessor
       for (const auto& entry : state.representations)
       {
         const auto& display = entry.second;
-        if (!display.visible || display.view_id != view_id || display.input.owner != OutputOwner::Source || display.input.port != 0)
+        if (!display.visible || display.view_id != view_id || display.input.port != 0)
         {
           continue;
         }
-        const auto data = result_data(display.input.object_id);
+        std::shared_ptr<const EvaluatedOutput> evaluated;
+        std::string evaluationError;
+        if (!evaluate_output(display,evaluated,evaluationError))
+        {
+          if (result_data(output_source(display.input)))
+          {
+            error = evaluationError;
+            return false;
+          }
+          continue;
+        }
+        const auto data = evaluated->data;
         if (!data || display.increment_index >= data->increments.size())
         {
           continue;
@@ -41,7 +52,7 @@ namespace Postprocessor
           }
           std::shared_ptr<vtkDataSet> transformed;
           std::string warning;
-          if (!deform_mesh(part.second,part.first,frame,display.deformation,transformed,warning,error))
+          if (display.input.owner == OutputOwner::Source && !deform_mesh(part.second,part.first,frame,display.deformation,transformed,warning,error))
           {
             return false;
           }

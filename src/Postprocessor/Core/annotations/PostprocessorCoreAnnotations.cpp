@@ -1,3 +1,4 @@
+#include <vtkCell.h>
 #include "../application/PostprocessorCore.hpp"
 #include <utility>
 #include "../representations/ResultMesh.hpp"
@@ -9,6 +10,7 @@
 #include <limits>
 #include <sstream>
 #include <locale>
+#include <iomanip>
 
 namespace Postprocessor
 {
@@ -130,8 +132,7 @@ namespace Postprocessor
     for (const auto& entry : state.representations)
     {
       auto display = entry.second;
-      if (display.view_id == view_id && display.input.owner == OutputOwner::Source &&
-          display.input.object_id == label.entity.source_id && data)
+      if (display_matches_source(display,label.entity.source_id,view_id) && data)
       {
         display.coloring.field = label.field;
         const auto value = annotation_probe(*data,display,label.entity);
@@ -261,6 +262,7 @@ namespace Postprocessor
       {
         continue;
       }
+      bool hiddenByFilter = false;
       EvaluatedAnnotation value{label.name,"Unavailable",std::nullopt,label.position};
       value.text = std::string(label.entity.kind == EntityKind::Node ? "Node " : "Element ")+std::to_string(label.entity.entity_id);
       if (label.entity.integration_point)
@@ -295,11 +297,19 @@ namespace Postprocessor
         for (const auto& item : state.representations)
         {
           auto display = item.second;
-          if (display.view_id == view_id && display.input.owner == OutputOwner::Source &&
-              display.input.object_id == label.entity.source_id && dataset_visible(display,label.entity.dataset_id))
+          if (display_matches_source(display,label.entity.source_id,view_id) && dataset_visible(display,label.entity.dataset_id))
           {
             display.coloring.field = label.field;
-            const auto result = annotation_probe(*data,display,label.entity);
+            auto result = annotation_probe(*data,display,label.entity);
+            if (display.input.owner == OutputOwner::Feature)
+            {
+              result.displayed_position = filtered_entity_position(display,label.entity);
+              if (!result.displayed_position)
+              {
+                hiddenByFilter = true;
+                continue;
+              }
+            }
             value.anchor = result.displayed_position;
             std::ostringstream text;
             text.imbue(std::locale::classic());
@@ -327,7 +337,10 @@ namespace Postprocessor
           }
         }
       }
-      output.push_back(std::move(value));
+      if (!hiddenByFilter)
+      {
+        output.push_back(std::move(value));
+      }
     }
     if (!definitions.extrema_visible)
     {
@@ -347,6 +360,83 @@ namespace Postprocessor
       return output;
     }
     const auto& display = active->second;
+    if (display.input.owner == OutputOwner::Feature)
+    {
+      if (!display.visible)
+      {
+        return output;
+      }
+      std::shared_ptr<const EvaluatedOutput> evaluated;
+      std::string error;
+      if (!evaluate_output(display,evaluated,error))
+      {
+        return output;
+      }
+      const auto& frame = evaluated->data->increments[display.increment_index];
+      std::optional<double> extrema[2];
+      std::array<double,3> positions[2];
+      for (const auto& part : result_mesh_parts(frame.dataset.get()))
+      {
+        if (!dataset_visible(display,part.first) || (display.coloring.field->dataset_id && *display.coloring.field->dataset_id != part.first))
+        {
+          continue;
+        }
+        auto selected = *display.coloring.field;
+        selected.dataset_id = part.first;
+        const auto* metadata = find_field(frame,selected);
+        std::vector<double> values;
+        if (!metadata || !color_values(part.second,*metadata,selected,values,error))
+        {
+          continue;
+        }
+        for (std::size_t i = 0; i < values.size(); ++i)
+        {
+          if (!std::isfinite(values[i]))
+          {
+            continue;
+          }
+          std::array<double,3> position = {};
+          if (metadata->association == SimResults::Association::Element)
+          {
+            auto* cell = part.second->GetCell(static_cast<vtkIdType>(i));
+            for (vtkIdType node = 0; cell && node < cell->GetNumberOfPoints(); ++node)
+            {
+              double point[3];
+              part.second->GetPoint(cell->GetPointId(node),point);
+              for (int axis = 0; axis < 3; ++axis)
+              {
+                position[axis] += point[axis]/cell->GetNumberOfPoints();
+              }
+            }
+          }
+          else
+          {
+            part.second->GetPoint(static_cast<vtkIdType>(i),position.data());
+          }
+          for (int index = 0; index < 2; ++index)
+          {
+            if (!extrema[index] || (index == 0 ? values[i] < *extrema[index] : values[i] > *extrema[index]))
+            {
+              extrema[index] = values[i];
+              positions[index] = position;
+            }
+          }
+        }
+      }
+      for (int index = 0; index < 2; ++index)
+      {
+        if (extrema[index])
+        {
+          std::ostringstream text;
+          text.imbue(std::locale::classic());
+          text << std::setprecision(6) << (index == 0 ? "Minimum: " : "Maximum: ") << *extrema[index]
+            << "\nFiltered display sample" << (display.coloring.field->association == SimResults::Association::Node ? " (interpolated)" : "");
+          output.push_back({index == 0 ? "@minimum" : "@maximum",text.str(),positions[index],
+            index == 0 ? definitions.minimum_position : definitions.maximum_position});
+        }
+      }
+      return output;
+    }
     const auto data = result_data(display.input.object_id);
     if (!data || display.increment_index >= data->increments.size())
     {

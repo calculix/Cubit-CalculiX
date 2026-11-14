@@ -158,17 +158,28 @@ void CalculiXGui::stop() noexcept
 
 void CalculiXGui::update()
 {
+  CalculiXApplicationInterface application;
+  if (application.block_core_update() || application.block_gui_update())
+  {
+    application.set_gui_updated(false);
+    application.trace_event("gui.update.blocked_skip");
+    return;
+  }
+  application.trace_event("gui.update.enter");
   if (boolwithGUI)
   {
     if (myCCXDockWindowModelTree)
     {
+      application.trace_event("gui.model_tree.enter");
       {
         const QSignalBlocker blocker(myCCXDockWindowModelTree->modelTree());
         myCCXDockWindowModelTree->update();
       }
+      application.trace_event("gui.model_tree.leave");
     }
     if (drawingToolbar != nullptr)
     {
+      application.trace_event("gui.drawing.enter");
       CalculiXDrawInterface drawing;
       const auto state = drawing.drawing_state();
       const bool enabled = std::any_of(state.groups.begin(), state.groups.end(), [](const auto& group) { return group.second.enabled; });
@@ -190,21 +201,29 @@ void CalculiXGui::update()
       }
       drawingToolbar->refreshSteps();
       drawingToolbar->synchronize(drawing.drawing_state());
+      application.trace_event("gui.drawing.leave");
     }
     if (topologyToolbar != nullptr)
     {
+      application.trace_event("gui.topology_toolbar.enter");
       topologyToolbar->refresh();
+      application.trace_event("gui.topology_toolbar.leave");
     }
     if (myCCXDockWindowModelTree)
     {
+      application.trace_event("gui.properties.enter");
       myCCXDockWindowModelTree->modelTree()->updatePropertySelection();
+      application.trace_event("gui.properties.leave");
     }
     if (drawingPick != nullptr)
     {
+      application.trace_event("gui.cursor.enter");
       auto* host = Claro::instance();
       drawingPick->refreshCursor(host == nullptr ? nullptr : host->graphics_widget());
+      application.trace_event("gui.cursor.leave");
     }
   }
+  application.trace_event("gui.update.leave");
 }
 
 void CalculiXGui::reset()

@@ -38,9 +38,13 @@ int jobSnapshotTests()
   check(CoreJobSnapshotBuilder::captureInput(root.toStdString(), record.input, error) && record.input.files.size() == 2,
     "Archive exact input bytes and quoted INCLUDE dependencies");
   auto setup = std::make_shared<CalculiXJobSetupSnapshot>();
+  setup->camera.available = true;
+  setup->camera.position = {2, -3, 4};
+  setup->camera.up = {0, 0, 1};
+  setup->camera.parallelScale = 8;
   setup->id = "snapshot-one";
   setup->symbolSize = 0.1;
-  setup->model.polygon({{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}, "lightgray");
+  setup->model.polygon({{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}, "#123456");
   setup->modelDefinitions.unavailableReason = "Job conditions require a selected step.";
   CalculiXJobSetupScene scene;
   scene.available = true;
@@ -81,7 +85,8 @@ int jobSnapshotTests()
   request.labels.showValues = true;
   DrawingFrame frame;
   check(CoreDrawSnapshotCapture::buildFrame(*record.setup, request, frame, error) && frame.entities.size() == 2 &&
-      frame.entities[1].geometry.primitives.back().text.find("Original force") != std::string::npos,
+      frame.entities[1].geometry.primitives.back().text.find("Original force") != std::string::npos &&
+      frame.shadedModelMesh && frame.camera.toJson() == setup->camera.toJson(),
     "Compose historical geometry and labels without querying a live model");
   auto changed = *record.setup;
   changed.steps.front().labels[force].name = "Changed current definition";
@@ -104,7 +109,9 @@ int jobSnapshotTests()
   {
     HDF5Tool file(project, false);
     check(CoreJobRunPersistence::read(file, restored, error) && restored.size() == 1 && restored.at(1)->setup &&
-        restored.at(1)->setup->fingerprint == setup->fingerprint && restored.at(1)->input.files == archived.files,
+        restored.at(1)->setup->fingerprint == setup->fingerprint && restored.at(1)->input.files == archived.files &&
+        restored.at(1)->setup->camera.toJson() == setup->camera.toJson() &&
+        restored.at(1)->setup->model.primitives.front().color == "#123456",
       "Round-trip archived input, labels and geometry without reading the external model");
     // Corrupt a bounded numeric payload; restore must fail atomically.
     const auto groups = file.getGroupsFromFile();

@@ -21,13 +21,29 @@ Commands and view behavior
 .. code-block:: text
 
    post table open "Forces / LOAD_TARGET" source "first_run"
-   post table field "<exact logical field key>" source "first_run"
+   post table field "STRESS" origin "FRD" association node source "first_run"
    post open file "C:/results/forces.vtt" name "forces"
    post view type 3d
 
-Source defaults to the active source. Native table names and exact catalogue keys
-are accepted. Ambiguous names report matching exact keys. Field names are also
-accepted when unique; tree actions use exact logical keys.
+Source defaults to the active source. GUI commands use readable table/field names.
+Native tables accept optional ``scope frame|global``, ``type "metadata type"`` and
+``entry N`` qualifiers. ``type`` matches TableType, falling back to ResultKind;
+``type ""`` explicitly matches absent type metadata. ``entry`` is a positive,
+1-based occurrence within a name/type/scope family in provider order, not a frame
+number or a global catalogue ordinal. Reordering otherwise identical tables in the
+provider output changes that occurrence's meaning, as it did for existing keys.
+Use an entry qualifier only when metadata cannot distinguish the tables.
+
+Field tables reuse ``origin "FRD"`` and ``association node|element|integrationpoint``.
+They show the complete field, so selector uniqueness never depends on a currently
+selected component. Native and spatial selectors are resolved across all frames;
+changing the active frame does not select a different table family. Ambiguity
+reports readable candidates and leaves the view unchanged. Existing exact keys
+remain accepted for replay and are still stored in project definitions.
+
+Tree/context actions and returning to the Table tab generate the same readable
+commands. Qualifiers are added only when necessary and checked against the exact
+stored identity before dispatch; generation never falls back to an opaque key.
 
 Double-click a native table to open it. Spatial results offer Open as table in
 their context menu. The table opens in a resizable pane to the right of the
@@ -105,3 +121,27 @@ Qt INT_MAX limit are rejected before opening; sums are checked for overflow.
 Active-frame updates repaint row backgrounds/fonts without a model reset, keeping
 selection, manual widths and scroll position. This patch does not add plotting,
 render capture or result-annotation commands.
+
+Table-column plots
+------------------
+
+.. code-block:: text
+
+   post plot add table "forces / LOAD_TARGET" x "Time" y "fx" source "first_run" plot "History 1"
+   post plot add field "STRESS" origin "FRD" association node x "Time" y "SXX" where "Node ID" equals "1171" source "first_run" plot "History 1"
+
+``add table`` accepts the native table qualifiers above; ``add field`` accepts the
+spatial field qualifiers. Column names are exactly those displayed in the table.
+Spatial tables use ``Node ID``, ``Element ID``, ``IP`` and ``Dataset``; native DAT/VTT
+tables retain their supplied column names. Filters compare exact cell text without
+converting large IDs through floating point. A time/frame history must isolate one
+entity/dataset identity and at most one matching record per frame. Compound IP or
+cross-block identities that cannot be isolated by the single table filter require
+an entity-history plot instead. Values are never averaged or silently connected
+across different entities.
+
+Table plotting validates the readable target and quoted arguments before creating
+a new plot. A source refreshed/replaced while the dialog is open must be reopened.
+Saved table curves retain internal keys and a boolean spatial-field flag; older
+projects without that flag default to native-table curves. The flag participates
+in plot-cache identity. No combined history arrays are serialized or duplicated.

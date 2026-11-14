@@ -1,4 +1,5 @@
 #include "CaptureDefinition.hpp"
+#include "../filters/FilterCodec.hpp"
 #include "../application/PostprocessorCore.hpp"
 #include "../plots/PlotCodec.hpp"
 #include "../representations/ResultMesh.hpp"
@@ -116,7 +117,7 @@ namespace Postprocessor
       {
         hidden.append(QString::number(static_cast<qulonglong>(id)));
       }
-      QJsonObject item{{"id",QString::fromStdString(entry.first)},{"source",QString::fromStdString(display.input.object_id)},
+      QJsonObject item{{"id",QString::fromStdString(entry.first)},{"source",QString::fromStdString(output_source(display.input))},{"output",QString::fromStdString(display.input.object_id)},{"feature",display.input.owner == OutputOwner::Feature},
         {"view",QString::fromStdString(display.view_id)},{"visible",display.visible},
         {"frame",QString::number(static_cast<qulonglong>(display.increment_index+1))},{"hidden",hidden},
         {"palette",QString::fromStdString(color_palette_name(display.coloring.palette))},{"range_mode",static_cast<int>(display.coloring.range_mode)},
@@ -142,7 +143,7 @@ namespace Postprocessor
       item.insert("reversed",display.coloring.reversed);
       item.insert("bands",display.coloring.bands ? QJsonValue(static_cast<int>(*display.coloring.bands)) : QJsonValue(QJsonValue::Null));
       item.insert("undeformed",display.deformation.overlay);
-      const auto source = snapshot.sources.find(display.input.object_id);
+      const auto source = snapshot.sources.find(output_source(display.input));
       if (source != snapshot.sources.end() && display.increment_index < source->second->increments.size())
       {
         const auto& frame = source->second->increments[display.increment_index];
@@ -162,6 +163,7 @@ namespace Postprocessor
     snapshot.provenance.insert("background",static_cast<int>(request.background));
     snapshot.provenance.insert("sources",sources);
     snapshot.provenance.insert("representations",displays);
+    snapshot.provenance.insert("filters",filters_to_json(snapshot.session.filters));
     output = std::move(snapshot);
     error.clear();
     return true;

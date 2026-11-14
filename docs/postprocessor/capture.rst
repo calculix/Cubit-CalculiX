@@ -66,7 +66,10 @@ Verification status
 
 Regression cases cover request limits, incompatible overlays, detached state,
 shared result ownership, no-overwrite publication, Report insertion failures,
-figure preservation and codec compatibility. They have not been run. Native GUI
+figure preservation and codec compatibility. They have not been run by the agent. The user has verified viewport capture
+with deformation, legend, triad and labels; plot capture with legend and active-frame
+marker; and Report insertion followed by project save/reopen and regeneration
+with unchanged figures. This confirms that exercised build only. Remaining GUI
 acceptance must verify viewport/plot rendering, high-DPI and large output, alpha,
 labels/triad/legend/marker placement, unavailable graphics backends and Report
 PDF/ODT image export on both Windows and Linux. No build was run for this patch.

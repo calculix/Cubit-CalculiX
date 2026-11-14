@@ -124,8 +124,7 @@ std::optional<Postprocessor::AnimationDefinition> PostprocessorApplicationInterf
   for (const auto& entry : core.session().representations)
   {
     const auto& display = entry.second;
-    if (display.input.owner == Postprocessor::OutputOwner::Source && display.input.object_id == id &&
-        display.input.port == 0 && display.view_id == core.session().active_view_id)
+    if (core.display_matches_source(display,id,core.session().active_view_id))
     {
       return display.animation;
     }
@@ -153,8 +152,7 @@ std::optional<Postprocessor::ResultColoring> PostprocessorApplicationInterface::
   for (const auto& entry : core.session().representations)
   {
     const auto& display = entry.second;
-    if (display.input.owner == Postprocessor::OutputOwner::Source && display.input.object_id == id &&
-        display.input.port == 0 && display.view_id == core.session().active_view_id)
+    if (core.display_matches_source(display,id,core.session().active_view_id))
     {
       return display.coloring;
     }
@@ -178,8 +176,7 @@ std::optional<Postprocessor::ResultDeformation> PostprocessorApplicationInterfac
   for (const auto& entry : core.session().representations)
   {
     const auto& display = entry.second;
-    if (display.input.owner == Postprocessor::OutputOwner::Source && display.input.object_id == id &&
-        display.input.port == 0 && display.view_id == core.session().active_view_id)
+    if (core.display_matches_source(display,id,core.session().active_view_id))
     {
       return display.deformation;
     }
@@ -207,7 +204,7 @@ bool PostprocessorApplicationInterface::deform_auto(const std::string& name, std
 }
 
 bool PostprocessorApplicationInterface::deform_field(const std::string& name, const std::string& field_name,
-  std::optional<std::size_t> dataset, std::string& error)
+  std::optional<std::size_t> dataset, std::string& error,const Postprocessor::FieldQualifiers& qualifiers)
 {
   auto settings = deformation(name,error);
   if (!settings)
@@ -219,34 +216,20 @@ bool PostprocessorApplicationInterface::deform_field(const std::string& name, co
   for (const auto& entry : core.session().representations)
   {
     const auto& display = entry.second;
-    if (display.input.owner != Postprocessor::OutputOwner::Source || display.input.object_id != id ||
-        display.input.port != 0 || display.view_id != core.session().active_view_id ||
+    if (!core.display_matches_source(display,id,core.session().active_view_id) ||
         !data || display.increment_index >= data->increments.size())
     {
       continue;
     }
-    const SimResults::Field* match = nullptr;
-    for (const auto& field : data->increments[display.increment_index].fields)
+    Postprocessor::ResultFieldGroup match;
+    if (!Postprocessor::resolve_result_field(core.field_groups(id,std::nullopt),{field_name,qualifiers},dataset,
+        {},true,true,match,error))
     {
-      if ((field.name == field_name || field.array_name == field_name) &&
-          (!dataset || field.dataset_id == *dataset) && Postprocessor::deformation_vector(field))
-      {
-        if (match && Postprocessor::field_group_key(*match) != Postprocessor::field_group_key(field))
-        {
-          error = "Ambiguous displacement fields. Use the exact array name and dataset qualifier.";
-          return false;
-        }
-        match = &field;
-      }
-    }
-    if (!match)
-    {
-      error = "No compatible point-associated displacement vector is available in this frame.";
       return false;
     }
     settings->field_mode = Postprocessor::DeformationFieldMode::Explicit;
-    settings->field = Postprocessor::FieldSelection{dataset,match->array_name,match->association,
-      {},true,Postprocessor::field_group_key(*match)};
+    settings->field = Postprocessor::FieldSelection{dataset,match.field.array_name,match.field.association,
+      {},true,match.key};
     return set_deformation(name,*settings,error);
   }
   error = "The source has no current result frame.";
@@ -254,7 +237,7 @@ bool PostprocessorApplicationInterface::deform_field(const std::string& name, co
 }
 
 bool PostprocessorApplicationInterface::color_field(const std::string& name, const std::string& field_name,
-  const std::string& component, bool magnitude, std::optional<std::size_t> dataset, std::string& error)
+  const std::string& component, bool magnitude, std::optional<std::size_t> dataset, std::string& error,const Postprocessor::FieldQualifiers& qualifiers)
 {
   auto settings = coloring(name, error);
   if (!settings)
@@ -266,33 +249,19 @@ bool PostprocessorApplicationInterface::color_field(const std::string& name, con
   for (const auto& entry : core.session().representations)
   {
     const auto& display = entry.second;
-    if (display.input.object_id != id || display.view_id != core.session().active_view_id ||
-        display.input.owner != Postprocessor::OutputOwner::Source || display.input.port != 0 ||
+    if (!core.display_matches_source(display,id,core.session().active_view_id) ||
         !data || display.increment_index >= data->increments.size())
     {
       continue;
     }
-    const SimResults::Field* match = nullptr;
-    for (const auto& field : data->increments[display.increment_index].fields)
+    Postprocessor::ResultFieldGroup match;
+    if (!Postprocessor::resolve_result_field(core.field_groups(id,std::nullopt),{field_name,qualifiers},dataset,
+        component,magnitude,false,match,error))
     {
-      if ((field.name == field_name || field.array_name == field_name) && (!dataset || field.dataset_id == *dataset))
-      {
-        if (match != nullptr && Postprocessor::field_group_key(*match) != Postprocessor::field_group_key(field))
-        {
-          error = "Ambiguous field variants. Use the exact array name and dataset qualifier.";
-          return false;
-        }
-        match = &field;
-      }
-    }
-    if (!match || match->association == SimResults::Association::Table ||
-        (magnitude && !match->vector_components) ||
-        (!magnitude && std::find(match->components.begin(), match->components.end(), component) == match->components.end()))
-    {
-      error = "The mesh field/component is unavailable; magnitude requires declared vector components.";
       return false;
     }
-    settings->field = Postprocessor::FieldSelection{dataset, match->array_name, match->association, component, magnitude, Postprocessor::field_group_key(*match)};
+    settings->field = Postprocessor::FieldSelection{dataset,match.field.array_name,match.field.association,
+      component,magnitude,match.key};
     return core.set_coloring(id,core.session().active_view_id,*settings,error,true);
   }
   error = "The source has no current result frame.";
@@ -480,10 +449,11 @@ bool PostprocessorApplicationInterface::open_vtt(const std::string& path, const 
 {
   return open_file("vtk",{path},name,error);
 }
-bool PostprocessorApplicationInterface::open_table(const std::string& source, const std::string& name, bool field, std::string& error)
+bool PostprocessorApplicationInterface::open_table(const std::string& source, const std::string& name, bool field, std::string& error,
+  const Postprocessor::TableQualifiers& tableQualifiers,const Postprocessor::FieldQualifiers& fieldQualifiers)
 {
   const auto id = source.empty() ? core.session().active_source_id : core.source_id_from_name(source);
-  return core.open_table(id,core.session().active_view_id,name,field,error);
+  return core.open_table(id,core.session().active_view_id,name,field,error,tableQualifiers,fieldQualifiers);
 }
 bool PostprocessorApplicationInterface::show_3d(std::string& error)
 {
@@ -590,4 +560,10 @@ bool PostprocessorApplicationInterface::refresh_source(const std::string& name, 
 bool PostprocessorApplicationInterface::show_only_source(const std::string& name, std::string& error)
 {
   return core.show_only_source(core.source_id_from_name(name),core.session().active_view_id,error);
+}
+
+bool PostprocessorApplicationInterface::readable_field(const std::string& source_id,const Postprocessor::FieldSelection& field,
+  Postprocessor::ResultFieldSelector& output,std::string& error) const
+{
+  return Postprocessor::readable_result_field(core.field_groups(source_id,std::nullopt),field,output,error);
 }

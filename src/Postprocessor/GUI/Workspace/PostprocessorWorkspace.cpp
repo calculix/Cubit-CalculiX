@@ -1,4 +1,7 @@
 #include "PostprocessorWorkspace.hpp"
+#include "Postprocessor/GUI/Filters/Clip/PostprocessorClipControls.hpp"
+#include "Postprocessor/GUI/Filters/Section/PostprocessorSectionControls.hpp"
+#include "Postprocessor/Commands/tables/TableCommandText.hpp"
 #include "Postprocessor/GUI/Capture/PostprocessorCaptureDialog.hpp"
 #include "PostprocessorToolbar.hpp"
 #include "Postprocessor/GUI/Sources/PostprocessorSourceControls.hpp"
@@ -145,8 +148,16 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       const auto source = state.sources.find(reference.source_id);
       if (source != state.sources.end())
       {
-        this->submit(QString(reference.field ? "post table field " : "post table open ")+Postprocessor::plot_quote(reference.key)+
-          " source "+Postprocessor::plot_quote(source->second.name));
+        std::string error;
+        const auto command = Postprocessor::table_open_command_text(*active,reference,error);
+        if (command.isEmpty())
+        {
+          PRINT_ERROR("Cannot journal table selection: %s\n",error.c_str());
+        }
+        else
+        {
+          this->submit(command);
+        }
       }
     }
     refresh();
@@ -293,29 +304,29 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   }, resultsDock);
   tree->open_table = [this](const QString& source,const QString& key,bool field)
   {
-    const auto quote = [](const QString& value) -> QString
+    const auto active = this->application.lock();
+    if (!active)
     {
-      const QChar delimiter = value.contains('"') ? QChar(0x27) : QChar('"');
-      if (value.contains(delimiter))
-      {
-        return {};
-      }
-      for (QChar character : value)
-      {
-        if (character.unicode() < 32 || character.unicode() == 127)
-        {
-          return {};
-        }
-      }
-      return delimiter+value+delimiter;
-    };
-    const auto table = quote(key), name = quote(source);
-    if (table.isEmpty() || name.isEmpty())
-    {
-      PRINT_ERROR("Table/source names cannot be represented by one quoted argument.\n");
       return;
     }
-    this->submit(QString(field ? "post table field " : "post table open ")+table+" source "+name);
+    std::string sourceId;
+    for (const auto& entry : active->session().sources)
+    {
+      if (QString::fromUtf8(entry.second.name.c_str()) == source)
+      {
+        sourceId = entry.first;
+        break;
+      }
+    }
+    std::string error;
+    const Postprocessor::TableReference reference{sourceId,key.toUtf8().toStdString(),field,0};
+    const auto command = Postprocessor::table_open_command_text(*active,reference,error);
+    if (command.isEmpty())
+    {
+      PRINT_ERROR("Cannot journal table selection: %s\n",error.c_str());
+      return;
+    }
+    this->submit(command);
     QTimer::singleShot(0,this,[this]()
     {
       panelRevision.reset();
@@ -628,6 +639,27 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   view->addAction(deformationToolbar->toggleViewAction());
   view->addAction(navigationToolbar->toggleViewAction());
 
+  filtersDock = new QDockWidget(tr("Filters"),host);
+  filtersDock->setObjectName("Postprocessor.FiltersDock");
+  auto* filters = new QTabWidget(filtersDock);
+  auto dispatchFilter = [this](const QString& command)
+  {
+    this->submit(command);
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+      viewport->request_redraw();
+    });
+  };
+  clipControls = new PostprocessorClipControls(this->application,dispatchFilter,filters);
+  sectionControls = new PostprocessorSectionControls(this->application,dispatchFilter,filters);
+  filters->addTab(clipControls,tr("Clip"));
+  filters->addTab(sectionControls,tr("Section"));
+  filtersDock->setWidget(filters);
+  host->addDockWidget(Qt::RightDockWidgetArea,filtersDock);
+  filtersDock->hide();
+  view->addAction(filtersDock->toggleViewAction());
   // Framework supplies the shared Help menu and keeps it last.
   for (auto* menu : {file, view, results})
   {
@@ -648,6 +680,7 @@ PostprocessorWorkspace::~PostprocessorWorkspace()
   delete fieldToolbar;
   delete deformationToolbar;
   delete propertiesDock;
+  delete filtersDock;
   // The options dialog may have reparented this page into its panel stack.
   delete optionsPanel.data();
   delete mouseOptionsPanel.data();
@@ -678,8 +711,7 @@ QString PostprocessorWorkspace::frame_command(std::size_t frame) const
   for (const auto& entry : state.representations)
   {
     const auto& display = entry.second;
-    if (display.input.owner == Postprocessor::OutputOwner::Source && display.input.object_id == state.active_source_id &&
-        display.input.port == 0 && display.view_id == state.active_view_id)
+    if (active->display_matches_source(display,state.active_source_id,state.active_view_id))
     {
       current = display.increment_index;
       break;
@@ -811,6 +843,8 @@ bool PostprocessorWorkspace::camera_command_active() const noexcept
 void PostprocessorWorkspace::refresh()
 {
   annotationControls->refresh();
+  clipControls->refresh();
+  sectionControls->refresh();
   try
   {
     const auto active = application.lock();
@@ -877,8 +911,7 @@ void PostprocessorWorkspace::refresh()
       for (const auto& entry : state.representations)
       {
         const auto& display = entry.second;
-        if (display.input.owner == Postprocessor::OutputOwner::Source && display.input.object_id == panelSource &&
-            display.input.port == 0 && display.view_id == panelView)
+        if (active->display_matches_source(display,panelSource,panelView))
         {
           frame = display.increment_index;
           animation = display.animation;
@@ -953,7 +986,7 @@ void PostprocessorWorkspace::workspace_view(WorkspaceView& view)
   view.graphicsPage = this;
   view.useNativeNavigation = false;
   view.dockLayout = WorkspaceDockLayout::LeftRight;
-  view.docks = {resultsDock,propertiesDock};
+  view.docks = {resultsDock,propertiesDock,filtersDock};
   view.menuActions = menus;
   view.toolbars = {nativeToolbar,toolbar,sourceToolbar,fieldToolbar,deformationToolbar,navigationToolbar};
   view.toolbarRowBreaks = {sourceToolbar};

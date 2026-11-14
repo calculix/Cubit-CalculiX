@@ -8,6 +8,12 @@
 #include "Core/application/CoreApplicationLog.hpp"
 #include "CoreObserver.hpp"
 #include "ScientificNumber.hpp"
+#include "Core/topology/CoreTopologyTrace.hpp"
+
+void CalculiXApplicationInterface::trace_event(const char* event) const
+{
+  CoreTopologyTrace::write(event);
+}
 
 CoreObserver& CalculiXApplicationInterface::core_observer()
 {

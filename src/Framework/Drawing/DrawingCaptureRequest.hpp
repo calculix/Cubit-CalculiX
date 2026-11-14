@@ -4,7 +4,7 @@
 
 enum class DrawingCaptureView
 {
-  Isometric, Front, Back, Left, Right, Top, Bottom
+  Isometric, Front, Back, Left, Right, Top, Bottom, Workspace
 };
 
 // Renderer inputs. The owning workspace supplies defaults and dimensions.

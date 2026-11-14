@@ -34,6 +34,7 @@ namespace Postprocessor
   struct PlotTableReference
   {
     std::string source_id, key, x, y, filter_column, filter_value;
+    bool field = false; // Spatial field rows; absent in legacy projects means native table.
   };
   struct PlotCurveDefinition
   {

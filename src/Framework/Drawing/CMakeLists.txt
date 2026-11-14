@@ -7,6 +7,7 @@ add_library(cubitsim_drawing SHARED
   DrawingService.cpp DrawingService.hpp
   DrawingGraphics.cpp DrawingGraphics.hpp
   DrawingCaptureRequest.cpp DrawingCaptureRequest.hpp
+  DrawingCaptureCamera.cpp DrawingCaptureCamera.hpp
   DrawingCaptureRenderer.cpp DrawingCaptureRenderer.hpp
   DrawingPicker.cpp DrawingPicker.hpp
   DrawingHitTest.cpp DrawingHitTest.hpp

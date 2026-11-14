@@ -98,10 +98,14 @@ namespace Postprocessor
       for (const auto& entry : state.representations)
       {
         const auto& display = entry.second;
-        if (display.view_id != view_id || display.input.owner != OutputOwner::Source ||
-            display.input.object_id != entity.source_id || display.input.port != 0 || !data)
+        if (!display_matches_source(display,entity.source_id,view_id) || !data)
         {
           continue;
+        }
+        if (display.input.owner == OutputOwner::Feature && !filtered_entity_position(display,entity))
+        {
+          error = "The entity is not retained by the active filter.";
+          return false;
         }
         const auto result = probe_result(*data,display,entity);
         if (!result.available)
@@ -185,10 +189,14 @@ namespace Postprocessor
       for (const auto& entry : state.representations)
       {
         const auto& display = entry.second;
-        if (display.view_id == view_id && display.input.owner == OutputOwner::Source &&
-            display.input.object_id == entity.source_id && display.input.port == 0 && data)
+        if (display_matches_source(display,entity.source_id,view_id) && data)
         {
           auto result = probe_result(*data,display,entity);
+          if (display.input.owner == OutputOwner::Feature)
+          {
+            result.displayed_position = filtered_entity_position(display,entity);
+            result.available = result.available && result.displayed_position.has_value();
+          }
           result.source_name = state.sources.at(entity.source_id).name;
           if (entity.kind == EntityKind::Node && display.increment_index < data->increments.size())
           {

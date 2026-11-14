@@ -7,6 +7,11 @@ and displacement runs remain the supported production methods.
 Current foundation
 ------------------
 
+The batch entries below describe implementation history. The latest Windows
+matrix evidence is 20261114T111858Z_b4776b97: four-formulation execution/history/
+reanalysis PASS after mapping and command/result guards. It does not establish
+Core-default settings or Linux release readiness; see the current checklist below.
+
 * Batch 1: document the representation, mathematical assumptions, integration
   contract, limitations and verification gates in :doc:`topology-level-set`.
 * Batch 2: introduce separate settings and in-memory level-set design records;
@@ -117,12 +122,18 @@ Remaining implementation
   native reopen and grouped/exact reanalysis, but remained unconverged at the
   iteration limit. All 60 physical export and cleanup trace pairs completed;
   the earlier intermittent C3D20 export exception remains unresolved.
-* Next: run verify_level_set_matrix.jou for C3D4, C3D10, C3D6 and C3D15 with
-  tracing enabled. Retain prior C3D8/C3D20 evidence separately. The journal saves
-  native state before postprocessing and supports explicit same-build recovery
-  with new attempt reports/paired-job filenames; native recovery remains to be
-  verified in Cubit. Keep execution, convergence and approximation accuracy
-  separate. Then resolve default-width scope using the documented numerical gates.
+* Matrix 20261114T111858Z_b4776b97 passed C3D4/C3D10/C3D6/C3D15 execution,
+  history/reopen and grouped/exact reanalysis. C3D4 converged at 52; the others
+  reached 60. All iteration CSVs and final metrics match the pre-mapping baseline.
+  Trace pairs completed for 232 exports, 240 result loads and 56 GUI refreshes,
+  with no exception markers. This is positive regression evidence for the
+  export/result guards, not proof that an intermittent failure is impossible.
+* Next: run the consolidated verify_level_set_release.jou for all six Core-default
+  cases, current-build broad-band hex baselines and automated lifecycle checks.
+  It must not silently replace width 0.1 with the already-tested width 1.0.
+  Archive execution, convergence and approximation differences separately.
+  Keep actual solver-process failure, kill after a completed iteration, visual
+  GUI checks and Linux verification explicitly pending until exercised.
 * Remaining: kill after completed iterations, solver-process failure cleanup,
   mixed/curved meshes, narrow-band refinement, larger-model performance, GUI
   lifecycle and Linux evidence. The standalone cache-suite result is separate.

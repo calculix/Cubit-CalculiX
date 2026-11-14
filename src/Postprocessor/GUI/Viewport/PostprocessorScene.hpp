@@ -5,6 +5,7 @@
 #include "Framework/Results/VtkResultsData.hpp"
 #include <vtkSmartPointer.h>
 #include "PostprocessorColorMap.hpp"
+#include "Postprocessor/Core/filters/FilterRuntime.hpp"
 #include "Postprocessor/Core/representations/ResultDeformation.hpp"
 #include <map>
 #include <memory>
@@ -13,11 +14,12 @@
 class vtkActor;
 class vtkRenderer;
 class PostprocessorApplicationInterface;
+class PostprocessorPlaneOverlay;
 
 class PostprocessorScene
 {
 public:
-  PostprocessorScene(vtkRenderer* renderer, const std::string& view_id);
+  PostprocessorScene(vtkRenderer* renderer, const std::string& view_id,bool planeOverlay = true);
   ~PostprocessorScene();
   bool synchronize(const PostprocessorApplicationInterface& application, std::string& error);
   void apply_camera(const Postprocessor::CameraDefinition& camera);
@@ -36,6 +38,7 @@ private:
   {
     std::shared_ptr<const SimResults::VtkResultsData> data;
     std::string source_id;
+    std::shared_ptr<const Postprocessor::EvaluatedOutput> evaluated;
     std::size_t increment = 0;
     Postprocessor::ResultDeformation deformation;
     std::vector<std::shared_ptr<vtkDataSet>> transformed;
@@ -50,8 +53,9 @@ private:
     std::unique_ptr<PostprocessorColorMap> coloring;
   };
   std::shared_ptr<RepresentationActors> build(const std::shared_ptr<const SimResults::VtkResultsData>& data,
-    const Postprocessor::Representation& display, std::string& error);
+    const Postprocessor::Representation& display, std::string& error,const Postprocessor::EvaluatedOutput* evaluated = nullptr);
   vtkSmartPointer<vtkRenderer> renderer;
+  std::unique_ptr<PostprocessorPlaneOverlay> planeOverlay;
   std::string viewId;
   std::optional<std::uint64_t> geometryRevision;
   std::optional<std::array<double, 6>> visibleBounds;

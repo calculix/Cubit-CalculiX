@@ -1,4 +1,12 @@
 add_library(postprocessor_core STATIC
+  Core/filters/PlaneOperations.cpp
+  Core/filters/ClipFilter.cpp
+  Core/filters/SectionFilter.cpp
+  Core/filters/FilterRuntime.cpp
+  Core/filters/PostprocessorCoreFilters.cpp
+  Core/filters/FilterCodec.cpp
+  Core/tables/ResultTableSelector.cpp
+  Core/representations/ResultFieldSelector.cpp
   Core/capture/CaptureSnapshot.cpp
   Core/capture/CaptureFileWriter.cpp
   Core/plots/PlotData.cpp
@@ -52,12 +60,22 @@ add_library(postprocessor_core STATIC
   Core/layouts/LayoutDefinition.hpp
 )
 
-target_link_libraries(postprocessor_core PUBLIC cubitsim_results PRIVATE Qt6::Core VTK::CommonDataModel VTK::FiltersCore)
+target_link_libraries(postprocessor_core PUBLIC cubitsim_results PRIVATE Qt6::Core VTK::CommonDataModel VTK::FiltersCore VTK::FiltersGeneral VTK::FiltersGeometry)
 target_include_directories(postprocessor_core PRIVATE "${CUBITSIM_SOURCE_ROOT}")
 target_compile_features(postprocessor_core PUBLIC cxx_std_17)
 set_target_properties(postprocessor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(postprocessor_module SHARED
+  Interfaces/PostprocessorFiltersInterface.cpp
+  Commands/filters/PostClipCommand.cpp
+  Commands/filters/PostSectionCommand.cpp
+  Commands/filters/PostFilterCommand.cpp
+  Commands/filters/FilterCommandText.cpp
+  GUI/Filters/Clip/PostprocessorClipControls.cpp
+  GUI/Filters/Section/PostprocessorSectionControls.cpp
+  GUI/Filters/PostprocessorPlaneOverlay.cpp
+  Commands/tables/TableCommandText.cpp
+  Commands/FieldCommandText.cpp
   Interfaces/PostprocessorCaptureInterface.cpp
   Interfaces/PostprocessorReportImageProvider.cpp
   Commands/capture/PostCaptureCommand.cpp

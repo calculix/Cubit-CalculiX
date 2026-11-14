@@ -89,7 +89,7 @@ namespace Postprocessor
         {
           const auto& table = std::get<PlotTableReference>(curve.input);
           item.insert("input",QJsonObject{{"type","table"},{"source",q(table.source_id)},{"key",q(table.key)},
-            {"x",q(table.x)},{"y",q(table.y)},{"filter_column",q(table.filter_column)},{"filter_value",q(table.filter_value)}});
+            {"x",q(table.x)},{"y",q(table.y)},{"filter_column",q(table.filter_column)},{"filter_value",q(table.filter_value)},{"field",table.field}});
         }
         curves.append(item);
       }
@@ -205,6 +205,11 @@ namespace Postprocessor
           {
             return false;
           }
+          if (input.contains("field") && !input.value("field").isBool())
+          {
+            return false;
+          }
+          reference.field = input.value("field").toBool(false);
           curve.input = reference;
         }
         else

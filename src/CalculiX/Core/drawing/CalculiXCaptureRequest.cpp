@@ -5,7 +5,7 @@ CalculiXCaptureRequest::CalculiXCaptureRequest()
 {
   image.width = 1920;
   image.height = 1080;
-  image.view = DrawingCaptureView::Isometric;
+  image.view = DrawingCaptureView::Workspace;
   image.background = {1, 1, 1};
   labels.color = "black";
   labels.selectedOnly = false;

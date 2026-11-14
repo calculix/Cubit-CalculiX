@@ -10,7 +10,7 @@ namespace
 {
 const std::vector<std::pair<std::string, DrawingCaptureView>>& captureViews()
 {
-  static const std::vector<std::pair<std::string, DrawingCaptureView>> views = {{"iso", DrawingCaptureView::Isometric},
+  static const std::vector<std::pair<std::string, DrawingCaptureView>> views = {{"workspace", DrawingCaptureView::Workspace}, {"iso", DrawingCaptureView::Isometric},
     {"front", DrawingCaptureView::Front}, {"back", DrawingCaptureView::Back}, {"left", DrawingCaptureView::Left},
     {"right", DrawingCaptureView::Right}, {"top", DrawingCaptureView::Top}, {"bottom", DrawingCaptureView::Bottom}};
   return views;

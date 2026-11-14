@@ -580,3 +580,43 @@ PNG captures
 
 See :doc:`capture` for ``post capture view``, ``post capture plot`` and
 ``report image add postprocessor`` command options and snapshot guarantees.
+
+Readable spatial field selectors
+-------------------------------
+
+Plot histories, labels, coloring and explicit deformation use human-readable
+field names in new GUI-generated commands. For example:
+
+.. code-block:: text
+
+   post plot add node 1171 dataset "Block_1" source "snap_fit" field "CONTACT" component "COPEN" name "curve_1" plot "History 1"
+   post color field "CONTACT" origin "FRD" association node component "COPEN" source "snap_fit"
+   post deform field "DISP" source "snap_fit"
+
+The optional ``origin "FRD"`` and ``association node|element|integrationpoint``
+qualifiers follow the field argument and precede component/dataset options.
+Origin is the exact provider result-origin metadata, e.g. FRD, DAT or VTK; it is
+not the workspace source name. Association identifies where values are stored,
+independently of the entity used for a history reduction or label. Plot and label
+commands require an explicit field name when qualifiers are supplied.
+
+Resolution considers the complete source catalogue across frames, scoped by the
+specified dataset, component or declared vector magnitude. Field identity never
+depends on the active frame, catalogue ordering or the first matching result.
+Ambiguity produces readable candidates and leaves the operation unchanged.
+GUI generation tries the field name alone, then origin, association or both;
+it verifies that the resulting selector resolves to the exact selected identity.
+If those qualifiers cannot distinguish a variant, it refuses the action rather
+than emitting an encoded key. Disabled label/plot actions expose the reason in
+their tooltip. Existing encoded keys and array names remain valid command inputs;
+project definitions and caches continue to store the exact internal identities.
+
+Table-field commands also use this resolver, without a component constraint.
+Native tables use readable names with optional scope/type/entry qualifiers;
+see :doc:`tables`. Old encoded keys remain accepted by both paths.
+
+Clipping and sections
+---------------------
+
+See :doc:`filters` for ``post clip``, ``post section`` and ``post filter``
+syntax, per-view behavior and source-data contracts.

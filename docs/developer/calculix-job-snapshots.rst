@@ -54,10 +54,14 @@ have a model overview but no verified combined setup image.
 Persistence
 ------------
 
-Archive schema 1 is stored at
+Archive schema 2 is stored at
 ``CalculiXModelSchema::path("Jobs/RunSnapshots")`` in project HDF5 data. Each job
 has launch metadata, exact input-byte datasets, a dependency manifest, one model
-mesh and per-step geometry and label metadata.
+mesh and per-step geometry and label metadata. The mesh palette contains native
+block RGB colors associated with the emitted element sets during export. The
+snapshot also stores the workspace camera pose, projection, scale, view angle and
+window center. Camera metadata participates in the snapshot fingerprint. No
+migration for older development archives is provided.
 
 Geometry uses numeric points, offsets, primitive kinds and annotation indices.
 Colors/text use a palette. Dataset shapes and limits are checked before reading.
