@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportOdtExporter.hpp"
 #include "ReportDocumentLayout.hpp"
 #include "ReportPageDecoration.hpp"
@@ -116,7 +117,13 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
     }
     xml.writeEndElement();
     xml.writeStartElement("style:text-properties");
-    xml.writeAttribute("fo:font-size", level == 1 ? "20pt" : "13pt");
+    xml.writeAttribute("fo:font-size", [&]() -> const char* {
+      if (level == 1) {
+        return "20pt";
+      } else {
+        return "13pt";
+      }
+    }());
     xml.writeAttribute("fo:font-weight", "bold");
     xml.writeAttribute("fo:color", "#18334c");
     xml.writeEndElement();
@@ -136,7 +143,11 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
   const auto value = [&](const std::string& key)
   {
     const auto found = report.configuration.values.find(key);
-    return found == report.configuration.values.end() ? std::string() : found->second;
+    if (found == report.configuration.values.end()) {
+      return std::string();
+    } else {
+      return found->second;
+    }
   };
   if (value("cover") == "true")
   {
@@ -149,7 +160,13 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
     paragraph(xml, "Author: " + QString::fromStdString(value("author")));
     paragraph(xml, "Revision: " + QString::fromStdString(value("revision")));
     paragraph(xml, "Generated: " + QString::fromStdString(report.generated_at));
-    paragraph(xml, "Source: " + QString::fromStdString(report.source.workspace_id) + (report.source.kind == "model" ? " / current model" : " / job " + QString::number(report.source.job_id)));
+    paragraph(xml, "Source: " + QString::fromStdString(report.source.workspace_id) + ([&]() -> QString {
+      if (report.source.kind == "model") {
+        return " / current model";
+      } else {
+        return " / job " + QString::number(report.source.job_id);
+      }
+    }()));
     paragraph(xml, QString::fromStdString(report.source.provenance));
   }
   if (value("contents") == "true")
@@ -175,7 +192,13 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
   const int precision = QString::fromStdString(value("precision")).toInt();
   std::function<void(const ReportSection&, int)> section = [&](const ReportSection& item, int level)
   {
-    heading(QString::fromStdString(item.title), level == 0 ? 1 : 2);
+    heading(QString::fromStdString(item.title), [&]() -> int {
+      if (level == 0) {
+        return 1;
+      } else {
+        return 2;
+      }
+    }());
     for (const auto& line : item.paragraphs)
     {
       paragraph(xml, QString::fromStdString(line));
@@ -191,12 +214,24 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
         for (const auto& cell : cells)
         {
           xml.writeStartElement("table:table-cell");
-          xml.writeAttribute("office:value-type", cell.isDouble() ? "float" : "string");
+          xml.writeAttribute("office:value-type", [&]() -> const char* {
+            if (cell.isDouble()) {
+              return "float";
+            } else {
+              return "string";
+            }
+          }());
           if (cell.isDouble())
           {
             xml.writeAttribute("office:value", QString::number(cell.toDouble(), 'g', 17));
           }
-          paragraph(xml, cell.isDouble() ? QString::number(cell.toDouble(), 'g', precision) : cell.toString());
+          paragraph(xml, [&]() -> std::common_type_t<decltype(QString::number(cell.toDouble(), 'g', precision)), decltype(cell.toString())> {
+            if (cell.isDouble()) {
+              return QString::number(cell.toDouble(), 'g', precision);
+            } else {
+              return cell.toString();
+            }
+          }());
           xml.writeEndElement();
         }
         xml.writeEndElement();
@@ -222,7 +257,13 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
     }
     for (const auto& image : item.images)
     {
-      const QByteArray path = "Pictures/image" + QByteArray::number(++imageNumber) + (image.media_type == "image/png" ? ".png" : ".jpg");
+      const QByteArray path = "Pictures/image" + QByteArray::number(++imageNumber) + ([&]() -> const char* {
+        if (image.media_type == "image/png") {
+          return ".png";
+        } else {
+          return ".jpg";
+        }
+      }());
       const auto bytes = QByteArray::fromBase64(QByteArray::fromStdString(image.base64_data));
       const auto pixels = QImage::fromData(bytes);
       files.push_back({path, bytes});
@@ -231,7 +272,13 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
       xml.writeAttribute("draw:name", "Image" + QString::number(imageNumber));
       xml.writeAttribute("text:anchor-type", "as-char");
       xml.writeAttribute("svg:width", "16cm");
-      const double height = pixels.width() > 0 ? std::min(20.0, 16.0 * pixels.height() / pixels.width()) : 9.0;
+      const double height = [&]() -> double {
+        if (pixels.width() > 0) {
+          return std::min(20.0, 16.0 * pixels.height() / pixels.width());
+        } else {
+          return 9.0;
+        }
+      }();
       xml.writeAttribute("svg:height", QString::number(height) + "cm");
       xml.writeStartElement("draw:image");
       xml.writeAttribute("xlink:href", QString::fromUtf8(path));
@@ -302,7 +349,13 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
   sx.writeStartElement("style:style");
   sx.writeAttribute("style:name", "CoverText");
   sx.writeAttribute("style:family", "paragraph");
-  sx.writeAttribute("style:master-page-name", ReportPageDecoration::value(report, "decoration_cover") == "false" ? "Cover" : "Standard");
+  sx.writeAttribute("style:master-page-name", [&]() -> const char* {
+    if (ReportPageDecoration::value(report, "decoration_cover") == "false") {
+      return "Cover";
+    } else {
+      return "Standard";
+    }
+  }());
   sx.writeEndElement();
   for (const QString position : {QString("left"), QString("center"), QString("right")})
   {
@@ -347,8 +400,20 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
   sx.writeStartElement("style:page-layout");
   sx.writeAttribute("style:name", "ReportPage");
   sx.writeStartElement("style:page-layout-properties");
-  sx.writeAttribute("fo:page-width", value("page_size") == "Letter" ? "21.59cm" : "21cm");
-  sx.writeAttribute("fo:page-height", value("page_size") == "Letter" ? "27.94cm" : "29.7cm");
+  sx.writeAttribute("fo:page-width", [&]() -> const char* {
+    if (value("page_size") == "Letter") {
+      return "21.59cm";
+    } else {
+      return "21cm";
+    }
+  }());
+  sx.writeAttribute("fo:page-height", [&]() -> const char* {
+    if (value("page_size") == "Letter") {
+      return "27.94cm";
+    } else {
+      return "29.7cm";
+    }
+  }());
   sx.writeAttribute("fo:margin-left", "44pt");
   sx.writeAttribute("fo:margin-right", "44pt");
   sx.writeAttribute("fo:margin-top", "20pt");
@@ -359,10 +424,22 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
     sx.writeStartElement(QString::fromStdString("style:" + band + "-style"));
     sx.writeStartElement("style:header-footer-properties");
     sx.writeAttribute("fo:min-height", "60pt");
-    sx.writeAttribute(band == "header" ? "fo:margin-bottom" : "fo:margin-top", "16pt");
+    sx.writeAttribute([&]() -> const char* {
+      if (band == "header") {
+        return "fo:margin-bottom";
+      } else {
+        return "fo:margin-top";
+      }
+    }(), "16pt");
     if (ReportPageDecoration::value(report, band + "_line") == "true")
     {
-      sx.writeAttribute(band == "header" ? "fo:border-bottom" : "fo:border-top", "0.5pt solid #18334c");
+      sx.writeAttribute([&]() -> const char* {
+        if (band == "header") {
+          return "fo:border-bottom";
+        } else {
+          return "fo:border-top";
+        }
+      }(), "0.5pt solid #18334c");
     }
     sx.writeEndElement();
     sx.writeEndElement();
@@ -371,8 +448,20 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
   sx.writeStartElement("style:page-layout");
   sx.writeAttribute("style:name", "CoverPage");
   sx.writeStartElement("style:page-layout-properties");
-  sx.writeAttribute("fo:page-width", value("page_size") == "Letter" ? "21.59cm" : "21cm");
-  sx.writeAttribute("fo:page-height", value("page_size") == "Letter" ? "27.94cm" : "29.7cm");
+  sx.writeAttribute("fo:page-width", [&]() -> const char* {
+    if (value("page_size") == "Letter") {
+      return "21.59cm";
+    } else {
+      return "21cm";
+    }
+  }());
+  sx.writeAttribute("fo:page-height", [&]() -> const char* {
+    if (value("page_size") == "Letter") {
+      return "27.94cm";
+    } else {
+      return "29.7cm";
+    }
+  }());
   sx.writeAttribute("fo:margin-left", "44pt");
   sx.writeAttribute("fo:margin-right", "44pt");
   sx.writeAttribute("fo:margin-top", "96pt");
@@ -415,7 +504,19 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
   {
     if (file.first != "mimetype")
     {
-      entry(QString::fromUtf8(file.first), file.first.endsWith(".png") ? "image/png" : file.first.endsWith(".jpg") ? "image/jpeg" : "text/xml");
+      entry(QString::fromUtf8(file.first), [&]() -> std::common_type_t<decltype("image/png"), const char*> {
+        if (file.first.endsWith(".png")) {
+          return "image/png";
+        } else {
+          return [&]() -> const char* {
+            if (file.first.endsWith(".jpg")) {
+              return "image/jpeg";
+            } else {
+              return "text/xml";
+            }
+          }();
+        }
+      }());
     }
   }
   mx.writeEndElement();

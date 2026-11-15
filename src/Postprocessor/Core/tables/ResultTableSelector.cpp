@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ResultTableSelector.hpp"
 #include <algorithm>
 #include <set>
@@ -22,7 +23,13 @@ namespace Postprocessor
     std::string candidates;
     for (const auto& table : catalogue)
     {
-      if ((exact ? table.key != selector.name : table.name != selector.name) ||
+      if (([&]() -> std::common_type_t<decltype(table.key != selector.name), decltype(table.name != selector.name)> {
+        if (exact) {
+          return table.key != selector.name;
+        } else {
+          return table.name != selector.name;
+        }
+      }()) ||
           (qualifiers.global && *qualifiers.global != table.global) ||
           (qualifiers.type && *qualifiers.type != table.type) ||
           (qualifiers.entry && *qualifiers.entry != table.entry) || !identities.insert(table.key).second)
@@ -32,8 +39,26 @@ namespace Postprocessor
       found = &table;
       if (identities.size() <= 8)
       {
-        candidates += (candidates.empty() ? "" : "; ") + table.name + " (scope " +
-          (table.global ? "global" : "frame") + ", type " + (table.type.empty() ? "<empty>" : table.type) +
+        candidates += ([&]() -> const char* {
+          if (candidates.empty()) {
+            return "";
+          } else {
+            return "; ";
+          }
+        }()) + table.name + " (scope " +
+          ([&]() -> const char* {
+            if (table.global) {
+              return "global";
+            } else {
+              return "frame";
+            }
+          }()) + ", type " + ([&]() -> std::common_type_t<decltype("<empty>"), decltype(table.type)> {
+            if (table.type.empty()) {
+              return "<empty>";
+            } else {
+              return table.type;
+            }
+          }()) +
           ", entry " + std::to_string(table.entry) + ")";
       }
     }
@@ -43,8 +68,11 @@ namespace Postprocessor
       {
         candidates += "; and " + std::to_string(identities.size()-8) + " more";
       }
-      error = identities.empty() ? "No table matches the name and qualifiers." :
-        "Ambiguous table. Specify scope, type or entry. Candidates: " + candidates;
+      if (identities.empty()) {
+        error = "No table matches the name and qualifiers.";
+      } else {
+        error = "Ambiguous table. Specify scope, type or entry. Candidates: " + candidates;
+      }
       return false;
     }
     output = *found;

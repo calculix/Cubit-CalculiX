@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorViewport.hpp"
 #include "PostprocessorScene.hpp"
 #include "CameraInteraction.hpp"
@@ -164,13 +165,25 @@ void PostprocessorViewport::update_hover()
   std::ostringstream text;
   text.imbue(std::locale::classic());
   text << result->source_name << " / " << result->dataset_name << '\n';
-  text << (entity->kind == Postprocessor::EntityKind::Node ? "Node: " : "Element: ") << entity->entity_id;
+  text << ([&]() -> const char* {
+    if (entity->kind == Postprocessor::EntityKind::Node) {
+      return "Node: ";
+    } else {
+      return "Element: ";
+    }
+  }()) << entity->entity_id;
   if (entity->kind == Postprocessor::EntityKind::Node && !result->element_ids.empty())
   {
     text << "\nElement(s): ";
     for (std::size_t index = 0; index < result->element_ids.size(); ++index)
     {
-      text << (index ? ", " : "") << result->element_ids[index];
+      text << ([&]() -> const char* {
+        if (index) {
+          return ", ";
+        } else {
+          return "";
+        }
+      }()) << result->element_ids[index];
     }
   }
   if (entity->integration_point)
@@ -236,7 +249,13 @@ void PostprocessorViewport::pick(const QPointF& position)
   }
   if (!submitCommand || !submitCommand(QString::fromUtf8(command.c_str()),error))
   {
-    report_error(error.empty() ? "Selection command rejected." : error);
+    report_error([&]() -> std::common_type_t<decltype("Selection command rejected."), decltype(error)> {
+      if (error.empty()) {
+        return "Selection command rejected.";
+      } else {
+        return error;
+      }
+    }());
   }
   synchronize(active);
 }
@@ -613,7 +632,13 @@ void PostprocessorViewport::report_timings()
     text.imbue(std::locale::classic());
     text << std::fixed << std::setprecision(3)
       << "Postprocessor camera timing: view " << viewId << ", gesture " << report->id
-      << (report->cancelled ? " cancelled" : " completed")
+      << ([&]() -> const char* {
+        if (report->cancelled) {
+          return " cancelled";
+        } else {
+          return " completed";
+        }
+      }())
       << "; frames " << report->frames << ", presented " << report->presented
       << ", unpresented " << report->unpresented << ", superseded " << report->superseded
       << ", unrendered " << report->unrendered

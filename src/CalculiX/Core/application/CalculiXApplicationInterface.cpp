@@ -58,10 +58,7 @@ bool CalculiXApplicationInterface::init_pythoninterface()
   return ccx_core.init_pythoninterface();
 }
 
-bool CalculiXApplicationInterface::init_materiallibrary()
-{
-  return ccx_core.init_materiallibrary();
-}
+
 
 bool CalculiXApplicationInterface::init_completed()
 {

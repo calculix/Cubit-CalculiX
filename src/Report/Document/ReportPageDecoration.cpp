@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportPageDecoration.hpp"
 #include "Report/Core/ReportUserOptions.hpp"
 #include <QPainter>
@@ -66,8 +67,19 @@ QString ReportPageDecoration::expand(const QString& pattern, const ReportDocumen
     const auto match = matches.next();
     result += pattern.mid(offset, match.capturedStart() - offset);
     const auto key = match.captured(1);
-    result += key == "page" ? QString::number(page) : key == "pages" ? QString::number(pages) :
-      key == "title" ? QString::fromStdString(report.title) : value(report, key.toStdString());
+    if (key == "page") {
+      result += QString::number(page);
+    } else {
+      if (key == "pages") {
+        result += QString::number(pages);
+      } else {
+        if (key == "title") {
+          result += QString::fromStdString(report.title);
+        } else {
+          result += value(report, key.toStdString());
+        }
+      }
+    }
     offset = match.capturedEnd();
   }
   return result + pattern.mid(offset);
@@ -105,19 +117,45 @@ void ReportPageDecoration::paint(QPainter& painter, const ReportDocument& report
   const double column = body.width() / 3;
   for (const std::string band : {"header", "footer"})
   {
-    const double top = band == "header" ? 20 : body.bottom() + 16;
+    const double top = [&]() -> double {
+      if (band == "header") {
+        return 20;
+      } else {
+        return body.bottom() + 16;
+      }
+    }();
     int index = 0;
     for (const std::string position : {"left", "center", "right"})
     {
       const std::string key = band + "_" + position;
       QRectF slot(body.left() + index * column + 4, top, column - 8, 60);
-      const int alignment = index == 0 ? Qt::AlignLeft : index == 1 ? Qt::AlignHCenter : Qt::AlignRight;
+      const int alignment = [&]() -> int {
+        if (index == 0) {
+          return Qt::AlignLeft;
+        } else {
+          if (index == 1) {
+            return Qt::AlignHCenter;
+          } else {
+            return Qt::AlignRight;
+          }
+        }
+      }();
       painter.save();
       painter.setClipRect(slot);
       if (report.configuration.company_logo && value(report, "logo_placement") == QString::fromStdString(key))
       {
         const auto size = logo_size(report, slot.width());
-        const double x = index == 0 ? slot.left() : index == 1 ? slot.center().x() - size.width() / 2 : slot.right() - size.width();
+        const double x = [&]() -> double {
+          if (index == 0) {
+            return slot.left();
+          } else {
+            if (index == 1) {
+              return slot.center().x() - size.width() / 2;
+            } else {
+              return slot.right() - size.width();
+            }
+          }
+        }();
         const auto pixels = QImage::fromData(QByteArray::fromBase64(QByteArray::fromStdString(report.configuration.company_logo->base64_data)));
         painter.drawImage(QRectF(QPointF(x, top), size), pixels);
         slot.setTop(top + size.height() + 4);
@@ -129,7 +167,13 @@ void ReportPageDecoration::paint(QPainter& painter, const ReportDocument& report
     }
     if (value(report, band + "_line") == "true")
     {
-      const double y = band == "header" ? body.top() - 10 : body.bottom() + 8;
+      const double y = [&]() -> double {
+        if (band == "header") {
+          return body.top() - 10;
+        } else {
+          return body.bottom() + 8;
+        }
+      }();
       painter.drawLine(QPointF(body.left(), y), QPointF(body.right(), y));
     }
   }
@@ -138,8 +182,20 @@ void ReportPageDecoration::paint(QPainter& painter, const ReportDocument& report
 
 void ReportPageDecoration::write_odt(QXmlStreamWriter& xml, const ReportDocument& report, bool header)
 {
-  const std::string band = header ? "header" : "footer";
-  xml.writeStartElement(header ? "style:header" : "style:footer");
+  const std::string band = [&]() -> std::string {
+    if (header) {
+      return "header";
+    } else {
+      return "footer";
+    }
+  }();
+  xml.writeStartElement([&]() -> const char* {
+    if (header) {
+      return "style:header";
+    } else {
+      return "style:footer";
+    }
+  }());
   xml.writeStartElement("table:table");
   xml.writeAttribute("table:name", QString::fromStdString(band));
   xml.writeAttribute("table:style-name", "DecorationTable");
@@ -157,7 +213,13 @@ void ReportPageDecoration::write_odt(QXmlStreamWriter& xml, const ReportDocument
     xml.writeAttribute("text:style-name", QString::fromStdString("Decoration_" + position));
     if (report.configuration.company_logo && value(report, "logo_placement") == QString::fromStdString(key))
     {
-      const auto size = logo_size(report, (value(report, "page_size") == "Letter" ? 612.0 - 88 : 595.28 - 88) / 3 - 8);
+      const auto size = logo_size(report, ([&]() -> std::common_type_t<decltype(612.0 - 88), decltype(595.28 - 88)> {
+        if (value(report, "page_size") == "Letter") {
+          return 612.0 - 88;
+        } else {
+          return 595.28 - 88;
+        }
+      }()) / 3 - 8);
       xml.writeStartElement("draw:frame");
       xml.writeAttribute("draw:name", "CompanyLogo");
       xml.writeAttribute("text:anchor-type", "as-char");
@@ -184,7 +246,13 @@ void ReportPageDecoration::write_odt(QXmlStreamWriter& xml, const ReportDocument
       const auto token = match.captured(1);
       if (token == "page" || token == "pages")
       {
-        xml.writeStartElement(token == "page" ? "text:page-number" : "text:page-count");
+        xml.writeStartElement([&]() -> const char* {
+          if (token == "page") {
+            return "text:page-number";
+          } else {
+            return "text:page-count";
+          }
+        }());
         if (token == "page")
         {
           xml.writeAttribute("text:select-page", "current");

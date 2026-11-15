@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "DrawingService.hpp"
 #include "DrawingCaptureRenderer.hpp"
 #include "CubitMessage.hpp"
@@ -117,7 +118,13 @@ void DrawingService::set_pick_callback(const std::string& workspace, DrawingPick
   {
     // Replacing a callback invalidates any queued invocation of the old owner.
     const auto current = callbacks.find(workspace);
-    picker.setCallback(current == callbacks.end() ? DrawingPickCallback{} : current->second);
+    picker.setCallback([&]() -> std::common_type_t<decltype(DrawingPickCallback{}), decltype(current->second)> {
+      if (current == callbacks.end()) {
+        return DrawingPickCallback{};
+      } else {
+        return current->second;
+      }
+    }());
   }
 }
 
@@ -169,7 +176,13 @@ bool DrawingService::render(std::string& error)
   }
   auto& frame = found->second;
   const auto callback = callbacks.find(activeWorkspace);
-  picker.setCallback(callback == callbacks.end() ? DrawingPickCallback{} : callback->second);
+  picker.setCallback([&]() -> std::common_type_t<decltype(DrawingPickCallback{}), decltype(callback->second)> {
+    if (callback == callbacks.end()) {
+      return DrawingPickCallback{};
+    } else {
+      return callback->second;
+    }
+  }());
   DrawingPickSnapshot snapshot;
   snapshot.revision = ++revision;
   std::map<std::string, DrawingGeometry> groups;

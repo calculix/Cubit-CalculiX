@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostShowCommand.hpp"
 #include "DatasetCommandSupport.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -49,9 +50,21 @@ bool PostShowCommand::execute(CubitCommandData& data)
       }
       return true;
     }
-    if (!active || !data.get_string("source_name", name) || !(data.find_keyword("ONLY") ? active->show_only_source(name,error) : active->set_source_visible(name,true,error)))
+    if (!active || !data.get_string("source_name", name) || !([&]() -> std::common_type_t<decltype(active->show_only_source(name,error)), decltype(active->set_source_visible(name,true,error))> {
+      if (data.find_keyword("ONLY")) {
+        return active->show_only_source(name,error);
+      } else {
+        return active->set_source_visible(name,true,error);
+      }
+    }()))
     {
-      PRINT_ERROR("Cannot show Postprocessor source: %s\n", error.empty() ? "application unavailable or missing quoted source name" : error.c_str());
+      PRINT_ERROR("Cannot show Postprocessor source: %s\n", [&]() -> std::common_type_t<decltype("application unavailable or missing quoted source name"), decltype(error.c_str())> {
+        if (error.empty()) {
+          return "application unavailable or missing quoted source name";
+        } else {
+          return error.c_str();
+        }
+      }());
       return false;
     }
     return true;

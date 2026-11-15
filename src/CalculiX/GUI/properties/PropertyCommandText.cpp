@@ -17,7 +17,13 @@ bool PropertyCommandText::quoteName(const QString& name, QString& quoted, QStrin
       return false;
     }
   }
-  const QChar delimiter = name.contains('"') ? QChar(0x27) : QChar('"');
+  const QChar delimiter = [&]() -> QChar {
+    if (name.contains('"')) {
+      return QChar(0x27);
+    } else {
+      return QChar('"');
+    }
+  }();
   if (name.contains(delimiter))
   {
     error = "A name containing both single and double quotes cannot be quoted for the command.";

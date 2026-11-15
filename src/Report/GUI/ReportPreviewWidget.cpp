@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportPreviewWidget.hpp"
 #include "Report/Document/ReportDocumentLayout.hpp"
 #include "Report/Core/ReportUserOptions.hpp"
@@ -54,7 +55,11 @@ double ReportPreviewWidget::scale() const
 
 double ReportPreviewWidget::stride() const
 {
-  return layout ? layout->page_size().height() * scale() + gap : 1;
+  if (layout) {
+    return layout->page_size().height() * scale() + gap;
+  } else {
+    return 1;
+  }
 }
 
 void ReportPreviewWidget::update_page_geometry(const QPointF& anchor)
@@ -70,7 +75,13 @@ void ReportPreviewWidget::update_page_geometry(const QPointF& anchor)
     verticalScrollBar()->setRange(0, 0);
     return;
   }
-  const double before = previousScale > 0 ? previousScale : scale();
+  const double before = [&]() -> double {
+    if (previousScale > 0) {
+      return previousScale;
+    } else {
+      return scale();
+    }
+  }();
   const auto paper = layout->page_size();
   const double oldStride = paper.height() * before + gap;
   const double oldY = verticalScrollBar()->value() + anchor.y() - margin;
@@ -158,7 +169,13 @@ void ReportPreviewWidget::set_view(int value, int percent, const std::string& mo
   if (navigate || fittingPage)
   {
     requestedPage = -1;
-    set_page(navigate ? value - 1 : visiblePage);
+    set_page([&]() -> std::common_type_t<decltype(value - 1), decltype(visiblePage)> {
+      if (navigate) {
+        return value - 1;
+      } else {
+        return visiblePage;
+      }
+    }());
   }
 }
 
@@ -166,7 +183,11 @@ int ReportPreviewWidget::page() const noexcept
 {
   // Scrollbars have integer positions. The one-pixel tolerance prevents a
   // fractional page boundary from reporting the preceding page after a jump.
-  return layout ? std::clamp(static_cast<int>(std::floor((verticalScrollBar()->value() + 1.0) / stride())), 0, layout->page_count() - 1) : 0;
+  if (layout) {
+    return std::clamp(static_cast<int>(std::floor((verticalScrollBar()->value() + 1.0) / stride())), 0, layout->page_count() - 1);
+  } else {
+    return 0;
+  }
 }
 
 int ReportPreviewWidget::percent() const noexcept
@@ -201,8 +222,26 @@ void ReportPreviewWidget::paintEvent(QPaintEvent*)
 
 void ReportPreviewWidget::resizeEvent(QResizeEvent* event)
 {
-  const double oldStride = layout ? layout->page_size().height() * (previousScale > 0 ? previousScale : scale()) + gap : 1;
-  const int visible = layout ? std::clamp(static_cast<int>((verticalScrollBar()->value() + 1.0) / oldStride), 0, layout->page_count() - 1) : 0;
+  const double oldStride = [&]() -> double {
+    if (layout) {
+      return layout->page_size().height() * ([&]() -> std::common_type_t<decltype(previousScale), decltype(scale())> {
+        if (previousScale > 0) {
+          return previousScale;
+        } else {
+          return scale();
+        }
+      }()) + gap;
+    } else {
+      return 1;
+    }
+  }();
+  const int visible = [&]() -> int {
+    if (layout) {
+      return std::clamp(static_cast<int>((verticalScrollBar()->value() + 1.0) / oldStride), 0, layout->page_count() - 1);
+    } else {
+      return 0;
+    }
+  }();
   QAbstractScrollArea::resizeEvent(event);
   update_page_geometry(QPointF(0, 0));
   if (layout && zoomMode == "page")
@@ -216,7 +255,13 @@ void ReportPreviewWidget::wheelEvent(QWheelEvent* event)
 {
   if ((event->modifiers() & Qt::ControlModifier) && layout)
   {
-    const int next = std::clamp(percent() + (event->angleDelta().y() > 0 ? 10 : -10), 1, 300);
+    const int next = std::clamp(percent() + ([&]() -> std::common_type_t<decltype(10), decltype(-10)> {
+      if (event->angleDelta().y() > 0) {
+        return 10;
+      } else {
+        return -10;
+      }
+    }()), 1, 300);
     zoomMode = "percent";
     zoomPercent = next;
     update_page_geometry(event->position());

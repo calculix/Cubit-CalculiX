@@ -9,6 +9,7 @@ class CoreConstraints
 {
 
 public:
+  bool domain_unit_view = false;
   bool get_settings(int id, ConstraintsSettings& settings, std::string& error) const;
   const std::vector<std::string>* get_constraint_data(int constraint_id);
   std::vector<int> get_constraint_ids() const;

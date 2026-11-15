@@ -1,3 +1,6 @@
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include <utility>
 #include "Core/application/SettingsRead.hpp"
 #include "Core/interactions/CoreConstraints.hpp"
 #include "Core/application/CoreIdSelection.hpp"
@@ -25,13 +28,13 @@ bool CoreConstraints::init()
   {
     return false; // already initialized
   }else{
-    is_initialized = true;  
+    is_initialized = true;
     return true;
   }
 }
 
 bool CoreConstraints::update()
-{ 
+{
   return true;
 }
 
@@ -56,6 +59,24 @@ bool CoreConstraints::check_initialized()
 
 bool CoreConstraints::create_constraint(std::string constraint_type, std::vector<std::string> options, std::vector<std::vector<double>> options2)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.create_constraint(constraint_type, options, options2)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int constraint_id;
   int constraint_type_value;
   int constraint_last;
@@ -140,6 +161,24 @@ bool CoreConstraints::create_constraint(std::string constraint_type, std::vector
 
 bool CoreConstraints::modify_constraint(std::string constraint_type,int constraint_id, std::vector<std::string> options, std::vector<int> options_marker,std::vector<std::vector<double>> options2)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.modify_constraint(constraint_type, constraint_id, options, options_marker, options2)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int constraint_type_value;
   if (constraint_type=="RIGIDBODY")
   {
@@ -213,7 +252,7 @@ bool CoreConstraints::modify_constraint(std::string constraint_type,int constrai
           {
             equation_data.erase(equation_data.begin() + sub_data_ids[i-1]);
           }
-          
+
           for (size_t i = 0; i < options2.size(); i++)
           {
             add_equation(std::stod(equation_constraint_data[sub_constraint_data_id][0]),options2[i][0],options2[i][1],options2[i][2]);
@@ -228,7 +267,7 @@ bool CoreConstraints::modify_constraint(std::string constraint_type,int constrai
 bool CoreConstraints::add_constraint(int constraint_id, int constraint_type, int constraint_type_id)
 {
   std::vector<int> v = {constraint_id, constraint_type, constraint_type_id};
-      
+
   constraints_data.push_back(v);
 
   return true;
@@ -237,16 +276,16 @@ bool CoreConstraints::add_constraint(int constraint_id, int constraint_type, int
 bool CoreConstraints::add_rigidbody_constraint(std::string rigid_body_constraint_id, std::string entity_type, std::string type_id,std::string vertex_ref,std::string vertex_rot)
 {
   std::vector<std::string> v = {rigid_body_constraint_id,entity_type,type_id,vertex_ref,vertex_rot};
-      
+
   rigidbody_constraint_data.push_back(v);
-  
+
   return true;
 }
 
 bool CoreConstraints::add_tie_constraint(std::string tie_constraint_id, std::string name, std::string master,std::string slave,std::string position_tolerance)
 {
   std::vector<std::string> v = {tie_constraint_id,name,master,slave,position_tolerance};
-      
+
   tie_constraint_data.push_back(v);
 
   return true;
@@ -255,7 +294,7 @@ bool CoreConstraints::add_tie_constraint(std::string tie_constraint_id, std::str
 bool CoreConstraints::add_equation_constraint(std::string equation_constraint_id, std::string name)
 {
   std::vector<std::string> v = {equation_constraint_id,name};
-      
+
   equation_constraint_data.push_back(v);
 
   return true;
@@ -264,7 +303,7 @@ bool CoreConstraints::add_equation_constraint(std::string equation_constraint_id
 bool CoreConstraints::add_equation(double equation_constraint_id, double node_id, double dof, double coefficient)
 {
   std::vector<double> v = {equation_constraint_id,node_id,dof,coefficient};
-      
+
   equation_data.push_back(v);
 
   return true;
@@ -273,7 +312,7 @@ bool CoreConstraints::add_equation(double equation_constraint_id, double node_id
 bool CoreConstraints::add_equation_group_constraint(std::string equation_constraint_id, std::string name)
 {
   std::vector<std::string> v = {equation_constraint_id,name};
-      
+
   equation_group_constraint_data.push_back(v);
 
   return true;
@@ -282,7 +321,7 @@ bool CoreConstraints::add_equation_group_constraint(std::string equation_constra
 bool CoreConstraints::add_equation_group(double equation_constraint_id, double node_id_1, double node_id_2, double dof)
 {
   std::vector<double> v = {equation_constraint_id,node_id_1,node_id_2,dof};
-      
+
   equation_group_data.push_back(v);
 
   return true;
@@ -388,92 +427,92 @@ const std::vector<std::string>* CoreConstraints::get_constraint_data(int constra
 }
 
 int CoreConstraints::get_constraints_data_id_from_constraint_id(int constraint_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < constraints_data.size(); i++)
   {
     if (constraints_data[i][0]==constraint_id)
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreConstraints::get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(int rigidbody_constraint_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < rigidbody_constraint_data.size(); i++)
   {
     if (rigidbody_constraint_data[i][0]==std::to_string(rigidbody_constraint_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreConstraints::get_tie_constraint_data_id_from_tie_constraint_id(int tie_constraint_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < tie_constraint_data.size(); i++)
   {
     if (tie_constraint_data[i][0]==std::to_string(tie_constraint_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreConstraints::get_equation_constraint_data_id_from_equation_constraint_id(int equation_constraint_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < equation_constraint_data.size(); i++)
   {
     if (equation_constraint_data[i][0]==std::to_string(equation_constraint_id))
     {
       return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreConstraints::get_equation_group_constraint_data_id_from_equation_group_constraint_id(int equation_constraint_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < equation_group_constraint_data.size(); i++)
   {
     if (equation_group_constraint_data[i][0]==std::to_string(equation_constraint_id))
     {
       return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 std::vector<int> CoreConstraints::get_equation_data_ids_from_equation_constraint_id(int equation_constraint_id)
-{ 
+{
   std::vector<int> return_int;
   for (size_t i = 0; i < equation_data.size(); i++)
   {
     if (equation_data[i][0]==double(equation_constraint_id))
     {
       return_int.push_back(int(i));
-    }  
+    }
   }
   return return_int;
 }
 
 std::vector<int> CoreConstraints::get_equation_group_data_ids_from_equation_group_constraint_id(int equation_constraint_id)
-{ 
+{
   std::vector<int> return_int;
   for (size_t i = 0; i < equation_group_data.size(); i++)
   {
     if (equation_group_data[i][0]==double(equation_constraint_id))
     {
       return_int.push_back(int(i));
-    }  
+    }
   }
   return return_int;
 }
@@ -497,7 +536,17 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
 
   //loop over all constraints
   for (size_t i = 0; i < constraints_data.size(); i++)
-  { 
+  {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Solver, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return {};
+    }
+    return candidate.get_constraint_export();
+  }
+
     // CUSTOMLINE START
     std::vector<std::string> customline = ccx_export_iface.get_customline_data("BEFORE","CONSTRAINT",constraints_data[i][0]);
     for (size_t icl = 0; icl < customline.size(); icl++)
@@ -512,7 +561,7 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
       sub_constraint_data_id = get_rigidbody_constraint_data_id_from_rigidbody_constraint_id(constraints_data[i][2]);
 
       str_temp = "*RIGID BODY, ";
-      
+
       if (rigidbody_constraint_data[sub_constraint_data_id][1]=="1")
       {
         str_temp.append("NSET=");
@@ -525,19 +574,19 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
 
       str_temp.append(", REF NODE=");
       str_temp.append(std::to_string(get_node_id_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][3]))));
-      
+
       str_temp.append(", ROT NODE=");
       str_temp.append(std::to_string(get_node_id_from_vertex_id(std::stoi(rigidbody_constraint_data[sub_constraint_data_id][4]))));
       constraints_export_list.push_back(str_temp);
     }
     // TIE
-    if (constraints_data[i][1] == 2) 
+    if (constraints_data[i][1] == 2)
     {
       sub_constraint_data_id = get_tie_constraint_data_id_from_tie_constraint_id(constraints_data[i][2]);
-      
+
       str_temp = "*TIE, NAME=";
       str_temp.append(tie_constraint_data[sub_constraint_data_id][1]);
-      
+
       if (tie_constraint_data[sub_constraint_data_id][4]!="")
       {
         str_temp.append(", POSITION TOLERANCE=");
@@ -553,26 +602,26 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
       constraints_export_list.push_back(str_temp);
     }
     // EQUATION
-    if (constraints_data[i][1] == 3) 
+    if (constraints_data[i][1] == 3)
     {
       sub_constraint_data_id = get_equation_constraint_data_id_from_equation_constraint_id(constraints_data[i][2]);
-      
+
       str_temp = "*EQUATION";
       constraints_export_list.push_back(str_temp);
-      
+
       std::vector<int> sub_data_ids = get_equation_data_ids_from_equation_constraint_id(constraints_data[i][2]);
-      
+
       // number of terms
       str_temp = std::to_string(sub_data_ids.size());
       constraints_export_list.push_back(str_temp);
-      
+
       // equations
       int counter = 0;
       str_temp = "";
       for (size_t i = 0; i < sub_data_ids.size(); i++)
       {
         counter = counter + 1;
-      
+
         str_temp.append(std::to_string(int(equation_data[sub_data_ids[i]][1])));
         str_temp.append(",");
         str_temp.append(std::to_string(int(equation_data[sub_data_ids[i]][2])));
@@ -592,12 +641,12 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
       constraints_export_list.push_back(str_temp);
     }
     // EQUATIONGROUP
-    if (constraints_data[i][1] == 4) 
+    if (constraints_data[i][1] == 4)
     {
       sub_constraint_data_id = get_equation_group_constraint_data_id_from_equation_group_constraint_id(constraints_data[i][2]);
-      
+
       std::vector<int> sub_data_ids = get_equation_group_data_ids_from_equation_group_constraint_id(constraints_data[i][2]);
-           
+
       // equations
       for (size_t i = 0; i < sub_data_ids.size(); i++)
       {
@@ -606,7 +655,7 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
         // number of terms
         str_temp = "2";
         constraints_export_list.push_back(str_temp);
-        str_temp = "";  
+        str_temp = "";
         str_temp.append(std::to_string(int(equation_group_data[sub_data_ids[i]][1])));
         str_temp.append(",");
         str_temp.append(std::to_string(int(equation_group_data[sub_data_ids[i]][3])));
@@ -636,7 +685,7 @@ std::string CoreConstraints::get_constraint_export() // get a list of the Calcul
   {
     constraint_export.append(constraints_export_list[i] + "\n");
   }
-  
+
   return constraint_export;
 }
 
@@ -648,18 +697,26 @@ std::vector<int> CoreConstraints::get_rigidbody_vertex_list()
     vertices.push_back(std::stoi(rigidbody_constraint_data[i][3]));
     vertices.push_back(std::stoi(rigidbody_constraint_data[i][4]));
   }
-  
+
   return vertices;
 }
 
 bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::string name, int group_id, double tolerance, bool dof_1, bool dof_2, bool dof_3)
 {
+  std::string unitError;
+  std::string inputUnit;
+  double canonicalTolerance = 0.0;
+  if (!framework_units().display_unit("calculix", "length", inputUnit, unitError) || !framework_units().to_si(tolerance, inputUnit, SimUnits::Length, SimUnits::UnitRole::Linear, canonicalTolerance, unitError) || !framework_units().from_si(canonicalTolerance, framework_units().geometry_unit(), SimUnits::Length, SimUnits::UnitRole::Linear, tolerance, unitError)) {
+    PRINT_ERROR("Cannot convert coincident-node tolerance: %s\n", unitError.c_str());
+    return false;
+  }
+
   StopWatch watch;
   watch.tick("Starting to create Equations from coincident Nodes in Group " + std::to_string(group_id));
 
   //get nodes from group
   std::vector<int> group_node_ids = CubitInterface::parse_cubit_list("node","all in group " + std::to_string(group_id));
-  
+
   if (group_node_ids.size() == 0)
   {
     std::string log;
@@ -667,7 +724,7 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
     PRINT_INFO("%s", log.c_str());
     return false;
   }
-  
+
   std::vector<std::vector<double>> group_node_coordinates;
 
   // get coordinates for each node
@@ -676,7 +733,7 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
     std::array<double, 3> coords = CubitInterface::get_nodal_coordinates(int(group_node_ids[i]));
     if (coords.size() > 0)
     {
-      std::vector<double> data;            
+      std::vector<double> data;
       data.push_back(coords[0]);
       data.push_back(coords[1]);
       data.push_back(coords[2]);
@@ -689,7 +746,7 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
     }
   }
   watch.tick("collected coordinates");
-  
+
   /*
   //check each node against each other and create pairs
   std::vector<std::vector<int>> node_pairs;
@@ -749,7 +806,7 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
   this->apply_permutation(tmp_group_node_ids_z, pz);
 
   watch.tick("created searchable datasets");
-  
+
   int ic = 0;
   std::vector<int> processed_group_node_ids;
   for (size_t i = 0; i < group_node_ids.size()-1; i++)
@@ -760,7 +817,7 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
     int y_max = -1;
     int z_min = -1;
     int z_max = -1;
-    
+
     // check range
     if (std::binary_search(tmp_group_node_coordinates_x.begin(), tmp_group_node_coordinates_x.end(), group_node_coordinates[i][0]))
     {
@@ -830,10 +887,10 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
           if (!std::binary_search(processed_group_node_ids.begin(), processed_group_node_ids.end(), tmp_group_node_ids_x[ii]))
           {
             // check id in y
-            for (size_t iii = y_min; iii < y_max; iii++) 
+            for (size_t iii = y_min; iii < y_max; iii++)
             {
               if (tmp_group_node_ids_x[ii]==tmp_group_node_ids_y[iii])
-              { 
+              {
                 // check id in z
                 for (size_t iv = z_min; iv < z_max; iv++)
                 {
@@ -847,7 +904,7 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
               }
             }
           }
-        }   
+        }
       }
     }
 
@@ -861,11 +918,11 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
       watch.tick("processed " + std::to_string(i+1) + " from "  + std::to_string(group_node_ids.size()) + " nodes");
       ic=0;
     }
-    
+
   }
 
   watch.tick("Found " + std::to_string(node_pairs.size()) + " Node Pairs");
-  
+
   /*
   for (size_t i = 0; i < node_pairs.size(); i++)
   {
@@ -892,7 +949,7 @@ bool CoreConstraints::create_constraint_equation_from_coincident_nodes(std::stri
     if (dof_3)
     {
       options2.push_back({double(node_pairs[i][0]),double(node_pairs[i][1]),3.});
-    } 
+    }
   }
   if (node_pairs.size()>0)
   {
@@ -930,7 +987,7 @@ std::string CoreConstraints::print_data()
   {
     str_return.append(tie_constraint_data[i][0] + " " + tie_constraint_data[i][1] + " " + tie_constraint_data[i][2] + " " + tie_constraint_data[i][3] + " " + tie_constraint_data[i][4] + " \n");
   }
-  
+
   str_return.append("\n CoreConstraints equation_constraint_data: \n");
   str_return.append("equation_constraint_id,name\n");
 
@@ -969,7 +1026,7 @@ std::string CoreConstraints::print_data()
 
 
 //sorting of vectors
-template <typename T> 
+template <typename T>
 std::vector<std::size_t> CoreConstraints::sort_permutation(
     const std::vector<T>& vec)
 {
@@ -981,7 +1038,7 @@ std::vector<std::size_t> CoreConstraints::sort_permutation(
     return p;
 }
 
-template <typename T> 
+template <typename T>
 void CoreConstraints::apply_permutation(
     std::vector<T>& vec,
     const std::vector<std::size_t>& p)
@@ -1044,6 +1101,16 @@ std::vector<int> CoreConstraints::get_constraint_ids() const
 
 bool CoreConstraints::get_settings(int id, ConstraintsSettings& settings, std::string& error) const
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      error = unitError;
+      return false;
+    }
+    return candidate.get_settings(id, settings, error);
+  }
+
   settings = {};
   error.clear();
   const auto* record = SettingsRead::row(constraints_data, id, 3, error);
@@ -1068,14 +1135,46 @@ bool CoreConstraints::get_settings(int id, ConstraintsSettings& settings, std::s
   {
     return false;
   }
-  settings.name = settings.type == 1 ? std::string() : (*detail)[1];
-  settings.block = settings.type == 1 && (*detail)[1] == "2" ? (*detail)[2] : std::string();
-  settings.nodeset = settings.type == 1 && (*detail)[1] == "1" ? (*detail)[2] : std::string();
-  settings.reference = settings.type == 1 ? (*detail)[3] : std::string();
-  settings.rotation = settings.type == 1 ? (*detail)[4] : std::string();
-  settings.master = settings.type == 2 ? (*detail)[2] : std::string();
-  settings.slave = settings.type == 2 ? (*detail)[3] : std::string();
-  settings.tolerance = settings.type == 2 ? (*detail)[4] : std::string();
+  if (settings.type == 1) {
+    settings.name = std::string();
+  } else {
+    settings.name = (*detail)[1];
+  }
+  if (settings.type == 1 && (*detail)[1] == "2") {
+    settings.block = (*detail)[2];
+  } else {
+    settings.block = std::string();
+  }
+  if (settings.type == 1 && (*detail)[1] == "1") {
+    settings.nodeset = (*detail)[2];
+  } else {
+    settings.nodeset = std::string();
+  }
+  if (settings.type == 1) {
+    settings.reference = (*detail)[3];
+  } else {
+    settings.reference = std::string();
+  }
+  if (settings.type == 1) {
+    settings.rotation = (*detail)[4];
+  } else {
+    settings.rotation = std::string();
+  }
+  if (settings.type == 2) {
+    settings.master = (*detail)[2];
+  } else {
+    settings.master = std::string();
+  }
+  if (settings.type == 2) {
+    settings.slave = (*detail)[3];
+  } else {
+    settings.slave = std::string();
+  }
+  if (settings.type == 2) {
+    settings.tolerance = (*detail)[4];
+  } else {
+    settings.tolerance = std::string();
+  }
 
   if (settings.type == 3)
   {

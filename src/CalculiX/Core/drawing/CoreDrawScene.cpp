@@ -80,7 +80,11 @@ bool CoreDrawScene::isHighlighted(DrawEntityKey entity, const CalculiXDrawSelect
 bool CoreDrawScene::setSelection(const CalculiXDrawSelection& requested)
 {
   const auto previous = selection;
-  selection = requested.active ? requested : CalculiXDrawSelection{};
+  if (requested.active) {
+    selection = requested;
+  } else {
+    selection = CalculiXDrawSelection{};
+  }
   if (previous.active == selection.active && previous.entity.feature == selection.entity.feature && previous.entity.id == selection.entity.id && previous.stepId == selection.stepId)
   {
     return false;
@@ -113,14 +117,16 @@ void CoreDrawScene::setPickCallback(std::function<void(const CalculiXDrawSelecti
   if (drawings != nullptr)
   {
     const auto target = pickCallback;
-    drawings->set_pick_callback("calculix", target ? DrawingPickCallback([target](const DrawingSelection& picked)
-    {
-      CalculiXDrawSelection selected;
-      if (CalculiXDrawingAdapter::selection(picked, selected))
-      {
-        target(selected);
-      }
-    }) : DrawingPickCallback{});
+    DrawingPickCallback callback;
+    if (target) {
+      callback = [target](const DrawingSelection& picked) {
+        CalculiXDrawSelection selected;
+        if (CalculiXDrawingAdapter::selection(picked, selected)) {
+          target(selected);
+        }
+      };
+    }
+    drawings->set_pick_callback("calculix", callback);
   }
 }
 
@@ -136,7 +142,13 @@ bool CoreDrawScene::synchronize(std::string& error, const DrawLabelSettings* lab
     error = "The CalculiX drawing service is unavailable.";
     return false;
   }
-  const auto& labelSettings = labelsOverride == nullptr ? state.labels : *labelsOverride;
+  const auto& labelSettings = [&]() -> const DrawLabelSettings& {
+    if (labelsOverride == nullptr) {
+      return state.labels;
+    } else {
+      return *labelsOverride;
+    }
+  }();
   DrawingFrame frame;
   frame.style = {hoverColor, selectionColor};
   frame.overlayVisible = state.overlayVisible && workspaceActive;
@@ -157,8 +169,13 @@ bool CoreDrawScene::synchronize(std::string& error, const DrawLabelSettings* lab
     DrawingGeometry geometry = entity.second;
     const auto label = labels.find(entity.first);
     const auto category = drawing_group(entity.first.feature);
-    const bool enabled = category == DrawGroup::Loads ? labelSettings.loads :
-      category == DrawGroup::BoundaryConditions && labelSettings.boundaryConditions;
+    const bool enabled = [&]() -> bool {
+      if (category == DrawGroup::Loads) {
+        return labelSettings.loads;
+      } else {
+        return category == DrawGroup::BoundaryConditions && labelSettings.boundaryConditions;
+      }
+    }();
     if ((category == DrawGroup::Loads || category == DrawGroup::BoundaryConditions) &&
         (!enabled || !labelSettings.enabled || (labelSettings.selectedOnly && !isHighlighted(entity.first, selection))))
     {

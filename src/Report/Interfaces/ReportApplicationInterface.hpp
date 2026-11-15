@@ -24,6 +24,7 @@ public:
   bool configure_patch(const ReportConfiguration& patch, std::string& error);
   bool generate(const std::string& provider, int job, const std::string& profile, std::string& error);
   bool update(std::string& error);
+  bool configure_units(const std::string& system, const std::string& quantity, const std::string& unit, std::string& error);
   bool configure(const std::string& key, const std::string& value, std::string& error);
   bool add_image(const ReportImageRequest& request,const std::string& caption,std::string& error);
   bool note(const std::string& section, const std::string& value, std::string& error);

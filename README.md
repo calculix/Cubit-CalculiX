@@ -81,7 +81,7 @@ Also take a look at our [Youtube Channel CubitCalculiX](https://www.youtube.com/
   - Specific Heat
   - Tension Only
 - Materiallibrary 
-  - easy to use library: materials can be created, modified and deleted, imported from cubit and exported into cubit
+  - easy to use library: materials can be created, modified and deleted, copied between the shared HDF5 library and independent workspace material stores
   - already contains some default materials
 - Sections 
   - Solid

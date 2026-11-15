@@ -76,7 +76,13 @@ bool solve_volume(const TopologyLevelSetQPProblem& problem, double source_volume
   double minimum_change = 0.0;
   for (int node = 0; node < values.size(); ++node)
   {
-    const double endpoint = problem.volume[node] >= 0.0 ? problem.lower[node] : problem.upper[node];
+    const double endpoint = [&]() -> double {
+      if (problem.volume[node] >= 0.0) {
+        return problem.lower[node];
+      } else {
+        return problem.upper[node];
+      }
+    }();
     minimum_change += problem.volume[node] * (endpoint - problem.origin[node]);
   }
   if (!std::isfinite(minimum_change))

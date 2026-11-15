@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "InitialConditionsPropertiesWidget.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -24,7 +25,13 @@ bool InitialConditionsPropertiesWidget::setInitialCondition(int id)
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
   if (settings.type == 1 || settings.type == 2)
   {
-    const auto kind = settings.type == 1 ? PropertyReferenceKind::Displacement : PropertyReferenceKind::Temperature;
+    const auto kind = [&]() -> std::common_type_t<decltype(PropertyReferenceKind::Displacement), decltype(PropertyReferenceKind::Temperature)> {
+      if (settings.type == 1) {
+        return PropertyReferenceKind::Displacement;
+      } else {
+        return PropertyReferenceKind::Temperature;
+      }
+    }();
     addReference(assignment, kind, "BC", QString::fromStdString(settings.bcId));
   }
   if (!settings.blockStress.empty())

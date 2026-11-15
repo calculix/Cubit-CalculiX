@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportDocumentLayout.hpp"
 #include "ReportPageDecoration.hpp"
 #include "Report/Core/ReportLogo.hpp"
@@ -40,9 +41,19 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   auto setting = [&](const std::string& key, const std::string& fallback)
   {
     const auto value = settings.find(key);
-    return value == settings.end() ? fallback : value->second;
+    if (value == settings.end()) {
+      return fallback;
+    } else {
+      return value->second;
+    }
   };
-  const QSizeF page = setting("page_size", "A4") == "Letter" ? QSizeF(612, 792) : QSizeF(595.28, 841.89);
+  const QSizeF page = [&]() -> QSizeF {
+    if (setting("page_size", "A4") == "Letter") {
+      return QSizeF(612, 792);
+    } else {
+      return QSizeF(595.28, 841.89);
+    }
+  }();
   if (!ReportPageDecoration::validate_templates(document.configuration, error) ||
       (document.configuration.company_logo && !ReportLogo::validate(*document.configuration.company_logo, error)))
   {
@@ -64,8 +75,20 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
       cursor.insertBlock();
     }
     QTextBlockFormat block;
-    block.setTopMargin(heading ? 12 : 3);
-    block.setBottomMargin(heading ? 7 : 5);
+    block.setTopMargin([&]() -> int {
+      if (heading) {
+        return 12;
+      } else {
+        return 3;
+      }
+    }());
+    block.setBottomMargin([&]() -> int {
+      if (heading) {
+        return 7;
+      } else {
+        return 5;
+      }
+    }());
     block.setHeadingLevel(heading);
     block.setNonBreakableLines(false);
     if (pageBreak)
@@ -74,9 +97,33 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
     }
     cursor.setBlockFormat(block);
     QTextCharFormat format;
-    format.setFontPointSize(heading == 1 ? 20 : heading == 2 ? 13 : 9);
-    format.setFontWeight(heading ? QFont::Bold : QFont::Normal);
-    format.setForeground(heading ? QColor("#18334c") : QColor("#253442"));
+    format.setFontPointSize([&]() -> std::common_type_t<decltype(20), int> {
+      if (heading == 1) {
+        return 20;
+      } else {
+        return [&]() -> int {
+          if (heading == 2) {
+            return 13;
+          } else {
+            return 9;
+          }
+        }();
+      }
+    }());
+    format.setFontWeight([&]() -> std::common_type_t<decltype(QFont::Bold), decltype(QFont::Normal)> {
+      if (heading) {
+        return QFont::Bold;
+      } else {
+        return QFont::Normal;
+      }
+    }());
+    format.setForeground([&]() -> std::common_type_t<decltype(QColor("#18334c")), decltype(QColor("#253442"))> {
+      if (heading) {
+        return QColor("#18334c");
+      } else {
+        return QColor("#253442");
+      }
+    }());
     cursor.setCharFormat(format);
     cursor.insertText(value);
   };
@@ -88,7 +135,13 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
     paragraph("Author: " + QString::fromStdString(setting("author", "")), 0, false);
     paragraph("Revision: " + QString::fromStdString(setting("revision", "")), 0, false);
     paragraph("Generated: " + QString::fromStdString(document.generated_at), 0, false);
-    paragraph("Source: " + QString::fromStdString(document.source.workspace_id) + (document.source.kind == "model" ? " / current model" : " / job " + QString::number(document.source.job_id)), 0, false);
+    paragraph("Source: " + QString::fromStdString(document.source.workspace_id) + ([&]() -> QString {
+      if (document.source.kind == "model") {
+        return " / current model";
+      } else {
+        return " / job " + QString::number(document.source.job_id);
+      }
+    }()), 0, false);
     paragraph(QString::fromStdString(document.source.provenance), 0, false);
   }
   // Insert real headings first, then resolve physical pages and replace
@@ -113,7 +166,13 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   }
   std::function<void(const ReportSection&, int)> appendSection = [&](const ReportSection& section, int level)
   {
-    paragraph(QString::fromStdString(section.title), level == 0 ? 1 : 2, level == 0 && cursor.position() != 0);
+    paragraph(QString::fromStdString(section.title), [&]() -> int {
+      if (level == 0) {
+        return 1;
+      } else {
+        return 2;
+      }
+    }(), level == 0 && cursor.position() != 0);
     headings.push_back({section.id, cursor.block().position()});
     for (const auto& line : section.paragraphs)
     {
@@ -147,7 +206,13 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
         {
           const auto value = sourceTable.rows[row][col];
           table->cellAt(static_cast<int>(row) + 1, static_cast<int>(col)).firstCursorPosition().insertText(
-            value.isDouble() ? QString::number(value.toDouble(), 'g', precision) : value.toString());
+            [&]() -> std::common_type_t<decltype(QString::number(value.toDouble(), 'g', precision)), decltype(value.toString())> {
+              if (value.isDouble()) {
+                return QString::number(value.toDouble(), 'g', precision);
+              } else {
+                return value.toString();
+              }
+            }());
         }
       }
       cursor = table->lastCursorPosition();
@@ -243,7 +308,11 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
 
 int ReportDocumentLayout::page_count() const noexcept
 {
-  return text == nullptr ? 0 : text->pageCount();
+  if (text == nullptr) {
+    return 0;
+  } else {
+    return text->pageCount();
+  }
 }
 
 QSizeF ReportDocumentLayout::page_size() const noexcept

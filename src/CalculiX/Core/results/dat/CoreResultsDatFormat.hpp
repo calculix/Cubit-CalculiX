@@ -1,3 +1,4 @@
+#include <type_traits>
 #ifndef CORERESULTSDATFORMAT_HPP
 #define CORERESULTSDATFORMAT_HPP
 
@@ -155,7 +156,13 @@ namespace CoreResultsDatFormat
       const bool id = name == "NodeId" || name == "ReportedNodeId" || name == "SlaveElementId" || name == "SlaveFace" ||
         name == "ElementId" || name == "Face" || name == "IntegrationPoint";
       if ((id || name == "Count") && (!std::isfinite(values[i]) || values[i] != std::floor(values[i]) ||
-        values[i] < (id ? 1 : 0) || values[i] > std::numeric_limits<int>::max()))
+        values[i] < ([&]() -> int {
+          if (id) {
+            return 1;
+          } else {
+            return 0;
+          }
+        }()) || values[i] > std::numeric_limits<int>::max()))
       {
         return false;
       }
@@ -206,7 +213,13 @@ namespace CoreResultsDatFormat
       }
       result.table.set_name = spaced.substr(set + 8, and_time - set - 8);
     }
-    auto name = line.substr(0, set == std::string::npos ? time : set);
+    auto name = line.substr(0, [&]() -> std::common_type_t<decltype(time), decltype(set)> {
+      if (set == std::string::npos) {
+        return time;
+      } else {
+        return set;
+      }
+    }());
     const auto open = name.find('(');
     if (open != std::string::npos)
     {
@@ -247,7 +260,11 @@ namespace CoreResultsDatFormat
     {
       result.kind = Kind::Table;
       const bool face = line.find("slave element+face") != std::string::npos;
-      result.table.columns = face ? std::vector<std::string>{"SlaveElementId", "SlaveFace"} : std::vector<std::string>{"ReportedNodeId"};
+      if (face) {
+        result.table.columns = std::vector<std::string>{"SlaveElementId", "SlaveFace"};
+      } else {
+        result.table.columns = std::vector<std::string>{"ReportedNodeId"};
+      }
       if (line.find("contact stress (") == 0)
       {
         result.table.key = "CSTR";

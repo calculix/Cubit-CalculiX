@@ -1,3 +1,5 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include <utility>
 #include "Core/application/SettingsRead.hpp"
 #include "Core/sections/CoreSections.hpp"
 #include "Core/application/CoreIdSelection.hpp"
@@ -28,13 +30,13 @@ bool CoreSections::init()
   {
     return false; // already initialized
   }else{
-    is_initialized = true;  
+    is_initialized = true;
     return true;
   }
 }
 
 bool CoreSections::update()
-{ 
+{
   return true;
 }
 
@@ -58,6 +60,30 @@ bool CoreSections::check_initialized()
 
 bool CoreSections::create_section(std::string section_type,int block_id, int material_id, std::vector<std::string> options)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.create_section(section_type, block_id, material_id, options)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
+  CalculiXMaterialsInterface materials;
+  if (!materials.check_material_exists(material_id)) {
+    PRINT_ERROR("CalculiX material %d does not exist; section creation cancelled.\n", material_id);
+    return false;
+  }
+
   int section_id;
   int section_type_value;
   int section_last;
@@ -117,7 +143,7 @@ bool CoreSections::create_section(std::string section_type,int block_id, int mat
     section_type_value = 4;
     this->add_membrane_section(std::to_string(sub_section_id), std::to_string(block_id), std::to_string(material_id), options[0], options[1], options[2]);
   }
-  
+
   if (sections_data.size()==0)
   {
     section_id = 1;
@@ -134,6 +160,37 @@ bool CoreSections::create_section(std::string section_type,int block_id, int mat
 
 bool CoreSections::modify_section(std::string section_type,int section_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.modify_section(section_type, section_id, options, options_marker)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
+  if (options.size() != options_marker.size() || options.size() < 2) {
+    PRINT_ERROR("Incomplete section modification options.\n");
+    return false;
+  }
+  if (options_marker[1] == 1) {
+    CalculiXMaterialsInterface materials;
+    const int material_id = std::stoi(options[1]);
+    if (!materials.check_material_exists(material_id)) {
+      PRINT_ERROR("CalculiX material %d does not exist; section modification cancelled.\n", material_id);
+      return false;
+    }
+  }
+
   int section_type_value;
   if (section_type=="SOLID")
   {
@@ -151,7 +208,7 @@ bool CoreSections::modify_section(std::string section_type,int section_id, std::
 
   int sub_section_data_id;
   int sections_data_id = get_sections_data_id_from_section_id(section_id);
-  
+
   if (sections_data_id == -1)
   {
     return false;
@@ -208,7 +265,7 @@ bool CoreSections::modify_section(std::string section_type,int section_id, std::
 bool CoreSections::add_section(int section_id, int section_type, int section_type_id)
 {
   std::vector<int> v = {section_id, section_type, section_type_id};
-      
+
   sections_data.push_back(v);
 
   return true;
@@ -217,7 +274,7 @@ bool CoreSections::add_section(int section_id, int section_type, int section_typ
 bool CoreSections::add_solid_section(std::string solid_section_id, std::string block_id, std::string material_id,std::string orientation,std::string thickness)
 {
   std::vector<std::string> v = {solid_section_id, block_id, material_id, orientation, thickness};
-      
+
   solid_section_data.push_back(v);
 
   return true;
@@ -226,7 +283,7 @@ bool CoreSections::add_solid_section(std::string solid_section_id, std::string b
 bool CoreSections::add_shell_section(std::string shell_section_id, std::string block_id, std::string material_id,std::string orientation,std::string thickness,std::string offset)
 {
   std::vector<std::string> v = {shell_section_id, block_id, material_id, orientation, thickness, offset};
-      
+
   shell_section_data.push_back(v);
 
   return true;
@@ -235,7 +292,7 @@ bool CoreSections::add_shell_section(std::string shell_section_id, std::string b
 bool CoreSections::add_beam_section(std::string beam_section_id, std::string block_id, std::string material_id,std::string beam_type,std::string parameter1,std::string parameter2,std::string parameter3,std::string parameter4,std::string parameter5,std::string parameter6,std::string x,std::string y,std::string z,std::string orientation,std::string offset1,std::string offset2)
 {
   std::vector<std::string> v = {beam_section_id, block_id, material_id, beam_type, parameter1, parameter2, parameter3, parameter4, parameter5, parameter6, x, y, z, orientation, offset1, offset2};
-      
+
   beam_section_data.push_back(v);
 
   return true;
@@ -244,7 +301,7 @@ bool CoreSections::add_beam_section(std::string beam_section_id, std::string blo
 bool CoreSections::add_membrane_section(std::string membrane_section_id, std::string block_id, std::string material_id,std::string orientation,std::string thickness,std::string offset)
 {
   std::vector<std::string> v = {membrane_section_id, block_id, material_id, orientation, thickness, offset};
-      
+
   membrane_section_data.push_back(v);
 
   return true;
@@ -370,75 +427,85 @@ const std::vector<std::string>* CoreSections::get_section_data(int section_id)
 }
 
 int CoreSections::get_sections_data_id_from_section_id(int section_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < sections_data.size(); i++)
   {
     if (sections_data[i][0]==section_id)
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreSections::get_solid_section_data_id_from_solid_section_id(int solid_section_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < solid_section_data.size(); i++)
   {
     if (solid_section_data[i][0]==std::to_string(solid_section_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 
 int CoreSections::get_shell_section_data_id_from_shell_section_id(int shell_section_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < shell_section_data.size(); i++)
   {
     if (shell_section_data[i][0]==std::to_string(shell_section_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 
 int CoreSections::get_beam_section_data_id_from_beam_section_id(int beam_section_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < beam_section_data.size(); i++)
   {
     if (beam_section_data[i][0]==std::to_string(beam_section_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 
 int CoreSections::get_membrane_section_data_id_from_membrane_section_id(int membrane_section_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < membrane_section_data.size(); i++)
   {
     if (membrane_section_data[i][0]==std::to_string(membrane_section_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 std::string CoreSections::get_section_export(int topology_id,int iteration_id)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Solver, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return {};
+    }
+    return candidate.get_section_export(topology_id, iteration_id);
+  }
+
   CalculiXExportInterface ccx_export_iface;
   CalculiXMaterialsInterface ccx_materials_iface;
   CalculiXMeshInterface ccx_mesh_iface;
@@ -487,7 +554,7 @@ std::string CoreSections::get_section_export(int topology_id,int iteration_id)
   // standard section export
   //loop over all sections
   for (size_t i = 0; i < sections_data.size(); i++)
-  { 
+  {
     // CUSTOMLINE START
     std::vector<std::string> customline = ccx_export_iface.get_customline_data("BEFORE","SECTION",sections_data[i][0]);
     for (size_t icl = 0; icl < customline.size(); icl++)
@@ -518,14 +585,18 @@ std::string CoreSections::get_section_export(int topology_id,int iteration_id)
       sub_section_data_id = get_solid_section_data_id_from_solid_section_id(sections_data[i][2]);
 
       str_temp = "*SOLID SECTION, MATERIAL=";
-      //str_temp.append(CubitInterface::get_material_name(std::stoi(solid_section_data[sub_section_data_id][2])));
-      std::string material_name = CubitInterface::get_material_name(std::stoi(solid_section_data[sub_section_data_id][2]));
+      const int material_id = std::stoi(solid_section_data[sub_section_data_id][2]);
+      if (!ccx_materials_iface.check_material_exists(material_id)) {
+        PRINT_ERROR("CalculiX material %d referenced by section %d does not exist.\n", material_id, sections_data[i][0]);
+        return "";
+      }
+      std::string material_name = ccx_materials_iface.get_material_name(material_id);
       material_name = ccx_materials_iface.get_material_prefix(material_name) + material_name;
-      str_temp.append(material_name); 
+      str_temp.append(material_name);
       str_temp.append(", ELSET=");
       str_temp.append(ccx_mesh_iface.get_block_name(std::stoi(solid_section_data[sub_section_data_id][1])));
-      
-      
+
+
       if (ccx_sections_iface.check_orientation_exists(std::stoi(solid_section_data[sub_section_data_id][3])))
       {
         str_temp.append(", ORIENTATION=");
@@ -535,23 +606,27 @@ std::string CoreSections::get_section_export(int topology_id,int iteration_id)
       sections_export_list.push_back(str_temp);
 
       if (solid_section_data[sub_section_data_id][4]!="")
-      { 
+      {
         sections_export_list.push_back(solid_section_data[sub_section_data_id][4]);
-      }    
+      }
     }
     // SHELL
-    if (sections_data[i][1] == 2) 
+    if (sections_data[i][1] == 2)
     {
       sub_section_data_id = get_shell_section_data_id_from_shell_section_id(sections_data[i][2]);
 
       str_temp = "*SHELL SECTION, MATERIAL=";
-      //str_temp.append(CubitInterface::get_material_name(std::stoi(shell_section_data[sub_section_data_id][2])));
-      std::string material_name = CubitInterface::get_material_name(std::stoi(shell_section_data[sub_section_data_id][2]));
+      const int material_id = std::stoi(shell_section_data[sub_section_data_id][2]);
+      if (!ccx_materials_iface.check_material_exists(material_id)) {
+        PRINT_ERROR("CalculiX material %d referenced by section %d does not exist.\n", material_id, sections_data[i][0]);
+        return "";
+      }
+      std::string material_name = ccx_materials_iface.get_material_name(material_id);
       material_name = ccx_materials_iface.get_material_prefix(material_name) + material_name;
       str_temp.append(material_name);
       str_temp.append(", ELSET=");
       str_temp.append(ccx_mesh_iface.get_block_name(std::stoi(shell_section_data[sub_section_data_id][1])));
-      
+
       if (ccx_sections_iface.check_orientation_exists(std::stoi(shell_section_data[sub_section_data_id][3])))
       {
         str_temp.append(", ORIENTATION=");
@@ -567,29 +642,33 @@ std::string CoreSections::get_section_export(int topology_id,int iteration_id)
       sections_export_list.push_back(str_temp);
 
       if (shell_section_data[sub_section_data_id][4]!="")
-      { 
+      {
         sections_export_list.push_back(shell_section_data[sub_section_data_id][4]);
-      }    
+      }
     }
     // BEAM
-    if (sections_data[i][1] == 3) 
+    if (sections_data[i][1] == 3)
     {
       sub_section_data_id = get_beam_section_data_id_from_beam_section_id(sections_data[i][2]);
 
       str_temp = "*BEAM SECTION, MATERIAL=";
-      //str_temp.append(CubitInterface::get_material_name(std::stoi(beam_section_data[sub_section_data_id][2])));
-      std::string material_name = CubitInterface::get_material_name(std::stoi(beam_section_data[sub_section_data_id][2]));
+      const int material_id = std::stoi(beam_section_data[sub_section_data_id][2]);
+      if (!ccx_materials_iface.check_material_exists(material_id)) {
+        PRINT_ERROR("CalculiX material %d referenced by section %d does not exist.\n", material_id, sections_data[i][0]);
+        return "";
+      }
+      std::string material_name = ccx_materials_iface.get_material_name(material_id);
       material_name = ccx_materials_iface.get_material_prefix(material_name) + material_name;
       str_temp.append(material_name);
       str_temp.append(", ELSET=");
       str_temp.append(ccx_mesh_iface.get_block_name(std::stoi(beam_section_data[sub_section_data_id][1])));
-      
+
       if (beam_section_data[sub_section_data_id][3]!="")
       {
         str_temp.append(", SECTION=");
         str_temp.append(beam_section_data[sub_section_data_id][3]);
       }
-      
+
       if (beam_section_data[sub_section_data_id][14]!="")
       {
         str_temp.append(", OFFSET1=");
@@ -618,18 +697,22 @@ std::string CoreSections::get_section_export(int topology_id,int iteration_id)
       sections_export_list.push_back(beam_section_data[sub_section_data_id][10] + ", " + beam_section_data[sub_section_data_id][11] + ", " + beam_section_data[sub_section_data_id][12]);
     }
     // MEMBRANE
-    if (sections_data[i][1] == 4) 
+    if (sections_data[i][1] == 4)
     {
       sub_section_data_id = get_membrane_section_data_id_from_membrane_section_id(sections_data[i][2]);
 
       str_temp = "*MEMBRANE SECTION, MATERIAL=";
-      //str_temp.append(CubitInterface::get_material_name(std::stoi(membrane_section_data[sub_section_data_id][2])));
-      std::string material_name = CubitInterface::get_material_name(std::stoi(membrane_section_data[sub_section_data_id][2]));
+      const int material_id = std::stoi(membrane_section_data[sub_section_data_id][2]);
+      if (!ccx_materials_iface.check_material_exists(material_id)) {
+        PRINT_ERROR("CalculiX material %d referenced by section %d does not exist.\n", material_id, sections_data[i][0]);
+        return "";
+      }
+      std::string material_name = ccx_materials_iface.get_material_name(material_id);
       material_name = ccx_materials_iface.get_material_prefix(material_name) + material_name;
       str_temp.append(material_name);
       str_temp.append(", ELSET=");
       str_temp.append(ccx_mesh_iface.get_block_name(std::stoi(membrane_section_data[sub_section_data_id][1])));
-      
+
       if (ccx_sections_iface.check_orientation_exists(std::stoi(membrane_section_data[sub_section_data_id][3])))
       {
         str_temp.append(", ORIENTATION=");
@@ -645,9 +728,9 @@ std::string CoreSections::get_section_export(int topology_id,int iteration_id)
       sections_export_list.push_back(str_temp);
 
       if (membrane_section_data[sub_section_data_id][4]!="")
-      { 
+      {
         sections_export_list.push_back(membrane_section_data[sub_section_data_id][4]);
-      }    
+      }
     }
     // CUSTOMLINE START
     customline = ccx_export_iface.get_customline_data("AFTER","SECTION",sections_data[i][0]);
@@ -664,7 +747,7 @@ std::string CoreSections::get_section_export(int topology_id,int iteration_id)
   {
     section_export.append(sections_export_list[i] + "\n");
   }
-  
+
   return section_export;
 }
 
@@ -686,7 +769,7 @@ std::string CoreSections::print_data()
   {
     str_return.append(solid_section_data[i][0] + " " + solid_section_data[i][1] + " " + solid_section_data[i][2] + " " + solid_section_data[i][3] + " " + solid_section_data[i][4] + " \n");
   }
-  
+
   str_return.append("\n CoreSections shell_section_data: \n");
   str_return.append("shell_section_id,block_id,material,orientation,thickness,offset \n");
 
@@ -783,6 +866,16 @@ bool CoreSections::initialize_topology_solid_sections(int topology_id,const std:
 
 std::string CoreSections::get_topology_solid_section_export(int topology_id,int iteration_id,int section_id)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Solver, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return {};
+    }
+    return candidate.get_topology_solid_section_export(topology_id, iteration_id, section_id);
+  }
+
   CalculiXMeshInterface ccx_mesh_iface;
   CalculiXSectionsInterface ccx_sections_iface;
   CalculiXTopologyInterface ccx_topology_iface;
@@ -904,6 +997,16 @@ std::string CoreSections::get_topology_solid_section_export(int topology_id,int 
 
 std::string CoreSections::get_topology_solid_section_export_legacy(int topology_id,int iteration_id,int section_id)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Solver, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return {};
+    }
+    return candidate.get_topology_solid_section_export_legacy(topology_id, iteration_id, section_id);
+  }
+
   CalculiXMeshInterface ccx_mesh_iface;
   CalculiXSectionsInterface ccx_sections_iface;
   CalculiXTopologyInterface ccx_topology_iface;
@@ -1018,6 +1121,16 @@ std::vector<int> CoreSections::get_section_ids() const
 
 bool CoreSections::get_settings(int id, SectionsSettings& settings, std::string& error) const
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      error = unitError;
+      return false;
+    }
+    return candidate.get_settings(id, settings, error);
+  }
+
   settings = {};
   error.clear();
   const auto* record = SettingsRead::row(sections_data, id, 3, error);
@@ -1044,21 +1157,81 @@ bool CoreSections::get_settings(int id, SectionsSettings& settings, std::string&
   }
   settings.block = (*detail)[1];
   settings.material = (*detail)[2];
-  settings.orientation = (*detail)[settings.type == 3 ? 13 : 3];
-  settings.thickness = settings.type == 3 ? std::string() : (*detail)[4];
-  settings.offset = settings.type == 2 || settings.type == 4 ? (*detail)[5] : std::string();
-  settings.beamType = settings.type == 3 ? (*detail)[3] : std::string();
-  settings.parameter1 = settings.type == 3 ? (*detail)[4] : std::string();
-  settings.parameter2 = settings.type == 3 ? (*detail)[5] : std::string();
-  settings.parameter3 = settings.type == 3 ? (*detail)[6] : std::string();
-  settings.parameter4 = settings.type == 3 ? (*detail)[7] : std::string();
-  settings.parameter5 = settings.type == 3 ? (*detail)[8] : std::string();
-  settings.parameter6 = settings.type == 3 ? (*detail)[9] : std::string();
-  settings.x = settings.type == 3 ? (*detail)[10] : std::string();
-  settings.y = settings.type == 3 ? (*detail)[11] : std::string();
-  settings.z = settings.type == 3 ? (*detail)[12] : std::string();
-  settings.offset1 = settings.type == 3 ? (*detail)[14] : std::string();
-  settings.offset2 = settings.type == 3 ? (*detail)[15] : std::string();
+  if (settings.type == 3) {
+    settings.orientation = (*detail)[13];
+  } else {
+    settings.orientation = (*detail)[3];
+  }
+  if (settings.type == 3) {
+    settings.thickness = std::string();
+  } else {
+    settings.thickness = (*detail)[4];
+  }
+  if (settings.type == 2 || settings.type == 4) {
+    settings.offset = (*detail)[5];
+  } else {
+    settings.offset = std::string();
+  }
+  if (settings.type == 3) {
+    settings.beamType = (*detail)[3];
+  } else {
+    settings.beamType = std::string();
+  }
+  if (settings.type == 3) {
+    settings.parameter1 = (*detail)[4];
+  } else {
+    settings.parameter1 = std::string();
+  }
+  if (settings.type == 3) {
+    settings.parameter2 = (*detail)[5];
+  } else {
+    settings.parameter2 = std::string();
+  }
+  if (settings.type == 3) {
+    settings.parameter3 = (*detail)[6];
+  } else {
+    settings.parameter3 = std::string();
+  }
+  if (settings.type == 3) {
+    settings.parameter4 = (*detail)[7];
+  } else {
+    settings.parameter4 = std::string();
+  }
+  if (settings.type == 3) {
+    settings.parameter5 = (*detail)[8];
+  } else {
+    settings.parameter5 = std::string();
+  }
+  if (settings.type == 3) {
+    settings.parameter6 = (*detail)[9];
+  } else {
+    settings.parameter6 = std::string();
+  }
+  if (settings.type == 3) {
+    settings.x = (*detail)[10];
+  } else {
+    settings.x = std::string();
+  }
+  if (settings.type == 3) {
+    settings.y = (*detail)[11];
+  } else {
+    settings.y = std::string();
+  }
+  if (settings.type == 3) {
+    settings.z = (*detail)[12];
+  } else {
+    settings.z = std::string();
+  }
+  if (settings.type == 3) {
+    settings.offset1 = (*detail)[14];
+  } else {
+    settings.offset1 = std::string();
+  }
+  if (settings.type == 3) {
+    settings.offset2 = (*detail)[15];
+  } else {
+    settings.offset2 = std::string();
+  }
 
   if (!error.empty())
   {

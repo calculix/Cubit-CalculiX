@@ -9,6 +9,7 @@ class CorePhysicalConstants
 {
 
 public:
+  bool domain_unit_view = false;
   bool get_settings(int id, PhysicalConstantsSettings& settings, std::string& error) const;
   CorePhysicalConstants();
   ~CorePhysicalConstants();

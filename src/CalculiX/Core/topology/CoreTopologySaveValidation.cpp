@@ -81,7 +81,11 @@ const std::map<int, double>* fractions(const TopologyCase& configuration, int it
   {
     return nullptr;
   }
-  return density != configuration.iteration_density_designs.end() ? &density->second.element_densities : &level_set->second.element_solid_fractions;
+  if (density != configuration.iteration_density_designs.end()) {
+    return &density->second.element_densities;
+  } else {
+    return &level_set->second.element_solid_fractions;
+  }
 }
 }
 

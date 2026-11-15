@@ -35,7 +35,13 @@ void PostprocessorPlaneOverlay::update(const Postprocessor::FilterDefinition* fi
     renderer->AddActor(actor);
   }
   const auto& normal = filter->plane.normal;
-  const int axis = std::abs(normal[0]) < 0.8 ? 0 : 1;
+  const int axis = [&]() -> int {
+    if (std::abs(normal[0]) < 0.8) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }();
   std::array<double,3> u = {0,normal[2],-normal[1]};
   if (axis == 1)
   {

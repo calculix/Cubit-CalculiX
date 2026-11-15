@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CoreDraw.hpp"
 #include "CoreDrawCapture.hpp"
 #include "CoreDrawSnapshotCapture.hpp"
@@ -54,7 +55,11 @@ double CoreDraw::modelSymbolSize() const
       }
     }
     const double extent = (std::max)({maximum[0] - minimum[0], maximum[1] - minimum[1], maximum[2] - minimum[2]});
-    return initialized && std::isfinite(extent) && extent > 0 ? extent * 0.10 : 1.0;
+    if (initialized && std::isfinite(extent) && extent > 0) {
+      return extent * 0.10;
+    } else {
+      return 1.0;
+    }
   }
   const auto vertices = CubitInterface::parse_cubit_list("vertex", "all");
   if (vertices.empty())
@@ -63,7 +68,11 @@ double CoreDraw::modelSymbolSize() const
   }
   const auto box = CubitInterface::get_total_bounding_box("vertex", vertices);
   const double extent = (std::max)({box[2], box[5], box[8]});
-  return std::isfinite(extent) && extent > 0 ? extent * 0.10 : 1.0;
+  if (std::isfinite(extent) && extent > 0) {
+    return extent * 0.10;
+  } else {
+    return 1.0;
+  }
 }
 
 double CoreDraw::defaultSymbolSize() const
@@ -95,7 +104,13 @@ bool CoreDraw::storeGeometry(DrawEntityKey key, DrawingGeometry geometry, double
     }
     label.symbolSize = size;
   }
-  scene.replace(key, std::move(geometry), labeled ? &label : nullptr);
+  scene.replace(key, std::move(geometry), [&]() -> std::common_type_t<decltype(&label), decltype(nullptr)> {
+    if (labeled) {
+      return &label;
+    } else {
+      return nullptr;
+    }
+  }());
   if (!rebuilding)
   {
     auto& group = scene.state.groups[drawing_group(key.feature)];
@@ -200,7 +215,11 @@ bool CoreDraw::refreshDrawing(std::string& error)
         success = false;
         if (firstError.empty())
         {
-          firstError = error.empty() ? "The selected step drawing is unavailable." : error;
+          if (error.empty()) {
+            firstError = "The selected step drawing is unavailable.";
+          } else {
+            firstError = error;
+          }
         }
         continue;
       }
@@ -255,7 +274,13 @@ bool CoreDraw::refreshDrawing(std::string& error)
         if (accepted(geometry.first))
         {
           const auto label = resolved->labels.find(geometry.first);
-          scene.replace(geometry.first, geometry.second, label == resolved->labels.end() ? nullptr : &label->second);
+          scene.replace(geometry.first, geometry.second, [&]() -> std::common_type_t<decltype(nullptr), decltype(&label->second)> {
+            if (label == resolved->labels.end()) {
+              return nullptr;
+            } else {
+              return &label->second;
+            }
+          }());
           selected.push_back(geometry.first);
         }
       }
@@ -322,7 +347,11 @@ bool CoreDraw::setGroupVisible(DrawGroup group, bool visible, std::string& error
   state.enabled = visible;
   if (visible && !state.initialized)
   {
-    state.sourceScope = scene.state.scope.kind == DrawScopeKind::Custom ? DrawScope{} : scene.state.scope;
+    if (scene.state.scope.kind == DrawScopeKind::Custom) {
+      state.sourceScope = DrawScope{};
+    } else {
+      state.sourceScope = scene.state.scope;
+    }
     state.allInScope = true;
   }
   if (visible)
@@ -353,7 +382,11 @@ bool CoreDraw::drawScopeAll(std::string& error)
       entry.second.allInScope = true;
       entry.second.featureFilter.clear();
       entry.second.entityFilter.clear();
-      entry.second.sourceScope = scene.state.scope.kind == DrawScopeKind::Custom ? DrawScope{} : scene.state.scope;
+      if (scene.state.scope.kind == DrawScopeKind::Custom) {
+        entry.second.sourceScope = DrawScope{};
+      } else {
+        entry.second.sourceScope = scene.state.scope;
+      }
     }
   }
   if (scene.state.scope.kind == DrawScopeKind::Custom)

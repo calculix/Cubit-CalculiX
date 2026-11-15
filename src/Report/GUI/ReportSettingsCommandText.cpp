@@ -52,7 +52,11 @@ bool ReportSettingsCommandText::build(const ReportConfiguration& patch, const QS
         error = "Expected a boolean setting for " + entry.first;
         return false;
       }
-      value = entry.second == "true" ? "on" : "off";
+      if (entry.second == "true") {
+        value = "on";
+      } else {
+        value = "off";
+      }
     }
     else if (kind->second == "precision" || kind->second == "logo_width" || kind->second == "logo_placement" || kind->second == "page_size")
     {

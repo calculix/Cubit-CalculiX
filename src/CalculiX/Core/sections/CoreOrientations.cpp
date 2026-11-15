@@ -1,3 +1,6 @@
+#include "CubitMessage.hpp"
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include <utility>
 #include "Core/application/SettingsRead.hpp"
 #include "Core/sections/CoreOrientations.hpp"
 #include <string>
@@ -16,13 +19,13 @@ bool CoreOrientations::init()
   {
     return false; // already initialized
   }else{
-    is_initialized = true;  
+    is_initialized = true;
     return true;
   }
 }
 
 bool CoreOrientations::update()
-{ 
+{
   return true;
 }
 
@@ -45,6 +48,24 @@ bool CoreOrientations::check_initialized()
 
 bool CoreOrientations::create_orientation(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.create_orientation(options, options2)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int orientation_id;
   int orientation_last;
   int sub_id;
@@ -56,7 +77,7 @@ bool CoreOrientations::create_orientation(std::vector<std::string> options, std:
   int b_id;
   int local_axis;
   int rotation_id;
-  
+
   if (orientations_data.size()==0)
   {
     orientation_id = 1;
@@ -102,7 +123,7 @@ bool CoreOrientations::create_orientation(std::vector<std::string> options, std:
   }
   a_id = sub_id;
   this->add_a(std::to_string(a_id), options2[3][0], options2[3][1], options2[3][2]);
-  
+
   //b
   if (b_data.size()==0)
   {
@@ -125,7 +146,7 @@ bool CoreOrientations::create_orientation(std::vector<std::string> options, std:
   this->add_b(std::to_string(b_id), options2[4][0], options2[4][1], options2[4][2]);
 
   local_axis = std::stoi(options[5]);
-  
+
   //rotation_id
   if (rotation_data.size()==0)
   {
@@ -145,7 +166,7 @@ bool CoreOrientations::create_orientation(std::vector<std::string> options, std:
     sub_id = sub_id + 1;
   }
   rotation_id = sub_id;
-  
+
   this->add_rotation(std::to_string(rotation_id), options2[5][0]);
 
   this->add_orientation(orientation_id, name_id, system_type, distribution_id, a_id, b_id, local_axis, rotation_id);
@@ -154,9 +175,27 @@ bool CoreOrientations::create_orientation(std::vector<std::string> options, std:
 
 bool CoreOrientations::modify_orientation(int orientation_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.modify_orientation(orientation_id, options, options_marker, options2)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int sub_data_id;
   int orientations_data_id = get_orientations_data_id_from_orientation_id(orientation_id);
-  
+
   if (orientations_data_id == -1)
   {
     return false;
@@ -212,7 +251,7 @@ bool CoreOrientations::modify_orientation(int orientation_id, std::vector<std::s
 bool CoreOrientations::add_orientation(int orientation_id, int name_id, int system_type, int distribution_id, int a_id, int b_id, int local_axis, int rotation_id)
 {
   std::vector<int> v = {orientation_id, name_id, system_type, distribution_id, a_id, b_id, local_axis, rotation_id};
-      
+
   orientations_data.push_back(v);
 
   return true;
@@ -221,36 +260,36 @@ bool CoreOrientations::add_orientation(int orientation_id, int name_id, int syst
 bool CoreOrientations::add_name(std::string name_id, std::string name)
 {
   std::vector<std::string> v = {name_id, name};
-  
+
   name_data.push_back(v);
-  
+
   return true;
 }
 
 bool CoreOrientations::add_a(std::string a_id, std::string x, std::string y, std::string z)
 {
   std::vector<std::string> v = {a_id, x, y, z};
-  
+
   a_data.push_back(v);
-  
+
   return true;
 }
 
 bool CoreOrientations::add_b(std::string b_id, std::string x, std::string y, std::string z)
 {
   std::vector<std::string> v = {b_id, x, y, z};
-  
+
   b_data.push_back(v);
-  
+
   return true;
 }
 
 bool CoreOrientations::add_rotation(std::string rotation_id, std::string angle)
 {
   std::vector<std::string> v = {rotation_id, angle};
-  
+
   rotation_data.push_back(v);
-  
+
   return true;
 }
 
@@ -265,19 +304,19 @@ bool CoreOrientations::delete_orientation(int orientation_id)
   } else {
     sub_data_id = get_name_data_id_from_name_id(orientations_data[orientations_data_id][1]);
     if (sub_data_id != -1){
-      name_data.erase(name_data.begin() + sub_data_id);  
+      name_data.erase(name_data.begin() + sub_data_id);
     }
     sub_data_id = get_a_data_id_from_a_id(orientations_data[orientations_data_id][4]);
     if (sub_data_id != -1){
-      a_data.erase(a_data.begin() + sub_data_id);  
+      a_data.erase(a_data.begin() + sub_data_id);
     }
     sub_data_id = get_b_data_id_from_b_id(orientations_data[orientations_data_id][5]);
     if (sub_data_id != -1){
-      b_data.erase(b_data.begin() + sub_data_id);  
+      b_data.erase(b_data.begin() + sub_data_id);
     }
     sub_data_id = get_rotation_data_id_from_rotation_id(orientations_data[orientations_data_id][7]);
     if (sub_data_id != -1){
-      rotation_data.erase(rotation_data.begin() + sub_data_id);  
+      rotation_data.erase(rotation_data.begin() + sub_data_id);
     }
     orientations_data.erase(orientations_data.begin() + orientations_data_id);
     return true;
@@ -285,66 +324,66 @@ bool CoreOrientations::delete_orientation(int orientation_id)
 }
 
 int CoreOrientations::get_orientations_data_id_from_orientation_id(int orientation_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < orientations_data.size(); i++)
   {
     if (orientations_data[i][0]==orientation_id)
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreOrientations::get_name_data_id_from_name_id(int name_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < name_data.size(); i++)
   {
     if (name_data[i][0]==std::to_string(name_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreOrientations::get_a_data_id_from_a_id(int a_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < a_data.size(); i++)
   {
     if (a_data[i][0]==std::to_string(a_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreOrientations::get_b_data_id_from_b_id(int b_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < b_data.size(); i++)
   {
     if (b_data[i][0]==std::to_string(b_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreOrientations::get_rotation_data_id_from_rotation_id(int rotation_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < rotation_data.size(); i++)
   {
     if (rotation_data[i][0]==std::to_string(rotation_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
@@ -358,10 +397,20 @@ std::string CoreOrientations::get_orientation_export() // get a list of the Calc
   std::string str_temp;
   int sub_data_id;
   std::vector<int> sub_data_ids;
-  
+
   //loop over all orientations
   for (size_t i = 0; i < orientations_data.size(); i++)
-  { 
+  {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Solver, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return {};
+    }
+    return candidate.get_orientation_export();
+  }
+
     // CUSTOMLINE START
     std::vector<std::string> customline = ccx_export_iface.get_customline_data("BEFORE","ORIENTATION",orientations_data[i][0]);
     for (size_t icl = 0; icl < customline.size(); icl++)
@@ -373,7 +422,7 @@ std::string CoreOrientations::get_orientation_export() // get a list of the Calc
     str_temp = "*ORIENTATION, NAME=";
     sub_data_id = get_name_data_id_from_name_id(orientations_data[i][1]);
     str_temp.append(name_data[sub_data_id][1]);
-    
+
     //system type
     if (orientations_data[i][2]==2)
     {
@@ -407,14 +456,14 @@ std::string CoreOrientations::get_orientation_export() // get a list of the Calc
     }
     // CUSTOMLINE END
   }
-  
+
   std::string orientation_export;
 
   for (size_t i = 0; i < orientations_export_list.size(); i++)
   {
     orientation_export.append(orientations_export_list[i] + "\n");
   }
-  
+
   return orientation_export;
 }
 
@@ -491,7 +540,11 @@ const std::string* CoreOrientations::find_orientation_name(int orientation_id)
 std::string CoreOrientations::get_orientation_name(int orientation_id)
 {
   const auto* name = find_orientation_name(orientation_id);
-  return name ? *name : std::string{};
+  if (name) {
+    return *name;
+  } else {
+    return std::string{};
+  }
 }
 
 bool CoreOrientations::check_orientation_exists(int orientation_id)
@@ -515,6 +568,16 @@ std::vector<int> CoreOrientations::get_orientations_ids() const
 
 bool CoreOrientations::get_settings(int id, OrientationsSettings& settings, std::string& error) const
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      error = unitError;
+      return false;
+    }
+    return candidate.get_settings(id, settings, error);
+  }
+
   settings = {};
   error.clear();
   const auto* record = SettingsRead::row(orientations_data, id, 8, error);
@@ -526,10 +589,26 @@ bool CoreOrientations::get_settings(int id, OrientationsSettings& settings, std:
 
   settings.id = id;
   settings.name = SettingsRead::field(name_data, (*record)[1], 1, error);
-  settings.system = (*record)[2] == 2 ? "Cylindrical" : "Rectangular";
+  if ((*record)[2] == 2) {
+    settings.system = "Cylindrical";
+  } else {
+    settings.system = "Rectangular";
+  }
   settings.a = SettingsRead::field(a_data, (*record)[4], 1, error) + " " + SettingsRead::field(a_data, (*record)[4], 2, error) + " " + SettingsRead::field(a_data, (*record)[4], 3, error);
   settings.b = SettingsRead::field(b_data, (*record)[5], 1, error) + " " + SettingsRead::field(b_data, (*record)[5], 2, error) + " " + SettingsRead::field(b_data, (*record)[5], 3, error);
-  settings.axis = (*record)[6] == 1 ? "x" : ((*record)[6] == 2 ? "y" : ((*record)[6] == 3 ? "z" : " "));
+  if ((*record)[6] == 1) {
+    settings.axis = "x";
+  } else {
+    if ((*record)[6] == 2) {
+      settings.axis = "y";
+    } else {
+      if ((*record)[6] == 3) {
+        settings.axis = "z";
+      } else {
+        settings.axis = " ";
+      }
+    }
+  }
   settings.angle = SettingsRead::field(rotation_data, (*record)[7], 1, error);
 
   if (!error.empty())

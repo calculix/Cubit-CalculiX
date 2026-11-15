@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "DrawingHover.hpp"
 #include "CubitColorTable.hpp"
 #include "CubitMessage.hpp"
@@ -31,7 +32,13 @@ void DrawingHover::show(const DrawingGeometry& geometry, const std::string& colo
   std::set<GCubitModelSet*> visited;
   for (const auto& view : factory->views())
   {
-    auto* models = view == nullptr ? nullptr : dynamic_cast<GCubitModelSet*>(view->get_model_set());
+    auto* models = [&]() -> std::common_type_t<decltype(nullptr), decltype(dynamic_cast<GCubitModelSet*>(view->get_model_set()))> {
+      if (view == nullptr) {
+        return nullptr;
+      } else {
+        return dynamic_cast<GCubitModelSet*>(view->get_model_set());
+      }
+    }();
     if (models == nullptr || !visited.insert(models).second)
     {
       continue;
@@ -114,7 +121,13 @@ void DrawingHover::clear() noexcept
     std::set<GCubitModelSet*> visited;
     for (const auto& view : factory->views())
     {
-      auto* models = view == nullptr ? nullptr : dynamic_cast<GCubitModelSet*>(view->get_model_set());
+      auto* models = [&]() -> std::common_type_t<decltype(nullptr), decltype(dynamic_cast<GCubitModelSet*>(view->get_model_set()))> {
+        if (view == nullptr) {
+          return nullptr;
+        } else {
+          return dynamic_cast<GCubitModelSet*>(view->get_model_set());
+        }
+      }();
       if (models == nullptr || !visited.insert(models).second)
       {
         continue;
@@ -153,7 +166,13 @@ void DrawingHover::detach() noexcept
     std::set<GCubitModelSet*> visited;
     for (const auto& view : factory->views())
     {
-      auto* models = view == nullptr ? nullptr : dynamic_cast<GCubitModelSet*>(view->get_model_set());
+      auto* models = [&]() -> std::common_type_t<decltype(nullptr), decltype(dynamic_cast<GCubitModelSet*>(view->get_model_set()))> {
+        if (view == nullptr) {
+          return nullptr;
+        } else {
+          return dynamic_cast<GCubitModelSet*>(view->get_model_set());
+        }
+      }();
       if (models == nullptr || !visited.insert(models).second)
       {
         continue;

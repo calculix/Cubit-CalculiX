@@ -42,6 +42,8 @@ struct CoreResultsVtkElement
   // Empty in an FRD-only mesh: FRD topology does not establish the formulation.
   std::string calculix_type;
   std::vector<int> connectivity; // Global node IDs, always CalculiX order.
+  int solver_material_id = 0;
+  int material_id = 0;
 };
 
 enum class CoreResultsVtkGroupKind
@@ -145,6 +147,10 @@ struct CoreResultsVtkPlan
   bool external_source = false; // Detached files may have job ID zero and table-only output.
   std::string run_identity;
   std::string result_identity;
+  std::string solver_launch_id;
+  SimUnits::SourceUnitContext source_units;
+  std::string source_workspace;
+  std::string source_project;
   CoreResultsVtkOptions options;
   SimResults::LinkSource link_source = SimResults::LinkSource::FrdOnly;
   SimResults::DatasetLayout layout = SimResults::DatasetLayout::SingleGrid;

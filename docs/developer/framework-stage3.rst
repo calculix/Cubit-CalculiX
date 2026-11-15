@@ -137,3 +137,23 @@ The destructor does not save or restore widgets.
 
 Set CUBITSIM_STARTUP_TRACE to an absolute log filename for optional startup and
 workspace lifecycle tracing. Normal errors continue through CubitMessage.
+
+Synchronous component startup
+-----------------------------
+
+For startup-crash isolation, place_workspace_toolbars returns while the host
+window is hidden. Toolbar removal/reinsertion therefore waits for a subsequent
+layout application with a visible host. This guard does not schedule a retry
+on first show and may leave the initial toolbar arrangement unchanged until
+workspace activation. It is an isolation test, not a confirmed crash fix.
+
+CubitSimComp::start_up completes Framework acquisition, GUI host attachment,
+module component startup and workspace registration in the original calling
+context. CalculiX initializes its Python interface during module component
+startup, before creating its GUI. Headless startup follows the same component
+path without creating widgets. The shared HDF5 material library initializes
+during Framework acquisition. Cleanup detaches the host, stops owned components
+and releases the Framework acquisition. No deferred startup callback remains.
+
+Source checks have been performed; startup still requires validation in Cubit
+after rebuilding. No build or runtime test was run for this rollback.

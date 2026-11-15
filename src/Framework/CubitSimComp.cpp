@@ -57,7 +57,10 @@ void CubitSimComp::start_up(int withGUI)
     return;
   }
 
-  auto* host = withGUI > 0 ? Claro::instance() : nullptr;
+  Claro* host = nullptr;
+  if (withGUI > 0) {
+    host = Claro::instance();
+  }
 
   removeStartupText(host, QStringLiteral("\"cubitsim_comp\" has been loaded."));
 

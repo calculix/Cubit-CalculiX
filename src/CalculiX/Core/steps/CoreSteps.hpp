@@ -13,6 +13,7 @@ class CoreSteps
 {
 
 public:
+  bool domain_unit_view = false;
   bool get_settings(int id, StepsSettings& settings, std::string& error) const;
   void remove_bc_references(int bc_type, int bc_id);
   void remove_load_references(int load_type, int load_id);

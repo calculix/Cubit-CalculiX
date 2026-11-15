@@ -46,7 +46,13 @@ bool PostprocessorAnnotationInteraction::send(const std::array<double,2>& positi
   const auto command = QStringLiteral("post label position ")+annotation_quote(label)+" "+
     QString::fromStdString(coordinates.str())+" view "+annotation_quote(viewId);
   std::string error;
-  const bool accepted = journal ? submitCommand(command,error) : silentCommand(command,error);
+  const bool accepted = [&]() -> bool {
+    if (journal) {
+      return submitCommand(command,error);
+    } else {
+      return silentCommand(command,error);
+    }
+  }();
   if (accepted)
   {
     previewed = previewed || !journal;
@@ -139,7 +145,11 @@ bool PostprocessorAnnotationInteraction::handle(QEvent* event)
     const auto found = annotations.labels.find(hit);
     if (hit == "@minimum" || hit == "@maximum")
     {
-      baseline = hit == "@minimum" ? annotations.minimum_position : annotations.maximum_position;
+      if (hit == "@minimum") {
+        baseline = annotations.minimum_position;
+      } else {
+        baseline = annotations.maximum_position;
+      }
     }
     else if (found != annotations.labels.end())
     {

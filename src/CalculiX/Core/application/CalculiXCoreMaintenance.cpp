@@ -1,3 +1,4 @@
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "Core/drawing/CoreDraw.hpp"
 #include "Core/CalculiXCore.hpp"
 #include "Core/sections/CoreSectionsCleanup.hpp"
@@ -11,7 +12,6 @@
 #include "Core/steps/CoreStepsCleanup.hpp"
 #include "CoreTimer.hpp"
 #include "Core/materials/CoreMaterials.hpp"
-#include "Core/materials/CoreMaterialsLibrary.hpp"
 #include "Core/sections/CoreSections.hpp"
 #include "Core/sections/CoreOrientations.hpp"
 #include "Core/interactions/CoreConstraints.hpp"
@@ -44,8 +44,7 @@
 #include "Core/bcs/CoreBCsDisplacements.hpp"
 #include "Core/bcs/CoreBCsTemperatures.hpp"
 
-bool CalculiXCore::update()
-{
+bool CalculiXCore::update() {
   cb->update();
   loadsforces->update();
   loadspressures->update();
@@ -53,18 +52,15 @@ bool CalculiXCore::update()
   bcsdisplacements->update();
   bcstemperatures->update();
 
-  if (use_ccx_autocleanup)
-  {
+  if (use_ccx_autocleanup) {
     const std::string cleanup_log = autocleanup();
 
-    if (!cleanup_log.empty())
-    {
+    if (!cleanup_log.empty()) {
       print_to_log(cleanup_log);
     }
   }
 
-  if (use_ccx_logfile)
-  {
+  if (use_ccx_logfile) {
     print_to_log("UPDATE");
     print_to_log(print_data());
   }
@@ -72,30 +68,24 @@ bool CalculiXCore::update()
   return true;
 }
 
-bool CalculiXCore::reset()
-{
-  if (draw != nullptr)
-  {
+bool CalculiXCore::reset() {
+  if (draw != nullptr) {
     draw->resetDrawing();
   }
 
   cancel_topology_animation();
 
-  if (checking_jobs)
-  {
+  if (checking_jobs) {
     PRINT_ERROR("Cannot reset CalculiX data while job results are being processed.\n");
     return false;
   }
 
-  if (timer)
-  {
+  if (timer) {
     timer->stop();
   }
 
-  if (!cancel_topology_runs())
-  {
-    if (timer)
-    {
+  if (!cancel_topology_runs()) {
+    if (timer) {
       timer->start(1000);
     }
 
@@ -104,7 +94,6 @@ bool CalculiXCore::reset()
 
   cb->reset();
   mat->reset(); // Reset topology material data.
-  mat_library->reset();
   sections->reset();
   constraints->reset();
   surfaceinteractions->reset();
@@ -136,18 +125,21 @@ bool CalculiXCore::reset()
   customlines->reset();
 
   sideset_faces.clear();
+  std::string unitError;
+  if (!framework_units().reset_workspace("calculix", unitError)) {
+    PRINT_ERROR("Cannot reset CalculiX units: %s\n", unitError.c_str());
+    return false;
+  }
   PRINT_INFO("Reset cubit-sim\n");
 
-  if (timer)
-  {
+  if (timer) {
     timer->start(1000);
   }
 
   return true;
 }
 
-std::string CalculiXCore::print_data()
-{
+std::string CalculiXCore::print_data() {
   std::string data;
   data.append(cb->print_data());
   data.append(sections->print_data());
@@ -182,26 +174,22 @@ std::string CalculiXCore::print_data()
   return data;
 }
 
-std::string CalculiXCore::autocleanup()
-{
+std::string CalculiXCore::autocleanup() {
   std::string log = "CCX Autocleanup\n";
   bool print_log = false;
 
   // SECTIONS
-  if (CoreSectionsCleanup::cleanup(*sections, *mat, *cb, orientations, log))
-  {
+  if (CoreSectionsCleanup::cleanup(*sections, *mat, *cb, orientations, log)) {
     print_log = true;
   }
 
   // CONSTRAINTS
-  if (CoreConstraintsCleanup::cleanup(*constraints, *cb, *me_iface, log))
-  {
+  if (CoreConstraintsCleanup::cleanup(*constraints, *cb, *me_iface, log)) {
     print_log = true;
   }
 
   // CONTACT PAIRS
-  if (CoreContactPairsCleanup::cleanup(*contactpairs, *surfaceinteractions, *me_iface, log))
-  {
+  if (CoreContactPairsCleanup::cleanup(*contactpairs, *surfaceinteractions, *me_iface, log)) {
     print_log = true;
   }
 
@@ -224,8 +212,7 @@ std::string CalculiXCore::autocleanup()
   };
 
   // LOADS
-  if (CoreLoadsCleanup::cleanup(load_cleanup, log))
-  {
+  if (CoreLoadsCleanup::cleanup(load_cleanup, log)) {
     print_log = true;
   }
 
@@ -234,56 +221,47 @@ std::string CalculiXCore::autocleanup()
   };
 
   // BCS DISPLACEMENTS
-  if (CoreBCsCleanup::cleanup(*bcsdisplacements, bc_cleanup, log))
-  {
+  if (CoreBCsCleanup::cleanup(*bcsdisplacements, bc_cleanup, log)) {
     print_log = true;
   }
 
   // BCS TEMPERATURES
-  if (CoreBCsCleanup::cleanup(*bcstemperatures, bc_cleanup, log))
-  {
+  if (CoreBCsCleanup::cleanup(*bcstemperatures, bc_cleanup, log)) {
     print_log = true;
   }
 
   // INITIAL CONDITIONS
-  if (CoreInitialConditionsCleanup::cleanup(*initialconditions, *bcsdisplacements, *bcstemperatures, log))
-  {
+  if (CoreInitialConditionsCleanup::cleanup(*initialconditions, *bcsdisplacements, *bcstemperatures, log)) {
     print_log = true;
   }
 
   // HISTORY OUTPUTS
-  if (CoreOutputsCleanup::cleanup(*historyoutputs, *cb, *contactpairs, *me_iface, log))
-  {
+  if (CoreOutputsCleanup::cleanup(*historyoutputs, *cb, *contactpairs, *me_iface, log)) {
     print_log = true;
   }
 
   // FIELD OUTPUTS
-  if (CoreOutputsCleanup::cleanup(*fieldoutputs, *cb, *contactpairs, *me_iface, log))
-  {
+  if (CoreOutputsCleanup::cleanup(*fieldoutputs, *cb, *contactpairs, *me_iface, log)) {
     print_log = true;
   }
 
   // HBCS
-  if (CoreBCsCleanup::cleanup(*hbcs, *bcsdisplacements, *bcstemperatures, log))
-  {
+  if (CoreBCsCleanup::cleanup(*hbcs, *bcsdisplacements, *bcstemperatures, log)) {
     print_log = true;
   }
 
   // STEPS
   const auto load_data = get_load_query_data();
 
-  const auto load_exists = [load_data](int load_type, int load_id)
-  {
+  const auto load_exists = [load_data](int load_type, int load_id) {
     return CoreLoadsQuery::load_exists(load_data, load_type, load_id);
   };
 
-  if (CoreStepsCleanup::cleanup(*steps, *bcsdisplacements, *bcstemperatures, *historyoutputs, *fieldoutputs, load_exists, log))
-  {
+  if (CoreStepsCleanup::cleanup(*steps, *bcsdisplacements, *bcstemperatures, *historyoutputs, *fieldoutputs, load_exists, log)) {
     print_log = true;
   }
-  
-  if (print_log)
-  {
+
+  if (print_log) {
     PRINT_INFO("%s", log.c_str());
     return log;
   }

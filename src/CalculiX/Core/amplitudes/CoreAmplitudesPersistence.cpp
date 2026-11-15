@@ -1,3 +1,6 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include "Core/units/CalculiXPhysicalModelUnits.hpp"
+#include <utility>
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/amplitudes/CoreAmplitudesPersistence.hpp"
 #include "Core/amplitudes/CoreAmplitudes.hpp"
@@ -8,6 +11,58 @@
 
 bool CoreAmplitudesPersistence::read(HDF5Tool& file, CoreAmplitudes& amplitudes)
 {
+  if (!amplitudes.domain_unit_view) {
+    CoreAmplitudes candidate;
+    candidate.is_initialized = amplitudes.is_initialized;
+    candidate.domain_unit_view = true;
+    if (!read(file, candidate)) {
+      return false;
+    }
+    std::vector<std::vector<std::string>> axes;
+    const std::string group = CalculiXModelSchema::path("Amplitudes");
+    if (file.nameExists(group + "/axis_quantities")) {
+      if (!file.read_dataset_string_rank_2("axis_quantities", group, axes)) {
+        PRINT_ERROR("Cannot read amplitude axes.\n");
+        return false;
+      }
+      for (const auto& row : axes) {
+        if (row.size() != 2 || (row[1] != "time" && row[1] != "frequency")) {
+          PRINT_ERROR("Invalid persisted amplitude axis.\n");
+          return false;
+        }
+        try {
+          std::size_t consumed = 0;
+          const int id = std::stoi(row[0], &consumed);
+          if (consumed != row[0].size() || !candidate.check_amplitude_exists(id) || !candidate.axis_quantities.emplace(id, row[1]).second) {
+            PRINT_ERROR("Invalid persisted amplitude axis reference.\n");
+            return false;
+          }
+        } catch (const std::exception& exception) {
+          PRINT_ERROR("Invalid amplitude axis: %s\n", exception.what());
+          return false;
+        }
+      }
+    }
+    std::string basis;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::read_basis(file, CalculiXModelSchema::path("Amplitudes"), basis, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return false;
+    }
+    if (basis.empty() && !CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Native, error)) {
+      PRINT_ERROR("Cannot restore Amplitudes units: %s\n", error.c_str());
+      return false;
+    }
+    auto validated = candidate;
+    if (!CalculiXDomainUnits::convert(validated, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("Cannot restore invalid physical values: %s\n", error.c_str());
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    amplitudes = std::move(candidate);
+    return true;
+  }
+
   try
   {
 
@@ -107,6 +162,29 @@ bool CoreAmplitudesPersistence::read(HDF5Tool& file, CoreAmplitudes& amplitudes)
 
 bool CoreAmplitudesPersistence::write(HDF5Tool& file, const CoreAmplitudes& amplitudes)
 {
+  std::vector<std::vector<std::string>> axes;
+  for (const auto& amplitude : amplitudes.amplitudes_data) {
+    if (amplitude.empty()) {
+      PRINT_ERROR("Cannot save an incomplete amplitude.\n");
+      return false;
+    }
+    std::string quantity = "time";
+    const auto found = amplitudes.axis_quantities.find(amplitude[0]);
+    if (found != amplitudes.axis_quantities.end()) {
+      quantity = found->second;
+    }
+    axes.push_back({std::to_string(amplitude[0]), quantity});
+  }
+  if (!file.ensureGroup(CalculiXModelSchema::path("Amplitudes")) || !file.write_dataset_string_rank_2("axis_quantities", CalculiXModelSchema::path("Amplitudes"), axes)) {
+    PRINT_ERROR("Cannot save amplitude axes.\n");
+    return false;
+  }
+  std::string unitError;
+  if (amplitudes.domain_unit_view || !CalculiXPhysicalModelUnits::write_basis(file, CalculiXModelSchema::path("Amplitudes"), "SI", unitError)) {
+    PRINT_ERROR("Cannot save Amplitudes canonical units: %s\n", unitError.c_str());
+    return false;
+  }
+
   try
   {
 

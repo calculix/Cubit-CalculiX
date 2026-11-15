@@ -1,3 +1,6 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include "Core/units/CalculiXPhysicalModelUnits.hpp"
+#include <utility>
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/sections/CoreSectionsPersistence.hpp"
 #include "Core/sections/CoreSections.hpp"
@@ -8,6 +11,33 @@
 
 bool CoreSectionsPersistence::read(HDF5Tool& file, CoreSections& sections)
 {
+  if (!sections.domain_unit_view) {
+    CoreSections candidate;
+    candidate.is_initialized = sections.is_initialized;
+    candidate.domain_unit_view = true;
+    if (!read(file, candidate)) {
+      return false;
+    }
+    std::string basis;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::read_basis(file, CalculiXModelSchema::path("Sections"), basis, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return false;
+    }
+    if (basis.empty() && !CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Native, error)) {
+      PRINT_ERROR("Cannot restore Sections units: %s\n", error.c_str());
+      return false;
+    }
+    auto validated = candidate;
+    if (!CalculiXDomainUnits::convert(validated, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("Cannot restore invalid physical values: %s\n", error.c_str());
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    sections = std::move(candidate);
+    return true;
+  }
+
   try
   {
 
@@ -117,6 +147,12 @@ bool CoreSectionsPersistence::read(HDF5Tool& file, CoreSections& sections)
 
 bool CoreSectionsPersistence::write(HDF5Tool& file, const CoreSections& sections)
 {
+  std::string unitError;
+  if (sections.domain_unit_view || !CalculiXPhysicalModelUnits::write_basis(file, CalculiXModelSchema::path("Sections"), "SI", unitError)) {
+    PRINT_ERROR("Cannot save Sections canonical units: %s\n", unitError.c_str());
+    return false;
+  }
+
   try
   {
 

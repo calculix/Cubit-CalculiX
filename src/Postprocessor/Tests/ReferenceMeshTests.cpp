@@ -89,5 +89,9 @@ int main()
   check(Postprocessor::integration_point_reference_meshes(frame,ips,output,warning) && !warning.empty() && output.empty(),
     "Missing parent ID fabricated an outline");
   check(block->GetNumberOfCells() == 1 && ids->GetValue(0) == element,"Reference extraction mutated input topology or IDs");
-  return failures ? 1 : 0;
+  if (failures) {
+    return 1;
+  } else {
+    return 0;
+  }
 }

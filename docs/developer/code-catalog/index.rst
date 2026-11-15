@@ -1,9 +1,8 @@
 Project-owned source catalogue
 ===============================
 
-Inventory prepared from the working tree on 4 November 2026. It includes 1500
-owned source, interface, resource-registration and build files across 63 groups.
-It excludes external source trees under ``src/Utility``, binary libraries, solver
+The source inventories include maintained Framework unit/material services and
+workspace adapters. They exclude external source trees under ``src/Utility``, binary libraries, solver
 distributions and generated wrapper/MOC/UI files. SVG/icon implementations are
 assets and are explained through their resource owner rather than C++ declarations.
 
@@ -43,6 +42,7 @@ CalculiX model domains
    calculix-core-jobs
    calculix-core-loads
    calculix-core-materials
+   calculix-core-units
    calculix-core-mesh
    calculix-core-results
    calculix-core-sections
@@ -64,6 +64,7 @@ CalculiX commands
    calculix-commands-jobs
    calculix-commands-loads
    calculix-commands-materials
+   calculix-commands-units
    calculix-commands-mesh
    calculix-commands-results
    calculix-commands-sections

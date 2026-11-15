@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CalculiXDrawLabels.hpp"
 #include "CalculiXDrawInterface.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
@@ -269,8 +270,13 @@ bool CalculiXDrawLabels::read(DrawEntityKey entityKey, DrawLabelData& output, st
           error = "Unsupported trajectory drawing label target type.";
           return false;
         }
-        const auto ids = settings.loadType == "Heatflux" ? loads.loadstrajectory_heatflux_get_node_ids(entityKey.id) :
-          loads.loadstrajectory_bodyheatfluxsphere_get_node_ids(entityKey.id);
+        const auto ids = [&]() -> std::common_type_t<decltype(loads.loadstrajectory_heatflux_get_node_ids(entityKey.id)), decltype(loads.loadstrajectory_bodyheatfluxsphere_get_node_ids(entityKey.id))> {
+          if (settings.loadType == "Heatflux") {
+            return loads.loadstrajectory_heatflux_get_node_ids(entityKey.id);
+          } else {
+            return loads.loadstrajectory_bodyheatfluxsphere_get_node_ids(entityKey.id);
+          }
+        }();
         nodes(data, ids);
       }
       break;
@@ -293,7 +299,13 @@ bool CalculiXDrawLabels::read(DrawEntityKey entityKey, DrawLabelData& output, st
     }
     else
     {
-      const auto points = targetKind == "nodeset" ? mesh.get_nodeset_entities_coords(id) : mesh.get_sideset_entities_coords_normals(id);
+      const auto points = [&]() -> std::common_type_t<decltype(mesh.get_nodeset_entities_coords(id)), decltype(mesh.get_sideset_entities_coords_normals(id))> {
+        if (targetKind == "nodeset") {
+          return mesh.get_nodeset_entities_coords(id);
+        } else {
+          return mesh.get_sideset_entities_coords_normals(id);
+        }
+      }();
       for (const auto& point : points)
       {
         sample(data, point);

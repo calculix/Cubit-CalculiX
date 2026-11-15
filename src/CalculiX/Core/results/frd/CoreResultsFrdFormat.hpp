@@ -64,7 +64,11 @@ namespace CoreResultsFrdFormat
     {
       return RecordStatus::Invalid;
     }
-    return count - 2 == components ? RecordStatus::Ready : RecordStatus::Pending;
+    if (count - 2 == components) {
+      return RecordStatus::Ready;
+    } else {
+      return RecordStatus::Pending;
+    }
   }
 }
 

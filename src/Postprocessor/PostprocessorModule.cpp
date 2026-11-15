@@ -1,5 +1,6 @@
 #include "PostprocessorModule.hpp"
 #include "Interfaces/PostprocessorReportImageProvider.hpp"
+#include "Interfaces/PostprocessorReportResultProvider.hpp"
 #include "GUI/Capture/PostprocessorCaptureRenderer.hpp"
 #include "Commands/PostprocessorCommands.hpp"
 #include "Interfaces/PostprocessorApplicationInterface.hpp"
@@ -11,12 +12,10 @@
 PostprocessorModule::PostprocessorModule(ResultSourceRegistryInterface& providers,
   std::function<bool(const std::string&, std::string&)> submit,
   std::function<bool(const std::string&, std::string&)> silent)
-  : providers(providers), submitCommand(std::move(submit)), silentCommand(std::move(silent))
-{
+  : providers(providers), submitCommand(std::move(submit)), silentCommand(std::move(silent)) {
 }
 
-PostprocessorModule::~PostprocessorModule()
-{
+PostprocessorModule::~PostprocessorModule() {
   shutdown();
 }
 
@@ -25,33 +24,28 @@ std::string PostprocessorModule::module_id() const
   return "postprocessor";
 }
 
-bool PostprocessorModule::initialize(UserOptionsInterface& options, DrawingInterface&, std::string& error)
-{
+bool PostprocessorModule::initialize(UserOptionsInterface& options, DrawingInterface&, std::string& error) {
   error.clear();
 
-  if (application != nullptr && commands != nullptr && modelObserver != nullptr)
-  {
+  if (application != nullptr && commands != nullptr && modelObserver != nullptr) {
     return true;
   }
 
   auto candidate = std::make_shared<PostprocessorApplicationInterface>(providers);
-  if (!candidate->initialize_user_options(options, error))
-  {
+  if (!candidate->initialize_user_options(options, error)) {
     return false;
   }
   application = std::move(candidate);
   commands = std::make_unique<PostprocessorCommands>(application);
   imageProvider = std::make_unique<PostprocessorReportImageProvider>(application);
-  modelObserver = std::make_unique<PostprocessorModelObserver>([this]()
-  {
+  resultProvider = std::make_unique<PostprocessorReportResultProvider>(application);
+  modelObserver = std::make_unique<PostprocessorModelObserver>([this]() {
     std::string error;
-    if (!application->reset(error))
-    {
+    if (!application->reset(error)) {
       PRINT_ERROR("Cannot reset Postprocessor: %s\n", error.c_str());
       return;
     }
-    if (gui != nullptr)
-    {
+    if (gui != nullptr) {
       // Refresh synchronously to release actors and their retained snapshots,
       // including when another workspace is active. No nested command is sent.
       gui->refresh();
@@ -65,17 +59,20 @@ void PostprocessorModule::shutdown() noexcept
   modelObserver.reset();
   stop_component();
   commands.reset();
-  if (application != nullptr)
-  {
+  if (application != nullptr) {
     application->shutdown_user_options();
   }
   imageProvider.reset();
+  resultProvider.reset();
   application.reset();
 }
 
 CommandProviderInterface* PostprocessorModule::command_provider() noexcept
 {
-  return commands == nullptr ? nullptr : this;
+  if (commands == nullptr) {
+    return nullptr;
+  }
+  return this;
 }
 
 ComponentProviderInterface* PostprocessorModule::component_provider() noexcept
@@ -85,38 +82,37 @@ ComponentProviderInterface* PostprocessorModule::component_provider() noexcept
 
 std::vector<std::string> PostprocessorModule::command_keys() const
 {
-  return commands == nullptr ? std::vector<std::string>{} : commands->command_keys();
+  if (commands == nullptr) {
+    return {};
+  }
+  return commands->command_keys();
 }
 
-CubitCommand* PostprocessorModule::create_command(const std::string& key)
-{
-  return commands == nullptr ? nullptr : commands->create_command(key);
+CubitCommand* PostprocessorModule::create_command(const std::string& key) {
+  if (commands == nullptr) {
+    return nullptr;
+  }
+  return commands->create_command(key);
 }
 
-bool PostprocessorModule::start_component(int withGUI, QWidget* host, std::string& error)
-{
+bool PostprocessorModule::start_component(int withGUI, QWidget* host, std::string& error) {
   error.clear();
 
-  if (withGUI <= 0)
-  {
+  if (withGUI <= 0) {
     return true;
   }
 
-  if (gui == nullptr)
-  {
+  if (gui == nullptr) {
     gui = std::make_unique<PostprocessorGui>(application, submitCommand, silentCommand);
   }
 
-  if (!gui->start(host,error))
-  {
+  if (!gui->start(host,error)) {
     return false;
   }
   application->set_capture_renderer([](const Postprocessor::CaptureSnapshot& snapshot,
-    const std::shared_ptr<PostprocessorApplicationInterface>& frozen,QByteArray& png,QJsonObject& manifest,std::string& failure)
-  {
+    const std::shared_ptr<PostprocessorApplicationInterface>& frozen,QByteArray& png,QJsonObject& manifest,std::string& failure) {
     return PostprocessorCaptureRenderer().render(snapshot,frozen,png,manifest,failure);
-  },[this](Postprocessor::CaptureTarget target,const std::string& id)
-  {
+  },[this](Postprocessor::CaptureTarget target,const std::string& id) {
     return gui->capture_reference_size(target,id);
   });
   return true;
@@ -124,8 +120,7 @@ bool PostprocessorModule::start_component(int withGUI, QWidget* host, std::strin
 
 void PostprocessorModule::stop_component() noexcept
 {
-  if (application)
-  {
+  if (application) {
     application->set_capture_renderer({});
   }
   gui.reset();
@@ -133,13 +128,14 @@ void PostprocessorModule::stop_component() noexcept
 
 WorkspaceProviderInterface* PostprocessorModule::workspace_provider() noexcept
 {
-  return gui == nullptr ? nullptr : this;
+  if (gui == nullptr) {
+    return nullptr;
+  }
+  return this;
 }
 
-bool PostprocessorModule::workspace_view(WorkspaceView& view, std::string& error)
-{
-  if (gui == nullptr)
-  {
+bool PostprocessorModule::workspace_view(WorkspaceView& view, std::string& error) {
+  if (gui == nullptr) {
     error = "The Postprocessor GUI component is not loaded.";
     return false;
   }
@@ -155,43 +151,39 @@ std::string PostprocessorModule::project_state_id() const
 {
   return "postprocessor";
 }
-bool PostprocessorModule::prepare_project_read(const ProjectStateContext& context, std::string& error)
-{
+bool PostprocessorModule::prepare_project_read(const ProjectStateContext& context, std::string& error) {
   return application && application->read_project_definitions(context.filename,error);
 }
-bool PostprocessorModule::resolve_project_sources(const ProjectStateContext&, std::string& error)
-{
+bool PostprocessorModule::resolve_project_sources(const ProjectStateContext&, std::string& error) {
   return application && application->resolve_project_sources(error);
 }
-bool PostprocessorModule::commit_project_read(const ProjectStateContext&, std::string& error)
-{
-  if (!application || !application->commit_project_restore(error))
-  {
+bool PostprocessorModule::commit_project_read(const ProjectStateContext&, std::string& error) {
+  if (!application || !application->commit_project_restore(error)) {
     return false;
   }
-  if (gui)
-  {
+  if (gui) {
     gui->refresh();
   }
   return true;
 }
 void PostprocessorModule::discard_project_read() noexcept
 {
-  if (application)
-  {
+  if (application) {
     application->discard_project_restore();
   }
 }
-bool PostprocessorModule::prepare_project_save(const ProjectStateContext&, std::string& error)
-{
+bool PostprocessorModule::prepare_project_save(const ProjectStateContext&, std::string& error) {
   return application && application->prepare_project_save(error);
 }
-bool PostprocessorModule::write_project_state(const ProjectStateContext& context, std::string& error)
-{
+bool PostprocessorModule::write_project_state(const ProjectStateContext& context, std::string& error) {
   return application && application->write_project(context.filename,error);
 }
 
 ReportImageProviderInterface* PostprocessorModule::report_image_provider() noexcept
 {
   return imageProvider.get();
+}
+
+ReportResultProviderInterface* PostprocessorModule::report_result_provider() noexcept {
+  return resultProvider.get();
 }

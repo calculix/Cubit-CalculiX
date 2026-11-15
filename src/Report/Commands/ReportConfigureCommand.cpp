@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportConfigureCommand.hpp"
 #include <utility>
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
@@ -36,7 +37,17 @@ std::vector<std::string> ReportConfigureCommand::get_syntax()
   {
     const bool numeric = option.second == "precision" || option.second == "logo_width";
     const bool word = option.second == "boolean" || option.second == "page_size" || option.second == "logo_placement";
-    const std::string argument = numeric ? "<value:" : word ? "<string:type='unquoted',number='1'," : "<string:type='quoted',number='1',";
+    const std::string argument = [&]() -> std::string {
+      if (numeric) {
+        return "<value:";
+      } else {
+        if (word) {
+          return "<string:type='unquoted',number='1',";
+        } else {
+          return "<string:type='quoted',number='1',";
+        }
+      }
+    }();
     settings += " [" + option.first + " " + argument + "label='" + option.first + "'>]";
   }
   settings += " [option <string:type='quoted',number='1',label='option_key'> value <string:type='quoted',number='1',label='option_value'>]...";
@@ -83,7 +94,13 @@ bool ReportConfigureCommand::execute(CubitCommandData& data)
   {
     error = "Unknown Report failure.";
   }
-  PRINT_ERROR("Report: %s\n", error.empty() ? "Invalid command arguments." : error.c_str());
+  PRINT_ERROR("Report: %s\n", [&]() -> std::common_type_t<decltype("Invalid command arguments."), decltype(error.c_str())> {
+    if (error.empty()) {
+      return "Invalid command arguments.";
+    } else {
+      return error.c_str();
+    }
+  }());
   return false;
 }
 
@@ -101,8 +118,26 @@ bool ReportConfigureCommand::run(CubitCommandData& data, const std::shared_ptr<R
         return false;
       }
       patch.values["logo_width_mm"] = std::to_string(width);
-      patch.values["logo_placement"] = std::string(data.find_keyword("HEADER") ? "header_" : "footer_") +
-        (data.find_keyword("LEFT") ? "left" : data.find_keyword("CENTER") ? "center" : "right");
+      patch.values["logo_placement"] = std::string([&]() -> const char* {
+        if (data.find_keyword("HEADER")) {
+          return "header_";
+        } else {
+          return "footer_";
+        }
+      }()) +
+        ([&]() -> std::common_type_t<decltype("left"), const char*> {
+          if (data.find_keyword("LEFT")) {
+            return "left";
+          } else {
+            return [&]() -> const char* {
+              if (data.find_keyword("CENTER")) {
+                return "center";
+              } else {
+                return "right";
+              }
+            }();
+          }
+        }());
     }
     else
     {
@@ -172,7 +207,11 @@ bool ReportConfigureCommand::run(CubitCommandData& data, const std::shared_ptr<R
           error = "Expected on or off for " + option.first + ".";
           return false;
         }
-        value = flag == "on" ? "true" : "false";
+        if (flag == "on") {
+          value = "true";
+        } else {
+          value = "false";
+        }
       }
       else if (option.second == "page_size")
       {

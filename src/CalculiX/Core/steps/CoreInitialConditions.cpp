@@ -1,3 +1,6 @@
+#include "CubitMessage.hpp"
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include <utility>
 #include "Core/application/SettingsRead.hpp"
 #include "Core/steps/CoreInitialConditions.hpp"
 #include "Core/application/CoreIdSelection.hpp"
@@ -16,13 +19,13 @@ bool CoreInitialConditions::init()
   {
     return false; // already initialized
   }else{
-    is_initialized = true;  
+    is_initialized = true;
     return true;
   }
 }
 
 bool CoreInitialConditions::update()
-{ 
+{
   return true;
 }
 
@@ -34,7 +37,7 @@ bool CoreInitialConditions::reset()
   stress_data.clear();
   stress_element_data.clear();
   stress_block_data.clear();
-  
+
   init();
   return true;
 }
@@ -46,12 +49,30 @@ bool CoreInitialConditions::check_initialized()
 
 bool CoreInitialConditions::create_initialcondition(std::vector<std::string> options)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.create_initialcondition(options)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int initialcondition_id;
   int initialcondition_last;
   int sub_id;
   int sub_last;
   int initialcondition_type;
-  
+
   if (initialconditions_data.size()==0)
   {
     initialcondition_id = 1;
@@ -61,10 +82,10 @@ bool CoreInitialConditions::create_initialcondition(std::vector<std::string> opt
     initialcondition_last = int(initialconditions_data.size()) - 1;
     initialcondition_id = initialconditions_data[initialcondition_last][0] + 1;
   }
-  
+
   // initialcondition_type
   initialcondition_type = std::stoi(options[0]);
-  
+
   if (initialcondition_type == 1)
   {  // displacement
     if (displacement_data.size()==0)
@@ -102,13 +123,31 @@ bool CoreInitialConditions::create_initialcondition(std::vector<std::string> opt
     }
     this->add_stress(sub_id);
   }
-  
+
   this->add_initialcondition(initialcondition_id, initialcondition_type, sub_id);
   return true;
 }
 
 bool CoreInitialConditions::modify_initialcondition(int initialcondition_id, int modify_type, std::vector<std::string> options, std::vector<int> options_marker)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.modify_initialcondition(initialcondition_id, modify_type, options, options_marker)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int sub_data_id;
   int initialconditions_data_id = get_initialconditions_data_id_from_initialcondition_id(initialcondition_id);
 
@@ -144,6 +183,24 @@ bool CoreInitialConditions::modify_initialcondition(int initialcondition_id, int
 
 bool CoreInitialConditions::add_initialcondition_stress(int initialcondition_id, int modify_type, std::vector<double> options)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.add_initialcondition_stress(initialcondition_id, modify_type, options)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   //int sub_data_id;
   int initialconditions_data_id = get_initialconditions_data_id_from_initialcondition_id(initialcondition_id);
 
@@ -161,12 +218,12 @@ bool CoreInitialConditions::add_initialcondition_stress(int initialcondition_id,
     }
     return true;
   }
-}  
+}
 
 bool CoreInitialConditions::add_initialcondition(int initialcondition_id, int initialcondition_type, int initialcondition_type_id)
 {
   std::vector<int> v = {initialcondition_id, initialcondition_type, initialcondition_type_id};
-      
+
   initialconditions_data.push_back(v);
 
   return true;
@@ -175,44 +232,44 @@ bool CoreInitialConditions::add_initialcondition(int initialcondition_id, int in
 bool CoreInitialConditions::add_displacement(std::string displacement_id)
 {
   std::vector<std::string> v = {displacement_id,""};
-  
+
   displacement_data.push_back(v);
-  
+
   return true;
 }
 
 bool CoreInitialConditions::add_temperature(std::string temperature_id)
 {
   std::vector<std::string> v = {temperature_id,""};
-  
+
   temperature_data.push_back(v);
-  
+
   return true;
 }
 
 bool CoreInitialConditions::add_stress(int stress_id)
 {
   stress_data.push_back(stress_id);
-  
+
   return true;
 }
 
 bool CoreInitialConditions::add_stress_element(double stress_id, double element_id, double ip, double sxx, double syy, double szz, double sxy, double sxz, double syz)
 {
   std::vector<double> v = {stress_id, element_id, ip, sxx, syy, szz, sxy, sxz, syz};
-  
+
   stress_element_data.push_back(v);
-  
-  return true;  
+
+  return true;
 }
 
 bool CoreInitialConditions::add_stress_block(double stress_id, double block_id, double sxx, double syy, double szz, double sxy, double sxz, double syz)
 {
   std::vector<double> v = {stress_id, block_id, sxx, syy, szz, sxy, sxz, syz};
-  
+
   stress_block_data.push_back(v);
-  
-  return true;  
+
+  return true;
 }
 
 bool CoreInitialConditions::delete_initialcondition(int initialcondition_id)
@@ -228,13 +285,13 @@ bool CoreInitialConditions::delete_initialcondition(int initialcondition_id)
     {
       sub_data_id = get_displacement_data_id_from_displacement_id(initialconditions_data[initialconditions_data_id][2]);
       if (sub_data_id != -1){
-        displacement_data.erase(displacement_data.begin() + sub_data_id);  
+        displacement_data.erase(displacement_data.begin() + sub_data_id);
       }
     }else if (initialconditions_data[initialconditions_data_id][1]==2)
     {
       sub_data_id = get_temperature_data_id_from_temperature_id(initialconditions_data[initialconditions_data_id][2]);
       if (sub_data_id != -1){
-        temperature_data.erase(temperature_data.begin() + sub_data_id);  
+        temperature_data.erase(temperature_data.begin() + sub_data_id);
       }
     }else if (initialconditions_data[initialconditions_data_id][1]==3)
     {
@@ -250,7 +307,7 @@ bool CoreInitialConditions::delete_initialcondition(int initialcondition_id)
       }
       sub_data_id = get_stress_data_id_from_stress_id(initialconditions_data[initialconditions_data_id][2]);
       if (sub_data_id != -1){
-        stress_data.erase(stress_data.begin() + sub_data_id);  
+        stress_data.erase(stress_data.begin() + sub_data_id);
       }
     }
     initialconditions_data.erase(initialconditions_data.begin() + initialconditions_data_id);
@@ -259,59 +316,59 @@ bool CoreInitialConditions::delete_initialcondition(int initialcondition_id)
 }
 
 int CoreInitialConditions::get_initialconditions_data_id_from_initialcondition_id(int initialcondition_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < initialconditions_data.size(); i++)
   {
     if (initialconditions_data[i][0]==initialcondition_id)
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreInitialConditions::get_displacement_data_id_from_displacement_id(int displacement_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < displacement_data.size(); i++)
   {
     if (displacement_data[i][0]==std::to_string(displacement_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreInitialConditions::get_temperature_data_id_from_temperature_id(int temperature_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < temperature_data.size(); i++)
   {
     if (temperature_data[i][0]==std::to_string(temperature_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreInitialConditions::get_stress_data_id_from_stress_id(int stress_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < stress_data.size(); i++)
   {
     if (stress_data[i]==stress_id)
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 std::vector<int> CoreInitialConditions::get_stress_element_data_ids_from_stress_id(int stress_id)
-{ 
+{
   std::vector<int> return_int;
 
   for (size_t i = 0; i < stress_element_data.size(); i++)
@@ -319,14 +376,14 @@ std::vector<int> CoreInitialConditions::get_stress_element_data_ids_from_stress_
     if (stress_element_data[i][0]==double(stress_id))
     {
         return_int.push_back(int(i));
-    }  
+    }
   }
-  
+
   return return_int;
 }
 
 std::vector<int> CoreInitialConditions::get_stress_block_data_ids_from_stress_id(int stress_id)
-{ 
+{
   std::vector<int> return_int;
 
   for (size_t i = 0; i < stress_block_data.size(); i++)
@@ -334,9 +391,9 @@ std::vector<int> CoreInitialConditions::get_stress_block_data_ids_from_stress_id
     if (stress_block_data[i][0]==double(stress_id))
     {
         return_int.push_back(int(i));
-    }  
+    }
   }
-  
+
   return return_int;
 }
 
@@ -358,7 +415,7 @@ std::string CoreInitialConditions::print_data()
   {
     str_return.append(displacement_data[i][0] + " " + displacement_data[i][1] + " \n");
   }
-  
+
   str_return.append("\n CoreInitialConditions temperature_data: \n");
   str_return.append("temperature_id, bc_temperature_id \n");
 
@@ -436,6 +493,16 @@ std::vector<int> CoreInitialConditions::get_initialcondition_ids() const
 
 bool CoreInitialConditions::get_settings(int id, InitialConditionsSettings& settings, std::string& error) const
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      error = unitError;
+      return false;
+    }
+    return candidate.get_settings(id, settings, error);
+  }
+
   settings = {};
   error.clear();
   const auto* record = SettingsRead::row(initialconditions_data, id, 3, error);
@@ -462,7 +529,15 @@ bool CoreInitialConditions::get_settings(int id, InitialConditionsSettings& sett
     return false;
   }
   settings.bcId = bc;
-  settings.conditionType = settings.type == 1 ? "Displacement" : (settings.type == 2 ? "Temperature" : "Stress");
+  if (settings.type == 1) {
+    settings.conditionType = "Displacement";
+  } else {
+    if (settings.type == 2) {
+      settings.conditionType = "Temperature";
+    } else {
+      settings.conditionType = "Stress";
+    }
+  }
 
   if (settings.type == 3)
   {

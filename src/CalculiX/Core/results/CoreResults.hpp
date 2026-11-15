@@ -7,6 +7,7 @@
 #include <memory>
 #include <atomic>
 #include "Framework/Results/VtkResultsData.hpp"
+#include "CoreResultsSourceMetadata.hpp"
 class CoreResultsFrd;
 class CoreResultsDat;
 class CoreResultsProject;
@@ -34,6 +35,7 @@ public:
   // dat_data[0] dat file reader object
 
   std::map<int,std::string> retained_identities; // Saved with reader state; never a replacement for verifying content.
+  std::map<int, CoreResultsSourceMetadata> source_metadata;
   bool is_initialized = false;
 
   bool init(); // initialize

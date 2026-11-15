@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CalculiXDrawingToolbar.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
@@ -28,7 +29,13 @@ CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
   overlayVisibility->setToolTip(tr("Display\nShow or hide all CalculiX overlays while preserving selected groups and drawing settings"));
   connect(overlayVisibility, &QAction::triggered, this, [this](bool visible)
   {
-    submit(visible ? "ccx display overlay on" : "ccx display overlay off");
+    submit([&]() -> const char* {
+      if (visible) {
+        return "ccx display overlay on";
+      } else {
+        return "ccx display overlay off";
+      }
+    }());
   });
   addSeparator();
   symbolPicking = addAction(resources.getIcon2("CCXPickSymbols"), tr("Pick symbols"));
@@ -37,7 +44,13 @@ CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
   symbolPicking->setToolTip(tr("Pick symbols\nSelect a CalculiX symbol in the viewport to show its model-tree item and properties. Turn off to restore Cubit's previous pick mode."));
   connect(symbolPicking, &QAction::triggered, this, [this](bool enabled)
   {
-    submit(enabled ? "ccx display picking on" : "ccx display picking off");
+    submit([&]() -> const char* {
+      if (enabled) {
+        return "ccx display picking on";
+      } else {
+        return "ccx display picking off";
+      }
+    }());
   });
   addSeparator();
   labelVisibility = addAction(resources.getIcon2("CCXDrawingLabels"), tr("Labels"));
@@ -46,7 +59,13 @@ CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
   labelVisibility->setToolTip(tr("Show or hide load and boundary-condition labels without changing symbols"));
   connect(labelVisibility, &QAction::triggered, this, [this](bool visible)
   {
-    submit(visible ? "ccx display labels on" : "ccx display labels off");
+    submit([&]() -> const char* {
+      if (visible) {
+        return "ccx display labels on";
+      } else {
+        return "ccx display labels off";
+      }
+    }());
   });
   addSeparator();
   scope = new QComboBox(this);
@@ -63,7 +82,13 @@ CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
   connect(drawAll, &QAction::triggered, this, [this]()
   {
     CalculiXDrawInterface drawing;
-    submit(allGroupsEnabled(drawing.drawing_state()) ? "ccx display all off" : "ccx display all on");
+    submit([&]() -> const char* {
+      if (allGroupsEnabled(drawing.drawing_state())) {
+        return "ccx display all off";
+      } else {
+        return "ccx display all on";
+      }
+    }());
   });
   addSeparator();
   const auto addGroup = [&](DrawGroup group, const QString& label, const std::string& icon, const QString& keyword)
@@ -74,7 +99,13 @@ CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
     groups.emplace(group, action);
     connect(action, &QAction::triggered, this, [this, keyword](bool checked)
     {
-      submit("ccx display " + keyword + (checked ? " on" : " off"));
+      submit("ccx display " + keyword + ([&]() -> const char* {
+        if (checked) {
+          return " on";
+        } else {
+          return " off";
+        }
+      }()));
     });
   };
   addGroup(DrawGroup::BoundaryConditions, tr("BCs"), "BCsTree", "bcs");
@@ -111,7 +142,13 @@ CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
     {
       return;
     }
-    submit(id < 0 ? QString("ccx display scope model") : QString("ccx display scope step %1").arg(id));
+    submit([&]() -> QString {
+      if (id < 0) {
+        return QString("ccx display scope model");
+      } else {
+        return QString("ccx display scope step %1").arg(id);
+      }
+    }());
   });
   connect(size, &QDoubleSpinBox::valueChanged, this, [this](double value)
   {
@@ -131,7 +168,13 @@ void CalculiXDrawingToolbar::submit(const QString& command)
 void CalculiXDrawingToolbar::refreshSteps()
 {
   const QSignalBlocker blocker(scope);
-  const int selected = scope->currentIndex() < 0 ? -1 : scope->currentData().toInt();
+  const int selected = [&]() -> int {
+    if (scope->currentIndex() < 0) {
+      return -1;
+    } else {
+      return scope->currentData().toInt();
+    }
+  }();
   scope->clear();
   scope->addItem(tr("Entire model"), -1);
   CalculiXStepsInterface steps;
@@ -150,7 +193,13 @@ void CalculiXDrawingToolbar::refreshSteps()
   }
   scope->addItem(tr("Custom (commands)"), -2);
   const int index = scope->findData(selected);
-  scope->setCurrentIndex(index < 0 ? 0 : index);
+  scope->setCurrentIndex([&]() -> std::common_type_t<decltype(0), decltype(index)> {
+    if (index < 0) {
+      return 0;
+    } else {
+      return index;
+    }
+  }());
 }
 
 void CalculiXDrawingToolbar::synchronize(const CalculiXDrawState& state)
@@ -161,20 +210,60 @@ void CalculiXDrawingToolbar::synchronize(const CalculiXDrawState& state)
   const bool allOn = allGroupsEnabled(state);
   const QSignalBlocker drawAllBlocker(drawAll);
   drawAll->setChecked(allOn);
-  drawAll->setIcon(resources.getIcon2(allOn ? "CCXDrawAllHidden" : "CCXDrawAll"));
-  drawAll->setToolTip(allOn ? tr("Hide all\nTurn off BCs, Loads, Constraints and Orientations") : tr("Draw all\nTurn on BCs, Loads, Constraints and Orientations in the selected scope"));
+  drawAll->setIcon(resources.getIcon2([&]() -> const char* {
+    if (allOn) {
+      return "CCXDrawAllHidden";
+    } else {
+      return "CCXDrawAll";
+    }
+  }()));
+  drawAll->setToolTip([&]() -> std::common_type_t<decltype(tr("Hide all\nTurn off BCs, Loads, Constraints and Orientations")), decltype(tr("Draw all\nTurn on BCs, Loads, Constraints and Orientations in the selected scope"))> {
+    if (allOn) {
+      return tr("Hide all\nTurn off BCs, Loads, Constraints and Orientations");
+    } else {
+      return tr("Draw all\nTurn on BCs, Loads, Constraints and Orientations in the selected scope");
+    }
+  }());
   const QSignalBlocker pickingBlocker(symbolPicking);
   symbolPicking->setChecked(state.pickingEnabled);
-  symbolPicking->setIcon(resources.getIcon2(state.pickingEnabled ? "CCXPickSymbolsActive" : "CCXPickSymbols"));
+  symbolPicking->setIcon(resources.getIcon2([&]() -> const char* {
+    if (state.pickingEnabled) {
+      return "CCXPickSymbolsActive";
+    } else {
+      return "CCXPickSymbols";
+    }
+  }()));
   symbolPicking->setEnabled(state.overlayVisible);
   const QSignalBlocker overlayBlocker(overlayVisibility);
   overlayVisibility->setChecked(state.overlayVisible);
-  overlayVisibility->setIcon(resources.getIcon2(state.overlayVisible ? "CCXDisplay" : "CCXDisplayHidden"));
+  overlayVisibility->setIcon(resources.getIcon2([&]() -> const char* {
+    if (state.overlayVisible) {
+      return "CCXDisplay";
+    } else {
+      return "CCXDisplayHidden";
+    }
+  }()));
   const QSignalBlocker scopeBlocker(scope);
   const QSignalBlocker sizeBlocker(size);
-  const int id = state.scope.kind == DrawScopeKind::Custom ? -2 : (state.scope.kind == DrawScopeKind::Step ? state.scope.stepId : -1);
+  const int id = [&]() -> int {
+    if (state.scope.kind == DrawScopeKind::Custom) {
+      return -2;
+    } else {
+      if (state.scope.kind == DrawScopeKind::Step) {
+        return state.scope.stepId;
+      } else {
+        return -1;
+      }
+    }
+  }();
   const int index = scope->findData(id);
-  scope->setCurrentIndex(index < 0 ? 0 : index);
+  scope->setCurrentIndex([&]() -> std::common_type_t<decltype(0), decltype(index)> {
+    if (index < 0) {
+      return 0;
+    } else {
+      return index;
+    }
+  }());
   if (state.sizeFactor > size->maximum())
   {
     size->setMaximum(state.sizeFactor);

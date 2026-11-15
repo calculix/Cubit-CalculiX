@@ -400,18 +400,30 @@ bool ModuleManager::resolve_model_reporting(const std::string& prefix, ReportTem
 
 ReportProfileStoreInterface* ModuleManager::report_profiles() const noexcept
 {
-  return initialized ? profile_store : nullptr;
+  if (initialized) {
+    return profile_store;
+  } else {
+    return nullptr;
+  }
 }
 
 ReportResultProviderInterface* ModuleManager::report_results() const noexcept
 {
-  return initialized ? result_report_provider : nullptr;
+  if (initialized) {
+    return result_report_provider;
+  } else {
+    return nullptr;
+  }
 }
 
 ReportImageProviderInterface* ModuleManager::report_images(const std::string& prefix) const noexcept
 {
   const auto found = report_image_providers.find(prefix);
-  return initialized && found != report_image_providers.end() ? found->second : nullptr;
+  if (initialized && found != report_image_providers.end()) {
+    return found->second;
+  } else {
+    return nullptr;
+  }
 }
 
 bool ModuleManager::available_report_sources(std::vector<ReportSourceEntry>& output, std::string& error) const

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CubitWorkspaceHost.hpp"
 #include "Framework/Core/CubitSimVersion.hpp"
 #include "DocumentationManager.hpp"
@@ -71,7 +72,11 @@ bool CubitWorkspaceHost::attach(Claro* host, std::string& error)
   viewport = host->graphics_widget();
   menu = host->menuBar();
   nativeNavigation = host->navigation_model();
-  navigationMode = host->command_buttons() == nullptr ? nullptr : host->command_buttons()->findChild<QGroupBox*>("mModeGroup");
+  if (host->command_buttons() == nullptr) {
+    navigationMode = nullptr;
+  } else {
+    navigationMode = host->command_buttons()->findChild<QGroupBox*>("mModeGroup");
+  }
 
   if (navigationMode != nullptr)
   {
@@ -219,6 +224,11 @@ bool CubitWorkspaceHost::dock_allowed(QDockWidget* dock) const
 
 void CubitWorkspaceHost::place_workspace_toolbars(const WorkspaceView& view)
 {
+  // Startup isolation: skip toolbar rearrangement before the host is visible.
+  if (!gui->isVisible()) {
+    return;
+  }
+
   // apply() guards these visibility changes with changing == true. Only module
   // toolbars may be removed/reinserted; native Cubit layout items stay intact.
   for (const auto& toolbar : ownedToolbars)
@@ -372,7 +382,11 @@ bool CubitWorkspaceHost::can_access_ui() const
 
 QByteArray CubitWorkspaceHost::save_layout() const
 {
-  return can_access_ui() ? gui->saveState(1) : QByteArray();
+  if (can_access_ui()) {
+    return gui->saveState(1);
+  } else {
+    return QByteArray();
+  }
 }
 
 bool CubitWorkspaceHost::restore_layout(const QByteArray& layout)
@@ -429,7 +443,19 @@ bool CubitWorkspaceHost::restore_layout(const QByteArray& layout)
   else
   {
     const bool horizontal = commandArea == Qt::BottomDockWidgetArea || commandArea == Qt::TopDockWidgetArea;
-    gui->resizeDocks({commandDock.data()}, {horizontal ? commandGeometry.height() : commandGeometry.width()}, horizontal ? Qt::Vertical : Qt::Horizontal);
+    gui->resizeDocks({commandDock.data()}, {[&]() -> std::common_type_t<decltype(commandGeometry.height()), decltype(commandGeometry.width())> {
+      if (horizontal) {
+        return commandGeometry.height();
+      } else {
+        return commandGeometry.width();
+      }
+    }()}, [&]() -> std::common_type_t<decltype(Qt::Vertical), decltype(Qt::Horizontal)> {
+      if (horizontal) {
+        return Qt::Vertical;
+      } else {
+        return Qt::Horizontal;
+      }
+    }());
   }
 
   commandDock->setVisible(commandVisible);
@@ -651,7 +677,13 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
     if (index >= 0)
     {
       const bool navigationPage = item.page == panel || item.page->isAncestorOf(panel);
-      item.tabs->setTabVisible(index, nativeActive ? item.visible : (useNativeNavigation && navigationPage));
+      item.tabs->setTabVisible(index, [&]() -> std::common_type_t<decltype(item.visible), decltype(useNativeNavigation && navigationPage)> {
+        if (nativeActive) {
+          return item.visible;
+        } else {
+          return (useNativeNavigation && navigationPage);
+        }
+      }());
 
       if ((!nativeActive && useNativeNavigation && navigationPage) || (nativeActive && item.current && item.visible))
       {
@@ -679,11 +711,29 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
   hideNavigationMode = !useNativeNavigation || view.hideNavigationMode;
   if (navigationMode != nullptr)
   {
-    navigationMode->setVisible(!hideNavigationMode && (nativeActive ? nativeModeVisible : true));
+    navigationMode->setVisible(!hideNavigationMode && ([&]() -> std::common_type_t<decltype(nativeModeVisible), decltype(true)> {
+      if (nativeActive) {
+        return nativeModeVisible;
+      } else {
+        return true;
+      }
+    }()));
   }
 
-  gui->setCorner(Qt::BottomLeftCorner, nativeActive ? bottomLeft : Qt::LeftDockWidgetArea);
-  gui->setCorner(Qt::BottomRightCorner, nativeActive ? bottomRight : Qt::RightDockWidgetArea);
+  gui->setCorner(Qt::BottomLeftCorner, [&]() -> std::common_type_t<decltype(bottomLeft), decltype(Qt::LeftDockWidgetArea)> {
+    if (nativeActive) {
+      return bottomLeft;
+    } else {
+      return Qt::LeftDockWidgetArea;
+    }
+  }());
+  gui->setCorner(Qt::BottomRightCorner, [&]() -> std::common_type_t<decltype(bottomRight), decltype(Qt::RightDockWidgetArea)> {
+    if (nativeActive) {
+      return bottomRight;
+    } else {
+      return Qt::RightDockWidgetArea;
+    }
+  }());
   return true;
 }
 
@@ -719,7 +769,11 @@ void CubitWorkspaceHost::restore_native() noexcept
 
 QPersistentModelIndex CubitWorkspaceHost::current_index() const
 {
-  return gui == nullptr || gui->command_buttons() == nullptr ? QPersistentModelIndex() : QPersistentModelIndex(gui->command_buttons()->getCurrent());
+  if (gui == nullptr || gui->command_buttons() == nullptr) {
+    return QPersistentModelIndex();
+  } else {
+    return QPersistentModelIndex(gui->command_buttons()->getCurrent());
+  }
 }
 
 Claro* CubitWorkspaceHost::window() const

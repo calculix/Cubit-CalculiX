@@ -165,7 +165,11 @@ bool CoreTopologyLevelSetQuadrature::acquire(const std::string& calculix_type, i
 const CoreTopologyLevelSetQuadrature::Rule* CoreTopologyLevelSetQuadrature::find(const std::string& calculix_type, int cubit_type, int subdivisions) const
 {
   const auto found = rules.find(Key(calculix_type, cubit_type, subdivisions));
-  return found == rules.end() ? nullptr : &found->second;
+  if (found == rules.end()) {
+    return nullptr;
+  } else {
+    return &found->second;
+  }
 }
 
 const std::set<CoreTopologyLevelSetQuadrature::Key>& CoreTopologyLevelSetQuadrature::requested_rules() const

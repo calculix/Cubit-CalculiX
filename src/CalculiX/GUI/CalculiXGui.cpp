@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "GUI/drawing/CalculiXDrawingToolbar.hpp"
 #include "GUI/drawing/CalculiXTopologyToolbar.hpp"
 #include "Framework/Drawing/NativeDisplayRefreshObserver.hpp"
@@ -219,7 +220,13 @@ void CalculiXGui::update()
     {
       application.trace_event("gui.cursor.enter");
       auto* host = Claro::instance();
-      drawingPick->refreshCursor(host == nullptr ? nullptr : host->graphics_widget());
+      drawingPick->refreshCursor([&]() -> std::common_type_t<decltype(nullptr), decltype(host->graphics_widget())> {
+        if (host == nullptr) {
+          return nullptr;
+        } else {
+          return host->graphics_widget();
+        }
+      }());
       application.trace_event("gui.cursor.leave");
     }
   }
@@ -265,7 +272,13 @@ void CalculiXGui::reset()
     if (drawingPick != nullptr)
     {
       auto* host = Claro::instance();
-      drawingPick->refreshCursor(host == nullptr ? nullptr : host->graphics_widget());
+      drawingPick->refreshCursor([&]() -> std::common_type_t<decltype(nullptr), decltype(host->graphics_widget())> {
+        if (host == nullptr) {
+          return nullptr;
+        } else {
+          return host->graphics_widget();
+        }
+      }());
     }
   }
 }
@@ -431,6 +444,7 @@ bool CalculiXGui::workspace_view(WorkspaceView& view, std::string& error) const
   view.docks = {myCCXDockWindowModelTree->dock_widget(), propertiesDock.data()};
   view.menuActions = myMenus->workspace_menu_actions();
   view.toolbars = {drawingToolbar.data(), topologyToolbar.data()};
+  view.modelManagementToolbar = topologyToolbar.data();
   view.activationChanged = [
     toolbar = QPointer<CalculiXDrawingToolbar>(drawingToolbar),
     topology = QPointer<CalculiXTopologyToolbar>(topologyToolbar),
@@ -461,7 +475,13 @@ bool CalculiXGui::workspace_view(WorkspaceView& view, std::string& error) const
     if (pick != nullptr)
     {
       auto* host = Claro::instance();
-      pick->refreshCursor(host == nullptr ? nullptr : host->graphics_widget());
+      pick->refreshCursor([&]() -> std::common_type_t<decltype(nullptr), decltype(host->graphics_widget())> {
+        if (host == nullptr) {
+          return nullptr;
+        } else {
+          return host->graphics_widget();
+        }
+      }());
     }
   };
   view.navigationModel = model;

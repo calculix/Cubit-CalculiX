@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "TopologyActionsPanel.hpp"
 #include "Core/topology/CoreTopologyStructs.hpp"
 #include <string>
@@ -196,10 +197,27 @@ void TopologyActionsPanel::updateControls()
     return;
   }
   status->setText(QString("State: %1\nIteration: %2\nJob: %3")
-    .arg(information.stop_requested && information.active
-      ? QString("Stopping") : QString::fromStdString(information.state))
-    .arg(information.iteration_id > 0 ? QString::number(information.iteration_id) : "-")
-    .arg(information.job_id > 0 ? QString::number(information.job_id) : "-"));
+    .arg([&]() -> std::common_type_t<decltype(QString("Stopping")), decltype(QString::fromStdString(information.state))> {
+      if (information.stop_requested && information.active) {
+        return QString("Stopping");
+      } else {
+        return QString::fromStdString(information.state);
+      }
+    }())
+    .arg([&]() -> std::common_type_t<decltype(QString::number(information.iteration_id)), decltype("-")> {
+      if (information.iteration_id > 0) {
+        return QString::number(information.iteration_id);
+      } else {
+        return "-";
+      }
+    }())
+    .arg([&]() -> std::common_type_t<decltype(QString::number(information.job_id)), decltype("-")> {
+      if (information.job_id > 0) {
+        return QString::number(information.job_id);
+      } else {
+        return "-";
+      }
+    }()));
   runButton->setEnabled(!information.active);
   waitButton->setEnabled(information.active && !information.waiting);
   killButton->setEnabled(information.active && !information.stop_requested);
@@ -332,17 +350,51 @@ int TopologyActionsPanel::updateCriterion(int index, const QString& text, double
     barValue = static_cast<int>(std::round(ratio * 10000.0));
   }
 
-  const QString multiplier = std::isfinite(ratio) ? locale.toString(ratio, 'f', 2) + "x limit" : QString("above limit");
-  const QString color = passed ? "#2e7d32" : "#b26a00";
-  const QString background = passed ? "#e8f5e9" : "#fff3e0";
+  const QString multiplier = [&]() -> QString {
+    if (std::isfinite(ratio)) {
+      return locale.toString(ratio, 'f', 2) + "x limit";
+    } else {
+      return QString("above limit");
+    }
+  }();
+  const QString color = [&]() -> QString {
+    if (passed) {
+      return "#2e7d32";
+    } else {
+      return "#b26a00";
+    }
+  }();
+  const QString background = [&]() -> QString {
+    if (passed) {
+      return "#e8f5e9";
+    } else {
+      return "#fff3e0";
+    }
+  }();
 
   criterion.bar->setValue(barValue);
   criterion.bar->setFormat(QString("%1 / %2 (%3)").arg(locale.toString(value, 'g', 8)).arg(locale.toString(limit, 'g', 8)).arg(multiplier));
-  criterion.bar->setStyleSheet(QString("QProgressBar { border: 1px solid %1; border-radius: 3px; text-align: center; background: palette(base); } QProgressBar::chunk { background: %2; }").arg(color).arg(passed ? "#81c784" : "#ffb74d"));
-  criterion.badge->setText(passed ? "PASS" : "WAIT");
+  criterion.bar->setStyleSheet(QString("QProgressBar { border: 1px solid %1; border-radius: 3px; text-align: center; background: palette(base); } QProgressBar::chunk { background: %2; }").arg(color).arg([&]() -> const char* {
+    if (passed) {
+      return "#81c784";
+    } else {
+      return "#ffb74d";
+    }
+  }()));
+  criterion.badge->setText([&]() -> const char* {
+    if (passed) {
+      return "PASS";
+    } else {
+      return "WAIT";
+    }
+  }());
   criterion.badge->setStyleSheet(QString("color: %1; background: %2; border-radius: 3px; padding: 2px 5px; font-weight: bold;").arg(color).arg(background));
 
-  return passed ? 1 : 0;
+  if (passed) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 void TopologyActionsPanel::updateConvergence()
@@ -407,7 +459,25 @@ void TopologyActionsPanel::updateConvergence()
   // Match the existing CoreTopology volume convergence allowance.
   constexpr double volumeTolerance = 1.0e-6;
   const int volume = updateCriterion(2, QString::fromStdString((*latest)[4]), settings.volume_fraction + volumeTolerance);
-  const int passed = (density == 1 ? 1 : 0) + (compliance == 1 ? 1 : 0) + (volume == 1 ? 1 : 0);
+  const int passed = ([&]() -> int {
+    if (density == 1) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }()) + ([&]() -> int {
+    if (compliance == 1) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }()) + ([&]() -> int {
+    if (volume == 1) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }());
 
   if (density < 0 || compliance < 0 || volume < 0 || (*latest)[8].empty())
   {
@@ -423,10 +493,22 @@ void TopologyActionsPanel::updateConvergence()
   }
   else
   {
-    convergenceSummary->setText(QString("Converged: %1 - %2 / 3 displayed criteria met").arg(converged ? "YES" : "NO").arg(passed));
+    convergenceSummary->setText(QString("Converged: %1 - %2 / 3 displayed criteria met").arg([&]() -> const char* {
+      if (converged) {
+        return "YES";
+      } else {
+        return "NO";
+      }
+    }()).arg(passed));
   }
 
-  convergenceSummary->setStyleSheet(converged ? "color: #2e7d32; font-weight: bold;" : "color: #b26a00; font-weight: bold;");
+  convergenceSummary->setStyleSheet([&]() -> const char* {
+    if (converged) {
+      return "color: #2e7d32; font-weight: bold;";
+    } else {
+      return "color: #b26a00; font-weight: bold;";
+    }
+  }());
 }
 
 void TopologyActionsPanel::clearTopology(int topology_id)

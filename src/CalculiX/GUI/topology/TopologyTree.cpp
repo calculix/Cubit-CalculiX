@@ -319,7 +319,13 @@ void TopologyTree::open_settings(int topology_id, ModelTree &host)
     return;
   }
   const bool levelSet = options.method == TopologyMethod::LevelSet;
-  host.setWidgetInCmdPanelMarker(levelSet ? "CCXTopologyModifyLevelSet" : "CCXTopologyModifyDensity");
+  host.setWidgetInCmdPanelMarker([&]() -> const char* {
+    if (levelSet) {
+      return "CCXTopologyModifyLevelSet";
+    } else {
+      return "CCXTopologyModifyDensity";
+    }
+  }());
   for (QWidget *widget : host.cmdpanel->findChildren<QWidget *>())
   {
     auto* panel = dynamic_cast<TopologyDensitySettingsPanel*>(widget);
@@ -413,7 +419,13 @@ void TopologyTree::populateContextMenu(QMenu &menu, QTreeWidgetItem *item, Model
     addCommandAction(menu, "Run", QString("ccx run topology %1").arg(topology_id));
     auto* run = menu.actions().last();
     run->setEnabled(!running && runnable);
-    run->setToolTip(runnable ? "Run this topology case." : "Only density-based cases can run. Level-set execution remains blocked pending verification.");
+    run->setToolTip([&]() -> const char* {
+      if (runnable) {
+        return "Run this topology case.";
+      } else {
+        return "Only density-based cases can run. Level-set execution remains blocked pending verification.";
+      }
+    }());
     addCommandAction(menu, "Kill", QString("ccx kill topology %1").arg(topology_id));
     menu.actions().last()->setEnabled(running);
     auto* remove = menu.addAction("Delete");

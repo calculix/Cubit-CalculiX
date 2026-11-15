@@ -9,7 +9,6 @@
 #include "GUI/mesh/NodesetTree.hpp"
 #include "GUI/mesh/SidesetTree.hpp"
 #include "GUI/materials/MaterialTree.hpp"
-#include "GUI/materials/MaterialManagement.hpp"
 #include "GUI/sections/SectionsTree.hpp"
 #include "GUI/interactions/ConstraintsTree.hpp"
 #include "GUI/interactions/SurfaceInteractionsTree.hpp"
@@ -83,13 +82,11 @@ ModelTree::ModelTree(QDockWidget* parent, NavigationModel* navigation):QTreeWidg
 
   gui = Claro::instance();
   nav_model = navigation;
-  myMaterialManagement = new MaterialManagement();
   myHBCsManagement = new HBCsManagement();
   myStepsManagement = new StepsManagement();
   myJobsMonitor = new JobsMonitor();
 
   QWidget* auxiliaryWindows[] = {
-    myMaterialManagement,
     myHBCsManagement,
     myStepsManagement,
     myJobsMonitor
@@ -119,7 +116,7 @@ ModelTree::ModelTree(QDockWidget* parent, NavigationModel* navigation):QTreeWidg
   setSelectionMode(QAbstractItemView::SingleSelection);
   connect(this, &QTreeWidget::itemSelectionChanged, this, &ModelTree::updatePropertySelection);
 
-  this->setColumnCount(2);  
+  this->setColumnCount(2);
   this->setHeaderLabels(QStringList() << "Name" << "ID");
   this->setColumnWidth(0, 280);
   this->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -132,11 +129,11 @@ ModelTree::ModelTree(QDockWidget* parent, NavigationModel* navigation):QTreeWidg
 
   success = connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)),
           this, SLOT(ModelTreeItemDoubleClicked(QTreeWidgetItem*, int)));
-  
+
   /*if (success)
   {
     ccx_application_iface.print_to_log("connected signals and slots");
-  }*/   
+  }*/
 
 }
 
@@ -415,17 +412,25 @@ void ModelTree::ModelTreeItemDoubleClicked(QTreeWidgetItem* item, int column)
     }
     if (auto* nodesets = dynamic_cast<NodesetTree*>(owner))
     {
-      setWidgetInCmdPanelMarker(item == nodesets ? "ExodusCreateNodeset" : "ExodusRemoveContentsNodeset");
+      if (item == nodesets) {
+        setWidgetInCmdPanelMarker("ExodusCreateNodeset");
+      } else {
+        setWidgetInCmdPanelMarker("ExodusRemoveContentsNodeset");
+      }
       return;
     }
     if (auto* sidesets = dynamic_cast<SidesetTree*>(owner))
     {
-      setWidgetInCmdPanelMarker(item == sidesets ? "ExodusCreateSideset" : "ExodusRemoveContentsSideset");
+      if (item == sidesets) {
+        setWidgetInCmdPanelMarker("ExodusCreateSideset");
+      } else {
+        setWidgetInCmdPanelMarker("ExodusRemoveContentsSideset");
+      }
       return;
     }
   }
 }
-  
+
 void ModelTree::setWidgetInCmdPanelMarker(const QString name) // get Widget from navigation model
 {
   QModelIndex widget_index;
@@ -488,7 +493,6 @@ void ModelTree::update()
 {
   CalculiXApplicationInterface application;
   application.trace_event("gui.material_management.enter");
-  myMaterialManagement->update();
   application.trace_event("gui.material_management.leave");
   application.trace_event("gui.hbcs_management.enter");
   myHBCsManagement->update();
@@ -508,7 +512,6 @@ void ModelTree::update()
 }
 
 void ModelTree::clear(){
-  myMaterialManagement->clear();
   myHBCsManagement->clear();
   myStepsManagement->clear();
   myJobsMonitor->clear();

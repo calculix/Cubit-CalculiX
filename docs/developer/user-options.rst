@@ -47,9 +47,9 @@ External absolute paths stay absolute. Resources are validated when used.
 CalculiX
 --------
 
-CoreUserOptions.cpp defines all 17 defaults and their validators.
+CoreUserOptions.cpp defines the CalculiX defaults and their validators.
 The data DLL retains ccx_uo, initialized with validated effective values
-before Python, material-library or GUI resource initialization. Core also
+before Python or GUI resource initialization. Core also
 retains the saved configuration returned to the options panel. These snapshots
 are identical at startup; ccx_uo always represents the active session values.
 The UserOptions and DrawingOptions constructors supply safe empty state;
@@ -60,8 +60,7 @@ It validates edited values and submits readable commands only for differences.
 Commands pass typed changes through the application interface. Core reads the
 saved snapshot, validates keys, types and values, merges the patch and prepares
 both saved and active candidates before saving the file.
-The active candidate retains the current icons, Python-interface and
-material-library paths. Only after saving succeeds does Core commit both
+The active candidate retains the current icons and Python-interface paths. Only after saving succeeds does Core commit both
 snapshots using non-throwing member swaps. Validation or save failures leave
 both snapshots unchanged. A drawing refresh failure after a successful save
 is reported as a warning, rather than presenting the committed save as failed.
@@ -73,12 +72,12 @@ The following options take effect at different times:
 * Save loaded results: next model save.
 * Drawing colors: immediately, through the existing drawing interface.
 * Drawing size and visibility: new or reset models.
-* Icons, Python-interface and material-library paths: after restarting Cubit.
+* Icons and Python-interface paths: after restarting Cubit.
+* Shared material-library path: managed by Framework material-library options.
 
 Restart-dependent paths are saved to HDF5 immediately, but remain unchanged in
-ccx_uo for the current session. In particular, material operations continue
-opening the active library so existing GUI group references do not switch to
-a different file. The panel displays the saved configuration, marks those
+ccx_uo for the current session. The material library has its own Framework
+option and does not use ccx_uo. The panel displays the saved configuration, marks those
 fields with tooltips and lists the pending restart changes. Core compares
 normalized saved and active paths; restoring an active path and applying it
 clears that item's restart notice. Windows comparisons ignore case.

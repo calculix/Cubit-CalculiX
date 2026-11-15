@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Core/drawing/CalculiXDrawingAdapter.hpp"
 #include "Core/export/CoreCustomLines.hpp"
 #include <cctype>
@@ -215,7 +216,11 @@ bool boundary(CalculiXCore& core, Conditions& conditions, int type, int id, int 
       if (components[axis] != "free")
       {
         dofs.push_back(axis + 1);
-        componentValues[axis + 1] = homogeneous ? "0" : components[axis];
+        if (homogeneous) {
+          componentValues[axis + 1] = "0";
+        } else {
+          componentValues[axis + 1] = components[axis];
+        }
       }
     }
   }
@@ -228,9 +233,17 @@ bool boundary(CalculiXCore& core, Conditions& conditions, int type, int id, int 
     }
     nodeset = std::stoi(data.nodeset);
     reset = data.operation == "new";
-    family = data.keyword == "*TEMPERATURE" && !homogeneous ? "TEMPERATURE" : "BOUNDARY";
+    if (data.keyword == "*TEMPERATURE" && !homogeneous) {
+      family = "TEMPERATURE";
+    } else {
+      family = "BOUNDARY";
+    }
     dofs = {11};
-    componentValues[11] = homogeneous ? "0" : data.magnitude;
+    if (homogeneous) {
+      componentValues[11] = "0";
+    } else {
+      componentValues[11] = data.magnitude;
+    }
   }
   conditions.beginCard(family, !homogeneous && reset);
   for (int node : CubitInterface::get_nodeset_nodes_inclusive(nodeset))
@@ -238,13 +251,23 @@ bool boundary(CalculiXCore& core, Conditions& conditions, int type, int id, int 
     for (int dof : dofs)
     {
       Condition condition;
-      condition.owner = {type == 1 ? DrawFeature::Displacement : DrawFeature::Temperature, id};
+      condition.owner = {[&]() -> std::common_type_t<decltype(DrawFeature::Displacement), decltype(DrawFeature::Temperature)> {
+        if (type == 1) {
+          return DrawFeature::Displacement;
+        } else {
+          return DrawFeature::Temperature;
+        }
+      }(), id};
       condition.point = coordinate(node);
       condition.dof = dof;
       condition.labelValue = componentValues[dof];
       condition.homogeneous = homogeneous;
       condition.step = step;
-      condition.color = type == 1 ? "coral" : "red";
+      if (type == 1) {
+        condition.color = "coral";
+      } else {
+        condition.color = "red";
+      }
       conditions.put(family, std::to_string(node) + ":" + std::to_string(dof), condition, false);
     }
   }
@@ -277,7 +300,11 @@ bool force(CalculiXCore& core, Conditions& conditions, int id, int step, std::st
       condition.value = value;
       condition.dof = axis + 1;
       condition.step = step;
-      condition.color = axis < 3 ? "green" : "seagreen";
+      if (axis < 3) {
+        condition.color = "green";
+      } else {
+        condition.color = "seagreen";
+      }
       conditions.put("CLOAD", std::to_string(node) + ":" + std::to_string(axis + 1), condition, true);
     }
   }
@@ -327,7 +354,13 @@ bool surface(CalculiXCore& core, Conditions& conditions, DrawFeature feature, in
 
 bool body(CalculiXCore& core, Conditions& conditions, DrawFeature feature, int id, const std::vector<int>& elements, bool reset, double magnitude, const std::vector<double>& direction, const std::vector<double>& origin, int step, std::string& error)
 {
-  const std::string family = feature == DrawFeature::BodyHeatflux ? "DFLUX" : "DLOAD";
+  const std::string family = [&]() -> std::string {
+    if (feature == DrawFeature::BodyHeatflux) {
+      return "DFLUX";
+    } else {
+      return "DLOAD";
+    }
+  }();
   conditions.beginCard(family, reset);
   for (int element : elements)
   {
@@ -366,8 +399,22 @@ bool body(CalculiXCore& core, Conditions& conditions, DrawFeature feature, int i
     condition.step = step;
     condition.body = feature == DrawFeature::BodyHeatflux;
     condition.element = element;
-    condition.color = condition.body ? "purple" : (feature == DrawFeature::Gravity ? "brown" : "khaki");
-    std::string address = std::to_string(element) + (condition.body ? ":BF" : ":BODY:");
+    if (condition.body) {
+      condition.color = "purple";
+    } else {
+      if (feature == DrawFeature::Gravity) {
+        condition.color = "brown";
+      } else {
+        condition.color = "khaki";
+      }
+    }
+    std::string address = std::to_string(element) + ([&]() -> const char* {
+      if (condition.body) {
+        return ":BF";
+      } else {
+        return ":BODY:";
+      }
+    }());
     if (!condition.body)
     {
       for (double value : direction)
@@ -781,12 +828,22 @@ bool CoreDrawScope::resolveStep(CalculiXCore& core, int stepId, double size, Res
         }
         else if (condition.dof >= 1 && condition.dof <= 6)
         {
-          component = family.first == "BOUNDARY" ? boundaryComponents[condition.dof - 1] : forceComponents[condition.dof - 1];
+          if (family.first == "BOUNDARY") {
+            component = boundaryComponents[condition.dof - 1];
+          } else {
+            component = forceComponents[condition.dof - 1];
+          }
         }
         std::ostringstream value;
         value.precision(8);
         value << condition.value;
-        CalculiXDrawLabels::resolved_value(label->second, component, condition.labelValue.empty() ? value.str() : condition.labelValue);
+        CalculiXDrawLabels::resolved_value(label->second, component, [&]() -> std::common_type_t<decltype(value.str()), decltype(condition.labelValue)> {
+          if (condition.labelValue.empty()) {
+            return value.str();
+          } else {
+            return condition.labelValue;
+          }
+        }());
         bool valid = true;
         if (family.first == "BOUNDARY" || family.first == "TEMPERATURE")
         {
@@ -799,7 +856,13 @@ bool CoreDrawScope::resolveStep(CalculiXCore& core, int stepId, double size, Res
         else if (condition.value != 0)
         {
           const bool towardVector = condition.owner.feature == DrawFeature::Force || condition.owner.feature == DrawFeature::SurfaceTraction || condition.owner.feature == DrawFeature::Gravity || condition.owner.feature == DrawFeature::Centrifugal;
-          auto direction = DrawingSymbols::mult_vector_scalar(condition.direction, towardVector ? -condition.value : condition.value);
+          auto direction = DrawingSymbols::mult_vector_scalar(condition.direction, [&]() -> std::common_type_t<decltype(-condition.value), decltype(condition.value)> {
+            if (towardVector) {
+              return -condition.value;
+            } else {
+              return condition.value;
+            }
+          }());
           if (condition.dof > 3)
           {
             valid = DrawingSymbols::flatArrow(geometry, condition.point, direction, false, condition.color, size);

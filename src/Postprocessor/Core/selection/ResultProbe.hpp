@@ -13,10 +13,13 @@ namespace Postprocessor
     EntityReference entity;
     std::vector<std::int64_t> element_ids;
     std::string source_name, dataset_name, status, field, component, value_status;
+    std::string value_unit, coordinate_unit, time_unit, material;
     bool available = false;
     bool visible = false;
     bool range_value = false;
     std::optional<std::array<double,3>> original_position, displayed_position;
+    std::optional<std::array<double,3>> presentation_original_position, presentation_displayed_position;
+    std::optional<double> presentation_time;
     std::optional<std::array<double,2>> values;
     std::size_t valid_samples = 0, invalid_samples = 0;
     int step = -1, increment = -1;

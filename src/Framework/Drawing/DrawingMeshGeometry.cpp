@@ -37,7 +37,11 @@ bool append_connectivity(const std::string& entity, int id, bool wireframe, cons
   {
     if (entity == "edge")
     {
-      corners = nodes.size() == 1 ? 1 : 2;
+      if (nodes.size() == 1) {
+        corners = 1;
+      } else {
+        corners = 2;
+      }
     }
     else if (entity == "face" || entity == "tri" || entity == "quad")
     {

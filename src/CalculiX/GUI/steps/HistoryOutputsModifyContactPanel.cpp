@@ -145,7 +145,13 @@ void HistoryOutputsModifyContactPanel::on_pushButton_apply_clicked(bool)
   changed = changed || fieldChanged("comboBox_6", comboBox_6->currentText());
   for (std::size_t index = 0; index < keys.size(); ++index)
   {
-    changed = changed || fieldChanged("key:" + QString::fromStdString(keys[index]), checkBox_keys[index]->isChecked() ? "YES" : "NO");
+    changed = changed || fieldChanged("key:" + QString::fromStdString(keys[index]), [&]() -> const char* {
+      if (checkBox_keys[index]->isChecked()) {
+        return "YES";
+      } else {
+        return "NO";
+      }
+    }());
   }
   if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
   {
@@ -339,7 +345,13 @@ bool HistoryOutputsModifyContactPanel::setHistoryOutput(int id)
   for (std::size_t index = 0; index < keys.size(); ++index)
   {
     checkBox_keys[index]->setChecked(std::find(settings.enabledKeys.begin(), settings.enabledKeys.end(), keys[index]) != settings.enabledKeys.end());
-    originalValues.insert("key:" + QString::fromStdString(keys[index]), checkBox_keys[index]->isChecked() ? "YES" : "NO");
+    originalValues.insert("key:" + QString::fromStdString(keys[index]), [&]() -> const char* {
+      if (checkBox_keys[index]->isChecked()) {
+        return "YES";
+      } else {
+        return "NO";
+      }
+    }());
   }
   originalValues.insert("lineEdit_0", lineEdit_0->text());
   originalValues.insert("lineEdit_1", lineEdit_1->text());

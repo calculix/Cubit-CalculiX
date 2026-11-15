@@ -30,8 +30,13 @@ namespace
     {
       auto collection = vtkSmartPointer<vtkPartitionedDataSetCollection>::New();
       SimResults::Increment frame;
-      const std::vector<std::string> kinds = blocks ? std::vector<std::string>{"Nodesets","Blocks","Surfaces","DAT_IntegrationPoints"} :
-        std::vector<std::string>{"Nodesets","DAT_IntegrationPoints"};
+      const std::vector<std::string> kinds = [&]() -> std::vector<std::string> {
+        if (blocks) {
+          return std::vector<std::string>{"Nodesets","Blocks","Surfaces","DAT_IntegrationPoints"};
+        } else {
+          return std::vector<std::string>{"Nodesets","DAT_IntegrationPoints"};
+        }
+      }();
       for (std::size_t index = 0; index < kinds.size(); ++index)
       {
         SimResults::Dataset dataset;
@@ -45,13 +50,27 @@ namespace
         auto values = vtkSmartPointer<vtkDoubleArray>::New();
         values->SetName("values");
         const bool vector = kinds[index] == "Blocks";
-        values->SetNumberOfComponents(vector ? 3 : 1);
+        values->SetNumberOfComponents([&]() -> int {
+          if (vector) {
+            return 3;
+          } else {
+            return 1;
+          }
+        }());
         values->SetNumberOfTuples(2); values->Fill(1.0);
         mesh->GetPointData()->AddArray(values);
         SimResults::Field field;
-        field.name = vector ? "DISP" : "A_hidden"; field.source = "test";
+        if (vector) {
+          field.name = "DISP";
+        } else {
+          field.name = "A_hidden";
+        } field.source = "test";
         field.array_name = "values"; field.dataset_id = index;
-        field.components = vector ? std::vector<std::string>{"X","Y","Z"} : std::vector<std::string>{"Value"};
+        if (vector) {
+          field.components = std::vector<std::string>{"X","Y","Z"};
+        } else {
+          field.components = std::vector<std::string>{"Value"};
+        }
         if (vector)
         {
           field.vector_components = std::array<std::size_t,3>{0,1,2};
@@ -147,5 +166,9 @@ int main(int argc,char** argv)
   check(fallbackDisplay.hidden_datasets == std::set<std::size_t>{1},"No-block opening did not show the first available category only");
   check(fallbackDisplay.coloring.field && !fallbackDisplay.coloring.field->magnitude &&
     fallbackDisplay.coloring.field->component == "Value","Scalar default did not choose the first component");
-  return failures ? 1 : 0;
+  if (failures) {
+    return 1;
+  } else {
+    return 0;
+  }
 }

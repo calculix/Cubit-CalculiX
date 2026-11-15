@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CalculiXPropertiesDock.hpp"
 #include "PropertyTreeWidget.hpp"
 #include "CubitMessage.hpp"
@@ -581,5 +582,11 @@ void CalculiXPropertiesDock::showSelection(const PropertySelection& selection)
   heading->show();
   pages->setCurrentWidget(active);
   const auto saved = viewStates.find(requested.feature);
-  active->restoreViewState(saved == viewStates.end() ? PropertyViewState{} : saved->second, sameEntity);
+  active->restoreViewState([&]() -> std::common_type_t<decltype(PropertyViewState{}), decltype(saved->second)> {
+    if (saved == viewStates.end()) {
+      return PropertyViewState{};
+    } else {
+      return saved->second;
+    }
+  }(), sameEntity);
 }

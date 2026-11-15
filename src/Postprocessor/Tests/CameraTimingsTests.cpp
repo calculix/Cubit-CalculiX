@@ -213,5 +213,9 @@ int main()
   const auto recovered = afterException.finish();
   check(recovered.handlers == 1 && recovered.coreUpdates == 0,
     "Unwinding must restore the probe context for subsequent commands.");
-  return failures == 0 ? 0 : 1;
+  if (failures == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
 }

@@ -54,7 +54,11 @@ void CalculiXReportImageSettings::add_options(ReportTemplate& definition)
     option.key = "ccx.images." + item.first;
     option.label = item.second.first;
     option.kind = "boolean";
-    option.default_value = item.second.second ? "true" : "false";
+    if (item.second.second) {
+      option.default_value = "true";
+    } else {
+      option.default_value = "false";
+    }
     add(std::move(option));
   }
   ReportOption view;
@@ -88,7 +92,13 @@ bool CalculiXReportImageSettings::decode(const ReportConfiguration& configuratio
   for (const auto& option : definition.options)
   {
     const auto found = configuration.values.find(option.key);
-    const std::string value = found == configuration.values.end() ? option.default_value : found->second;
+    const std::string value = [&]() -> std::string {
+      if (found == configuration.values.end()) {
+        return option.default_value;
+      } else {
+        return found->second;
+      }
+    }();
     if (option.kind == "boolean")
     {
       if (value != "true" && value != "false")
@@ -206,8 +216,16 @@ bool CalculiXReportImageSettings::decode_capture(const ReportImageRequest& reque
   }
   CalculiXCaptureRequest candidate;
   candidate.labels.enabled = settings.labels;
-  candidate.image.width = request.width == 0 ? settings.width : request.width;
-  candidate.image.height = request.height == 0 ? settings.height : request.height;
+  if (request.width == 0) {
+    candidate.image.width = settings.width;
+  } else {
+    candidate.image.width = request.width;
+  }
+  if (request.height == 0) {
+    candidate.image.height = settings.height;
+  } else {
+    candidate.image.height = request.height;
+  }
   if (candidate.image.width < 64 || candidate.image.width > 8192 || candidate.image.height < 64 || candidate.image.height > 8192 ||
       static_cast<long long>(candidate.image.width) * candidate.image.height > 32000000)
   {
@@ -235,7 +253,12 @@ bool CalculiXReportImageSettings::decode_capture(const ReportImageRequest& reque
   }
   candidate.content = content->second;
   std::string id = "ccx.images." + request.purpose;
-  std::string title = request.purpose == "model" ? "Current model - undeformed mesh" : "Current model - " + request.purpose + " reference setup";
+  std::string title;
+  if (request.purpose == "model") {
+    title = "Current model - undeformed mesh";
+  } else {
+    title = "Current model - " + request.purpose + " reference setup";
+  }
   if (request.context != "model")
   {
     const auto context = QString::fromStdString(request.context);

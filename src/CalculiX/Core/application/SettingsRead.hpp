@@ -57,12 +57,20 @@ std::string field(const std::vector<std::vector<Value>>& rows, int id, std::size
   }
 
   const auto* values = row(rows, id, column + 1, error);
-  return values == nullptr ? std::string() : text((*values)[column]);
+  if (values == nullptr) {
+    return std::string();
+  } else {
+    return text((*values)[column]);
+  }
 }
 
 inline std::string optional_id(int id)
 {
-  return id < 0 ? std::string() : std::to_string(id);
+  if (id < 0) {
+    return std::string();
+  } else {
+    return std::to_string(id);
+  }
 }
 
 template<typename Value>

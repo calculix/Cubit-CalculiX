@@ -230,10 +230,11 @@ def run_persistence_journal():
         sideset 1 name "PersistenceMaster"
         sideset 2 add surface 2
         sideset 2 name "PersistenceSlave"
-        create material "PersistenceSteel" property_group "SIM_CCX"
-        modify material "PersistenceSteel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-        modify material "PersistenceSteel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-        modify material "PersistenceSteel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0
+        ccx units system "N-mm-s"
+        ccx units geometry unit "mm"
+        ccx create material "PersistenceSteel"
+        ccx modify material 1 add card elastic model iso
+        ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"
         ccx create orientation name PersistenceAxes system_type_r a_coord 1 0 0 b_coord 0 1 0 local_axis_z angle 15
         ccx create section solid block 1 material 1 orientation 1
         ccx create amplitude name PersistenceRamp time_amplitude 0 0 0.5 0.25 1 1 shiftx 0.1 shifty 0.2

@@ -1,0 +1,5 @@
+add_executable(calculix_domain_unit_tests DomainUnitsTests.cpp)
+target_compile_features(calculix_domain_unit_tests PRIVATE cxx_std_17)
+target_include_directories(calculix_domain_unit_tests PRIVATE "${CUBITSIM_SOURCE_ROOT}" "${CUBITSIM_SOURCE_ROOT}/CalculiX")
+target_link_libraries(calculix_domain_unit_tests PRIVATE calculix_core cubitsim_model cubitsim_storage Qt6::Core)
+add_test(NAME calculix_domain_units COMMAND calculix_domain_unit_tests)

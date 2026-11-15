@@ -91,17 +91,33 @@ bool ReportTestProviders::resolve_source(const ReportRequest& request, ReportSou
   source.kind = request.kind;
   source.model_id = request.model_id;
   source.input_files = {"fixture.inp"};
-  source.fingerprints = {std::string(64, changed_source ? '2' : '1')};
+  source.fingerprints = {std::string(64, [&]() -> char {
+    if (changed_source) {
+      return '2';
+    } else {
+      return '1';
+    }
+  }())};
   if (request.kind == "model")
   {
     source.input_files.clear();
     source.fingerprints.clear();
-    source.snapshot_fingerprint = std::string(64, changed_source ? '2' : '1');
+    source.snapshot_fingerprint = std::string(64, [&]() -> char {
+      if (changed_source) {
+        return '2';
+      } else {
+        return '1';
+      }
+    }());
   }
   source.provenance = "Test fixture";
   if (request.kind == "job")
   {
-    source.solver_launch_id = changed_launch ? "fixture-launch-b" : "fixture-launch-a";
+    if (changed_launch) {
+      source.solver_launch_id = "fixture-launch-b";
+    } else {
+      source.solver_launch_id = "fixture-launch-a";
+    }
     source.setup_snapshot_id = "fixture-setup";
   }
   output = std::move(source);
@@ -149,11 +165,23 @@ bool ReportTestProviders::available_sources(std::vector<ReportSourceEntry>& outp
     }
     ReportSourceEntry entry;
     entry.request.provider = "test";
-    entry.request.kind = job == 0 ? "model" : "job";
-    entry.request.model_id = job == 0 ? "current" : "";
+    if (job == 0) {
+      entry.request.kind = "model";
+    } else {
+      entry.request.kind = "job";
+    }
+    if (job == 0) {
+      entry.request.model_id = "current";
+    } else {
+      entry.request.model_id = "";
+    }
     entry.request.job_id = job;
     entry.workspace_label = "Test";
-    entry.label = job == 0 ? "Current model" : "Job " + std::to_string(job);
+    if (job == 0) {
+      entry.label = "Current model";
+    } else {
+      entry.label = "Job " + std::to_string(job);
+    }
     entry.available = true;
     entries.push_back(entry);
   }

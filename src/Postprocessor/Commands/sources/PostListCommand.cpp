@@ -78,7 +78,13 @@ bool PostListCommand::execute(CubitCommandData&)
           }
         }, source.reference);
 
-      PRINT_INFO("%s \"%s\" | %s\n", entry.first == session.active_source_id ? "*" : " ",
+      PRINT_INFO("%s \"%s\" | %s\n", [&]() -> const char* {
+        if (entry.first == session.active_source_id) {
+          return "*";
+        } else {
+          return " ";
+        }
+      }(),
         source.name.c_str(), origin.c_str());
     }
 

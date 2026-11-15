@@ -4,14 +4,11 @@
 #include "Core/materials/CalculiXMaterialsInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
-ccxMaterialLibraryDeleteMaterialCommand::ccxMaterialLibraryDeleteMaterialCommand()
-{}
+ccxMaterialLibraryDeleteMaterialCommand::ccxMaterialLibraryDeleteMaterialCommand() {}
 
-ccxMaterialLibraryDeleteMaterialCommand::~ccxMaterialLibraryDeleteMaterialCommand()
-{}
+ccxMaterialLibraryDeleteMaterialCommand::~ccxMaterialLibraryDeleteMaterialCommand() {}
 
-std::vector<std::string> ccxMaterialLibraryDeleteMaterialCommand::get_syntax()
-{
+std::vector<std::string> ccxMaterialLibraryDeleteMaterialCommand::get_syntax() {
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
@@ -22,8 +19,7 @@ std::vector<std::string> ccxMaterialLibraryDeleteMaterialCommand::get_syntax()
   return syntax_list;
 }
 
-std::vector<std::string> ccxMaterialLibraryDeleteMaterialCommand::get_syntax_help()
-{
+std::vector<std::string> ccxMaterialLibraryDeleteMaterialCommand::get_syntax_help() {
   std::vector<std::string> help(2);
   help[0] = "ccx ";
   help[0].append("delete materiallibrary material ");
@@ -33,14 +29,12 @@ std::vector<std::string> ccxMaterialLibraryDeleteMaterialCommand::get_syntax_hel
   return help;
 }
 
-std::vector<std::string> ccxMaterialLibraryDeleteMaterialCommand::get_help()
-{
+std::vector<std::string> ccxMaterialLibraryDeleteMaterialCommand::get_help() {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxMaterialLibraryDeleteMaterialCommand::execute(CubitCommandData &data)
-{
+bool ccxMaterialLibraryDeleteMaterialCommand::execute(CubitCommandData &data) {
   CalculiXMaterialsInterface ccx_materials_iface;
 
 
@@ -50,12 +44,12 @@ bool ccxMaterialLibraryDeleteMaterialCommand::execute(CubitCommandData &data)
 
   data.get_string("name", name);
   data.get_string("groupname", groupname);
-  
-  if (!ccx_materials_iface.delete_materiallibrary_material(name,groupname))
-  {
+
+  if (!ccx_materials_iface.delete_materiallibrary_material(name,groupname)) {
     output = "Failed!\n";
-    PRINT_ERROR(output.c_str());
+    PRINT_ERROR("%s", output.c_str());
+    return false;
   }
-    
+
   return true;
 }

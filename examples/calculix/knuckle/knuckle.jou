@@ -75,15 +75,13 @@ sideset 2 add surface 177 175
 sideset 2 name "bolt"
 
 #material
-create material "steel" property_group "SIM_CCX"
-modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0
-modify material "steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
-modify material "steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-modify material "steel" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 235 0 0
+ccx units system "N-mm-s"
+ccx units geometry unit "mm"
+ccx create material "steel"
+ccx modify material 1 add card elastic model iso
+ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"
+ccx modify material 1 add card plastic model iso
+ccx modify material 1 card plastic row 1 values 235000000 0 273.15 unit "SI"
 
 #section assignment
 ccx create section solid block all material 1

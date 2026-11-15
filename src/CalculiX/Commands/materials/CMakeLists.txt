@@ -9,10 +9,8 @@ target_sources(calculix_commands PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialLibraryDeleteMaterialCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialLibraryExportMaterialCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialLibraryExportMaterialCommand.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialLibraryImportMaterialCommand.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialLibraryImportMaterialCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialLibraryModifyGroupCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialLibraryModifyGroupCommand.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialLibraryModifyMaterialCommand.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialLibraryModifyMaterialCommand.hpp
 )
+
+target_sources(calculix_commands PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialCommand.cpp ${CMAKE_CURRENT_SOURCE_DIR}/ccxMaterialCommand.hpp)

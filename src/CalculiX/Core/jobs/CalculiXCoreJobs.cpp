@@ -84,7 +84,13 @@ bool CalculiXCore::prepare_job_input(int job_id, const std::string& filename)
 
     CoreTopologyTrace::write("job.export_command.enter");
     const bool result = silent_cmd(text);
-    CoreTopologyTrace::write(result ? "job.export_command.success" : "job.export_command.failure");
+    CoreTopologyTrace::write([&]() -> const char* {
+      if (result) {
+        return "job.export_command.success";
+      } else {
+        return "job.export_command.failure";
+      }
+    }());
     return result;
   };
 

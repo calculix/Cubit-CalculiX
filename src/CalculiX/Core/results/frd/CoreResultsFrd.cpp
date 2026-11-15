@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Core/results/frd/CoreResultsFrd.hpp"
 #include "Core/results/frd/CoreResultsFrdFormat.hpp"
 #include <numeric>
@@ -1199,8 +1200,20 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       {
         state.analysis.parameters.emplace_back(raw);
       }
-      int* parameter = fields[0] == "1PMODE" ? &state.analysis.mode :
-        fields[0] == "1PHID" ? &state.analysis.nodal_diameter : fields[0] == "1PSUBC" ? &state.analysis.subcase : nullptr;
+      int* parameter;
+      if (fields[0] == "1PMODE") {
+        parameter = &state.analysis.mode;
+      } else {
+        if (fields[0] == "1PHID") {
+          parameter = &state.analysis.nodal_diameter;
+        } else {
+          if (fields[0] == "1PSUBC") {
+            parameter = &state.analysis.subcase;
+          } else {
+            parameter = nullptr;
+          }
+        }
+      }
       if (parameter && (fields.size() != 2 || !ResultReadNumbers::integer(fields[1], *parameter)))
       {
         PRINT_ERROR("Invalid FRD analysis parameter at line %zu.\n", state.line_number);
@@ -1463,8 +1476,18 @@ FrdParsedBatch CoreResultsFrd::parse_raw_batch(const FrdRawReadBatch& batch, con
         std::fill(row.begin() + 6, row.end(), std::numeric_limits<double>::quiet_NaN());
         continue;
       }
-      row[6] = stress ? ccx_results_iface.compute_von_mises_stress(tensor) : ccx_results_iface.compute_von_mises_strain(tensor);
-      const auto principal = stress ? ccx_results_iface.compute_principal_stresses(tensor) : ccx_results_iface.compute_principal_strains(tensor);
+      if (stress) {
+        row[6] = ccx_results_iface.compute_von_mises_stress(tensor);
+      } else {
+        row[6] = ccx_results_iface.compute_von_mises_strain(tensor);
+      }
+      const auto principal = [&]() -> std::common_type_t<decltype(ccx_results_iface.compute_principal_stresses(tensor)), decltype(ccx_results_iface.compute_principal_strains(tensor))> {
+        if (stress) {
+          return ccx_results_iface.compute_principal_stresses(tensor);
+        } else {
+          return ccx_results_iface.compute_principal_strains(tensor);
+        }
+      }();
       if (principal.size() < 4)
       {
         output.error = "Invalid FRD principal component result.";

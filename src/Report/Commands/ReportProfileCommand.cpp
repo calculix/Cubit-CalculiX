@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportProfileCommand.hpp"
 #include <utility>
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
@@ -50,14 +51,38 @@ bool ReportProfileCommand::execute(CubitCommandData& data)
   {
     error = "Unknown Report failure.";
   }
-  PRINT_ERROR("Report: %s\n", error.empty() ? "Invalid command arguments." : error.c_str());
+  PRINT_ERROR("Report: %s\n", [&]() -> std::common_type_t<decltype("Invalid command arguments."), decltype(error.c_str())> {
+    if (error.empty()) {
+      return "Invalid command arguments.";
+    } else {
+      return error.c_str();
+    }
+  }());
   return false;
 }
 
 bool ReportProfileCommand::run(CubitCommandData& data, const std::shared_ptr<ReportApplicationInterface>& active, std::string& error)
 {
   std::string name;
-  const std::string action = data.find_keyword("LIST") ? "list" : data.find_keyword("RESET") ? "reset" : data.find_keyword("SAVE") ? "save" : data.find_keyword("LOAD") ? "load" : "default";
+  const std::string action = [&]() -> std::string {
+    if (data.find_keyword("LIST")) {
+      return "list";
+    } else {
+      if (data.find_keyword("RESET")) {
+        return "reset";
+      } else {
+        if (data.find_keyword("SAVE")) {
+          return "save";
+        } else {
+          if (data.find_keyword("LOAD")) {
+            return "load";
+          } else {
+            return "default";
+          }
+        }
+      }
+    }
+  }();
   if (action != "list" && action != "reset" && !data.get_string("profile_name", name))
   {
     error = "A profile operation needs a quoted profile name.";

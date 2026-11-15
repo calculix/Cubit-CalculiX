@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorSessionCodec.hpp"
 #include "../filters/FilterCodec.hpp"
 #include "../plots/PlotCodec.hpp"
@@ -217,7 +218,13 @@ namespace Postprocessor
           const auto relative = base.relativeFilePath(q(path));
           const bool native = QDir::isAbsolutePath(q(path));
           const bool local = native && !QDir::isAbsolutePath(relative) && relative != ".." && !relative.startsWith("../");
-          paths.append(Object{{"path",local ? relative : q(path)},{"relative",local}});
+          paths.append(Object{{"path",[&]() -> std::common_type_t<decltype(relative), decltype(q(path))> {
+            if (local) {
+              return relative;
+            } else {
+              return q(path);
+            }
+          }()},{"relative",local}});
         }
         object.insert("reference",Object{{"type","file"},{"provider",q(files->provider_id)},
           {"identity",q(files->content_identity)},{"paths",paths}});
@@ -244,7 +251,13 @@ namespace Postprocessor
       const auto& view = item.second;
       Object object{{"id",q(view.id)},{"name",q(view.name)},{"pick_mode",static_cast<int>(view.selection.mode)}};
       object.insert("annotations",annotations_to_json(view.annotations));
-      object.insert("plot",view.plot_id ? QJsonValue(q(*view.plot_id)) : QJsonValue(QJsonValue::Null));
+      object.insert("plot",[&]() -> QJsonValue {
+        if (view.plot_id) {
+          return QJsonValue(q(*view.plot_id));
+        } else {
+          return QJsonValue(QJsonValue::Null);
+        }
+      }());
       object.insert("plot_active",view.plot_active);
       QJsonValue camera(QJsonValue::Null), table(QJsonValue::Null);
       if (view.camera)
@@ -258,7 +271,13 @@ namespace Postprocessor
       {
         const auto found = project.table_frames.find(view.id);
         table = Object{{"source",q(view.table->source_id)},{"key",q(view.table->key)},{"field",view.table->field},
-          {"frame",frame_json(found == project.table_frames.end() ? SavedFrameReference{} : found->second)}};
+          {"frame",frame_json([&]() -> std::common_type_t<decltype(SavedFrameReference{}), decltype(found->second)> {
+            if (found == project.table_frames.end()) {
+              return SavedFrameReference{};
+            } else {
+              return found->second;
+            }
+          }())}};
       }
       object.insert("camera",camera); object.insert("table",table); views.append(object);
     }
@@ -266,7 +285,13 @@ namespace Postprocessor
     {
       const auto& display = item.second;
       const auto found = project.bindings.find(display.id);
-      const SavedRepresentationBinding binding = found == project.bindings.end() ? SavedRepresentationBinding{} : found->second;
+      const SavedRepresentationBinding binding = [&]() -> SavedRepresentationBinding {
+        if (found == project.bindings.end()) {
+          return SavedRepresentationBinding{};
+        } else {
+          return found->second;
+        }
+      }();
       Array hidden;
       for (const auto& value : binding.hidden)
       {
@@ -276,14 +301,32 @@ namespace Postprocessor
       const auto& deform = display.deformation;
       Object coloring{{"field",field_json(color.field)},{"palette",static_cast<int>(color.palette)},
         {"range_mode",static_cast<int>(color.range_mode)},{"range",vector_json(color.fixed_range)},
-        {"reversed",color.reversed},{"legend",color.legend_visible},{"bands",color.bands ? QJsonValue(static_cast<int>(*color.bands)) : QJsonValue(QJsonValue::Null)},
+        {"reversed",color.reversed},{"legend",color.legend_visible},{"bands",[&]() -> QJsonValue {
+          if (color.bands) {
+            return QJsonValue(static_cast<int>(*color.bands));
+          } else {
+            return QJsonValue(QJsonValue::Null);
+          }
+        }()},
         {"minimum",limit_json(color.minimum)},{"maximum",limit_json(color.maximum)}};
       Object deformation{{"enabled",deform.enabled},{"field",field_json(deform.field)},{"mode",static_cast<int>(deform.field_mode)},
         {"scale",deform.scale},{"overlay",deform.overlay}};
       displays.append(Object{{"id",q(display.id)},{"name",q(display.name)},{"source",q(display.input.object_id)},{"feature",display.input.owner == OutputOwner::Feature},
         {"view",q(display.view_id)},{"visible",display.visible},{"frame",frame_json(binding.frame)},{"hidden",hidden},
-        {"color_dataset",binding.color_dataset ? QJsonValue(dataset_json(*binding.color_dataset)) : QJsonValue(QJsonValue::Null)},
-        {"deformation_dataset",binding.deformation_dataset ? QJsonValue(dataset_json(*binding.deformation_dataset)) : QJsonValue(QJsonValue::Null)},
+        {"color_dataset",[&]() -> QJsonValue {
+          if (binding.color_dataset) {
+            return QJsonValue(dataset_json(*binding.color_dataset));
+          } else {
+            return QJsonValue(QJsonValue::Null);
+          }
+        }()},
+        {"deformation_dataset",[&]() -> QJsonValue {
+          if (binding.deformation_dataset) {
+            return QJsonValue(dataset_json(*binding.deformation_dataset));
+          } else {
+            return QJsonValue(QJsonValue::Null);
+          }
+        }()},
         {"coloring",coloring},{"deformation",deformation},{"fps",static_cast<int>(display.animation.frames_per_second)},{"loop",display.animation.loop}});
     }
     for (const auto& item : state.layout.nodes)
@@ -383,8 +426,13 @@ namespace Postprocessor
           {
             return false;
           }
-          files.paths.push_back(relative || QDir::isAbsolutePath(q(name)) ?
-            QDir(q(directory)).absoluteFilePath(q(name)).toUtf8().toStdString() : name);
+          files.paths.push_back([&]() -> std::common_type_t<decltype(QDir(q(directory)).absoluteFilePath(q(name)).toUtf8().toStdString()), decltype(name)> {
+            if (relative || QDir::isAbsolutePath(q(name))) {
+              return QDir(q(directory)).absoluteFilePath(q(name)).toUtf8().toStdString();
+            } else {
+              return name;
+            }
+          }());
         }
         source.reference = files;
       }
@@ -527,7 +575,11 @@ namespace Postprocessor
       {
         return false;
       }
-      display.input.owner = object.value("feature").toBool(false) ? OutputOwner::Feature : OutputOwner::Source;
+      if (object.value("feature").toBool(false)) {
+        display.input.owner = OutputOwner::Feature;
+      } else {
+        display.input.owner = OutputOwner::Source;
+      }
       for (const auto& item : hidden)
       {
         SavedDatasetReference data;
@@ -546,7 +598,11 @@ namespace Postprocessor
           {
             return false;
           }
-          (std::string(key) == "color_dataset" ? binding.color_dataset : binding.deformation_dataset) = data;
+          if (std::string(key) == "color_dataset") {
+            binding.color_dataset = data;
+          } else {
+            binding.deformation_dataset = data;
+          }
         }
       }
       if (!object.value("coloring").isObject() || !object.value("deformation").isObject())
@@ -686,8 +742,19 @@ namespace Postprocessor
     {
       const auto& active = state.representations.at(state.active_representation_id);
       const auto filter = state.filters.find(active.input.object_id);
-      const auto source = active.input.owner == OutputOwner::Source ? active.input.object_id :
-        filter == state.filters.end() ? std::string{} : filter->second.input.object_id;
+      const auto source = [&]() -> std::common_type_t<decltype(active.input.object_id), std::common_type_t<decltype(std::string{}), decltype(filter->second.input.object_id)>> {
+        if (active.input.owner == OutputOwner::Source) {
+          return active.input.object_id;
+        } else {
+          return [&]() -> std::common_type_t<decltype(std::string{}), decltype(filter->second.input.object_id)> {
+            if (filter == state.filters.end()) {
+              return std::string{};
+            } else {
+              return filter->second.input.object_id;
+            }
+          }();
+        }
+      }();
       if (source != state.active_source_id || active.view_id != state.active_view_id)
       {
         return false;
@@ -782,8 +849,13 @@ namespace Postprocessor
     for (const auto& item : state.representations)
     {
       const auto& value = item.second;
-      const bool inputValid = value.input.owner == OutputOwner::Source ? state.sources.count(value.input.object_id) != 0 :
-        value.input.owner == OutputOwner::Feature && state.filters.count(value.input.object_id) != 0;
+      const bool inputValid = [&]() -> bool {
+        if (value.input.owner == OutputOwner::Source) {
+          return state.sources.count(value.input.object_id) != 0;
+        } else {
+          return value.input.owner == OutputOwner::Feature && state.filters.count(value.input.object_id) != 0;
+        }
+      }();
       if (item.first.empty() || item.first != value.id || !inputValid || value.input.port != 0 || state.views.count(value.view_id) == 0 ||
           !connections.emplace(std::to_string(static_cast<int>(value.input.owner))+":"+value.input.object_id,value.view_id).second || project.bindings.count(value.id) == 0 ||
           !valid_coloring(value.coloring,error) || !valid_deformation(value.deformation,error))

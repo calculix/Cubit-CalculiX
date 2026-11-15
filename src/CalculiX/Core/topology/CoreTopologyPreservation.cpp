@@ -139,7 +139,13 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
     const auto append_face = [&](const std::string& entity, int id) -> bool
     {
       auto nodes = CubitInterface::get_connectivity(entity, id);
-      const std::size_t expected = entity == "quad" ? 4 : 3;
+      const std::size_t expected = [&]() -> std::size_t {
+        if (entity == "quad") {
+          return 4;
+        } else {
+          return 3;
+        }
+      }();
 
       if (nodes.size() != expected)
       {
@@ -230,7 +236,17 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
       }
 
       const auto connectivity = CubitInterface::get_connectivity(entity, local_id);
-      const std::size_t expected = entity == "hex" ? 8 : entity == "tet" ? 4 : 6;
+      const std::size_t expected = [&]() -> std::size_t {
+        if (entity == "hex") {
+          return 8;
+        } else {
+          if (entity == "tet") {
+            return 4;
+          } else {
+            return 6;
+          }
+        }
+      }();
 
       if (connectivity.size() != expected)
       {

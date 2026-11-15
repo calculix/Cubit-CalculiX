@@ -101,11 +101,22 @@ bool append_mesh_loads(Loads& loads, MeshExportInterface& mesh, const std::set<i
     }
 
     const int set_id = loads.loads_data[index][4];
-    const bool exists = set_type == 2 ? mesh_query.check_nodeset_exists(set_id) : mesh_query.check_sideset_exists(set_id);
+    const bool exists = [&]() -> bool {
+      if (set_type == 2) {
+        return mesh_query.check_nodeset_exists(set_id);
+      } else {
+        return mesh_query.check_sideset_exists(set_id);
+      }
+    }();
 
     if (!exists)
     {
-      const char* entity = set_type == 2 ? "Nodeset" : "Sideset";
+      const char* entity;
+      if (set_type == 2) {
+        entity = "Nodeset";
+      } else {
+        entity = "Sideset";
+      }
       PRINT_ERROR("%s %d referenced by %s %d does not exist.\n", entity, set_id, load_name, load_id);
       return false;
     }

@@ -1,3 +1,4 @@
+#include "Commands/materials/ccxMaterialCommand.hpp"
 #include "Commands/drawing/ccxDisplayCommand.hpp"
 #include "Commands/drawing/ccxCaptureCommand.hpp"
 #include "CalculiXCommands.hpp"
@@ -5,6 +6,7 @@
 #include <vector>
 
 #include "Commands/application/ccxUserOptionsCommand.hpp"
+#include "Commands/units/ccxUnitsCommand.hpp"
 #include "Commands/application/ccxResetCommand.hpp"
 #include "Commands/export/ccxExportCommand.hpp"
 #include "Commands/application/ccxInitPythonInterfaceCommand.hpp"
@@ -172,10 +174,8 @@
 #include "Commands/materials/ccxMaterialLibraryModifyGroupCommand.hpp"
 #include "Commands/materials/ccxMaterialLibraryDeleteGroupCommand.hpp"
 #include "Commands/materials/ccxMaterialLibraryCreateMaterialCommand.hpp"
-#include "Commands/materials/ccxMaterialLibraryModifyMaterialCommand.hpp"
 #include "Commands/materials/ccxMaterialLibraryDeleteMaterialCommand.hpp"
 #include "Commands/materials/ccxMaterialLibraryExportMaterialCommand.hpp"
-#include "Commands/materials/ccxMaterialLibraryImportMaterialCommand.hpp"
 #include "Commands/mesh/ccxWrapCommand.hpp"
 #include "Commands/drawing/ccxAnimateTopologyCommand.hpp"
 
@@ -183,6 +183,7 @@ std::vector<std::string> CalculiXCommands::command_keys() const
 {
   std::vector<std::string> keys;
   keys.push_back("ccxUserOptionsCommand");
+  keys.push_back("ccxUnitsCommand");
   keys.push_back("ccxResetCommand");
   keys.push_back("ccxExportCommand");
   keys.push_back("ccxInitPythonInterfaceCommand");
@@ -352,896 +353,716 @@ std::vector<std::string> CalculiXCommands::command_keys() const
   keys.push_back("ccxMaterialLibraryModifyGroupCommand");
   keys.push_back("ccxMaterialLibraryDeleteGroupCommand");
   keys.push_back("ccxMaterialLibraryCreateMaterialCommand");
-  keys.push_back("ccxMaterialLibraryModifyMaterialCommand");
   keys.push_back("ccxMaterialLibraryDeleteMaterialCommand");
   keys.push_back("ccxMaterialLibraryExportMaterialCommand");
-  keys.push_back("ccxMaterialLibraryImportMaterialCommand");
   keys.push_back("ccxWrapCommand");
   keys.push_back("ccxAnimateTopologyCommand");
 
+  keys.push_back("ccxMaterialCommand");
   return keys;
 }
 
-CubitCommand* CalculiXCommands::create_command(const std::string &key)
-{
+CubitCommand* CalculiXCommands::create_command(const std::string &key) {
+  if (key == "ccxUnitsCommand") {
+    return new ccxUnitsCommand();
+  }
+  if (key == "ccxMaterialCommand") {
+    return new ccxMaterialCommand();
+  }
   // NOTE: The internals of Cubit will take owernship of the command,
   // and delete it when it is time to clean up.
 
-  if (key == "ccxUserOptionsCommand")
-  {
+  if (key == "ccxUserOptionsCommand") {
     return new ccxUserOptionsCommand();
   }
 
-  
-  if(key == "ccxResetCommand")
-  {
+
+  if(key == "ccxResetCommand") {
     return new ccxResetCommand();
   }
 
-  if(key == "ccxExportCommand")
-  {
+  if(key == "ccxExportCommand") {
     return new ccxExportCommand();
   }
 
-  if(key == "ccxUseAutoCleanupCommand")
-  {
+  if(key == "ccxUseAutoCleanupCommand") {
     return new ccxUseAutoCleanupCommand();
   }
-  
-  if(key == "ccxInitPythonInterfaceCommand")
-  {
+
+  if(key == "ccxInitPythonInterfaceCommand") {
     return new ccxInitPythonInterfaceCommand();
   }
 
-  if(key == "ccxUseLogCoreCommand")
-  {
+  if(key == "ccxUseLogCoreCommand") {
     return new ccxUseLogCoreCommand();
   }
 
-  if(key == "ccxPrintCoreCommand")
-  {
+  if(key == "ccxPrintCoreCommand") {
     return new ccxPrintCoreCommand();
   }
-  
-  if(key == "ccxLogCoreCommand")
-  {
+
+  if(key == "ccxLogCoreCommand") {
     return new ccxLogCoreCommand();
   }
-  
-  if (key == "ccxDisplayCommand")
-  {
+
+  if (key == "ccxDisplayCommand") {
     return new ccxDisplayCommand();
   }
-  if (key == "ccxCaptureCommand")
-  {
+  if (key == "ccxCaptureCommand") {
     return new ccxCaptureCommand();
   }
-  if(key == "ccxDrawCommand")
-  {
+  if(key == "ccxDrawCommand") {
     return new ccxDrawCommand();
   }
-  
-  if(key == "ccxDrawStepCommand")
-  {
+
+  if(key == "ccxDrawStepCommand") {
     return new ccxDrawStepCommand();
   }
 
-  if(key == "ccxBlockElementTypeCommand")
-  {
+  if(key == "ccxBlockElementTypeCommand") {
     return new ccxBlockElementTypeCommand();
   }
 
-  if(key == "ccxSectionDeleteCommand")
-  {
+  if(key == "ccxSectionDeleteCommand") {
     return new ccxSectionDeleteCommand();
   }
 
-  if(key == "ccxSectionSolidCreateCommand")
-  {
+  if(key == "ccxSectionSolidCreateCommand") {
     return new ccxSectionSolidCreateCommand();
   }
 
-  if(key == "ccxSectionSolidModifyCommand")
-  {
+  if(key == "ccxSectionSolidModifyCommand") {
     return new ccxSectionSolidModifyCommand();
   }
 
-  if(key == "ccxSectionShellCreateCommand")
-  {
+  if(key == "ccxSectionShellCreateCommand") {
     return new ccxSectionShellCreateCommand();
   }
 
-  if(key == "ccxSectionShellModifyCommand")
-  {
+  if(key == "ccxSectionShellModifyCommand") {
     return new ccxSectionShellModifyCommand();
   }
 
-  if(key == "ccxSectionBeamCreateCommand")
-  {
+  if(key == "ccxSectionBeamCreateCommand") {
     return new ccxSectionBeamCreateCommand();
   }
 
-  if(key == "ccxSectionBeamModifyCommand")
-  {
+  if(key == "ccxSectionBeamModifyCommand") {
     return new ccxSectionBeamModifyCommand();
   }
 
-  if(key == "ccxSectionMembraneCreateCommand")
-  {
+  if(key == "ccxSectionMembraneCreateCommand") {
     return new ccxSectionMembraneCreateCommand();
   }
 
-  if(key == "ccxSectionMembraneModifyCommand")
-  {
+  if(key == "ccxSectionMembraneModifyCommand") {
     return new ccxSectionMembraneModifyCommand();
   }
 
-  if(key == "ccxConstraintDeleteCommand")
-  {
+  if(key == "ccxConstraintDeleteCommand") {
     return new ccxConstraintDeleteCommand();
   }
 
-  if(key == "ccxConstraintRigidBodyCreateCommand")
-  {
+  if(key == "ccxConstraintRigidBodyCreateCommand") {
     return new ccxConstraintRigidBodyCreateCommand();
   }
 
-  if(key == "ccxConstraintRigidBody2CreateCommand")
-  {
+  if(key == "ccxConstraintRigidBody2CreateCommand") {
     return new ccxConstraintRigidBody2CreateCommand();
   }
-  
-  if(key == "ccxConstraintRigidBodyModifyCommand")
-  {
+
+  if(key == "ccxConstraintRigidBodyModifyCommand") {
     return new ccxConstraintRigidBodyModifyCommand();
   }
 
-  if(key == "ccxConstraintTieCreateCommand")
-  {
+  if(key == "ccxConstraintTieCreateCommand") {
     return new ccxConstraintTieCreateCommand();
   }
 
-  if(key == "ccxConstraintTieModifyCommand")
-  {
+  if(key == "ccxConstraintTieModifyCommand") {
     return new ccxConstraintTieModifyCommand();
   }
 
-  if(key == "ccxConstraintEquationCreateCommand")
-  {
+  if(key == "ccxConstraintEquationCreateCommand") {
     return new ccxConstraintEquationCreateCommand();
   }
 
-  if(key == "ccxConstraintEquationCreateFromCoincidentNodesCommand")
-  {
+  if(key == "ccxConstraintEquationCreateFromCoincidentNodesCommand") {
     return new ccxConstraintEquationCreateFromCoincidentNodesCommand();
   }
-  
-  if(key == "ccxConstraintEquationModifyCommand")
-  {
+
+  if(key == "ccxConstraintEquationModifyCommand") {
     return new ccxConstraintEquationModifyCommand();
   }
 
-  if(key == "ccxConstraintTieCreateFromCubitContactPairCommand")
-  {
+  if(key == "ccxConstraintTieCreateFromCubitContactPairCommand") {
     return new ccxConstraintTieCreateFromCubitContactPairCommand();
   }
 
-  if(key == "ccxSurfaceInteractionExponentialCreateCommand")
-  {
+  if(key == "ccxSurfaceInteractionExponentialCreateCommand") {
     return new ccxSurfaceInteractionExponentialCreateCommand();
   }
 
-  if(key == "ccxSurfaceInteractionLinearCreateCommand")
-  {
+  if(key == "ccxSurfaceInteractionLinearCreateCommand") {
     return new ccxSurfaceInteractionLinearCreateCommand();
   }
-  
-  if(key == "ccxSurfaceInteractionTabularCreateCommand")
-  {
+
+  if(key == "ccxSurfaceInteractionTabularCreateCommand") {
     return new ccxSurfaceInteractionTabularCreateCommand();
   }
 
-  if(key == "ccxSurfaceInteractionTiedCreateCommand")
-  {
+  if(key == "ccxSurfaceInteractionTiedCreateCommand") {
     return new ccxSurfaceInteractionTiedCreateCommand();
   }
 
-  if(key == "ccxSurfaceInteractionHardCreateCommand")
-  {
+  if(key == "ccxSurfaceInteractionHardCreateCommand") {
     return new ccxSurfaceInteractionHardCreateCommand();
   }
 
-  if(key == "ccxSurfaceInteractionNameModifyCommand")
-  {
+  if(key == "ccxSurfaceInteractionNameModifyCommand") {
     return new ccxSurfaceInteractionNameModifyCommand();
   }
 
-  if(key == "ccxSurfaceInteractionExponentialModifyCommand")
-  {
+  if(key == "ccxSurfaceInteractionExponentialModifyCommand") {
     return new ccxSurfaceInteractionExponentialModifyCommand();
   }
 
-  if(key == "ccxSurfaceInteractionLinearModifyCommand")
-  {
+  if(key == "ccxSurfaceInteractionLinearModifyCommand") {
     return new ccxSurfaceInteractionLinearModifyCommand();
   }
 
-  if(key == "ccxSurfaceInteractionTabularModifyCommand")
-  {
+  if(key == "ccxSurfaceInteractionTabularModifyCommand") {
     return new ccxSurfaceInteractionTabularModifyCommand();
   }
 
-  if(key == "ccxSurfaceInteractionTiedModifyCommand")
-  {
+  if(key == "ccxSurfaceInteractionTiedModifyCommand") {
     return new ccxSurfaceInteractionTiedModifyCommand();
   }
 
-  if(key == "ccxSurfaceInteractionGapConductanceModifyCommand")
-  {
+  if(key == "ccxSurfaceInteractionGapConductanceModifyCommand") {
     return new ccxSurfaceInteractionGapConductanceModifyCommand();
   }
 
-  if(key == "ccxSurfaceInteractionGapHeatGenerationModifyCommand")
-  {
+  if(key == "ccxSurfaceInteractionGapHeatGenerationModifyCommand") {
     return new ccxSurfaceInteractionGapHeatGenerationModifyCommand();
   }
 
-  if(key == "ccxSurfaceInteractionFrictionModifyCommand")
-  {
+  if(key == "ccxSurfaceInteractionFrictionModifyCommand") {
     return new ccxSurfaceInteractionFrictionModifyCommand();
   }
 
-  if(key == "ccxSurfaceInteractionDeleteCommand")
-  {
+  if(key == "ccxSurfaceInteractionDeleteCommand") {
     return new ccxSurfaceInteractionDeleteCommand();
   }
 
-  if(key == "ccxContactPairCreateCommand")
-  {
+  if(key == "ccxContactPairCreateCommand") {
     return new ccxContactPairCreateCommand();
   }
 
-  if(key == "ccxContactPairModifyCommand")
-  {
+  if(key == "ccxContactPairModifyCommand") {
     return new ccxContactPairModifyCommand();
   }
-  
-  if(key == "ccxContactPairDeleteCommand")
-  {
+
+  if(key == "ccxContactPairDeleteCommand") {
     return new ccxContactPairDeleteCommand();
   }
-  
-  if(key == "ccxContactPairCreateFromCubitContactPairCommand")
-  {
+
+  if(key == "ccxContactPairCreateFromCubitContactPairCommand") {
     return new ccxContactPairCreateFromCubitContactPairCommand();
   }
 
-  if(key == "ccxAmplitudeCreateCommand")
-  {
+  if(key == "ccxAmplitudeCreateCommand") {
     return new ccxAmplitudeCreateCommand();
   }
 
-  if(key == "ccxAmplitudeModifyCommand")
-  {
+  if(key == "ccxAmplitudeModifyCommand") {
     return new ccxAmplitudeModifyCommand();
   }
 
-  if(key == "ccxAmplitudeDeleteCommand")
-  {
+  if(key == "ccxAmplitudeDeleteCommand") {
     return new ccxAmplitudeDeleteCommand();
   }
-  
-  if(key == "ccxOrientationCreateCommand")
-  {
+
+  if(key == "ccxOrientationCreateCommand") {
     return new ccxOrientationCreateCommand();
   }
 
-  if(key == "ccxOrientationModifyCommand")
-  {
+  if(key == "ccxOrientationModifyCommand") {
     return new ccxOrientationModifyCommand();
   }
 
-  if(key == "ccxOrientationDeleteCommand")
-  {
+  if(key == "ccxOrientationDeleteCommand") {
     return new ccxOrientationDeleteCommand();
   }
 
-  if(key == "ccxDampingModifyCommand")
-  {
+  if(key == "ccxDampingModifyCommand") {
     return new ccxDampingModifyCommand();
   }
 
-  if(key == "ccxDampingDeleteCommand")
-  {
+  if(key == "ccxDampingDeleteCommand") {
     return new ccxDampingDeleteCommand();
   }
 
-  if(key == "ccxPhysicalConstantsModifyCommand")
-  {
+  if(key == "ccxPhysicalConstantsModifyCommand") {
     return new ccxPhysicalConstantsModifyCommand();
   }
 
-  if(key == "ccxPhysicalConstantsDeleteCommand")
-  {
+  if(key == "ccxPhysicalConstantsDeleteCommand") {
     return new ccxPhysicalConstantsDeleteCommand();
   }
 
-  if(key == "ccxLoadsForcesDeleteCommand")
-  {
+  if(key == "ccxLoadsForcesDeleteCommand") {
     return new ccxLoadsForcesDeleteCommand();
   }
 
-  if(key == "ccxLoadsForcesCreateCommand")
-  {
+  if(key == "ccxLoadsForcesCreateCommand") {
     return new ccxLoadsForcesCreateCommand();
   }
 
-  if(key == "ccxLoadsForcesModifyCommand")
-  {
+  if(key == "ccxLoadsForcesModifyCommand") {
     return new ccxLoadsForcesModifyCommand();
   }
 
-  if(key == "ccxLoadsPressuresCreateCommand")
-  {
+  if(key == "ccxLoadsPressuresCreateCommand") {
     return new ccxLoadsPressuresCreateCommand();
   }
 
-  if(key == "ccxLoadsPressuresModifyCommand")
-  {
+  if(key == "ccxLoadsPressuresModifyCommand") {
     return new ccxLoadsPressuresModifyCommand();
   }
 
-  if(key == "ccxLoadsPressuresDeleteCommand")
-  {
+  if(key == "ccxLoadsPressuresDeleteCommand") {
     return new ccxLoadsPressuresDeleteCommand();
   }
 
-  if(key == "ccxLoadsHeatfluxesCreateCommand")
-  {
+  if(key == "ccxLoadsHeatfluxesCreateCommand") {
     return new ccxLoadsHeatfluxesCreateCommand();
   }
 
-  if(key == "ccxLoadsHeatfluxesModifyCommand")
-  {
+  if(key == "ccxLoadsHeatfluxesModifyCommand") {
     return new ccxLoadsHeatfluxesModifyCommand();
   }
 
-  if(key == "ccxLoadsHeatfluxesDeleteCommand")
-  {
+  if(key == "ccxLoadsHeatfluxesDeleteCommand") {
     return new ccxLoadsHeatfluxesDeleteCommand();
   }
 
-  if(key == "ccxLoadsGravityCreateCommand")
-  {
+  if(key == "ccxLoadsGravityCreateCommand") {
     return new ccxLoadsGravityCreateCommand();
   }
-  
-  if(key == "ccxLoadsGravityModifyCommand")
-  {
+
+  if(key == "ccxLoadsGravityModifyCommand") {
     return new ccxLoadsGravityModifyCommand();
   }
 
-  if(key == "ccxLoadsGravityDeleteCommand")
-  {
+  if(key == "ccxLoadsGravityDeleteCommand") {
     return new ccxLoadsGravityDeleteCommand();
   }
 
-  if(key == "ccxLoadsCentrifugalCreateCommand")
-  {
+  if(key == "ccxLoadsCentrifugalCreateCommand") {
     return new ccxLoadsCentrifugalCreateCommand();
   }
-  
-  if(key == "ccxLoadsCentrifugalModifyCommand")
-  {
+
+  if(key == "ccxLoadsCentrifugalModifyCommand") {
     return new ccxLoadsCentrifugalModifyCommand();
   }
 
-  if(key == "ccxLoadsCentrifugalDeleteCommand")
-  {
+  if(key == "ccxLoadsCentrifugalDeleteCommand") {
     return new ccxLoadsCentrifugalDeleteCommand();
   }
 
-  if(key == "ccxLoadsTrajectoryHeatfluxCreateCommand")
-  {
+  if(key == "ccxLoadsTrajectoryHeatfluxCreateCommand") {
     return new ccxLoadsTrajectoryHeatfluxCreateCommand();
   }
-  
-  if(key == "ccxLoadsTrajectoryHeatfluxModifyCommand")
-  {
+
+  if(key == "ccxLoadsTrajectoryHeatfluxModifyCommand") {
     return new ccxLoadsTrajectoryHeatfluxModifyCommand();
   }
-  
-  if(key == "ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand")
-  {
+
+  if(key == "ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand") {
     return new ccxLoadsTrajectoryBodyHeatfluxSphereCreateCommand();
   }
 
-  if(key == "ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand")
-  {
+  if(key == "ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand") {
     return new ccxLoadsTrajectoryBodyHeatfluxSphereModifyCommand();
   }
 
-  if(key == "ccxLoadsTrajectoryDeleteCommand")
-  {
+  if(key == "ccxLoadsTrajectoryDeleteCommand") {
     return new ccxLoadsTrajectoryDeleteCommand();
   }
 
-  if(key == "ccxLoadsFilmCreateCommand")
-  {
+  if(key == "ccxLoadsFilmCreateCommand") {
     return new ccxLoadsFilmCreateCommand();
   }
 
-  if(key == "ccxLoadsFilmModifyCommand")
-  {
+  if(key == "ccxLoadsFilmModifyCommand") {
     return new ccxLoadsFilmModifyCommand();
   }
 
-  if(key == "ccxLoadsFilmDeleteCommand")
-  {
+  if(key == "ccxLoadsFilmDeleteCommand") {
     return new ccxLoadsFilmDeleteCommand();
   }
 
-  if(key == "ccxLoadsRadiationCreateCommand")
-  {
+  if(key == "ccxLoadsRadiationCreateCommand") {
     return new ccxLoadsRadiationCreateCommand();
   }
 
-  if(key == "ccxLoadsRadiationModifyCommand")
-  {
+  if(key == "ccxLoadsRadiationModifyCommand") {
     return new ccxLoadsRadiationModifyCommand();
   }
 
-  if(key == "ccxLoadsRadiationDeleteCommand")
-  {
+  if(key == "ccxLoadsRadiationDeleteCommand") {
     return new ccxLoadsRadiationDeleteCommand();
   }
 
-  if(key == "ccxLoadsSurfaceTractionCreateCommand")
-  {
+  if(key == "ccxLoadsSurfaceTractionCreateCommand") {
     return new ccxLoadsSurfaceTractionCreateCommand();
   }
 
-  if(key == "ccxLoadsSurfaceTractionModifyCommand")
-  {
+  if(key == "ccxLoadsSurfaceTractionModifyCommand") {
     return new ccxLoadsSurfaceTractionModifyCommand();
   }
 
-  if(key == "ccxLoadsSurfaceTractionDeleteCommand")
-  {
+  if(key == "ccxLoadsSurfaceTractionDeleteCommand") {
     return new ccxLoadsSurfaceTractionDeleteCommand();
   }
-  
-  if(key == "ccxLoadsBodyHeatfluxCreateCommand")
-  {
+
+  if(key == "ccxLoadsBodyHeatfluxCreateCommand") {
     return new ccxLoadsBodyHeatfluxCreateCommand();
   }
 
-  if(key == "ccxLoadsBodyHeatfluxModifyCommand")
-  {
+  if(key == "ccxLoadsBodyHeatfluxModifyCommand") {
     return new ccxLoadsBodyHeatfluxModifyCommand();
   }
 
-  if(key == "ccxLoadsBodyHeatfluxDeleteCommand")
-  {
+  if(key == "ccxLoadsBodyHeatfluxDeleteCommand") {
     return new ccxLoadsBodyHeatfluxDeleteCommand();
   }
-    
-  if(key == "ccxBCsDisplacementsCreateCommand")
-  {
+
+  if(key == "ccxBCsDisplacementsCreateCommand") {
     return new ccxBCsDisplacementsCreateCommand();
   }
 
-  if(key == "ccxBCsDisplacementsModifyCommand")
-  {
+  if(key == "ccxBCsDisplacementsModifyCommand") {
     return new ccxBCsDisplacementsModifyCommand();
   }
 
-  if(key == "ccxBCsDisplacementsDeleteCommand")
-  {
+  if(key == "ccxBCsDisplacementsDeleteCommand") {
     return new ccxBCsDisplacementsDeleteCommand();
   }
 
-  if(key == "ccxBCsTemperaturesCreateCommand")
-  {
+  if(key == "ccxBCsTemperaturesCreateCommand") {
     return new ccxBCsTemperaturesCreateCommand();
   }
-  if(key == "ccxBCsTemperaturesDeleteCommand")
-  {
+  if(key == "ccxBCsTemperaturesDeleteCommand") {
     return new ccxBCsTemperaturesDeleteCommand();
   }
-  if(key == "ccxBCsTemperaturesModifyCommand")
-  {
+  if(key == "ccxBCsTemperaturesModifyCommand") {
     return new ccxBCsTemperaturesModifyCommand();
   }
-  
-  if(key == "ccxHistoryOutputCreateCommand")
-  {
+
+  if(key == "ccxHistoryOutputCreateCommand") {
     return new ccxHistoryOutputCreateCommand();
   }
 
-  if(key == "ccxHistoryOutputNodeModifyCommand")
-  {
+  if(key == "ccxHistoryOutputNodeModifyCommand") {
     return new ccxHistoryOutputNodeModifyCommand();
   }
-  
-  if(key == "ccxHistoryOutputElementModifyCommand")
-  {
+
+  if(key == "ccxHistoryOutputElementModifyCommand") {
     return new ccxHistoryOutputElementModifyCommand();
   }
-  
-  if(key == "ccxHistoryOutputContactModifyCommand")
-  {
+
+  if(key == "ccxHistoryOutputContactModifyCommand") {
     return new ccxHistoryOutputContactModifyCommand();
   }
 
-  if(key == "ccxHistoryOutputSectionModifyCommand")
-  {
+  if(key == "ccxHistoryOutputSectionModifyCommand") {
     return new ccxHistoryOutputSectionModifyCommand();
   }
 
-  if(key == "ccxHistoryOutputDeleteCommand")
-  {
+  if(key == "ccxHistoryOutputDeleteCommand") {
     return new ccxHistoryOutputDeleteCommand();
   }
 
-  if(key == "ccxFieldOutputCreateCommand")
-  {
+  if(key == "ccxFieldOutputCreateCommand") {
     return new ccxFieldOutputCreateCommand();
   }
 
-  if(key == "ccxFieldOutputNodeModifyCommand")
-  {
+  if(key == "ccxFieldOutputNodeModifyCommand") {
     return new ccxFieldOutputNodeModifyCommand();
   }
-  
-  if(key == "ccxFieldOutputElementModifyCommand")
-  {
+
+  if(key == "ccxFieldOutputElementModifyCommand") {
     return new ccxFieldOutputElementModifyCommand();
   }
 
-  if(key == "ccxFieldOutputContactModifyCommand")
-  {
+  if(key == "ccxFieldOutputContactModifyCommand") {
     return new ccxFieldOutputContactModifyCommand();
   }
 
-  if(key == "ccxFieldOutputDeleteCommand")
-  {
+  if(key == "ccxFieldOutputDeleteCommand") {
     return new ccxFieldOutputDeleteCommand();
   }
 
-  if(key == "ccxInitialConditionCreateCommand")
-  {
+  if(key == "ccxInitialConditionCreateCommand") {
     return new ccxInitialConditionCreateCommand();
   }
 
-  if(key == "ccxInitialConditionDisplacementModifyCommand")
-  {
+  if(key == "ccxInitialConditionDisplacementModifyCommand") {
     return new ccxInitialConditionDisplacementModifyCommand();
   }
 
-  if(key == "ccxInitialConditionTemperatureModifyCommand")
-  {
+  if(key == "ccxInitialConditionTemperatureModifyCommand") {
     return new ccxInitialConditionTemperatureModifyCommand();
   }
 
-  if(key == "ccxInitialConditionStressAddCommand")
-  {
+  if(key == "ccxInitialConditionStressAddCommand") {
     return new ccxInitialConditionStressAddCommand();
   }
 
-  if(key == "ccxInitialConditionDeleteCommand")
-  {
+  if(key == "ccxInitialConditionDeleteCommand") {
     return new ccxInitialConditionDeleteCommand();
   }
 
-  if(key == "ccxHBCAddBCCommand")
-  {
+  if(key == "ccxHBCAddBCCommand") {
     return new ccxHBCAddBCCommand();
   }
 
-  if(key == "ccxHBCRemoveBCCommand")
-  {
+  if(key == "ccxHBCRemoveBCCommand") {
     return new ccxHBCRemoveBCCommand();
   }
 
-  if(key == "ccxStepCreateCommand")
-  {
+  if(key == "ccxStepCreateCommand") {
     return new ccxStepCreateCommand();
   }
-  
-  if(key == "ccxStepAddLoadCommand")
-  {
+
+  if(key == "ccxStepAddLoadCommand") {
     return new ccxStepAddLoadCommand();
   }
 
-  if(key == "ccxStepAddBCCommand")
-  {
+  if(key == "ccxStepAddBCCommand") {
     return new ccxStepAddBCCommand();
   }
 
-  if(key == "ccxStepAddHistoryOutputCommand")
-  {
+  if(key == "ccxStepAddHistoryOutputCommand") {
     return new ccxStepAddHistoryOutputCommand();
   }
-  
-  if(key == "ccxStepAddFieldOutputCommand")
-  {
+
+  if(key == "ccxStepAddFieldOutputCommand") {
     return new ccxStepAddFieldOutputCommand();
   }
 
-  if(key == "ccxStepRemoveLoadCommand")
-  {
+  if(key == "ccxStepRemoveLoadCommand") {
     return new ccxStepRemoveLoadCommand();
   }
 
-  if(key == "ccxStepRemoveBCCommand")
-  {
+  if(key == "ccxStepRemoveBCCommand") {
     return new ccxStepRemoveBCCommand();
   }
 
-  if(key == "ccxStepRemoveHistoryOutputCommand")
-  {
+  if(key == "ccxStepRemoveHistoryOutputCommand") {
     return new ccxStepRemoveHistoryOutputCommand();
   }
-  
-  if(key == "ccxStepRemoveFieldOutputCommand")
-  {
+
+  if(key == "ccxStepRemoveFieldOutputCommand") {
     return new ccxStepRemoveFieldOutputCommand();
   }
-  
-  if(key == "ccxStepParameterModifyCommand")
-  {
+
+  if(key == "ccxStepParameterModifyCommand") {
     return new ccxStepParameterModifyCommand();
   }
 
-  if(key == "ccxStepStaticModifyCommand")
-  {
+  if(key == "ccxStepStaticModifyCommand") {
     return new ccxStepStaticModifyCommand();
   }
 
-  if(key == "ccxStepFrequencyModifyCommand")
-  {
+  if(key == "ccxStepFrequencyModifyCommand") {
     return new ccxStepFrequencyModifyCommand();
   }
 
-  if(key == "ccxStepBuckleModifyCommand")
-  {
+  if(key == "ccxStepBuckleModifyCommand") {
     return new ccxStepBuckleModifyCommand();
   }
 
-  if(key == "ccxStepHeatTransferModifyCommand")
-  {
+  if(key == "ccxStepHeatTransferModifyCommand") {
     return new ccxStepHeatTransferModifyCommand();
   }
 
-  if(key == "ccxStepCoupledTemperatureDisplacementModifyCommand")
-  {
+  if(key == "ccxStepCoupledTemperatureDisplacementModifyCommand") {
     return new ccxStepCoupledTemperatureDisplacementModifyCommand();
   }
 
-  if(key == "ccxStepUncoupledTemperatureDisplacementModifyCommand")
-  {
+  if(key == "ccxStepUncoupledTemperatureDisplacementModifyCommand") {
     return new ccxStepUncoupledTemperatureDisplacementModifyCommand();
   }
 
-  if(key == "ccxStepDynamicModifyCommand")
-  {
+  if(key == "ccxStepDynamicModifyCommand") {
     return new ccxStepDynamicModifyCommand();
   }
 
-  if(key == "ccxStepModalDynamicModifyCommand")
-  {
+  if(key == "ccxStepModalDynamicModifyCommand") {
     return new ccxStepModalDynamicModifyCommand();
   }
 
-  if(key == "ccxStepSteadyStateDynamicsModifyCommand")
-  {
+  if(key == "ccxStepSteadyStateDynamicsModifyCommand") {
     return new ccxStepSteadyStateDynamicsModifyCommand();
   }
 
-  if(key == "ccxStepComplexFrequencyModifyCommand")
-  {
+  if(key == "ccxStepComplexFrequencyModifyCommand") {
     return new ccxStepComplexFrequencyModifyCommand();
   }
 
-  if(key == "ccxStepDeleteCommand")
-  {
+  if(key == "ccxStepDeleteCommand") {
     return new ccxStepDeleteCommand();
   }
-  
-  if(key == "ccxStepUtilityModelChangeElementDummyStepCommand")
-  {
+
+  if(key == "ccxStepUtilityModelChangeElementDummyStepCommand") {
     return new ccxStepUtilityModelChangeElementDummyStepCommand();
   }
 
-  if(key == "ccxJobCreateCommand")
-  {
+  if(key == "ccxJobCreateCommand") {
     return new ccxJobCreateCommand();
   }
 
-  if(key == "ccxJobModifyCommand")
-  {
+  if(key == "ccxJobModifyCommand") {
     return new ccxJobModifyCommand();
   }
-  
-  if(key == "ccxJobDeleteCommand")
-  {
+
+  if(key == "ccxJobDeleteCommand") {
     return new ccxJobDeleteCommand();
   }
 
-  if(key == "ccxRunJobCommand")
-  {
+  if(key == "ccxRunJobCommand") {
     return new ccxRunJobCommand();
   }
-  
-  if(key == "ccxWaitJobCommand")
-  {
+
+  if(key == "ccxWaitJobCommand") {
     return new ccxWaitJobCommand();
   }
 
-  if(key == "ccxTopologyCreateCommand")
-  {
+  if(key == "ccxTopologyCreateCommand") {
     return new ccxTopologyCreateCommand();
   }
 
-  if(key == "ccxTopologyModifyCommand")
-  {
+  if(key == "ccxTopologyModifyCommand") {
     return new ccxTopologyModifyCommand();
   }
-    
-  if(key == "ccxTopologyDeleteCommand")
-  {
+
+  if(key == "ccxTopologyDeleteCommand") {
     return new ccxTopologyDeleteCommand();
   }
 
-  if(key == "ccxTopologyAddSetsCommand")
-  {
+  if(key == "ccxTopologyAddSetsCommand") {
     return new ccxTopologyAddSetsCommand();
   }
 
-  if(key == "ccxTopologyRemoveSetsCommand")
-  {
+  if(key == "ccxTopologyRemoveSetsCommand") {
     return new ccxTopologyRemoveSetsCommand();
   }
 
-  if (key == "ccxTopologyResetPreservedCommand")
-  {
+  if (key == "ccxTopologyResetPreservedCommand") {
     return new ccxTopologyResetPreservedCommand();
   }
 
-  if (key == "ccxWaitTopologyCommand")
-  {
+  if (key == "ccxWaitTopologyCommand") {
     return new ccxWaitTopologyCommand();
   }
-  if (key == "ccxKillTopologyCommand")
-  {
+  if (key == "ccxKillTopologyCommand") {
     return new ccxKillTopologyCommand();
   }
 
-  if(key == "ccxRunTopologyCommand")
-  {
+  if(key == "ccxRunTopologyCommand") {
     return new ccxRunTopologyCommand();
   }
 
 
 
-  if(key == "ccxResultLoadJobCommand")
-  {
+  if(key == "ccxResultLoadJobCommand") {
     return new ccxResultLoadJobCommand();
   }
 
-  if(key == "ccxResultExportJobCommand")
-  {
+  if(key == "ccxResultExportJobCommand") {
     return new ccxResultExportJobCommand();
   }
 
-  if(key == "ccxResultConvertJobCommand")
-  {
+  if(key == "ccxResultConvertJobCommand") {
     return new ccxResultConvertJobCommand();
   }
 
-  if(key == "ccxResultProjectJobCommand")
-  {
+  if(key == "ccxResultProjectJobCommand") {
     return new ccxResultProjectJobCommand();
   }
 
-  if(key == "ccxResultPlotJobFrdCommand")
-  {
+  if(key == "ccxResultPlotJobFrdCommand") {
     return new ccxResultPlotJobFrdCommand();
   }
 
-  if(key == "ccxResultPlotJobDatCommand")
-  {
+  if(key == "ccxResultPlotJobDatCommand") {
     return new ccxResultPlotJobDatCommand();
   }
-  
-  if(key == "ccxResultPlotJobDatSectionCommand")
-  {
+
+  if(key == "ccxResultPlotJobDatSectionCommand") {
     return new ccxResultPlotJobDatSectionCommand();
   }
 
-  if(key == "ccxResultCSVJobFrdCommand")
-  {
+  if(key == "ccxResultCSVJobFrdCommand") {
     return new ccxResultCSVJobFrdCommand();
   }
 
-  if(key == "ccxResultCSVJobDatCommand")
-  {
+  if(key == "ccxResultCSVJobDatCommand") {
     return new ccxResultCSVJobDatCommand();
   }
 
-  if(key == "ccxResultCSVJobDatSectionCommand")
-  {
+  if(key == "ccxResultCSVJobDatSectionCommand") {
     return new ccxResultCSVJobDatSectionCommand();
   }
 
-  if(key == "ccxKillJobCommand")
-  {
+  if(key == "ccxKillJobCommand") {
     return new ccxKillJobCommand();
   }
 
-  if(key == "ccxCustomLineCreateCommand")
-  {
+  if(key == "ccxCustomLineCreateCommand") {
     return new ccxCustomLineCreateCommand();
   }
 
-  if(key == "ccxCustomLineModifyCommand")
-  {
+  if(key == "ccxCustomLineModifyCommand") {
     return new ccxCustomLineModifyCommand();
   }
-  
-  if(key == "ccxCustomLineDeleteCommand")
-  {
+
+  if(key == "ccxCustomLineDeleteCommand") {
     return new ccxCustomLineDeleteCommand();
   }
 
-  if(key == "ccxMaterialLibraryCreateGroupCommand")
-  {
+  if(key == "ccxMaterialLibraryCreateGroupCommand") {
     return new ccxMaterialLibraryCreateGroupCommand();
   }
 
-  if(key == "ccxMaterialLibraryModifyGroupCommand")
-  {
+  if(key == "ccxMaterialLibraryModifyGroupCommand") {
     return new ccxMaterialLibraryModifyGroupCommand();
   }
-  
-  if(key == "ccxMaterialLibraryDeleteGroupCommand")
-  {
+
+  if(key == "ccxMaterialLibraryDeleteGroupCommand") {
     return new ccxMaterialLibraryDeleteGroupCommand();
   }
 
-  if(key == "ccxMaterialLibraryCreateMaterialCommand")
-  {
+  if(key == "ccxMaterialLibraryCreateMaterialCommand") {
     return new ccxMaterialLibraryCreateMaterialCommand();
   }
 
-  if(key == "ccxMaterialLibraryModifyMaterialCommand")
-  {
-    return new ccxMaterialLibraryModifyMaterialCommand();
-  }
-  
-  if(key == "ccxMaterialLibraryDeleteMaterialCommand")
-  {
+if(key == "ccxMaterialLibraryDeleteMaterialCommand") {
     return new ccxMaterialLibraryDeleteMaterialCommand();
   }
 
-  if(key == "ccxMaterialLibraryExportMaterialCommand")
-  {
+  if(key == "ccxMaterialLibraryExportMaterialCommand") {
     return new ccxMaterialLibraryExportMaterialCommand();
   }
 
-  if(key == "ccxMaterialLibraryImportMaterialCommand")
-  {
-    return new ccxMaterialLibraryImportMaterialCommand();
-  }
-  
-  if (key == "ccxWrapCommand")
-  {
+if (key == "ccxWrapCommand") {
      return new ccxWrapCommand();
   }
 
-  if (key == "ccxAnimateTopologyCommand")
-  {
+  if (key == "ccxAnimateTopologyCommand") {
     return new ccxAnimateTopologyCommand();
   }
 

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorCore.hpp"
 #include "../persistence/PostprocessorSessionCodec.hpp"
 #include <algorithm>
@@ -22,7 +23,11 @@ namespace
   {
     if (!saved.valid)
     {
-      return data.increments.empty() ? std::optional<std::size_t>{0} : std::nullopt;
+      if (data.increments.empty()) {
+        return std::optional<std::size_t>{0};
+      } else {
+        return std::nullopt;
+      }
     }
     std::optional<std::size_t> found;
     for (std::size_t index = 0; index < data.increments.size(); ++index)
@@ -49,14 +54,24 @@ namespace
     {
       return item.id == id;
     });
-    return found == data.end() ? std::nullopt : std::optional<SavedDatasetReference>{{found->kind,found->name,found->model_id}};
+    if (found == data.end()) {
+      return std::nullopt;
+    } else {
+      return std::optional<SavedDatasetReference>{{found->kind,found->name,found->model_id}};
+    }
   }
   std::optional<std::size_t> find_dataset(const std::vector<SimResults::Dataset>& data, const SavedDatasetReference& saved)
   {
     std::optional<std::size_t> found;
     for (const auto& item : data)
     {
-      if (item.kind == saved.kind && (saved.model_id >= 0 ? item.model_id == saved.model_id : item.name == saved.name))
+      if (item.kind == saved.kind && ([&]() -> std::common_type_t<decltype(item.model_id == saved.model_id), decltype(item.name == saved.name)> {
+        if (saved.model_id >= 0) {
+          return item.model_id == saved.model_id;
+        } else {
+          return item.name == saved.name;
+        }
+      }()))
       {
         if (found)
         {
@@ -82,7 +97,11 @@ namespace Postprocessor
   std::string PostprocessorCore::source_unavailable_reason(const std::string& id) const
   {
     const auto found = runtime.find(id);
-    return found == runtime.end() ? "Result source is unresolved." : found->second.unavailable_reason;
+    if (found == runtime.end()) {
+      return "Result source is unresolved.";
+    } else {
+      return found->second.unavailable_reason;
+    }
   }
   bool PostprocessorCore::capture_project(PostprocessorProjectState& output, std::string& error) const
   {
@@ -120,8 +139,15 @@ namespace Postprocessor
         {
           const auto data = result_data(item.second.table->source_id);
           const auto saved = saved_table_frames.find(item.first);
-          project.table_frames[item.first] = data ? frame_reference(*data,item.second.table->frame) :
-            saved == saved_table_frames.end() ? SavedFrameReference{} : saved->second;
+          if (data) {
+            project.table_frames[item.first] = frame_reference(*data,item.second.table->frame);
+          } else {
+            if (saved == saved_table_frames.end()) {
+              project.table_frames[item.first] = SavedFrameReference{};
+            } else {
+              project.table_frames[item.first] = saved->second;
+            }
+          }
         }
       }
       for (auto& item : project.session.representations)
@@ -130,7 +156,13 @@ namespace Postprocessor
         display.animation.playing = false;
         const auto loaded = runtime.find(output_source(display.input));
         const auto previous = saved_bindings.find(item.first);
-        auto binding = previous == saved_bindings.end() ? SavedRepresentationBinding{} : previous->second;
+        auto binding = [&]() -> std::common_type_t<decltype(SavedRepresentationBinding{}), decltype(previous->second)> {
+          if (previous == saved_bindings.end()) {
+            return SavedRepresentationBinding{};
+          } else {
+            return previous->second;
+          }
+        }();
         if (loaded != runtime.end() && loaded->second.data)
         {
           const auto& data = *loaded->second.data;
@@ -198,8 +230,13 @@ namespace Postprocessor
     for (auto& item : project.session.representations)
     {
       auto& display = item.second;
-      const auto source = display.input.owner == OutputOwner::Source ? display.input.object_id :
-        project.session.filters.at(display.input.object_id).input.object_id;
+      const auto source = [&]() -> std::common_type_t<decltype(display.input.object_id), decltype(project.session.filters.at(display.input.object_id).input.object_id)> {
+        if (display.input.owner == OutputOwner::Source) {
+          return display.input.object_id;
+        } else {
+          return project.session.filters.at(display.input.object_id).input.object_id;
+        }
+      }();
       auto& loaded = prepared.runtime.at(source);
       display.animation.playing = false;
       if (!loaded.data)
@@ -228,8 +265,20 @@ namespace Postprocessor
       }
       for (int index = 0; index < 2; ++index)
       {
-        const auto& reference = index == 0 ? binding.color_dataset : binding.deformation_dataset;
-        auto& selection = index == 0 ? display.coloring.field : display.deformation.field;
+        const auto& reference = [&]() -> decltype((binding.color_dataset)) {
+          if (index == 0) {
+            return binding.color_dataset;
+          } else {
+            return binding.deformation_dataset;
+          }
+        }();
+        auto& selection = [&]() -> decltype((display.coloring.field)) {
+          if (index == 0) {
+            return display.coloring.field;
+          } else {
+            return display.deformation.field;
+          }
+        }();
         if (selection)
         {
           selection->dataset_id.reset();

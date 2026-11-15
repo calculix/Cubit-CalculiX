@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorCaptureDialog.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/Commands/plots/PlotCommandText.hpp"
@@ -18,7 +19,13 @@ QString postprocessor_capture_dialog(QWidget* parent,const PostprocessorApplicat
 {
   using namespace Postprocessor;
   QDialog dialog(parent);
-  dialog.setWindowTitle(report ? QObject::tr("Add image to Report") : QObject::tr("Render PNG image"));
+  dialog.setWindowTitle([&]() -> std::common_type_t<decltype(QObject::tr("Add image to Report")), decltype(QObject::tr("Render PNG image"))> {
+    if (report) {
+      return QObject::tr("Add image to Report");
+    } else {
+      return QObject::tr("Render PNG image");
+    }
+  }());
   auto* form = new QFormLayout(&dialog);
   auto* target = new QComboBox(&dialog);
   for (const auto& view : application.session().views)
@@ -120,7 +127,13 @@ QString postprocessor_capture_dialog(QWidget* parent,const PostprocessorApplicat
     form->addRow(QObject::tr("Caption"),caption);
   }
   auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel,&dialog);
-  buttons->button(QDialogButtonBox::Ok)->setText(report ? QObject::tr("Add to Report") : QObject::tr("Save PNG…"));
+  buttons->button(QDialogButtonBox::Ok)->setText([&]() -> std::common_type_t<decltype(QObject::tr("Add to Report")), decltype(QObject::tr("Save PNG…"))> {
+    if (report) {
+      return QObject::tr("Add to Report");
+    } else {
+      return QObject::tr("Save PNG…");
+    }
+  }());
   form->addRow(buttons);
   QObject::connect(buttons,&QDialogButtonBox::rejected,&dialog,&QDialog::reject);
   QObject::connect(buttons,&QDialogButtonBox::accepted,&dialog,[&]()
@@ -142,8 +155,17 @@ QString postprocessor_capture_dialog(QWidget* parent,const PostprocessorApplicat
   }
   const bool plot = target->currentIndex() >= viewCount;
   const auto name = target->currentData().toString().toUtf8().toStdString();
-  QString command = report ? "report image add postprocessor " : "post capture ";
-  command += plot ? "plot " : "view ";
+  QString command;
+  if (report) {
+    command = "report image add postprocessor ";
+  } else {
+    command = "post capture ";
+  }
+  if (plot) {
+    command += "plot ";
+  } else {
+    command += "view ";
+  }
   command += plot_quote(name);
   if (report)
   {
@@ -171,7 +193,13 @@ QString postprocessor_capture_dialog(QWidget* parent,const PostprocessorApplicat
   {
     if (control->isEnabled() && control->currentIndex() != 0)
     {
-      command += QString(" %1 %2").arg(key,control->currentIndex() == 1 ? "on" : "off");
+      command += QString(" %1 %2").arg(key,[&]() -> const char* {
+        if (control->currentIndex() == 1) {
+          return "on";
+        } else {
+          return "off";
+        }
+      }());
     }
   };
   flag("legend",legend);

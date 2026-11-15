@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportUpdateCommand.hpp"
 #include <utility>
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
@@ -49,7 +50,13 @@ bool ReportUpdateCommand::execute(CubitCommandData& data)
   {
     error = "Unknown Report failure.";
   }
-  PRINT_ERROR("Report: %s\n", error.empty() ? "Invalid command arguments." : error.c_str());
+  PRINT_ERROR("Report: %s\n", [&]() -> std::common_type_t<decltype("Invalid command arguments."), decltype(error.c_str())> {
+    if (error.empty()) {
+      return "Invalid command arguments.";
+    } else {
+      return error.c_str();
+    }
+  }());
   return false;
 }
 

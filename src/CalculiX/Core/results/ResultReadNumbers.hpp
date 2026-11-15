@@ -1,3 +1,4 @@
+#include <type_traits>
 #ifndef RESULTREADNUMBERS_HPP
 #define RESULTREADNUMBERS_HPP
 
@@ -90,7 +91,13 @@ inline bool parse_real(std::string_view text, double& value)
     }
     for (std::size_t i = 0; i < name.size(); ++i)
     {
-      const char c = special[i] >= 'a' && special[i] <= 'z' ? special[i] - 'a' + 'A' : special[i];
+      const char c = [&]() -> char {
+        if (special[i] >= 'a' && special[i] <= 'z') {
+          return special[i] - 'a' + 'A';
+        } else {
+          return special[i];
+        }
+      }();
       if (c != name[i])
       {
         return false;
@@ -100,12 +107,22 @@ inline bool parse_real(std::string_view text, double& value)
   };
   if (equal("INF") || equal("INFINITY"))
   {
-    value = negative ? -std::numeric_limits<double>::infinity() : std::numeric_limits<double>::infinity();
+    if (negative) {
+      value = -std::numeric_limits<double>::infinity();
+    } else {
+      value = std::numeric_limits<double>::infinity();
+    }
     return true;
   }
   if (equal("NAN") || equal("NAN(IND)"))
   {
-    value = std::copysign(std::numeric_limits<double>::quiet_NaN(), negative ? -1.0 : 1.0);
+    value = std::copysign(std::numeric_limits<double>::quiet_NaN(), [&]() -> std::common_type_t<decltype(-1.0), decltype(1.0)> {
+      if (negative) {
+        return -1.0;
+      } else {
+        return 1.0;
+      }
+    }());
     return true;
   }
 
@@ -119,7 +136,11 @@ inline bool parse_real(std::string_view text, double& value)
     }
     for (std::size_t i = 0; i < text.size(); ++i)
     {
-      normalized[i] = text[i] == 'D' || text[i] == 'd' ? 'E' : text[i];
+      if (text[i] == 'D' || text[i] == 'd') {
+        normalized[i] = 'E';
+      } else {
+        normalized[i] = text[i];
+      }
     }
     begin = normalized.data();
   }

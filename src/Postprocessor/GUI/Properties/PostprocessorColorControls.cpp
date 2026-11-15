@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorColorControls.hpp"
 #include "Postprocessor/Commands/FieldCommandText.hpp"
 #include <QComboBox>
@@ -13,7 +14,13 @@ namespace
   QString quote(const std::string& value)
   {
     const auto text = QString::fromUtf8(value.c_str());
-    const QChar delimiter = text.contains('"') ? QChar(0x27) : QChar('"');
+    const QChar delimiter = [&]() -> QChar {
+      if (text.contains('"')) {
+        return QChar(0x27);
+      } else {
+        return QChar('"');
+      }
+    }();
     if (text.isEmpty() || text.contains(delimiter))
     {
       return {};
@@ -112,7 +119,13 @@ void PostprocessorColorControls::publish()
   const bool magnitude = components->currentData().toBool();
   const auto& group = catalogue[static_cast<std::size_t>(entry)];
   Postprocessor::FieldSelection selected{std::nullopt,field.array_name,field.association,
-    magnitude ? std::string{} : components->currentText().toUtf8().toStdString(),magnitude,group.key};
+    [&]() -> std::common_type_t<decltype(std::string{}), decltype(components->currentText().toUtf8().toStdString())> {
+      if (magnitude) {
+        return std::string{};
+      } else {
+        return components->currentText().toUtf8().toStdString();
+      }
+    }(),magnitude,group.key};
   Postprocessor::ResultFieldSelector selector;
   if (!active->readable_field(sourceId,selected,selector,error))
   {
@@ -120,7 +133,13 @@ void PostprocessorColorControls::publish()
     return;
   }
   const auto fieldArg = Postprocessor::field_command_text(selector);
-  const auto componentArg = components->currentData().toBool() ? QStringLiteral("magnitude") : quote(components->currentText().toUtf8().toStdString());
+  const auto componentArg = [&]() -> std::common_type_t<decltype(QStringLiteral("magnitude")), decltype(quote(components->currentText().toUtf8().toStdString()))> {
+    if (components->currentData().toBool()) {
+      return QStringLiteral("magnitude");
+    } else {
+      return quote(components->currentText().toUtf8().toStdString());
+    }
+  }();
   if (fieldArg.isEmpty() || componentArg.isEmpty())
   {
     PRINT_ERROR("This field/component cannot be represented as a quoted command argument.\n");
@@ -270,7 +289,13 @@ void PostprocessorColorControls::apply_field(const QString& name, std::size_t fi
       }
       const bool magnitude = field.vector_components.has_value();
       Postprocessor::FieldSelection selected{std::nullopt,field.array_name,field.association,
-        magnitude ? std::string{} : field.components.front(),magnitude,group.key};
+        [&]() -> std::common_type_t<decltype(std::string{}), decltype(field.components.front())> {
+          if (magnitude) {
+            return std::string{};
+          } else {
+            return field.components.front();
+          }
+        }(),magnitude,group.key};
       Postprocessor::ResultFieldSelector selector;
       std::string error;
       if (!active->readable_field(entry.first,selected,selector,error))
@@ -280,7 +305,13 @@ void PostprocessorColorControls::apply_field(const QString& name, std::size_t fi
       }
       const auto fieldArg = Postprocessor::field_command_text(selector);
       const auto sourceArg = quote(entry.second.name);
-      const auto componentArg = field.vector_components ? QStringLiteral("magnitude") : quote(field.components.front());
+      const auto componentArg = [&]() -> std::common_type_t<decltype(QStringLiteral("magnitude")), decltype(quote(field.components.front()))> {
+        if (field.vector_components) {
+          return QStringLiteral("magnitude");
+        } else {
+          return quote(field.components.front());
+        }
+      }();
       if (fieldArg.isEmpty() || sourceArg.isEmpty() || componentArg.isEmpty())
       {
         PRINT_ERROR("The field/source/component cannot be represented as a quoted command argument.\n");

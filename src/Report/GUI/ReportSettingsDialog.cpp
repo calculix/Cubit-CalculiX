@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportSettingsDialog.hpp"
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
 #include "Framework/Reporting/ReportConfiguration.hpp"
@@ -47,7 +48,11 @@ ReportSettingsDialog::ReportSettingsDialog(QWidget* parent, const ReportConfigur
   const auto text = [&](const std::string& key)
   {
     const auto found = displayed.values.find(key);
-    return found == displayed.values.end() ? QString() : QString::fromStdString(found->second);
+    if (found == displayed.values.end()) {
+      return QString();
+    } else {
+      return QString::fromStdString(found->second);
+    }
   };
   auto* general = new QWidget(tabs);
   auto* fields = new QFormLayout(general);
@@ -127,7 +132,13 @@ ReportSettingsDialog::ReportSettingsDialog(QWidget* parent, const ReportConfigur
      {"footer_left", tr("Footer left")}, {"footer_center", tr("Footer centre")}, {"footer_right", tr("Footer right")}})
   {
     auto* field = new QLineEdit(text(entry.first), branding);
-    field->setMaxLength(entry.first.find("company_") == 0 ? 256 : 160);
+    field->setMaxLength([&]() -> int {
+      if (entry.first.find("company_") == 0) {
+        return 256;
+      } else {
+        return 160;
+      }
+    }());
     decorationFields.emplace(entry.first, field);
     brandingFields->addRow(entry.second, field);
   }
@@ -180,7 +191,13 @@ ReportSettingsDialog::ReportSettingsDialog(QWidget* parent, const ReportConfigur
     std::string error;
     if (!active || !active->load_logo(filename.toStdString(), image, error))
     {
-      message->setText(QString::fromStdString(error.empty() ? "The Report application is unavailable." : error));
+      message->setText(QString::fromStdString([&]() -> std::common_type_t<decltype("The Report application is unavailable."), decltype(error)> {
+        if (error.empty()) {
+          return "The Report application is unavailable.";
+        } else {
+          return error;
+        }
+      }()));
       return;
     }
     stagedLogo = std::move(image);
@@ -254,7 +271,11 @@ void ReportSettingsDialog::apply()
   }
   for (const auto& entry : decorationFlags)
   {
-    patch.values[entry.first] = entry.second->isChecked() ? "true" : "false";
+    if (entry.second->isChecked()) {
+      patch.values[entry.first] = "true";
+    } else {
+      patch.values[entry.first] = "false";
+    }
   }
   patch.values["logo_placement"] = logoPlacement->currentData().toString().toStdString();
   for (const auto& entry : captureChoices)

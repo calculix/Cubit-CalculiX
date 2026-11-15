@@ -46,5 +46,6 @@ private:
   std::optional<std::size_t> appliedFrame;
   std::string appliedDisplayName;
   unsigned int appliedSlot = 0;
+  std::uint64_t unitGeneration = 0;
 };
 #endif

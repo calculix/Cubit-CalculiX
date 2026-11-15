@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportImageRequest.hpp"
 #include <utility>
 #include "ReportJson.hpp"
@@ -16,7 +17,13 @@ QJsonObject ReportImageRequest::to_json() const
   result.insert("height", height);
   if (visual)
   {
-    result.insert("visual",QJsonObject{{"kind",visual->kind == ReportVisualKind::View ? "view" : "plot"},
+    result.insert("visual",QJsonObject{{"kind",[&]() -> const char* {
+      if (visual->kind == ReportVisualKind::View) {
+        return "view";
+      } else {
+        return "plot";
+      }
+    }()},
       {"reference",QString::fromStdString(visual->reference)}});
   }
   return result;
@@ -61,7 +68,13 @@ bool ReportImageRequest::from_json(const QJsonObject& input, ReportImageRequest&
       error = "Invalid report visual reference.";
       return false;
     }
-    candidate.visual = ReportVisualReference{kind == "view" ? ReportVisualKind::View : ReportVisualKind::Plot,
+    candidate.visual = ReportVisualReference{[&]() -> std::common_type_t<decltype(ReportVisualKind::View), decltype(ReportVisualKind::Plot)> {
+      if (kind == "view") {
+        return ReportVisualKind::View;
+      } else {
+        return ReportVisualKind::Plot;
+      }
+    }(),
       object.value("reference").toString().toStdString()};
   }
   output = std::move(candidate);

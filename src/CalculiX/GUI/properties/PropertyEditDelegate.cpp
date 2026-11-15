@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PropertyEditDelegate.hpp"
 #include <QApplication>
 #include <QAbstractItemView>
@@ -57,7 +58,13 @@ void PropertyEditDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
   }
   else if (auto* combo = qobject_cast<QComboBox*>(editor))
   {
-    combo->setPlaceholderText(original.isEmpty() ? tr("Select an element type") : original);
+    combo->setPlaceholderText([&]() -> std::common_type_t<decltype(tr("Select an element type")), decltype(original)> {
+      if (original.isEmpty()) {
+        return tr("Select an element type");
+      } else {
+        return original;
+      }
+    }());
     combo->setCurrentIndex(combo->findText(original, Qt::MatchFixedString));
   }
 }
@@ -122,7 +129,13 @@ void PropertyEditDelegate::paint(QPainter* painter, const QStyleOptionViewItem& 
     arrow.rect = QRect(option.rect.right() - 16, option.rect.center().y() - 5, 10, 10);
     arrow.state = option.state;
     arrow.palette = option.palette;
-    auto* style = option.widget == nullptr ? QApplication::style() : option.widget->style();
+    auto* style = [&]() -> std::common_type_t<decltype(QApplication::style()), decltype(option.widget->style())> {
+      if (option.widget == nullptr) {
+        return QApplication::style();
+      } else {
+        return option.widget->style();
+      }
+    }();
     style->drawPrimitive(QStyle::PE_IndicatorArrowDown, &arrow, painter, option.widget);
   }
 }

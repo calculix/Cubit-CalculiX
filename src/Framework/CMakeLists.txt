@@ -42,6 +42,10 @@ add_library(cubitsim_framework SHARED
   GUI/CubitWorkspaceHost.hpp
   GUI/WorkspaceGraphicsStack.cpp
   GUI/WorkspaceGraphicsStack.hpp
+  GUI/Resources/FrameworkIconLoader.cpp
+  GUI/Resources/FrameworkIconLoader.hpp
+  Icons/Materials.svg
+  Icons/Units.svg
   GUI/CommandDispatcher.cpp
   GUI/CommandDispatcher.hpp
 )
@@ -126,3 +130,19 @@ add_custom_target(stage_documentation
     -P "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/StageDocumentation.cmake"
   COMMENT "Staging the existing Cubit cubit-sim manual"
   VERBATIM)
+
+target_link_libraries(cubitsim_framework PRIVATE cubitsim_model)
+target_link_libraries(cubitsim_plugin PRIVATE cubitsim_model)
+target_sources(cubitsim_framework PRIVATE GUI/ModelEditorManager.cpp GUI/ModelEditorManager.hpp)
+add_subdirectory(GUI/materials)
+add_subdirectory(GUI/units)
+add_custom_command(TARGET cubitsim_framework POST_BUILD COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/libmaterial.hdf5" "$<TARGET_FILE_DIR:cubitsim_framework>/libmaterial.hdf5" VERBATIM)
+add_custom_command(TARGET cubitsim_framework POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "$<TARGET_FILE_DIR:cubitsim_framework>/Icons"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/Materials.svg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/Units.svg"
+    "$<TARGET_FILE_DIR:cubitsim_framework>/Icons"
+  VERBATIM)
+
+target_sources(cubitsim_plugin PRIVATE Commands/ImportMaterialCommand.cpp Commands/ImportMaterialCommand.hpp)

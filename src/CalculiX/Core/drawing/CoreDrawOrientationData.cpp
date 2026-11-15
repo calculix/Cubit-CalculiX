@@ -1,3 +1,5 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include "CubitMessage.hpp"
 #include "CoreDrawOrientationData.hpp"
 #include "Core/sections/CoreOrientations.hpp"
 #include "Core/sections/CoreSections.hpp"
@@ -9,6 +11,15 @@
 std::vector<std::vector<double>> CoreDrawOrientationData::get_draw_data_for_orientation(
   CoreOrientations& orientations, CoreSections& sections, int id)
 {
+  if (!orientations.domain_unit_view) {
+    auto candidate = orientations;
+    std::string error;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Geometry, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return {};
+    }
+    return get_draw_data_for_orientation(candidate, sections, id);
+  }
   std::vector<std::vector<double>> draw_data;
   int orientation_data_id = orientations.get_orientations_data_id_from_orientation_id(id);
 

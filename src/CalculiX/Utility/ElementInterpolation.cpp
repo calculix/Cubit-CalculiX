@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ElementInterpolation.hpp"
 #include "ElementPhysicalMapping.hpp"
 #include "CubitMessage.hpp"
@@ -112,7 +113,11 @@ namespace
     {
       for (std::size_t axis = 0; axis < 3; ++axis)
       {
-        gradients[i][axis] = node_count == 4 ? dl[i][axis] : (4.0 * l[i] - 1.0) * dl[i][axis];
+        if (node_count == 4) {
+          gradients[i][axis] = dl[i][axis];
+        } else {
+          gradients[i][axis] = (4.0 * l[i] - 1.0) * dl[i][axis];
+        }
       }
     }
 
@@ -178,13 +183,22 @@ namespace
       {
         for (std::size_t axis = 0; axis < 3; ++axis)
         {
-          double derivative = edges[edge][axis] == 0 ? -0.5 * point[axis] : 0.25 * edges[edge][axis];
+          double derivative;
+          if (edges[edge][axis] == 0) {
+            derivative = -0.5 * point[axis];
+          } else {
+            derivative = 0.25 * edges[edge][axis];
+          }
 
           for (std::size_t other = 0; other < 3; ++other)
           {
             if (other != axis)
             {
-              derivative *= edges[edge][other] == 0 ? 1.0 - point[other] * point[other] : 1.0 + edges[edge][other] * point[other];
+              if (edges[edge][other] == 0) {
+                derivative *= 1.0 - point[other] * point[other];
+              } else {
+                derivative *= 1.0 + edges[edge][other] * point[other];
+              }
             }
           }
 
@@ -205,7 +219,13 @@ namespace
 
     for (std::size_t side = 0; side < 2; ++side)
     {
-      const double sign = side == 0 ? -1.0 : 1.0;
+      const double sign = [&]() -> double {
+        if (side == 0) {
+          return -1.0;
+        } else {
+          return 1.0;
+        }
+      }();
       const double factor = 1.0 + sign * z;
 
       for (std::size_t node = 0; node < 3; ++node)
@@ -269,7 +289,11 @@ namespace
     values.resize(count);
     for (std::size_t node = 0; node < 4; ++node)
     {
-      values[node] = count == 4 ? l[node] : l[node] * (2.0 * l[node] - 1.0);
+      if (count == 4) {
+        values[node] = l[node];
+      } else {
+        values[node] = l[node] * (2.0 * l[node] - 1.0);
+      }
     }
     if (count == 10)
     {
@@ -313,7 +337,11 @@ namespace
         values[8 + edge] = 0.25;
         for (std::size_t axis = 0; axis < 3; ++axis)
         {
-          values[8 + edge] *= edges[edge][axis] == 0 ? 1.0 - p[axis] * p[axis] : 1.0 + edges[edge][axis] * p[axis];
+          if (edges[edge][axis] == 0) {
+            values[8 + edge] *= 1.0 - p[axis] * p[axis];
+          } else {
+            values[8 + edge] *= 1.0 + edges[edge][axis] * p[axis];
+          }
         }
       }
     }
@@ -326,7 +354,13 @@ namespace
     values.resize(count);
     for (std::size_t side = 0; side < 2; ++side)
     {
-      const double sign = side == 0 ? -1.0 : 1.0;
+      const double sign = [&]() -> double {
+        if (side == 0) {
+          return -1.0;
+        } else {
+          return 1.0;
+        }
+      }();
       const double factor = 1.0 + sign * p[2];
       for (std::size_t node = 0; node < 3; ++node)
       {
@@ -380,7 +414,13 @@ bool ElementInterpolation::evaluate_reference(const std::string& calculix_type, 
   if (tet || wedge)
   {
     valid = valid && point[0] >= 0.0 && point[1] >= 0.0 && point[0] + point[1] <= 1.0;
-    valid = valid && (tet ? point[2] >= 0.0 && point[0] + point[1] + point[2] <= 1.0 : std::abs(point[2]) <= 1.0);
+    valid = valid && ([&]() -> std::common_type_t<decltype(point[2] >= 0.0 && point[0] + point[1] + point[2] <= 1.0), decltype(std::abs(point[2]) <= 1.0)> {
+      if (tet) {
+        return point[2] >= 0.0 && point[0] + point[1] + point[2] <= 1.0;
+      } else {
+        return std::abs(point[2]) <= 1.0;
+      }
+    }());
   }
   else
   {

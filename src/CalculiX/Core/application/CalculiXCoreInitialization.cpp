@@ -34,17 +34,13 @@
 #include "Core/results/CoreResults.hpp"
 #include "Core/export/CoreCustomLines.hpp"
 #include "Core/drawing/CoreDraw.hpp"
-#include "Core/materials/CoreMaterialsLibrary.hpp"
 #include "Core/materials/CoreMaterials.hpp"
 #include "MeshExportInterface.hpp"
-#include "MaterialInterface.hpp"
 #include "CubitInterface.hpp"
 #include "loadUserOptions.hpp"
 
-bool CalculiXCore::init_pythoninterface()
-{
-  if (bool_init_pythoninterface)
-  {
+bool CalculiXCore::init_pythoninterface() {
+  if (bool_init_pythoninterface) {
     return true;
   }
 
@@ -52,54 +48,26 @@ bool CalculiXCore::init_pythoninterface()
   return bool_init_pythoninterface;
 }
 
-bool CalculiXCore::init_materiallibrary()
-{
-  // The GUI timer initializes the library after Cubit has fully loaded.
-  if (!bool_init_materiallibrary)
-  {
-    bool_init_materiallibrary = mat_library->init();
-    return bool_init_materiallibrary;
-  }
-
-  return true;
-}
-
-bool CalculiXCore::init2()
-{
+bool CalculiXCore::init2() {
   me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
 
-  if (me_iface == nullptr)
-  {
+  if (me_iface == nullptr) {
     return false;
   }
 
   me_iface->initialize_export();
 
-  mat_iface = dynamic_cast<MaterialInterface*>(CubitInterface::get_interface("Material"));
-
-  if (mat_iface == nullptr)
-  {
-    return false;
-  }
-
-  if (!mat)
-  {
+  if (!mat) {
     mat = new CoreMaterials;
   }
 
-  mat->init();
 
-  if (!mat_library)
-  {
-    mat_library = new CoreMaterialsLibrary;
-  }
 
   bool_init2 = true;
   return true;
 }
 
-bool CalculiXCore::init()
-{
+bool CalculiXCore::init() {
   CoreFeatureInitialization::initialize(cb);
   CoreFeatureInitialization::initialize(sections);
   CoreFeatureInitialization::initialize(constraints);
@@ -132,18 +100,15 @@ bool CalculiXCore::init()
   CoreFeatureInitialization::initialize(customlines);
   CoreFeatureInitialization::initialize(draw);
 
-  if (!timer)
-  {
+  if (!timer) {
     timer = new CoreTimer;
   }
 
-  if (!topologyoptimization)
-  {
+  if (!topologyoptimization) {
     topologyoptimization = new CoreTopologyOptimization;
   }
 
-  if (use_ccx_logfile)
-  {
+  if (use_ccx_logfile) {
     print_to_log("CalculiXCore Initialization!");
   }
 

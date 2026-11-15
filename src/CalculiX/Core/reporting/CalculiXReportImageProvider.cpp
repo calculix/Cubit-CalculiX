@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CalculiXReportImageProvider.hpp"
 #include "CalculiXReportImageSettings.hpp"
 #include "Core/drawing/CalculiXCaptureInterface.hpp"
@@ -33,7 +34,11 @@ bool archivedSetup(const ReportSource& source, std::shared_ptr<const CalculiXJob
   if (output->launchId != source.solver_launch_id || !output->setup || output->setup->id != source.setup_snapshot_id ||
       output->setup->fingerprint != source.snapshot_fingerprint)
   {
-    error = output->setupUnavailableReason.empty() ? "The requested setup snapshot does not match the job's latest launch." : output->setupUnavailableReason;
+    if (output->setupUnavailableReason.empty()) {
+      error = "The requested setup snapshot does not match the job's latest launch.";
+    } else {
+      error = output->setupUnavailableReason;
+    }
     return false;
   }
   return true;
@@ -66,8 +71,13 @@ bool CalculiXReportImageProvider::render(const ReportImageRequest& request, Repo
     return false;
   }
   QByteArray png;
-  const bool rendered = archive ? CalculiXCaptureInterface().render_snapshot(*archive->setup, capture, png, error) :
-    CalculiXCaptureInterface().render(capture, png, error);
+  const bool rendered = [&]() -> bool {
+    if (archive) {
+      return CalculiXCaptureInterface().render_snapshot(*archive->setup, capture, png, error);
+    } else {
+      return CalculiXCaptureInterface().render(capture, png, error);
+    }
+  }();
   if (!rendered)
   {
     return false;
@@ -150,12 +160,24 @@ bool CalculiXReportImageProvider::collect(const ReportImageRequest& request, Rep
     ordered = steps.get_steps_ids();
   }
   if ((settings.setup || settings.loads || settings.bcs) &&
-      !CalculiXReportImageSettings::select_steps(ordered, selection == request.settings.values.end() ? "all" : selection->second, selected, error))
+      !CalculiXReportImageSettings::select_steps(ordered, [&]() -> std::common_type_t<decltype("all"), decltype(selection->second)> {
+        if (selection == request.settings.values.end()) {
+          return "all";
+        } else {
+          return selection->second;
+        }
+      }(), selected, error))
   {
     return false;
   }
   const std::size_t perStep = static_cast<std::size_t>(settings.setup) + settings.loads + settings.bcs;
-  const std::size_t count = static_cast<std::size_t>(settings.model) + perStep * (selected.empty() ? 1 : selected.size());
+  const std::size_t count = static_cast<std::size_t>(settings.model) + perStep * ([&]() -> std::common_type_t<decltype(1), decltype(selected.size())> {
+    if (selected.empty()) {
+      return 1;
+    } else {
+      return selected.size();
+    }
+  }());
   if (count > 256)
   {
     error = "A report supports at most 256 CalculiX setup images. Select fewer steps or image types.";
@@ -164,14 +186,23 @@ bool CalculiXReportImageProvider::collect(const ReportImageRequest& request, Rep
   ReportSection root;
   root.id = "ccx.images";
   root.title = "Model and analysis setup images";
-  root.paragraphs.push_back(archive ? "Archived exported mesh and frozen reference conditions from this solver launch. Amplitudes are not evaluated; these are not result plots." :
-    "Current undeformed mesh and reference load/BC definitions. Amplitudes are not evaluated; these images do not contain calculated results.");
+  root.paragraphs.push_back([&]() -> const char* {
+    if (archive) {
+      return "Archived exported mesh and frozen reference conditions from this solver launch. Amplitudes are not evaluated; these are not result plots.";
+    } else {
+      return "Current undeformed mesh and reference load/BC definitions. Amplitudes are not evaluated; these images do not contain calculated results.";
+    }
+  }());
   std::size_t embeddedBytes = 0;
   const auto append = [&](const std::string& purpose, int stepId, ReportSection& section)
   {
     ReportImageRequest imageRequest = request;
     imageRequest.purpose = purpose;
-    imageRequest.context = stepId > 0 ? "step:" + std::to_string(stepId) : "model";
+    if (stepId > 0) {
+      imageRequest.context = "step:" + std::to_string(stepId);
+    } else {
+      imageRequest.context = "model";
+    }
     imageRequest.width = settings.width;
     imageRequest.height = settings.height;
     ReportImage image;
@@ -187,7 +218,13 @@ bool CalculiXReportImageProvider::collect(const ReportImageRequest& request, Rep
       error = "CalculiX setup images exceed the report's 128 MiB embedded image budget.";
       return false;
     }
-    image.caption = section.title + " - " + (purpose == "model" ? "undeformed mesh" : purpose + " reference setup");
+    image.caption = section.title + " - " + ([&]() -> std::common_type_t<decltype("undeformed mesh"), decltype(purpose + " reference setup")> {
+      if (purpose == "model") {
+        return "undeformed mesh";
+      } else {
+        return purpose + " reference setup";
+      }
+    }());
     section.images.push_back(std::move(image));
     return true;
   };
@@ -195,7 +232,11 @@ bool CalculiXReportImageProvider::collect(const ReportImageRequest& request, Rep
   {
     ReportSection model;
     model.id = "ccx.images.model";
-    model.title = archive ? "Job model overview" : "Current model overview";
+    if (archive) {
+      model.title = "Job model overview";
+    } else {
+      model.title = "Current model overview";
+    }
     if (!append("model", -1, model))
     {
       return false;
@@ -210,7 +251,11 @@ bool CalculiXReportImageProvider::collect(const ReportImageRequest& request, Rep
   for (int stepId : selected)
   {
     ReportSection step;
-    step.id = stepId > 0 ? "ccx.images.steps." + std::to_string(stepId) : "ccx.images.setup";
+    if (stepId > 0) {
+      step.id = "ccx.images.steps." + std::to_string(stepId);
+    } else {
+      step.id = "ccx.images.setup";
+    }
     step.title = "Current model setup";
     if (stepId > 0)
     {

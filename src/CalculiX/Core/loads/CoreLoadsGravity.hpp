@@ -9,6 +9,8 @@ class CoreLoadsGravity
 {
 
 public:
+  std::string value_unit_system = "SI";
+  bool unit_view = false;
   bool get_settings(int id, LoadsGravitySettings& settings, std::string& error) const;
   std::vector<int> get_load_ids() const;
   CoreLoadsGravity();

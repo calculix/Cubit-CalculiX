@@ -220,7 +220,13 @@ int main(int argc,char** argv)
     else if (operation == "limit")
     {
       stream >> value;
-      auto& limit = value == "minimum" ? c.minimum : c.maximum;
+      auto& limit = [&]() -> decltype((c.minimum)) {
+        if (value == "minimum") {
+          return c.minimum;
+        } else {
+          return c.maximum;
+        }
+      }();
       stream >> value;
       if (value == "on" || value == "off")
       {
@@ -340,5 +346,9 @@ int main(int argc,char** argv)
   check(application->reset(error),"Cannot reset property fixture");
   page.refresh();
   check(!page.isEnabled() && !apply->isEnabled(),"Reset left stale property controls active");
-  return failures == 0 ? 0 : 1;
+  if (failures == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
 }

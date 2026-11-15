@@ -1,3 +1,4 @@
+#include <type_traits>
 #include <utility>
 #include "PostprocessorApplicationInterface.hpp"
 #include <algorithm>
@@ -9,10 +10,18 @@ void PostprocessorApplicationInterface::set_capture_renderer(CaptureRenderer ren
 std::array<int,2> PostprocessorApplicationInterface::capture_reference_size(
   Postprocessor::CaptureTarget target,const std::string& id) const
 {
-  const auto size = captureSizer ? captureSizer(target,id) :
-    std::array<int,2>{Postprocessor::CaptureDefaults::width,Postprocessor::CaptureDefaults::height};
-  return size[0] >= 64 && size[1] >= 64 ? size :
-    std::array<int,2>{Postprocessor::CaptureDefaults::width,Postprocessor::CaptureDefaults::height};
+  const auto size = [&]() -> std::common_type_t<decltype(captureSizer(target,id)), decltype(std::array<int,2>{Postprocessor::CaptureDefaults::width,Postprocessor::CaptureDefaults::height})> {
+    if (captureSizer) {
+      return captureSizer(target,id);
+    } else {
+      return std::array<int,2>{Postprocessor::CaptureDefaults::width,Postprocessor::CaptureDefaults::height};
+    }
+  }();
+  if (size[0] >= 64 && size[1] >= 64) {
+    return size;
+  } else {
+    return std::array<int,2>{Postprocessor::CaptureDefaults::width,Postprocessor::CaptureDefaults::height};
+  }
 }
 bool PostprocessorApplicationInterface::render_capture(const Postprocessor::CaptureDefinition& request,
   QByteArray& png,QJsonObject& provenance,std::string& error) const

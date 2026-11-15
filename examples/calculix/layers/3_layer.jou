@@ -20,11 +20,13 @@ block 2 name "top"
 block 3 add vol 3
 block 3 name "core"
 
-ccx import materiallibrary name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" cubit_name "rubber_65ShoreA"
-ccx import materiallibrary name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" cubit_name "steel_S235_DNV2013"
-ccx import materiallibrary name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" cubit_name "EN_AW_5754_O"
-modify material "steel_S235_DNV2013" scalar_properties "CCX_PLASTIC_USE_CARD" 0
-modify material "EN_AW_5754_O" scalar_properties "CCX_PLASTIC_USE_CARD" 0
+ccx units system "N-mm-s"
+ccx units geometry unit "mm"
+sim import materiallibrary name "rubber_65ShoreA" groupname "Example Materials RSMITH/Rubber" workspace calculix material_name "rubber_65ShoreA"
+sim import materiallibrary name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" workspace calculix material_name "steel_S235_DNV2013"
+sim import materiallibrary name "EN_AW_5754_O" groupname "Example Materials RSMITH/Aluminium" workspace calculix material_name "EN_AW_5754_O"
+ccx modify material 2 deactivate card plastic
+ccx modify material 3 deactivate card plastic
 
 ccx create section solid block 1 material 2
 ccx create section solid block 2 material 3

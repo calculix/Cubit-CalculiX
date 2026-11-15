@@ -121,9 +121,11 @@ bool CalculiXResultSourceProvider::load_job(
 
       if (!results.build_vtk_result(request.job_id, CoreResultsVtkOptions{}))
       {
-        error = results.get_vtk_status(request.job_id) == SimResults::ConversionStatus::Cancelled
-          ? "CalculiX result conversion was cancelled."
-          : "Cannot convert results for CalculiX job " + std::to_string(request.job_id) + ".";
+        if (results.get_vtk_status(request.job_id) == SimResults::ConversionStatus::Cancelled) {
+          error = "CalculiX result conversion was cancelled.";
+        } else {
+          error = "Cannot convert results for CalculiX job " + std::to_string(request.job_id) + ".";
+        }
         return false;
       }
 
@@ -233,7 +235,13 @@ bool CalculiXResultSourceProvider::available_jobs(std::vector<SimResults::Result
   for (const auto& row : jobs.get_jobs_tree_data())
   {
     bool valid = false;
-    const int id = row.empty() ? -1 : QString::fromStdString(row[0]).toInt(&valid);
+    const int id = [&]() -> int {
+      if (row.empty()) {
+        return -1;
+      } else {
+        return QString::fromStdString(row[0]).toInt(&valid);
+      }
+    }();
     JobsSettings settings;
     if (!valid || id <= 0 || !jobs.get_job_settings(id,settings,error))
     {
@@ -252,7 +260,15 @@ bool CalculiXResultSourceProvider::available_jobs(std::vector<SimResults::Result
     const bool files = job.size() > 1 && QFileInfo::exists(QString::fromStdString(job[1]+".frd")) &&
       QFileInfo::exists(QString::fromStdString(job[1]+".dat"));
     entry.available = !busy && (data || files);
-    entry.unavailable_reason = busy ? "Job or result conversion is running." : files || data ? "" : "Result files are not available.";
+    if (busy) {
+      entry.unavailable_reason = "Job or result conversion is running.";
+    } else {
+      if (files || data) {
+        entry.unavailable_reason = "";
+      } else {
+        entry.unavailable_reason = "Result files are not available.";
+      }
+    }
     entries.push_back(std::move(entry));
   }
   output = std::move(entries);

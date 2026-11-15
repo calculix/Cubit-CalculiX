@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Postprocessor/Commands/options/PostprocessorOptionCommands.hpp"
 #include "PostprocessorOptionsPanel.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -99,7 +100,13 @@ PostprocessorOptionsPanel::PostprocessorOptionsPanel(std::weak_ptr<Postprocessor
         const auto color = QColor::fromRgbF(rgb[0],rgb[1],rgb[2]);
         pair.first->setProperty("rgb",QString::fromStdString(text));
         pair.first->setText(color.name());
-        pair.first->setStyleSheet(QStringLiteral("background-color: %1; color: %2;").arg(color.name(),color.lightnessF()>0.5 ? "black":"white"));
+        pair.first->setStyleSheet(QStringLiteral("background-color: %1; color: %2;").arg(color.name(),[&]() -> const char* {
+          if (color.lightnessF()>0.5) {
+            return "black";
+          } else {
+            return "white";
+          }
+        }()));
       }
     }
   });
@@ -138,11 +145,21 @@ void PostprocessorOptionsPanel::refresh_settings()
     const auto color = QColor::fromRgbF(entry.second[0], entry.second[1], entry.second[2]);
     entry.first->setProperty("rgb", QString::fromStdString(Postprocessor::format_background_color(entry.second)));
     entry.first->setText(color.name());
-    entry.first->setStyleSheet(QStringLiteral("background-color: %1; color: %2;").arg(color.name(), color.lightnessF() > 0.5 ? "black" : "white"));
+    entry.first->setStyleSheet(QStringLiteral("background-color: %1; color: %2;").arg(color.name(), [&]() -> const char* {
+      if (color.lightnessF() > 0.5) {
+        return "black";
+      } else {
+        return "white";
+      }
+    }()));
   }
-  restartNotice->setText(active->user_options_restart_required()
-    ? tr("Saved icons directory changes will take effect after restarting Cubit.")
-    : tr("Icons directory changes require a restart."));
+  restartNotice->setText([&]() -> std::common_type_t<decltype(tr("Saved icons directory changes will take effect after restarting Cubit.")), decltype(tr("Icons directory changes require a restart."))> {
+    if (active->user_options_restart_required()) {
+      return tr("Saved icons directory changes will take effect after restarting Cubit.");
+    } else {
+      return tr("Icons directory changes require a restart.");
+    }
+  }());
   baseline = option_values();
 }
 
@@ -196,5 +213,11 @@ void PostprocessorOptionsPanel::choose_color(QPushButton* button)
   }
   button->setProperty("rgb", QString::fromStdString(Postprocessor::format_background_color({color.redF(), color.greenF(), color.blueF()})));
   button->setText(color.name());
-  button->setStyleSheet(QStringLiteral("background-color: %1; color: %2;").arg(color.name(), color.lightnessF() > 0.5 ? "black" : "white"));
+  button->setStyleSheet(QStringLiteral("background-color: %1; color: %2;").arg(color.name(), [&]() -> const char* {
+    if (color.lightnessF() > 0.5) {
+      return "black";
+    } else {
+      return "white";
+    }
+  }()));
 }

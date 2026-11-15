@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "JobsMonitorProgressTables.hpp"
 #include <QAbstractTableModel>
 #include <QAction>
@@ -33,12 +34,30 @@ public:
 
   int rowCount(const QModelIndex& parent = {}) const override
   {
-    return parent.isValid() ? 0 : static_cast<int>(status ? sta.size() : cvg.size());
+    if (parent.isValid()) {
+      return 0;
+    } else {
+      return static_cast<int>([&]() -> std::common_type_t<decltype(sta.size()), decltype(cvg.size())> {
+        if (status) {
+          return sta.size();
+        } else {
+          return cvg.size();
+        }
+      }());
+    }
   }
 
   int columnCount(const QModelIndex& parent = {}) const override
   {
-    return parent.isValid() ? 0 : (status ? 8 : 9);
+    if (parent.isValid()) {
+      return 0;
+    } else {
+      if (status) {
+        return 8;
+      } else {
+        return 9;
+      }
+    }
   }
 
   QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override
@@ -56,7 +75,13 @@ public:
     };
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
     {
-      const auto& headers = status ? status_headers : convergence_headers;
+      const auto& headers = [&]() -> decltype((status_headers)) {
+        if (status) {
+          return status_headers;
+        } else {
+          return convergence_headers;
+        }
+      }();
       if (section >= 0 && section < headers.size())
       {
         return headers[section];
@@ -64,11 +89,22 @@ public:
     }
     if (orientation == Qt::Horizontal && role == Qt::ToolTipRole)
     {
-      const auto& headers = status ? status_headers : convergence_headers;
+      const auto& headers = [&]() -> decltype((status_headers)) {
+        if (status) {
+          return status_headers;
+        } else {
+          return convergence_headers;
+        }
+      }();
       if (section >= 0 && section < headers.size())
       {
-        return headers[section] + (status ? "\nTimes are solver time, not elapsed wall time. U marks an unconverged attempt."
-          : "\nPercentages are reported by CalculiX; no generic convergence threshold is applied.");
+        return headers[section] + ([&]() -> const char* {
+          if (status) {
+            return "\nTimes are solver time, not elapsed wall time. U marks an unconverged attempt.";
+          } else {
+            return "\nPercentages are reported by CalculiX; no generic convergence threshold is applied.";
+          }
+        }());
       }
     }
     return {};
@@ -82,7 +118,13 @@ public:
     }
     if (role == Qt::TextAlignmentRole)
     {
-      return static_cast<int>((status && index.column() == 3 ? Qt::AlignLeft : Qt::AlignRight) | Qt::AlignVCenter);
+      return static_cast<int>(([&]() -> std::common_type_t<decltype(Qt::AlignLeft), decltype(Qt::AlignRight)> {
+        if (status && index.column() == 3) {
+          return Qt::AlignLeft;
+        } else {
+          return Qt::AlignRight;
+        }
+      }()) | Qt::AlignVCenter);
     }
     if (status && sta[index.row()].unconverged)
     {
@@ -111,7 +153,11 @@ public:
         case 0: value = row.step; break;
         case 1: value = row.increment; break;
         case 2: value = row.attempt; break;
-        case 3: value = row.unconverged ? "Unconverged" : "Converged"; break;
+        case 3: if (row.unconverged) {
+          value = "Unconverged";
+        } else {
+          value = "Converged";
+        } break;
         case 4: value = row.iterations; break;
         default: value = row.time[column - 5]; break;
       }
@@ -138,7 +184,13 @@ public:
 
   void update(const CalculiXJobProgress::Data& data, bool reset)
   {
-    const auto size = status ? data.status.size() : data.convergence.size();
+    const auto size = [&]() -> std::common_type_t<decltype(data.status.size()), decltype(data.convergence.size())> {
+      if (status) {
+        return data.status.size();
+      } else {
+        return data.convergence.size();
+      }
+    }();
     const int old = rowCount();
     if (reset)
     {
@@ -525,11 +577,27 @@ void JobsMonitorProgressTables::apply_filters()
 
 void JobsMonitorProgressTables::update_summary()
 {
-  const auto suffix = read_error.empty() ? QString() : "\n" + QString::fromStdString(read_error);
-  status_summary->setText((status_model->rowCount() == 0 ? QString("No status records yet.") :
-    QString("%1 reported increment attempts. Times are solver time.").arg(status_model->rowCount())) + suffix);
-  convergence_summary->setText((convergence_model->rowCount() == 0 ? QString("No convergence records yet.") :
-    QString("%1 of %2 iterations.").arg(convergence_proxy->rowCount()).arg(convergence_model->rowCount())) + suffix);
+  const auto suffix = [&]() -> std::common_type_t<decltype(QString()), decltype("\n" + QString::fromStdString(read_error))> {
+    if (read_error.empty()) {
+      return QString();
+    } else {
+      return "\n" + QString::fromStdString(read_error);
+    }
+  }();
+  status_summary->setText(([&]() -> QString {
+    if (status_model->rowCount() == 0) {
+      return QString("No status records yet.");
+    } else {
+      return QString("%1 reported increment attempts. Times are solver time.").arg(status_model->rowCount());
+    }
+  }()) + suffix);
+  convergence_summary->setText(([&]() -> QString {
+    if (convergence_model->rowCount() == 0) {
+      return QString("No convergence records yet.");
+    } else {
+      return QString("%1 of %2 iterations.").arg(convergence_proxy->rowCount()).arg(convergence_model->rowCount());
+    }
+  }()) + suffix);
 }
 
 void JobsMonitorProgressTables::update(const CalculiXJobProgress::Data& data, const std::string& error)
@@ -565,7 +633,13 @@ void JobsMonitorProgressTables::update(const CalculiXJobProgress::Data& data, co
   for (std::size_t i = unparsed_count; i < data.unparsed.size(); ++i)
   {
     const auto& line = data.unparsed[i];
-    auto* text = line.source == "STA" ? status_text : convergence_text;
+    auto* text = [&]() -> std::common_type_t<decltype(status_text), decltype(convergence_text)> {
+      if (line.source == "STA") {
+        return status_text;
+      } else {
+        return convergence_text;
+      }
+    }();
     text->appendPlainText(QString("Line %1: %2").arg(static_cast<qulonglong>(line.line)).arg(QString::fromStdString(line.text)));
     if (line.source == "STA")
     {

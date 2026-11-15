@@ -15,7 +15,13 @@ bool ReportCommandText::quote(const QString& value, std::string& output, std::st
     error = "Report command text cannot contain both quote delimiters.";
     return false;
   }
-  const char delimiter = value.contains('"') ? '\'' : '"';
+  const char delimiter = [&]() -> char {
+    if (value.contains('"')) {
+      return '\'';
+    } else {
+      return '"';
+    }
+  }();
   output = std::string(1, delimiter) + value.toStdString() + delimiter;
   error.clear();
   return true;

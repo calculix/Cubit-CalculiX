@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "TopologyManagement.hpp"
 #include "TopologyManagementDensitySettingsWidget.hpp"
 #include "TopologyManagementLevelSetSettingsWidget.hpp"
@@ -32,7 +33,13 @@ void TopologyManagement::createSettingsTab(QWidget* tab)
   };
   const auto applied = [this](int topology_id)
   {
-    settingsMethodDrafts.erase(creating ? 0 : currentTopologyId);
+    settingsMethodDrafts.erase([&]() -> std::common_type_t<decltype(0), decltype(currentTopologyId)> {
+      if (creating) {
+        return 0;
+      } else {
+        return currentTopologyId;
+      }
+    }());
     creating = false;
     currentTopologyId = topology_id;
     settingsMethodDrafts.erase(topology_id);
@@ -48,7 +55,13 @@ void TopologyManagement::createSettingsTab(QWidget* tab)
   layout->addWidget(settingsForm, 1);
   connect(settingsMethod, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index)
   {
-    const int new_id = settingsStack->currentIndex() == 0 ? densitySettings->topologyId() : levelSetSettings->topologyId();
+    const int new_id = [&]() -> int {
+      if (settingsStack->currentIndex() == 0) {
+        return densitySettings->topologyId();
+      } else {
+        return levelSetSettings->topologyId();
+      }
+    }();
     rememberSettingsDraft();
     settingsStack->setCurrentIndex(index);
     if (index == 0)
@@ -59,7 +72,13 @@ void TopologyManagement::createSettingsTab(QWidget* tab)
     {
       levelSetSettings->setContext(currentTopologyId, creating, new_id);
     }
-    settingsMethodDrafts[creating ? 0 : currentTopologyId] = index;
+    settingsMethodDrafts[([&]() -> std::common_type_t<decltype(0), decltype(currentTopologyId)> {
+      if (creating) {
+        return 0;
+      } else {
+        return currentTopologyId;
+      }
+    }())] = index;
   });
 }
 
@@ -80,9 +99,19 @@ void TopologyManagement::loadSettings()
       settingsForm->setEnabled(false);
       return;
     }
-    method = options.method == TopologyMethod::LevelSet ? 1 : 0;
+    if (options.method == TopologyMethod::LevelSet) {
+      method = 1;
+    } else {
+      method = 0;
+    }
   }
-  const auto draft = settingsMethodDrafts.find(creating ? 0 : currentTopologyId);
+  const auto draft = settingsMethodDrafts.find([&]() -> std::common_type_t<decltype(0), decltype(currentTopologyId)> {
+    if (creating) {
+      return 0;
+    } else {
+      return currentTopologyId;
+    }
+  }());
   if (draft != settingsMethodDrafts.end())
   {
     method = draft->second;

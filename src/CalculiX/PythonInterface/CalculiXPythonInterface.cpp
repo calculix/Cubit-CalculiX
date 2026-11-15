@@ -157,7 +157,13 @@ std::vector<std::vector<std::string>> CalculiXPythonInterface::get_topology_sett
 
   return {
       {"name", options.name},
-      {"method", options.method == TopologyMethod::Density ? "density" : "level_set"},
+      {"method", [&]() -> const char* {
+        if (options.method == TopologyMethod::Density) {
+          return "density";
+        } else {
+          return "level_set";
+        }
+      }()},
       {"objective", objective},
       {"volume_fraction", number(options.volume_fraction)},
       {"void_ratio", number(options.void_ratio)},
@@ -165,7 +171,13 @@ std::vector<std::vector<std::string>> CalculiXPythonInterface::get_topology_sett
       {"material_cap", std::to_string(options.material_cap)},
       {"filter_radius", number(options.filter_radius)},
       {"move_limit", number(options.move_limit)},
-      {"adaptive_moves", options.adaptive_move_limits ? "adaptive_moves_on" : "adaptive_moves_off"},
+      {"adaptive_moves", [&]() -> const char* {
+        if (options.adaptive_move_limits) {
+          return "adaptive_moves_on";
+        } else {
+          return "adaptive_moves_off";
+        }
+      }()},
       {"minimum_move_limit", number(options.minimum_move_limit)},
       {"density_tolerance", number(options.density_tolerance)},
       {"compliance_tolerance", number(options.compliance_tolerance)},

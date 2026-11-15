@@ -1,3 +1,5 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include <utility>
 #include "Core/application/SettingsRead.hpp"
 #include "Core/steps/CoreDamping.hpp"
 #include <string>
@@ -20,14 +22,14 @@ bool CoreDamping::init()
   }else{
     damping_data.push_back("");
     damping_data.push_back("");
-    
-    is_initialized = true;  
+
+    is_initialized = true;
     return true;
   }
 }
 
 bool CoreDamping::update()
-{ 
+{
   return true;
 }
 
@@ -36,7 +38,7 @@ bool CoreDamping::reset()
   damping_data.clear();
   damping_data.push_back("");
   damping_data.push_back("");
-    
+
   init();
   return true;
 }
@@ -48,6 +50,24 @@ bool CoreDamping::check_initialized()
 
 bool CoreDamping::modify_damping(std::vector<std::string> options, std::vector<int> options_marker)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.modify_damping(options, options_marker)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   for (size_t i = 0; i < options.size(); i++)
   {
     if (options_marker[i]==1)
@@ -55,7 +75,7 @@ bool CoreDamping::modify_damping(std::vector<std::string> options, std::vector<i
       damping_data[i] = options[i];
     }
   }
-  return true; 
+  return true;
 }
 
 bool CoreDamping::delete_damping(bool delete_alpha, bool delete_beta)
@@ -63,7 +83,7 @@ bool CoreDamping::delete_damping(bool delete_alpha, bool delete_beta)
   if (delete_alpha)
   {
     damping_data[0] = "";
-  } 
+  }
   if (delete_beta)
   {
     damping_data[1] = "";
@@ -74,10 +94,20 @@ bool CoreDamping::delete_damping(bool delete_alpha, bool delete_beta)
 
 std::string CoreDamping::get_damping_export_data()
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Solver, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return {};
+    }
+    return candidate.get_damping_export_data();
+  }
+
   CalculiXExportInterface ccx_export_iface;
 
   std::string str_temp = "";
-    
+
   // CUSTOMLINE START
   std::vector<std::string> customline = ccx_export_iface.get_customline_data("BEFORE","DAMPING",0);
   for (size_t icl = 0; icl < customline.size(); icl++)
@@ -107,7 +137,7 @@ std::string CoreDamping::get_damping_export_data()
     str_temp.append(customline[icl] + "\n");
   }
   // CUSTOMLINE END
-  
+
   return str_temp;
 }
 
@@ -124,6 +154,16 @@ std::string CoreDamping::print_data()
 
 std::vector<std::vector<std::string>> CoreDamping::get_tree_data() const
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string error;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return {};
+    }
+    return candidate.get_tree_data();
+  }
+
   if (damping_data.size() != 2)
   {
     return {};
@@ -138,11 +178,29 @@ std::vector<std::vector<std::string>> CoreDamping::get_tree_data() const
 
 bool CoreDamping::get_settings(int id, DampingSettings& settings, std::string& error) const
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      error = unitError;
+      return false;
+    }
+    return candidate.get_settings(id, settings, error);
+  }
+
   settings = {};
   error.clear();
   settings.id = id;
-  settings.alpha = damping_data.size() > 0 ? damping_data[0] : std::string();
-  settings.beta = damping_data.size() > 1 ? damping_data[1] : std::string();
+  if (damping_data.size() > 0) {
+    settings.alpha = damping_data[0];
+  } else {
+    settings.alpha = std::string();
+  }
+  if (damping_data.size() > 1) {
+    settings.beta = damping_data[1];
+  } else {
+    settings.beta = std::string();
+  }
 
   if (!error.empty())
   {

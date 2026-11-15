@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "TopologyIterationPropertiesWidget.hpp"
 #include "Core/topology/CalculiXTopologyInterface.hpp"
 #include "Core/topology/CoreTopologyStructs.hpp"
@@ -22,7 +23,17 @@ bool TopologyIterationPropertiesWidget::setTopologyIteration(int topologyId, int
     auto* results = addGroup("iteration", "Iteration", PropertySection::Data);
     TopologyMethod method = TopologyMethod::Unspecified;
     const bool methodAvailable = core.get_topology_iteration_method(topologyId, iterationId, method);
-    const QString methodName = !methodAvailable ? "Unavailable" : (method == TopologyMethod::LevelSet ? "Level set" : "Density-based");
+    const QString methodName = [&]() -> QString {
+      if (!methodAvailable) {
+        return "Unavailable";
+      } else {
+        if (method == TopologyMethod::LevelSet) {
+          return "Level set";
+        } else {
+          return "Density-based";
+        }
+      }
+    }();
     addValue(results, "Method", methodName);
     addReference(results, PropertyReferenceKind::Job, "Job", QString::fromStdString(row[1]));
     QString status;
@@ -40,11 +51,45 @@ bool TopologyIterationPropertiesWidget::setTopologyIteration(int topologyId, int
     addValue(results, "Job status", status);
     addValue(results, "Objective", QString::fromStdString(row[3]));
     addValue(results, "Volume fraction", QString::fromStdString(row[4]));
-    addValue(results, "Selected for results", row[5].empty() ? QString() : (row[5] == "1" ? "Yes" : "No"));
-    const QString changeLabel = !methodAvailable ? "Maximum design change" : (method == TopologyMethod::LevelSet ? "Maximum field change" : "Maximum density change");
+    addValue(results, "Selected for results", [&]() -> std::common_type_t<decltype(QString()), const char*> {
+      if (row[5].empty()) {
+        return QString();
+      } else {
+        return ([&]() -> const char* {
+          if (row[5] == "1") {
+            return "Yes";
+          } else {
+            return "No";
+          }
+        }());
+      }
+    }());
+    const QString changeLabel = [&]() -> QString {
+      if (!methodAvailable) {
+        return "Maximum design change";
+      } else {
+        if (method == TopologyMethod::LevelSet) {
+          return "Maximum field change";
+        } else {
+          return "Maximum density change";
+        }
+      }
+    }();
     addValue(results, changeLabel, QString::fromStdString(row[6]));
     addValue(results, "Relative objective change", QString::fromStdString(row[7]));
-    addValue(results, "Converged", row[8].empty() ? QString() : (row[8] == "1" ? "Yes" : "No"));
+    addValue(results, "Converged", [&]() -> std::common_type_t<decltype(QString()), const char*> {
+      if (row[8].empty()) {
+        return QString();
+      } else {
+        return ([&]() -> const char* {
+          if (row[8] == "1") {
+            return "Yes";
+          } else {
+            return "No";
+          }
+        }());
+      }
+    }());
     if (row.size() >= 13)
     {
       addValue(results, "Displacement", QString::fromStdString(row[9]));

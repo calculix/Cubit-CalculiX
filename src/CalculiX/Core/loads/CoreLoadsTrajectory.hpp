@@ -12,6 +12,7 @@ class CoreLoadsTrajectory
 {
 
 public:
+  bool domain_unit_view = false;
   bool get_settings(int id, LoadsTrajectorySettings& settings, std::string& error) const;
   int get_subload_id(int trajectory_id, int expected_type);
   std::vector<int> get_heatflux_node_ids(int trajectory_id);

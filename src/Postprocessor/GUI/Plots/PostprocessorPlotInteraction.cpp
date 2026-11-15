@@ -157,7 +157,13 @@ bool PostprocessorPlotInteraction::handle(QEvent* event)
     {
       return true;
     }
-    const double steps = input->angleDelta().y() != 0 ? input->angleDelta().y()/120.0 : input->pixelDelta().y()/40.0;
+    const double steps = [&]() -> double {
+      if (input->angleDelta().y() != 0) {
+        return input->angleDelta().y()/120.0;
+      } else {
+        return input->pixelDelta().y()/40.0;
+      }
+    }();
     const double factor = std::exp(-std::clamp(steps,-10.0,10.0)*0.12);
     for (auto* range : {&*target.x,&*target.y})
     {

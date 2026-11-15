@@ -16,7 +16,6 @@ class BlocksTree;
 class NodesetTree;
 class SidesetTree;
 class MaterialTree;
-class MaterialManagement;
 class TopologyManagement;
 class SectionsTree;
 class ConstraintsTree;
@@ -86,7 +85,6 @@ public:
   NavigationModel* nav_model;
   Claro* gui;
   TaskPanel* cmdpanel;
-  MaterialManagement* myMaterialManagement;
   HBCsManagement* myHBCsManagement;
   StepsManagement* myStepsManagement;
   JobsMonitor* myJobsMonitor;

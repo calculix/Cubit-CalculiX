@@ -1,3 +1,4 @@
+#include <type_traits>
 #include <QPen>
 #include "PostprocessorCaptureRenderer.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -41,7 +42,11 @@ namespace
     auto& error = *static_cast<std::string*>(client);
     if (error.empty())
     {
-      error = message ? static_cast<const char*>(message) : "VTK capture failed.";
+      if (message) {
+        error = static_cast<const char*>(message);
+      } else {
+        error = "VTK capture failed.";
+      }
     }
   }
   template<std::size_t N> QJsonArray numbers(const std::array<double,N>& values)
@@ -56,7 +61,13 @@ namespace
   struct RestoreContext
   {
     QPointer<QOpenGLContext> context = QOpenGLContext::currentContext();
-    QSurface* surface = context ? context->surface() : nullptr;
+    QSurface* surface = [&]() -> std::common_type_t<decltype(context->surface()), decltype(nullptr)> {
+      if (context) {
+        return context->surface();
+      } else {
+        return nullptr;
+      }
+    }();
     RestoreContext()
     {
       if (context)
@@ -149,8 +160,20 @@ bool PostprocessorCaptureRenderer::render(const Postprocessor::CaptureSnapshot& 
     scene->apply_camera(camera);
     const auto& options = snapshot.options;
     const std::array<double,3> white = {1,1,1};
-    scene->apply_appearance(request.background == CaptureBackground::Transparent ? white : options.backgroundTop,
-      request.background == CaptureBackground::Transparent ? white : options.backgroundBottom);
+    scene->apply_appearance([&]() -> std::common_type_t<decltype(white), decltype(options.backgroundTop)> {
+      if (request.background == CaptureBackground::Transparent) {
+        return white;
+      } else {
+        return options.backgroundTop;
+      }
+    }(),
+      [&]() -> std::common_type_t<decltype(white), decltype(options.backgroundBottom)> {
+        if (request.background == CaptureBackground::Transparent) {
+          return white;
+        } else {
+          return options.backgroundBottom;
+        }
+      }());
     scene->scale_capture(scale);
     manifest.insert("camera",QJsonObject{{"position",numbers(camera.position)},{"focal",numbers(camera.focal_point)},
       {"up",numbers(camera.view_up)},{"parallel",camera.parallel_projection},{"angle",camera.vertical_view_angle_degrees},
@@ -163,12 +186,24 @@ bool PostprocessorCaptureRenderer::render(const Postprocessor::CaptureSnapshot& 
     for (const auto& label : annotations)
     {
       records.append(QJsonObject{{"name",QString::fromUtf8(label.name.c_str())},{"text",QString::fromUtf8(label.text.c_str())},
-        {"position",numbers(label.position)},{"anchor",label.anchor ? QJsonValue(numbers(*label.anchor)) : QJsonValue(QJsonValue::Null)}});
+        {"position",numbers(label.position)},{"anchor",[&]() -> QJsonValue {
+          if (label.anchor) {
+            return QJsonValue(numbers(*label.anchor));
+          } else {
+            return QJsonValue(QJsonValue::Null);
+          }
+        }()}});
     }
     manifest.insert("labels",records);
     triad = std::make_unique<PostprocessorTriad>(window);
     triad->update(renderer->GetActiveCamera(),options.triadVisible,
-      request.background == CaptureBackground::Transparent ? white : options.backgroundBottom,
+      [&]() -> std::common_type_t<decltype(white), decltype(options.backgroundBottom)> {
+        if (request.background == CaptureBackground::Transparent) {
+          return white;
+        } else {
+          return options.backgroundBottom;
+        }
+      }(),
       request.width,request.height,scale);
     auto* actors = renderer->GetActors();
     actors->InitTraversal();
@@ -212,7 +247,13 @@ bool PostprocessorCaptureRenderer::render(const Postprocessor::CaptureSnapshot& 
       marker = plot_frame_marker(snapshot.session,found->second,values);
     }
     manifest.insert("legend",request.legend.value_or(PlotDefaults::legend_visible));
-    manifest.insert("marker",marker ? QJsonValue(*marker) : QJsonValue(QJsonValue::Null));
+    manifest.insert("marker",[&]() -> QJsonValue {
+      if (marker) {
+        return QJsonValue(*marker);
+      } else {
+        return QJsonValue(QJsonValue::Null);
+      }
+    }());
   }
   if (request.background == CaptureBackground::Transparent)
   {

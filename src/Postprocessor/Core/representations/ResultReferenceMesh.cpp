@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ResultReferenceMesh.hpp"
 #include "ResultMesh.hpp"
 #include <vtkAlgorithm.h>
@@ -102,7 +103,13 @@ bool Postprocessor::integration_point_reference_meshes(const SimResults::Increme
   try
   {
     std::set<std::int64_t> wanted;
-    auto* parents = integrationPoints ? integrationPoints->GetPointData()->GetArray("OriginalElementId") : nullptr;
+    auto* parents = [&]() -> std::common_type_t<decltype(integrationPoints->GetPointData()->GetArray("OriginalElementId")), decltype(nullptr)> {
+      if (integrationPoints) {
+        return integrationPoints->GetPointData()->GetArray("OriginalElementId");
+      } else {
+        return nullptr;
+      }
+    }();
     bool invalid = false;
     if (!integrationPoints || !integrationPoints->GetPointData()->HasArray("IntegrationPointId"))
     {

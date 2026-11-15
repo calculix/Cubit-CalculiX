@@ -46,21 +46,17 @@ vol all size 6
 mesh vol all
 
 #material
-create material "steel" property_group "SIM_CCX"
-modify material "steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-modify material "steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-modify material "steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
-modify material "steel" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-modify material "steel" scalar_properties "CCX_PLASTIC_JOHNSON_COOK_USE_CARD" 1
-modify material "steel" matrix_property "CCX_PLASTIC_JOHNSON_COOK" 350 275 0.36 1 1 1 
-modify material "steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
-modify material "steel" matrix_property "CCX_DENSITY_DENSITY" 7.85e-09 0 
-modify material "steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-modify material "steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
-modify material "steel" scalar_properties "CCX_RATE_DEPENDENT_USE_CARD" 1
-modify material "steel" matrix_property "CCX_RATE_DEPENDENT_RATE_DEPENDENT" 0.022 1 
-modify material "steel" scalar_properties "CCX_HYPERELASTIC_ARRUDA_BOYCE_USE_CARD" 1
-modify material "steel" scalar_properties "CCX_HYPERFOAM_HYPERFOAM_N1_USE_CARD" 1
+ccx units system "N-mm-s"
+ccx units geometry unit "mm"
+ccx create material "steel"
+ccx modify material 1 add card elastic model iso
+ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"
+ccx modify material 1 add card plastic model johnson_cook
+ccx modify material 1 card plastic row 1 values 350000000 275000000 0.36 1 274.15 274.15 unit "SI"
+ccx modify material 1 add card density model default
+ccx modify material 1 card density row 1 values 7850 273.15 unit "SI"
+ccx modify material 1 add card rate_dependent model default
+ccx modify material 1 card rate_dependent row 1 values 0.022 1 unit "SI"
 
 ccx create section solid block all material 1
 

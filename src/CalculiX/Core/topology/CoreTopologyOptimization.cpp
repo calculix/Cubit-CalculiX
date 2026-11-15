@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Core/topology/CoreTopologyOptimization.hpp"
 #include "Core/topology/CoreTopologyStructs.hpp"
 #include "Core/topology/CoreTopologyLevelSetGeometryCache.hpp"
@@ -56,7 +57,11 @@ bool CoreTopologyOptimization::run_topology(int topology_id, bool wait)
     return state == "converged" || state == "iteration_limit";
   }
 
-  return wait ? wait_topology(topology_id) : true;
+  if (wait) {
+    return wait_topology(topology_id);
+  } else {
+    return true;
+  }
 }
 
 void CoreTopologyOptimization::update()
@@ -87,16 +92,40 @@ void CoreTopologyOptimization::update()
     {
       const auto run = topology_runs.find(entry.first);
       PRINT_ERROR("Topology %d iteration %d failed during %s: %s\n", entry.first,
-        run == topology_runs.end() ? -1 : run->second.iteration_id,
-        run == topology_runs.end() ? "unknown phase" : phase_name(run->second.phase), error.what());
+        [&]() -> std::common_type_t<decltype(-1), decltype(run->second.iteration_id)> {
+          if (run == topology_runs.end()) {
+            return -1;
+          } else {
+            return run->second.iteration_id;
+          }
+        }(),
+        [&]() -> std::common_type_t<decltype("unknown phase"), decltype(phase_name(run->second.phase))> {
+          if (run == topology_runs.end()) {
+            return "unknown phase";
+          } else {
+            return phase_name(run->second.phase);
+          }
+        }(), error.what());
       fail_topology_run(entry.first, entry.second);
     }
     catch (...)
     {
       const auto run = topology_runs.find(entry.first);
       PRINT_ERROR("Topology %d iteration %d failed during %s with an unexpected exception.\n", entry.first,
-        run == topology_runs.end() ? -1 : run->second.iteration_id,
-        run == topology_runs.end() ? "unknown phase" : phase_name(run->second.phase));
+        [&]() -> std::common_type_t<decltype(-1), decltype(run->second.iteration_id)> {
+          if (run == topology_runs.end()) {
+            return -1;
+          } else {
+            return run->second.iteration_id;
+          }
+        }(),
+        [&]() -> std::common_type_t<decltype("unknown phase"), decltype(phase_name(run->second.phase))> {
+          if (run == topology_runs.end()) {
+            return "unknown phase";
+          } else {
+            return phase_name(run->second.phase);
+          }
+        }());
       fail_topology_run(entry.first, entry.second);
     }
   }
@@ -245,9 +274,13 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
     }
     if (current.phase == TopologyRunPhase::Preparing)
     {
-      const bool prepared = current.iteration_id == 1
-        ? prepare_topology_run(topology_id)
-        : prepare_topology_iteration(topology_id, current.iteration_id - 1, current.iteration_id);
+      const bool prepared = [&]() -> bool {
+        if (current.iteration_id == 1) {
+          return prepare_topology_run(topology_id);
+        } else {
+          return prepare_topology_iteration(topology_id, current.iteration_id - 1, current.iteration_id);
+        }
+      }();
       if (!prepared)
       {
         finish_topology_run(topology_id, serial, TopologyRunState::Failed);
@@ -305,7 +338,11 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
         return;
       }
 
-      run->second.phase = options.objective == TopologyObjective::Displacement ? TopologyRunPhase::StartingAdjoint : TopologyRunPhase::Evaluating;
+      if (options.objective == TopologyObjective::Displacement) {
+        run->second.phase = TopologyRunPhase::StartingAdjoint;
+      } else {
+        run->second.phase = TopologyRunPhase::Evaluating;
+      }
     }
     else if (current.phase == TopologyRunPhase::StartingAdjoint)
     {
@@ -687,7 +724,13 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
               return false;
             }
 
-            const double multiplier = component < 3 ? 1.0 : 2.0;
+            const double multiplier = [&]() -> double {
+              if (component < 3) {
+                return 1.0;
+              } else {
+                return 2.0;
+              }
+            }();
             contraction += multiplier * stress_value * strain_value;
           }
 
@@ -826,7 +869,11 @@ bool CoreTopologyOptimization::build_topology_adjoint_load(int topology_id, int 
   else
   {
     const std::size_t axis = static_cast<std::size_t>(component - 1);
-    load[axis] = displacement[axis] > 0.0 ? 1.0 : -1.0;
+    if (displacement[axis] > 0.0) {
+      load[axis] = 1.0;
+    } else {
+      load[axis] = -1.0;
+    }
   }
 
   return true;

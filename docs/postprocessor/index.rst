@@ -15,6 +15,7 @@ See :doc:`../developer/postprocessor-verification` for the acceptance checklist.
    :maxdepth: 1
 
    commands
+   units
    workspace
    selection
    annotations

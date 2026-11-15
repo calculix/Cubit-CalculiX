@@ -1,3 +1,4 @@
+#include <type_traits>
 #ifndef POSTPROCESSOR_DATASETCOMMANDSUPPORT_HPP
 #define POSTPROCESSOR_DATASETCOMMANDSUPPORT_HPP
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -9,7 +10,13 @@ namespace DatasetCommandSupport
   inline std::vector<std::string> syntax(bool show)
   {
     const std::string source = " [source <string:type='quoted',number='1',label='source_name'>]";
-    const std::string prefix = show ? "post show " : "post hide ";
+    const std::string prefix = [&]() -> std::string {
+      if (show) {
+        return "post show ";
+      } else {
+        return "post hide ";
+      }
+    }();
     std::vector<std::string> result = {prefix+"{blocks|nodesets|sidesets|integrationpoints}"+source};
     for (const auto& selector : {std::string("<value:label='dataset_id'>"),
         std::string("<string:type='quoted',number='1',label='dataset_name'>")})
@@ -39,16 +46,38 @@ namespace DatasetCommandSupport
     for (auto category : {Postprocessor::DatasetCategory::Blocks,Postprocessor::DatasetCategory::NodeSets,
         Postprocessor::DatasetCategory::SideSets,Postprocessor::DatasetCategory::IntegrationPoints})
     {
-      if (data.find_keyword(category == Postprocessor::DatasetCategory::Blocks ? "BLOCKS" :
-          category == Postprocessor::DatasetCategory::NodeSets ? "NODESETS" :
-          category == Postprocessor::DatasetCategory::SideSets ? "SIDESETS" : "INTEGRATIONPOINTS"))
+      if (data.find_keyword([&]() -> std::common_type_t<decltype("BLOCKS"), std::common_type_t<decltype("NODESETS"), const char*>> {
+        if (category == Postprocessor::DatasetCategory::Blocks) {
+          return "BLOCKS";
+        } else {
+          return [&]() -> std::common_type_t<decltype("NODESETS"), const char*> {
+            if (category == Postprocessor::DatasetCategory::NodeSets) {
+              return "NODESETS";
+            } else {
+              return [&]() -> const char* {
+                if (category == Postprocessor::DatasetCategory::SideSets) {
+                  return "SIDESETS";
+                } else {
+                  return "INTEGRATIONPOINTS";
+                }
+              }();
+            }
+          }();
+        }
+      }()))
       {
         return application.set_category_visible(source,category,show,error);
       }
     }
     using Action = Postprocessor::DatasetVisibilityAction;
     std::optional<PostprocessorApplicationInterface::DatasetSelector> selector;
-    auto action = show ? Action::Show : Action::Hide;
+    auto action = [&]() -> std::common_type_t<decltype(Action::Show), decltype(Action::Hide)> {
+      if (show) {
+        return Action::Show;
+      } else {
+        return Action::Hide;
+      }
+    }();
     std::string label;
     double number;
     // Read quoted names first: a dataset literally named "all" is not Show all.

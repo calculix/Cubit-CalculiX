@@ -29,7 +29,6 @@ public:
   bool set_use_ccx_autocleanup(bool bool_use);
   bool set_use_ccx_logfile(bool bool_use);
   bool init_pythoninterface();
-  bool init_materiallibrary();
   bool init_completed(); // returns true after every init is true otherwise false
   bool gui_updated(); //returns if gui is updated, necessary because of time check in the observer
   bool set_gui_updated(bool status); //sets the bool if core the gui was updated

@@ -68,27 +68,103 @@ nodeset 5 add volume all
 nodeset 5 name "initial_temp"
 
 #material
-create material "X5CrNi189" property_group "SIM_CCX"
-modify material "X5CrNi189" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-modify material "X5CrNi189" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-modify material "X5CrNi189" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-modify material "X5CrNi189" scalar_properties "CCX_DENSITY_USE_CARD" 1
-modify material "X5CrNi189" matrix_property "CCX_DENSITY_DENSITY" 7910 20 7880 90 7840 200 7790 320 7740 430 7690 540 7640 650 7590 760 7540 870 
-modify material "X5CrNi189" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
-modify material "X5CrNi189" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
-modify material "X5CrNi189" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 11.63 20. 15. 200. 17.5 400. 18. 600.
-modify material "X5CrNi189" scalar_properties "CCX_HYPERELASTIC_ARRUDA_BOYCE_USE_CARD" 1
-modify material "X5CrNi189" scalar_properties "CCX_HYPERFOAM_HYPERFOAM_N1_USE_CARD" 1
-modify material "X5CrNi189" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-modify material "X5CrNi189" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 1.99e+11 0.28 24 1.87e+11 0.3 200 1.69e+11 0.28 430 1.63e+11 0.28 480 1.53e+11 0.29 590 1.43e+11 0.28 700 1.27e+11 0.25 820 
-modify material "X5CrNi189" scalar_properties "CCX_EXPANSION_USE_CARD" 1
-modify material "X5CrNi189" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.63e-05 100 1.71e-05 300 1.8e-05 500 1.9e-05 700 2e-05 800 
-modify material "X5CrNi189" scalar_properties "CCX_EXPANSION_ZERO_USE_CARD" 1
-modify material "X5CrNi189" scalar_properties "CCX_EXPANSION_ZERO" 20
-modify material "X5CrNi189" scalar_properties "CCX_PLASTIC_USE_CARD" 1
-modify material "X5CrNi189" matrix_property "CCX_PLASTIC_ISO_YIELD_STRESS_VS_STRAIN_VS_TEMPERATURE" 5.5e+08 0. 20. 6.7e+08 0.0966332 20. 1e+09 0.394975 20. 1.015e+09 0.494899 20. 9.95e+08 0.805 20. 5e+08 0. 100. 5.7e+08 0.0970918 100. 7e+08 0.296429 100. 7.9e+08 0.495969 100. 8.2e+08 0.595816 100. 8.25e+08 0.695791 100. 8.2e+08 0.815816 100. 4.1e+08 0. 200. 5.1e+08 0.0971823 200. 6.2e+08 0.296575 200. 6.8e+08 0.496243 200. 7.05e+08 0.596105 200. 7.05e+08 0.806105 200. 4.1e+08 0. 300. 5.1e+08 0.0971823 300. 6.2e+08 0.296575 300. 6.8e+08 0.496243 300. 7.05e+08 0.596105 300. 7.05e+08 0.806105 300. 4.1e+08 0. 400. 5.1e+08 0.0971823 400. 6.2e+08 0.296575 400. 6.8e+08 0.496243 400. 7.05e+08 0.596105 400. 7.05e+08 0.806105 400. 4e+08 0. 500. 4.75e+08 0.0970405 500. 5.3e+08 0.196698 500. 6e+08 0.396262 500. 6.45e+08 0.695981 500. 6.65e+08 0.805857 500. 3.4e+08 0. 600. 4.2e+08 0.0972549 600. 5e+08 0.296732 600. 5.15e+08 0.496634 600. 5.3e+08 0.696536 600. 5.45e+08 0.806438 600. 2.7e+08 0. 700. 3.5e+08 0.0975524 700. 4e+08 0.197203 700. 4.5e+08 0.396853 700. 4.6e+08 0.596783 700. 4.7e+08 0.806713 700. 2.1e+08 0. 800. 2.55e+08 0.0979921 800. 2.95e+08 0.297677 800. 3.15e+08 0.59752 800. 3.3e+08 0.807402 800.
-modify material "X5CrNi189" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
-modify material "X5CrNi189" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 456 20 490 90 532 200 557 320 574 430 586 540 599 650 620 760 645 870 
+ccx units system "N-mm-s"
+ccx units geometry unit "m"
+ccx create material "X5CrNi189"
+ccx modify material 1 add card density model default
+ccx modify material 1 card density row 1 values 7910 293.15 unit "SI"
+ccx modify material 1 card density row 2 values 7880 363.15 unit "SI"
+ccx modify material 1 card density row 3 values 7840 473.15 unit "SI"
+ccx modify material 1 card density row 4 values 7790 593.15 unit "SI"
+ccx modify material 1 card density row 5 values 7740 703.15 unit "SI"
+ccx modify material 1 card density row 6 values 7690 813.15 unit "SI"
+ccx modify material 1 card density row 7 values 7640 923.15 unit "SI"
+ccx modify material 1 card density row 8 values 7590 1033.15 unit "SI"
+ccx modify material 1 card density row 9 values 7540 1143.15 unit "SI"
+ccx modify material 1 add card conductivity model iso
+ccx modify material 1 card conductivity row 1 values 11.63 293.15 unit "SI"
+ccx modify material 1 card conductivity row 2 values 15 473.15 unit "SI"
+ccx modify material 1 card conductivity row 3 values 17.5 673.15 unit "SI"
+ccx modify material 1 card conductivity row 4 values 18 873.15 unit "SI"
+ccx modify material 1 add card elastic model iso
+ccx modify material 1 card elastic row 1 values 199000000000 0.28 297.15 unit "SI"
+ccx modify material 1 card elastic row 2 values 187000000000 0.3 473.15 unit "SI"
+ccx modify material 1 card elastic row 3 values 169000000000 0.28 703.15 unit "SI"
+ccx modify material 1 card elastic row 4 values 163000000000 0.28 753.15 unit "SI"
+ccx modify material 1 card elastic row 5 values 153000000000 0.29 863.15 unit "SI"
+ccx modify material 1 card elastic row 6 values 143000000000 0.28 973.15 unit "SI"
+ccx modify material 1 card elastic row 7 values 127000000000 0.25 1093.15 unit "SI"
+ccx modify material 1 add card expansion model iso
+ccx modify material 1 card expansion row 1 values 1.63e-05 373.15 unit "SI"
+ccx modify material 1 card expansion row 2 values 1.71e-05 573.15 unit "SI"
+ccx modify material 1 card expansion row 3 values 1.8e-05 773.15 unit "SI"
+ccx modify material 1 card expansion row 4 values 1.9e-05 973.15 unit "SI"
+ccx modify material 1 card expansion row 5 values 2e-05 1073.15 unit "SI"
+ccx modify material 1 card expansion reference temperature 293.15 unit "SI"
+ccx modify material 1 add card plastic model iso
+ccx modify material 1 card plastic row 1 values 550000000 0 293.15 unit "SI"
+ccx modify material 1 card plastic row 2 values 670000000 0.0966332 293.15 unit "SI"
+ccx modify material 1 card plastic row 3 values 1000000000 0.394975 293.15 unit "SI"
+ccx modify material 1 card plastic row 4 values 1015000000 0.494899 293.15 unit "SI"
+ccx modify material 1 card plastic row 5 values 995000000 0.805 293.15 unit "SI"
+ccx modify material 1 card plastic row 6 values 500000000 0 373.15 unit "SI"
+ccx modify material 1 card plastic row 7 values 570000000 0.0970918 373.15 unit "SI"
+ccx modify material 1 card plastic row 8 values 700000000 0.296429 373.15 unit "SI"
+ccx modify material 1 card plastic row 9 values 790000000 0.495969 373.15 unit "SI"
+ccx modify material 1 card plastic row 10 values 820000000 0.595816 373.15 unit "SI"
+ccx modify material 1 card plastic row 11 values 825000000 0.695791 373.15 unit "SI"
+ccx modify material 1 card plastic row 12 values 820000000 0.815816 373.15 unit "SI"
+ccx modify material 1 card plastic row 13 values 410000000 0 473.15 unit "SI"
+ccx modify material 1 card plastic row 14 values 510000000 0.0971823 473.15 unit "SI"
+ccx modify material 1 card plastic row 15 values 620000000 0.296575 473.15 unit "SI"
+ccx modify material 1 card plastic row 16 values 680000000 0.496243 473.15 unit "SI"
+ccx modify material 1 card plastic row 17 values 705000000 0.596105 473.15 unit "SI"
+ccx modify material 1 card plastic row 18 values 705000000 0.806105 473.15 unit "SI"
+ccx modify material 1 card plastic row 19 values 410000000 0 573.15 unit "SI"
+ccx modify material 1 card plastic row 20 values 510000000 0.0971823 573.15 unit "SI"
+ccx modify material 1 card plastic row 21 values 620000000 0.296575 573.15 unit "SI"
+ccx modify material 1 card plastic row 22 values 680000000 0.496243 573.15 unit "SI"
+ccx modify material 1 card plastic row 23 values 705000000 0.596105 573.15 unit "SI"
+ccx modify material 1 card plastic row 24 values 705000000 0.806105 573.15 unit "SI"
+ccx modify material 1 card plastic row 25 values 410000000 0 673.15 unit "SI"
+ccx modify material 1 card plastic row 26 values 510000000 0.0971823 673.15 unit "SI"
+ccx modify material 1 card plastic row 27 values 620000000 0.296575 673.15 unit "SI"
+ccx modify material 1 card plastic row 28 values 680000000 0.496243 673.15 unit "SI"
+ccx modify material 1 card plastic row 29 values 705000000 0.596105 673.15 unit "SI"
+ccx modify material 1 card plastic row 30 values 705000000 0.806105 673.15 unit "SI"
+ccx modify material 1 card plastic row 31 values 400000000 0 773.15 unit "SI"
+ccx modify material 1 card plastic row 32 values 475000000 0.0970405 773.15 unit "SI"
+ccx modify material 1 card plastic row 33 values 530000000 0.196698 773.15 unit "SI"
+ccx modify material 1 card plastic row 34 values 600000000 0.396262 773.15 unit "SI"
+ccx modify material 1 card plastic row 35 values 645000000 0.695981 773.15 unit "SI"
+ccx modify material 1 card plastic row 36 values 665000000 0.805857 773.15 unit "SI"
+ccx modify material 1 card plastic row 37 values 340000000 0 873.15 unit "SI"
+ccx modify material 1 card plastic row 38 values 420000000 0.0972549 873.15 unit "SI"
+ccx modify material 1 card plastic row 39 values 500000000 0.296732 873.15 unit "SI"
+ccx modify material 1 card plastic row 40 values 515000000 0.496634 873.15 unit "SI"
+ccx modify material 1 card plastic row 41 values 530000000 0.696536 873.15 unit "SI"
+ccx modify material 1 card plastic row 42 values 545000000 0.806438 873.15 unit "SI"
+ccx modify material 1 card plastic row 43 values 270000000 0 973.15 unit "SI"
+ccx modify material 1 card plastic row 44 values 350000000 0.0975524 973.15 unit "SI"
+ccx modify material 1 card plastic row 45 values 400000000 0.197203 973.15 unit "SI"
+ccx modify material 1 card plastic row 46 values 450000000 0.396853 973.15 unit "SI"
+ccx modify material 1 card plastic row 47 values 460000000 0.596783 973.15 unit "SI"
+ccx modify material 1 card plastic row 48 values 470000000 0.806713 973.15 unit "SI"
+ccx modify material 1 card plastic row 49 values 210000000 0 1073.15 unit "SI"
+ccx modify material 1 card plastic row 50 values 255000000 0.0979921 1073.15 unit "SI"
+ccx modify material 1 card plastic row 51 values 295000000 0.297677 1073.15 unit "SI"
+ccx modify material 1 card plastic row 52 values 315000000 0.59752 1073.15 unit "SI"
+ccx modify material 1 card plastic row 53 values 330000000 0.807402 1073.15 unit "SI"
+ccx modify material 1 add card specific_heat model default
+ccx modify material 1 card specific_heat row 1 values 456 293.15 unit "SI"
+ccx modify material 1 card specific_heat row 2 values 490 363.15 unit "SI"
+ccx modify material 1 card specific_heat row 3 values 532 473.15 unit "SI"
+ccx modify material 1 card specific_heat row 4 values 557 593.15 unit "SI"
+ccx modify material 1 card specific_heat row 5 values 574 703.15 unit "SI"
+ccx modify material 1 card specific_heat row 6 values 586 813.15 unit "SI"
+ccx modify material 1 card specific_heat row 7 values 599 923.15 unit "SI"
+ccx modify material 1 card specific_heat row 8 values 620 1033.15 unit "SI"
+ccx modify material 1 card specific_heat row 9 values 645 1143.15 unit "SI"
 
 #sections
 ccx create section solid block all material 1

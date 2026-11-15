@@ -52,7 +52,13 @@ public:
       const char* first = buffer_.data() + begin_;
       const std::size_t available = end_ - begin_;
       const auto newline = static_cast<const char*>(std::memchr(first, '\n', available));
-      const std::size_t length = newline == nullptr ? available : static_cast<std::size_t>(newline - first);
+      const std::size_t length = [&]() -> std::size_t {
+        if (newline == nullptr) {
+          return available;
+        } else {
+          return static_cast<std::size_t>(newline - first);
+        }
+      }();
       if (length > maximum_line_bytes_ - spill_.size())
       {
         return LineStatus::TooLong;
@@ -97,7 +103,11 @@ private:
       return LineStatus::IoError;
     }
     end_ = static_cast<std::size_t>(file_.gcount());
-    return end_ == 0 ? LineStatus::End : LineStatus::Line;
+    if (end_ == 0) {
+      return LineStatus::End;
+    } else {
+      return LineStatus::Line;
+    }
   }
 
   std::ifstream& file_;

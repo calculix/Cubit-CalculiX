@@ -43,11 +43,21 @@ bool cleanup_set_loads(LoadType& loads, CoreAmplitudes& amplitudes, CoreSteps& s
       }
     }
 
-    const bool target_exists = nodeset ? query.check_nodeset_exists(load[4]) : query.check_sideset_exists(load[4]);
+    bool target_exists;
+    if (nodeset) {
+      target_exists = query.check_nodeset_exists(load[4]);
+    } else {
+      target_exists = query.check_sideset_exists(load[4]);
+    }
 
     if (!target_exists)
     {
-      const std::string set_label = nodeset ? "Nodeset" : "Sideset";
+      std::string set_label;
+      if (nodeset) {
+        set_label = "Nodeset";
+      } else {
+        set_label = "Sideset";
+      }
       log.append(set_label + " ID " + std::to_string(load[4]) + " doesn't exist.\n");
       log.append(label + " ID " + std::to_string(load_id) + " will be deleted.\n");
 
@@ -278,7 +288,12 @@ bool CoreLoadsCleanup::cleanup(CoreLoadsBodyHeatflux& loads, CoreAmplitudes& amp
       for (std::size_t element_index = 1; element_index < elements.size(); element_index++)
       {
         const int element_id = elements[element_index];
-        const bool exists = load[5] == 1 ? blocks.check_block_exists(element_id) : CoreMeshQuery::check_global_element_exists(element_id);
+        bool exists;
+        if (load[5] == 1) {
+          exists = blocks.check_block_exists(element_id);
+        } else {
+          exists = CoreMeshQuery::check_global_element_exists(element_id);
+        }
 
         if (!exists)
         {

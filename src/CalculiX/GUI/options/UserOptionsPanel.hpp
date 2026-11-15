@@ -61,21 +61,18 @@ private:
   QHBoxLayout* HBoxLayout_6;
   QHBoxLayout* HBoxLayout_7;
   QHBoxLayout* HBoxLayout_8;
-  QHBoxLayout* HBoxLayout_9;
   QLabel* label_1;
   QLabel* label_2;
   QLabel* label_3;
   QLabel* label_6;
   QLabel* label_7;
   QLabel* label_8;
-  QLabel* label_9;
   QLineEdit* lineEdit_1;
   QLineEdit* lineEdit_2;
   QLineEdit* lineEdit_3;
   QLineEdit* lineEdit_6;
   QLineEdit* lineEdit_7;
   QCheckBox* checkBox_8;
-  QLineEdit* lineEdit_9;
 };
 
 #endif // USEROPTIONSPANEL_HPP

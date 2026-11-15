@@ -7,7 +7,13 @@ namespace Postprocessor
   {
     const auto quote = [](const std::string& value) -> QString
     {
-      const char delimiter = value.find('"') == std::string::npos ? '"' : '\'';
+      const char delimiter = [&]() -> char {
+        if (value.find('"') == std::string::npos) {
+          return '"';
+        } else {
+          return '\'';
+        }
+      }();
       if (value.empty() || value.find(delimiter) != std::string::npos || std::any_of(value.begin(),value.end(),[](unsigned char c)
         {
           return c < 32 || c == 127;

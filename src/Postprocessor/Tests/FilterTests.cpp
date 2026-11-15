@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "Postprocessor/Core/filters/FilterCodec.hpp"
 #include "Postprocessor/Core/persistence/PostprocessorSessionCodec.hpp"
@@ -39,7 +40,13 @@ namespace
     points->SetDataTypeToDouble();
     const double coordinates[][3] = {{0,0,0},{1,0,0},{1,1,0},{0,1,0},{0,0,1},{1,0,1},{1,1,1},{0,1,1},
       {.5,0,0},{1,.5,0},{.5,1,0},{0,.5,0},{.5,0,1},{1,.5,1},{.5,1,1},{0,.5,1},{0,0,.5},{1,0,.5},{1,1,.5},{0,1,.5}};
-    const int count = quadratic ? 20 : 8;
+    const int count = [&]() -> int {
+      if (quadratic) {
+        return 20;
+      } else {
+        return 8;
+      }
+    }();
     auto values = vtkSmartPointer<vtkDoubleArray>::New();
     values->SetName("VALUE");
     auto ids = vtkSmartPointer<vtkTypeInt64Array>::New();
@@ -56,7 +63,13 @@ namespace
     {
       vertices[i] = i;
     }
-    mesh->InsertNextCell(quadratic ? VTK_QUADRATIC_HEXAHEDRON : VTK_HEXAHEDRON,count,vertices);
+    mesh->InsertNextCell([&]() -> std::common_type_t<decltype(VTK_QUADRATIC_HEXAHEDRON), decltype(VTK_HEXAHEDRON)> {
+      if (quadratic) {
+        return VTK_QUADRATIC_HEXAHEDRON;
+      } else {
+        return VTK_HEXAHEDRON;
+      }
+    }(),count,vertices);
     mesh->GetPointData()->AddArray(values);
     mesh->GetPointData()->AddArray(ids);
     auto elements = vtkSmartPointer<vtkTypeInt64Array>::New();
@@ -161,7 +174,11 @@ int main(int argc,char** argv)
   check(core.create_filter(requested,"view1",error),"Cannot create named clip");
   if (failures != 0 || core.session().representations.count(core.session().active_representation_id) == 0)
   {
-    return failures == 0 ? 1 : failures;
+    if (failures == 0) {
+      return 1;
+    } else {
+      return failures;
+    }
   }
   const auto display = core.session().representations.at(core.session().active_representation_id);
   std::shared_ptr<const EvaluatedOutput> first, second;

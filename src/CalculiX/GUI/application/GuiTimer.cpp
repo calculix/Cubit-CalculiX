@@ -11,14 +11,4 @@ GuiTimer::~GuiTimer()
 
 void GuiTimer::timeoutaction()
 {
-  /*
-  if (!this->bool_init_pythoninterface)
-  {
-    this->bool_init_pythoninterface = ccx_application_iface.init_pythoninterface();
-  }
-  if (!this->bool_init_materiallibrary)
-  {
-    this->bool_init_materiallibrary = ccx_application_iface.init_materiallibrary();
-  }
-  */
 }

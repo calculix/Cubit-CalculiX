@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CoreDrawCapture.hpp"
 #include "CoreDrawScope.hpp"
 #include "CoreDrawEntityGeometry.hpp"
@@ -123,14 +124,24 @@ bool CoreDrawCapture::buildFrame(CalculiXCore& core, const CalculiXCaptureReques
       }
     }
     const double extent = (std::max)({maximum[0] - minimum[0], maximum[1] - minimum[1], maximum[2] - minimum[2]});
-    const double size = std::isfinite(extent) && extent > 0 ? 0.10 * extent : 1.0;
+    const double size = [&]() -> double {
+      if (std::isfinite(extent) && extent > 0) {
+        return 0.10 * extent;
+      } else {
+        return 1.0;
+      }
+    }();
     frame.entities.push_back({{"calculix", "model", 0, ""}, "model", std::move(mesh), false});
     if (request.content != CalculiXCaptureContent::Model)
     {
       ResolvedDrawScope resolved;
-      const bool valid = request.scope.kind == DrawScopeKind::Step ?
-        CoreDrawScope::resolveStep(core, request.scope.stepId, size, resolved, error) :
-        CoreDrawScope::resolveModel(core, resolved, error);
+      const bool valid = [&]() -> bool {
+        if (request.scope.kind == DrawScopeKind::Step) {
+          return CoreDrawScope::resolveStep(core, request.scope.stepId, size, resolved, error);
+        } else {
+          return CoreDrawScope::resolveModel(core, resolved, error);
+        }
+      }();
       if (!valid)
       {
         return false;
@@ -158,7 +169,13 @@ bool CoreDrawCapture::buildFrame(CalculiXCore& core, const CalculiXCaptureReques
         }
         const auto group = drawing_group(entity.first.feature);
         const bool labels = request.labels.enabled &&
-          (group == DrawGroup::Loads ? request.labels.loads : request.labels.boundaryConditions);
+          ([&]() -> std::common_type_t<decltype(request.labels.loads), decltype(request.labels.boundaryConditions)> {
+            if (group == DrawGroup::Loads) {
+              return request.labels.loads;
+            } else {
+              return request.labels.boundaryConditions;
+            }
+          }());
         if (!labels)
         {
           auto& primitives = entity.second.primitives;
@@ -196,7 +213,13 @@ bool CoreDrawCapture::buildFrame(CalculiXCore& core, const CalculiXCaptureReques
           }
         }
         frame.entities.push_back({CalculiXDrawingAdapter::key(entity.first,
-          request.scope.kind == DrawScopeKind::Step ? request.scope.stepId : -1),
+          [&]() -> std::common_type_t<decltype(request.scope.stepId), decltype(-1)> {
+            if (request.scope.kind == DrawScopeKind::Step) {
+              return request.scope.stepId;
+            } else {
+              return -1;
+            }
+          }()),
           drawing_group_name(group), std::move(entity.second), false});
       }
     }

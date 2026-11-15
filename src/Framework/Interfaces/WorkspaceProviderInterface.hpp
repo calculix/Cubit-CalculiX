@@ -46,6 +46,8 @@ struct WorkspaceView
   // after one row break when native top toolbars are visible. Placement is
   // reasserted after layout restoration; per-toolbar visibility is preserved.
   QList<QToolBar*> toolbars;
+  // Shared Framework editor actions are appended to this workspace-owned bar.
+  QToolBar* modelManagementToolbar = nullptr;
   QList<QToolBar*> toolbarRowBreaks;
   std::function<void(bool)> activationChanged;
   NavigationModel* navigationModel = nullptr;

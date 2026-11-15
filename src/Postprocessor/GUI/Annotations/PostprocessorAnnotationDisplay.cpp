@@ -54,7 +54,11 @@ void PostprocessorAnnotationDisplay::synchronize(const PostprocessorApplicationI
   {
     if (label.value.name == "@minimum" || label.value.name == "@maximum")
     {
-      label.value.position = label.value.name == "@minimum" ? state.minimum_position : state.maximum_position;
+      if (label.value.name == "@minimum") {
+        label.value.position = state.minimum_position;
+      } else {
+        label.value.position = state.maximum_position;
+      }
     }
     else
     {

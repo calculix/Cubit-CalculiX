@@ -22,16 +22,17 @@ std::vector<std::string> ccxAmplitudeModifyCommand::get_syntax()
   syntax.append("[shiftx <value:label='shiftx',help='<shiftx>'>] ");
   syntax.append("[shifty <value:label='shifty',help='<shifty>'>] ");
   syntax.append("[{totaltime_yes|totaltime_no}] ");
-  
+
+  syntax.append("[axis <string:type='unquoted',number='1',label='axis'>] ");
   syntax_list.push_back(syntax);
-  
+
   return syntax_list;
 }
 
 std::vector<std::string> ccxAmplitudeModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx modify amplitude <amplitude id> [name <name>] [time_amplitude <time_amplitude>...] [shiftx <value>] [shifty <value>] [{totaltime_yes|totaltime_no}]"; 
+  help[0] = "ccx modify amplitude <amplitude id> [name <name>] [time_amplitude <time_amplitude>...] [axis time|frequency] [shiftx <value>] [shifty <value>] [{totaltime_yes|totaltime_no}]";
 
   return help;
 }
@@ -49,7 +50,7 @@ bool ccxAmplitudeModifyCommand::execute(CubitCommandData &data)
 
 
   std::string output;
-  std::vector<std::string> options;  
+  std::vector<std::string> options;
   std::vector<int> options_marker;
   std::vector<std::vector<std::string>> options2;
   int amplitude_id;
@@ -63,7 +64,7 @@ bool ccxAmplitudeModifyCommand::execute(CubitCommandData &data)
   data.get_value("amplitude id", amplitude_id);
 
   data.get_values("time_amplitude", amplitudevalues);
-  
+
   if (amplitudevalues.size() % 2 != 0)
   {
     output = "Failed! numbers count is not even!\n";
@@ -79,7 +80,7 @@ bool ccxAmplitudeModifyCommand::execute(CubitCommandData &data)
       amplitude.clear();
     }
   }
-  
+
   if (!data.get_string("name", name))
   {
     name = "";
@@ -129,13 +130,17 @@ bool ccxAmplitudeModifyCommand::execute(CubitCommandData &data)
     options.push_back("-1");
     options_marker.push_back(0);
   }
-  
+
+  std::string axis = "";
+  data.get_string("axis", axis);
+  options.push_back(axis);
   if (!ccx_amplitudes_iface.modify_amplitude(amplitude_id, options, options_marker,options2))
   {
     output = "Failed!\n";
-    PRINT_ERROR(output.c_str());
+    PRINT_ERROR("%s", output.c_str());
+    return false;
   }
   options.clear();
-    
+
   return true;
 }

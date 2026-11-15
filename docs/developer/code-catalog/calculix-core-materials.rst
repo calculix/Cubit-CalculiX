@@ -1,10 +1,8 @@
 Calculix Core Materials source files
 ====================================
 
-This is a navigation catalogue for the inspected project-owned source. Declaration
-names are source hints, not inferred behavior or evidence that a file is active
-in every build. Read the domain chapters and maintained CMake registration before
-changing a path. External utility implementations are excluded.
+Source navigation updated for the unit/material integration. These links describe
+file ownership; they do not establish compilation or runtime validation.
 
 .. list-table:: Owned files
    :header-rows: 1
@@ -26,12 +24,12 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Core/materials/CoreMaterials.hpp <../../../src/CalculiX/Core/materials/CoreMaterials.hpp>`
      - ``CoreMaterials``
-   * - :download:`src/CalculiX/Core/materials/CoreMaterialsLibrary.cpp <../../../src/CalculiX/Core/materials/CoreMaterialsLibrary.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/Core/materials/CoreMaterialsLibrary.hpp <../../../src/CalculiX/Core/materials/CoreMaterialsLibrary.hpp>`
-     - ``CoreMaterialsLibrary``
    * - :download:`src/CalculiX/Core/materials/CoreMaterialsStructs.hpp <../../../src/CalculiX/Core/materials/CoreMaterialsStructs.hpp>`
      - ``TopologyElasticMaterial, TopologyMaterialGroup, TopologyMaterialGrouping, TopologyMaterialData``
+   * - :download:`src/CalculiX/Core/materials/CoreMaterialsTopologyGrouping.cpp <../../../src/CalculiX/Core/materials/CoreMaterialsTopologyGrouping.cpp>`
+     - ``Implementation / integration``
+   * - :download:`src/CalculiX/Core/materials/CoreMaterialsTopologyGrouping.hpp <../../../src/CalculiX/Core/materials/CoreMaterialsTopologyGrouping.hpp>`
+     - ``CoreMaterialsTopologyGrouping``
    * - :download:`src/CalculiX/Core/materials/CoreMaterialsTreeData.cpp <../../../src/CalculiX/Core/materials/CoreMaterialsTreeData.cpp>`
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Core/materials/CoreMaterialsTreeData.hpp <../../../src/CalculiX/Core/materials/CoreMaterialsTreeData.hpp>`

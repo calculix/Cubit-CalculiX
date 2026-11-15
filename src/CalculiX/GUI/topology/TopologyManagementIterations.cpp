@@ -278,9 +278,13 @@ void TopologyManagement::updateDisplay()
   if (!selected)
   {
     pausePlayback();
-    metrics->setText(iterations->count() == 0
-      ? "No completed iterations available."
-      : "The requested iteration is not available.");
+    metrics->setText([&]() -> const char* {
+      if (iterations->count() == 0) {
+        return "No completed iterations available.";
+      } else {
+        return "The requested iteration is not available.";
+      }
+    }());
     return;
   }
 

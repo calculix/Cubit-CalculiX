@@ -22,7 +22,11 @@ QString resolved(bool exists, const std::string& name)
   {
     return QCoreApplication::translate("PropertyReferenceResolver", "Not found");
   }
-  return name.empty() ? QCoreApplication::translate("PropertyReferenceResolver", "Unnamed") : QString::fromStdString(name);
+  if (name.empty()) {
+    return QCoreApplication::translate("PropertyReferenceResolver", "Unnamed");
+  } else {
+    return QString::fromStdString(name);
+  }
 }
 }
 

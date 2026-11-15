@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorSourceControls.hpp"
 #include <QComboBox>
 #include <QToolButton>
@@ -63,12 +64,24 @@ PostprocessorSourceControls::PostprocessorSourceControls(Catalogue query,
   });
   connect(sources,qOverload<int>(&QComboBox::currentIndexChanged),this,[this](int)
   {
-    const int entry = sources->currentData().isValid() ? sources->currentData().toInt() : -1;
+    const int entry = [&]() -> int {
+      if (sources->currentData().isValid()) {
+        return sources->currentData().toInt();
+      } else {
+        return -1;
+      }
+    }();
     add->setEnabled(entry >= 0 && entry < static_cast<int>(entries.size()) && entries[entry].available);
   });
   connect(add,&QToolButton::clicked,this,[this,addJob]()
   {
-    const int entry = sources->currentData().isValid() ? sources->currentData().toInt() : -1;
+    const int entry = [&]() -> int {
+      if (sources->currentData().isValid()) {
+        return sources->currentData().toInt();
+      } else {
+        return -1;
+      }
+    }();
     if (entry >= 0 && entry < static_cast<int>(entries.size()) && entries[entry].available)
     {
       const auto selected = entries[entry];
@@ -85,7 +98,13 @@ void PostprocessorSourceControls::refresh()
 {
   std::string application;
   int job = -1;
-  const int previous = sources->currentData().isValid() ? sources->currentData().toInt() : -1;
+  const int previous = [&]() -> int {
+    if (sources->currentData().isValid()) {
+      return sources->currentData().toInt();
+    } else {
+      return -1;
+    }
+  }();
   if (previous >= 0 && previous < static_cast<int>(entries.size()))
   {
     application = entries[previous].reference.application_id;
@@ -96,7 +115,11 @@ void PostprocessorSourceControls::refresh()
   const bool available = catalogue && catalogue(current,error);
   QSignalBlocker guard(sources);
   sources->clear();
-  entries = available ? std::move(current) : std::vector<SimResults::ResultJobEntry>{};
+  if (available) {
+    entries = std::move(current);
+  } else {
+    entries = std::vector<SimResults::ResultJobEntry>{};
+  }
   auto* model = qobject_cast<QStandardItemModel*>(sources->model());
   int selected = -1;
   std::string group;
@@ -119,8 +142,20 @@ void PostprocessorSourceControls::refresh()
     }
   }
   sources->setCurrentIndex(selected);
-  sources->setToolTip(available ? tr("Choose a workspace job, then click Add") : QString::fromUtf8(error.c_str()));
-  const int index = sources->currentData().isValid() ? sources->currentData().toInt() : -1;
+  sources->setToolTip([&]() -> std::common_type_t<decltype(tr("Choose a workspace job, then click Add")), decltype(QString::fromUtf8(error.c_str()))> {
+    if (available) {
+      return tr("Choose a workspace job, then click Add");
+    } else {
+      return QString::fromUtf8(error.c_str());
+    }
+  }());
+  const int index = [&]() -> int {
+    if (sources->currentData().isValid()) {
+      return sources->currentData().toInt();
+    } else {
+      return -1;
+    }
+  }();
   add->setEnabled(index >= 0 && index < static_cast<int>(entries.size()) && entries[index].available);
 }
 

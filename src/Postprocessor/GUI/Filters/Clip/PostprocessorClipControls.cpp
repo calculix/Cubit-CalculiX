@@ -1,3 +1,4 @@
+#include <type_traits>
 #include <utility>
 #include "PostprocessorClipControls.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -28,7 +29,13 @@ PostprocessorClipControls::PostprocessorClipControls(std::weak_ptr<Postprocessor
     auto* validator = new QDoubleValidator(coordinates[i]);
     validator->setLocale(QLocale::c());
     coordinates[i]->setValidator(validator);
-    coordinates[i]->setText(QString::number(i < 3 ? Postprocessor::FilterDefaults::origin[i] : Postprocessor::FilterDefaults::normal[i-3],'g',17));
+    coordinates[i]->setText(QString::number([&]() -> std::common_type_t<decltype(Postprocessor::FilterDefaults::origin[i]), decltype(Postprocessor::FilterDefaults::normal[i-3])> {
+      if (i < 3) {
+        return Postprocessor::FilterDefaults::origin[i];
+      } else {
+        return Postprocessor::FilterDefaults::normal[i-3];
+      }
+    }(),'g',17));
     form->addRow(labels[i],coordinates[i]);
     connect(coordinates[i],&QLineEdit::editingFinished,this,[this]()
     {
@@ -83,14 +90,26 @@ PostprocessorClipControls::PostprocessorClipControls(std::weak_ptr<Postprocessor
   {
     if (!loading && !filters->currentData().toString().isEmpty())
     {
-      send(QString(checked ? "post filter show " : "post filter hide ")+Postprocessor::plot_quote(filters->currentText().toUtf8().toStdString()));
+      send(QString([&]() -> const char* {
+        if (checked) {
+          return "post filter show ";
+        } else {
+          return "post filter hide ";
+        }
+      }())+Postprocessor::plot_quote(filters->currentText().toUtf8().toStdString()));
     }
   });
   connect(side,&QComboBox::activated,this,[this](int index)
   {
     if (!loading && !filters->currentData().toString().isEmpty())
     {
-      send("post clip keep "+Postprocessor::plot_quote(filters->currentText().toUtf8().toStdString())+(index == 0 ? " positive" : " negative"));
+      send("post clip keep "+Postprocessor::plot_quote(filters->currentText().toUtf8().toStdString())+([&]() -> const char* {
+        if (index == 0) {
+          return " positive";
+        } else {
+          return " negative";
+        }
+      }()));
     }
   });
   refresh();
@@ -123,16 +142,38 @@ void PostprocessorClipControls::submit_plane(bool create)
       QMessageBox::warning(this,tr("Plane"),tr("Enter finite origin and normal coordinates."));
       return;
     }
-    (i < 3 ? plane.origin[i] : plane.normal[i-3]) = value;
+    if (i < 3) {
+      plane.origin[i] = value;
+    } else {
+      plane.normal[i-3] = value;
+    }
   }
-  const auto chosenName = create ? (name->text().isEmpty() ? app->suggested_filter_name(Postprocessor::FilterKind::Clip) : name->text().toUtf8().toStdString()) : filters->currentText().toUtf8().toStdString();
+  const auto chosenName = [&]() -> std::common_type_t<std::common_type_t<decltype(app->suggested_filter_name(Postprocessor::FilterKind::Clip)), decltype(name->text().toUtf8().toStdString())>, decltype(filters->currentText().toUtf8().toStdString())> {
+    if (create) {
+      return ([&]() -> std::common_type_t<decltype(app->suggested_filter_name(Postprocessor::FilterKind::Clip)), decltype(name->text().toUtf8().toStdString())> {
+        if (name->text().isEmpty()) {
+          return app->suggested_filter_name(Postprocessor::FilterKind::Clip);
+        } else {
+          return name->text().toUtf8().toStdString();
+        }
+      }());
+    } else {
+      return filters->currentText().toUtf8().toStdString();
+    }
+  }();
   const auto quoted = Postprocessor::plot_quote(chosenName);
   if (quoted.isEmpty())
   {
     QMessageBox::warning(this,tr("Filter name"),tr("Enter a name that can be quoted in the journal."));
     return;
   }
-  QString command = QString(create ? "post clip create " : "post clip plane ")+quoted;
+  QString command = QString([&]() -> const char* {
+    if (create) {
+      return "post clip create ";
+    } else {
+      return "post clip plane ";
+    }
+  }())+quoted;
   if (create)
   {
     const auto source = app->session().sources.find(app->session().active_source_id);
@@ -150,7 +191,11 @@ void PostprocessorClipControls::submit_plane(bool create)
   command += " "+Postprocessor::plane_command_text(plane);
   if (create)
   {
-    command += side->currentIndex() == 0 ? " keep positive" : " keep negative";
+    if (side->currentIndex() == 0) {
+      command += " keep positive";
+    } else {
+      command += " keep negative";
+    }
   }
 
   send(command);
@@ -189,7 +234,13 @@ void PostprocessorClipControls::refresh()
     }
   }
   const int index = filters->findData(selected);
-  filters->setCurrentIndex(index >= 0 ? index : 0);
+  filters->setCurrentIndex([&]() -> std::common_type_t<decltype(index), decltype(0)> {
+    if (index >= 0) {
+      return index;
+    } else {
+      return 0;
+    }
+  }());
   const auto found = app->session().filters.find(filters->currentData().toString().toStdString());
   visible->setEnabled(found != app->session().filters.end());
   if (found != app->session().filters.end())
@@ -199,10 +250,22 @@ void PostprocessorClipControls::refresh()
     {
       if (!coordinates[i]->hasFocus())
       {
-        coordinates[i]->setText(QString::number(i < 3 ? found->second.plane.origin[i] : found->second.plane.normal[i-3],'g',17));
+        coordinates[i]->setText(QString::number([&]() -> std::common_type_t<decltype(found->second.plane.origin[i]), decltype(found->second.plane.normal[i-3])> {
+          if (i < 3) {
+            return found->second.plane.origin[i];
+          } else {
+            return found->second.plane.normal[i-3];
+          }
+        }(),'g',17));
       }
     }
-    side->setCurrentIndex(found->second.keep == Postprocessor::ClipSide::Positive ? 0 : 1);
+    side->setCurrentIndex([&]() -> int {
+      if (found->second.keep == Postprocessor::ClipSide::Positive) {
+        return 0;
+      } else {
+        return 1;
+      }
+    }());
     bool shown = false;
     for (const auto& display : app->session().representations)
     {

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Postprocessor/GUI/Navigation/PostprocessorDeformationControls.hpp"
 #include "Postprocessor/GUI/Viewport/PostprocessorScene.hpp"
 #include "Framework/Interfaces/ResultSourceProviderInterface.hpp"
@@ -162,14 +163,26 @@ namespace
     check(deformation_available(mixed,settings,error),"Mixed displacement did not resolve");
     for (std::size_t dataset = 0; dataset < 2; ++dataset)
     {
-      auto* mesh = vtkDataSet::SafeDownCast(dataset == 0 ? nodal.dataset.get() : integration.dataset.get());
+      auto* mesh = vtkDataSet::SafeDownCast([&]() -> std::common_type_t<decltype(nodal.dataset.get()), decltype(integration.dataset.get())> {
+        if (dataset == 0) {
+          return nodal.dataset.get();
+        } else {
+          return integration.dataset.get();
+        }
+      }());
       std::shared_ptr<vtkDataSet> moved;
       check(deform_mesh(mesh,dataset,mixed,settings,moved,warning,error) && moved && warning.empty(),"Automatic mixed displacement failed");
       if (moved)
       {
         double p[3];
         moved->GetPoint(0,p);
-        check(p[0] == (dataset == 0 ? 1 : 4) && p[1] == 2 && p[2] == 3,"Wrong per-dataset displacement used");
+        check(p[0] == ([&]() -> int {
+          if (dataset == 0) {
+            return 1;
+          } else {
+            return 4;
+          }
+        }()) && p[1] == 2 && p[2] == 3,"Wrong per-dataset displacement used");
       }
     }
     mixed.fields[0].name = "SolverSpecificMotion";
@@ -251,7 +264,11 @@ int main(int argc,char** argv)
   PostprocessorDeformationControls* activePage = nullptr;
   auto dispatch = [&](bool preview, const std::string& command, std::string& issue)
   {
-    (preview ? previews : sent).push_back(command);
+    if (preview) {
+      previews.push_back(command);
+    } else {
+      sent.push_back(command);
+    }
     if (failNext)
     {
       failNext = false;
@@ -288,7 +305,11 @@ int main(int argc,char** argv)
         stream >> value;
         dataset = value;
       }
-      accepted = field == "auto" ? app->deform_auto(name,issue) : app->deform_field(name,field,dataset,issue);
+      if (field == "auto") {
+        accepted = app->deform_auto(name,issue);
+      } else {
+        accepted = app->deform_field(name,field,dataset,issue);
+      }
     }
     else
     {
@@ -473,5 +494,9 @@ int main(int argc,char** argv)
   finish();
   check(sent.size() == beforeReset && previews.size() == previewsBeforeReset,"Reset allowed stale commands");
   check(!page.isEnabled(),"Reset did not disable deformation toolbar");
-  return failures == 0 ? 0 : 1;
+  if (failures == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
 }

@@ -1,3 +1,5 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include <utility>
 #include "Core/application/SettingsRead.hpp"
 #include "Core/amplitudes/CoreAmplitudes.hpp"
 #include "Core/application/CoreIdSelection.hpp"
@@ -24,24 +26,25 @@ bool CoreAmplitudes::init()
   {
     return false; // already initialized
   }else{
-    is_initialized = true;  
+    is_initialized = true;
     return true;
   }
 }
 
 bool CoreAmplitudes::update()
-{ 
+{
   return true;
 }
 
 bool CoreAmplitudes::reset()
 {
   amplitudes_data.clear();
+  axis_quantities.clear();
   name_amplitude_data.clear();
   shiftx_amplitude_data.clear();
   shifty_amplitude_data.clear();
   amplitudevalues_amplitude_data.clear();
-  
+
   init();
   return true;
 }
@@ -53,6 +56,24 @@ bool CoreAmplitudes::check_initialized()
 
 bool CoreAmplitudes::create_amplitude(std::vector<std::string> options, std::vector<std::vector<std::string>> options2)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.create_amplitude(options, options2)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int amplitude_id;
   int amplitude_last;
   int sub_id;
@@ -62,7 +83,7 @@ bool CoreAmplitudes::create_amplitude(std::vector<std::string> options, std::vec
   int shifty_id;
   int time_type;
   int amplitudevalues_id;
-  
+
   if (amplitudes_data.size()==0)
   {
     amplitude_id = 1;
@@ -98,7 +119,7 @@ bool CoreAmplitudes::create_amplitude(std::vector<std::string> options, std::vec
   }
   shiftx_id = sub_id;
   this->add_shiftx_amplitude(std::to_string(sub_id), options[1]);
-  
+
   // shifty
   if (shifty_amplitude_data.size()==0)
   {
@@ -111,9 +132,9 @@ bool CoreAmplitudes::create_amplitude(std::vector<std::string> options, std::vec
   }
   shifty_id = sub_id;
   this->add_shifty_amplitude(std::to_string(sub_id), options[2]);
-  
+
   time_type = std::stoi(options[3]);
-  
+
   if (amplitudevalues_amplitude_data.size()==0)
   {
     sub_id = 1;
@@ -138,16 +159,51 @@ bool CoreAmplitudes::create_amplitude(std::vector<std::string> options, std::vec
   }
 
   this->add_amplitude(amplitude_id, name_id, shiftx_id, shifty_id, time_type, amplitudevalues_id);
+  std::string axis = "time";
+  if (options.size() > 4) {
+    axis = options[4];
+  }
+  if (axis != "time" && axis != "frequency") {
+    PRINT_ERROR("Amplitude axis must be time or frequency.\n");
+    return false;
+  }
+  axis_quantities[amplitude_id] = axis;
+
 
   return true;
 }
 
 bool CoreAmplitudes::modify_amplitude(int amplitude_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<std::vector<std::string>> options2)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (options.size() > 4 && !options[4].empty()) {
+      if ((options[4] != "time" && options[4] != "frequency") || options2.empty() || options_marker.size() < 2 || options_marker[1] != 1) {
+        PRINT_ERROR("Changing an amplitude axis requires time or frequency, replacement point values, and an explicit shiftx.\n");
+        return false;
+      }
+      candidate.axis_quantities[amplitude_id] = options[4];
+    }
+    if (!candidate.modify_amplitude(amplitude_id, options, options_marker, options2)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int sub_data_id;
   std::vector<int> sub_data_ids;
   int amplitudes_data_id = get_amplitudes_data_id_from_amplitude_id(amplitude_id);
-  
+
   if (amplitudes_data_id == -1)
   {
     return false;
@@ -194,7 +250,7 @@ bool CoreAmplitudes::modify_amplitude(int amplitude_id, std::vector<std::string>
         {
           amplitudevalues_amplitude_data.erase(amplitudevalues_amplitude_data.begin() + sub_data_ids[i-1]);
         }
-        
+
         for (size_t i = 0; i < options2.size(); i++)
         {
           add_amplitudevalues_amplitude(double(amplitudes_data[amplitudes_data_id][5]),ScientificNumber::parse(options2[i][0]),ScientificNumber::parse(options2[i][1]));
@@ -208,7 +264,7 @@ bool CoreAmplitudes::modify_amplitude(int amplitude_id, std::vector<std::string>
 bool CoreAmplitudes::add_amplitude(int amplitude_id, int name_id, int shiftx, int shifty, int time_type, int amplitudevalues_id)
 {
   std::vector<int> v = {amplitude_id, name_id, shiftx, shifty, time_type, amplitudevalues_id};
-      
+
   amplitudes_data.push_back(v);
 
   return true;
@@ -217,41 +273,42 @@ bool CoreAmplitudes::add_amplitude(int amplitude_id, int name_id, int shiftx, in
 bool CoreAmplitudes::add_name_amplitude(std::string name_amplitude_id, std::string name)
 {
   std::vector<std::string> v = {name_amplitude_id, name};
-  
+
   name_amplitude_data.push_back(v);
-  
+
   return true;
 }
 
 bool CoreAmplitudes::add_shiftx_amplitude(std::string shiftx_amplitude_id, std::string shiftx_value)
 {
   std::vector<std::string> v = {shiftx_amplitude_id, shiftx_value};
-  
+
   shiftx_amplitude_data.push_back(v);
-  
+
   return true;
 }
 
 bool CoreAmplitudes::add_shifty_amplitude(std::string shifty_amplitude_id, std::string shifty_value)
 {
   std::vector<std::string> v = {shifty_amplitude_id, shifty_value};
-  
+
   shifty_amplitude_data.push_back(v);
-  
+
   return true;
 }
 
 bool CoreAmplitudes::add_amplitudevalues_amplitude(double amplitudevalues_amplitude_id, double amplitudevalues_value1, double amplitudevalues_value2)
 {
   std::vector<double> v = {amplitudevalues_amplitude_id, amplitudevalues_value1, amplitudevalues_value2};
-  
+
   amplitudevalues_amplitude_data.push_back(v);
-  
+
   return true;
 }
 
 bool CoreAmplitudes::delete_amplitude(int amplitude_id)
 {
+  axis_quantities.erase(amplitude_id);
   int sub_data_id;
   std::vector<int> sub_data_ids;
   int amplitudes_data_id = get_amplitudes_data_id_from_amplitude_id(amplitude_id);
@@ -261,15 +318,15 @@ bool CoreAmplitudes::delete_amplitude(int amplitude_id)
   } else {
     sub_data_id = get_name_amplitude_data_id_from_name_amplitude_id(amplitudes_data[amplitudes_data_id][1]);
     if (sub_data_id != -1){
-      name_amplitude_data.erase(name_amplitude_data.begin() + sub_data_id);  
+      name_amplitude_data.erase(name_amplitude_data.begin() + sub_data_id);
     }
     sub_data_id = get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(amplitudes_data[amplitudes_data_id][2]);
     if (sub_data_id != -1){
-      shiftx_amplitude_data.erase(shiftx_amplitude_data.begin() + sub_data_id);  
+      shiftx_amplitude_data.erase(shiftx_amplitude_data.begin() + sub_data_id);
     }
     sub_data_id = get_shifty_amplitude_data_id_from_shifty_amplitude_id(amplitudes_data[amplitudes_data_id][3]);
     if (sub_data_id != -1){
-      shifty_amplitude_data.erase(shifty_amplitude_data.begin() + sub_data_id);  
+      shifty_amplitude_data.erase(shifty_amplitude_data.begin() + sub_data_id);
     }
     sub_data_ids = get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id(amplitudes_data[amplitudes_data_id][5]);
     for (size_t i = sub_data_ids.size(); i > 0; i--)
@@ -288,7 +345,7 @@ bool CoreAmplitudes::delete_amplitudes(std::vector<int> amplitude_ids)
   auto p = sort_permutation(amplitude_ids);
   this->apply_permutation(amplitude_ids, p);
   //reverse to delete backwards
-  std::reverse(amplitude_ids.begin(),amplitude_ids.end()); 
+  std::reverse(amplitude_ids.begin(),amplitude_ids.end());
 
   for (size_t i = 0; i < amplitude_ids.size(); i++)
   {
@@ -301,47 +358,48 @@ bool CoreAmplitudes::delete_amplitudes(std::vector<int> amplitude_ids)
     } else {
       sub_data_id = get_name_amplitude_data_id_from_name_amplitude_id_sorted(amplitudes_data[amplitudes_data_id][1]);
       if (sub_data_id != -1){
-        name_amplitude_data.erase(name_amplitude_data.begin() + sub_data_id);  
+        name_amplitude_data.erase(name_amplitude_data.begin() + sub_data_id);
       }
       sub_data_id = get_shiftx_amplitude_data_id_from_shiftx_amplitude_id_sorted(amplitudes_data[amplitudes_data_id][2]);
       if (sub_data_id != -1){
-        shiftx_amplitude_data.erase(shiftx_amplitude_data.begin() + sub_data_id);  
+        shiftx_amplitude_data.erase(shiftx_amplitude_data.begin() + sub_data_id);
       }
       sub_data_id = get_shifty_amplitude_data_id_from_shifty_amplitude_id_sorted(amplitudes_data[amplitudes_data_id][3]);
       if (sub_data_id != -1){
-        shifty_amplitude_data.erase(shifty_amplitude_data.begin() + sub_data_id);  
+        shifty_amplitude_data.erase(shifty_amplitude_data.begin() + sub_data_id);
       }
       sub_data_ids = get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id_sorted(amplitudes_data[amplitudes_data_id][5]);
       for (size_t i = sub_data_ids.size(); i > 0; i--)
       {
         amplitudevalues_amplitude_data.erase(amplitudevalues_amplitude_data.begin() + sub_data_ids[i-1]);
       }
+      axis_quantities.erase(amplitude_ids[i]);
       amplitudes_data.erase(amplitudes_data.begin() + amplitudes_data_id);
     }
   }
-  
+
   return true;
 }
 
 int CoreAmplitudes::get_amplitudes_data_id_from_amplitude_id(int amplitude_id)
-{ 
+{
   int return_int = -1;
-  
+
   for (size_t i = 0; i < amplitudes_data.size(); i++)
   {
     if (amplitudes_data[i][0]==amplitude_id)
     {
         return_int = int(i);
-    }  
+    }
   }
 
   return return_int;
 }
 
 int CoreAmplitudes::get_amplitudes_data_id_from_amplitude_id_sorted(int amplitude_id)
-{ 
+{
   int return_int = -1;
-  
+
   if (std::binary_search(sorted_amplitudes_ids.begin(), sorted_amplitudes_ids.end(), amplitude_id))
   {
     auto lower = std::lower_bound(sorted_amplitudes_ids.begin(), sorted_amplitudes_ids.end(), amplitude_id);
@@ -353,29 +411,29 @@ int CoreAmplitudes::get_amplitudes_data_id_from_amplitude_id_sorted(int amplitud
     if (amplitudes_data[i][0]==amplitude_id)
     {
         return_int = int(i);
-    }  
+    }
   }
   */
   return return_int;
 }
 
 int CoreAmplitudes::get_name_amplitude_data_id_from_name_amplitude_id(int name_amplitude_id)
-{ 
+{
   int return_int = -1;
-  
+
   for (size_t i = 0; i < name_amplitude_data.size(); i++)
   {
     if (name_amplitude_data[i][0]==std::to_string(name_amplitude_id))
     {
         return_int = int(i);
-    }  
+    }
   }
-  
+
   return return_int;
 }
 
 int CoreAmplitudes::get_name_amplitude_data_id_from_name_amplitude_id_sorted(int name_amplitude_id)
-{ 
+{
   int return_int = -1;
   if (std::binary_search(sorted_name_ids.begin(), sorted_name_ids.end(), name_amplitude_id))
   {
@@ -388,7 +446,7 @@ int CoreAmplitudes::get_name_amplitude_data_id_from_name_amplitude_id_sorted(int
     if (name_amplitude_data[i][0]==std::to_string(name_amplitude_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   */
   return return_int;
@@ -396,22 +454,22 @@ int CoreAmplitudes::get_name_amplitude_data_id_from_name_amplitude_id_sorted(int
 
 
 int CoreAmplitudes::get_shiftx_amplitude_data_id_from_shiftx_amplitude_id(int shiftx_amplitude_id)
-{ 
+{
   int return_int = -1;
-  
+
   for (size_t i = 0; i < shiftx_amplitude_data.size(); i++)
   {
     if (shiftx_amplitude_data[i][0]==std::to_string(shiftx_amplitude_id))
     {
         return_int = int(i);
-    }  
+    }
   }
-  
+
   return return_int;
 }
 
 int CoreAmplitudes::get_shiftx_amplitude_data_id_from_shiftx_amplitude_id_sorted(int shiftx_amplitude_id)
-{ 
+{
   int return_int = -1;
   if (std::binary_search(sorted_shiftx_ids.begin(), sorted_shiftx_ids.end(), shiftx_amplitude_id))
   {
@@ -424,29 +482,29 @@ int CoreAmplitudes::get_shiftx_amplitude_data_id_from_shiftx_amplitude_id_sorted
     if (shiftx_amplitude_data[i][0]==std::to_string(shiftx_amplitude_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   */
   return return_int;
 }
 
 int CoreAmplitudes::get_shifty_amplitude_data_id_from_shifty_amplitude_id(int shifty_amplitude_id)
-{ 
+{
   int return_int = -1;
- 
+
   for (size_t i = 0; i < shifty_amplitude_data.size(); i++)
   {
     if (shifty_amplitude_data[i][0]==std::to_string(shifty_amplitude_id))
     {
         return_int = int(i);
-    }  
+    }
   }
-  
+
   return return_int;
 }
 
 int CoreAmplitudes::get_shifty_amplitude_data_id_from_shifty_amplitude_id_sorted(int shifty_amplitude_id)
-{ 
+{
   int return_int = -1;
   if (std::binary_search(sorted_shifty_ids.begin(), sorted_shifty_ids.end(), shifty_amplitude_id))
   {
@@ -459,14 +517,14 @@ int CoreAmplitudes::get_shifty_amplitude_data_id_from_shifty_amplitude_id_sorted
     if (shifty_amplitude_data[i][0]==std::to_string(shifty_amplitude_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   */
   return return_int;
 }
 
 std::vector<int> CoreAmplitudes::get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id(int amplitudevalues_amplitude_id)
-{ 
+{
   std::vector<int> return_int;
 
   for (size_t i = 0; i < amplitudevalues_amplitude_data.size(); i++)
@@ -474,14 +532,14 @@ std::vector<int> CoreAmplitudes::get_amplitudevalues_amplitude_data_ids_from_amp
     if (amplitudevalues_amplitude_data[i][0]==double(amplitudevalues_amplitude_id))
     {
         return_int.push_back(int(i));
-    }  
+    }
   }
-  
+
   return return_int;
 }
 
 std::vector<int> CoreAmplitudes::get_amplitudevalues_amplitude_data_ids_from_amplitudevalues_amplitude_id_sorted(int amplitudevalues_amplitude_id)
-{ 
+{
   std::vector<int> return_int;
 
   if (std::binary_search(sorted_amplitudevalues_ids.begin(), sorted_amplitudevalues_ids.end(), amplitudevalues_amplitude_id))
@@ -495,7 +553,7 @@ std::vector<int> CoreAmplitudes::get_amplitudevalues_amplitude_data_ids_from_amp
         return_int.push_back(sorted_amplitudevalues_data_ids[i]);
       }else{
         return return_int;
-      } 
+      }
     }
   }
 
@@ -505,7 +563,7 @@ std::vector<int> CoreAmplitudes::get_amplitudevalues_amplitude_data_ids_from_amp
     if (amplitudevalues_amplitude_data[i][0]==double(amplitudevalues_amplitude_id))
     {
         return_int.push_back(int(i));
-    }  
+    }
   }
   */
   return return_int;
@@ -521,10 +579,20 @@ std::string CoreAmplitudes::get_amplitude_export() // get a list of the CalculiX
   std::string str_temp;
   int sub_data_id;
   std::vector<int> sub_data_ids;
-  
+
   //loop over all amplitudes
   for (size_t i = 0; i < amplitudes_data.size(); i++)
-  { 
+  {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Solver, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return {};
+    }
+    return candidate.get_amplitude_export();
+  }
+
     // CUSTOMLINE START
     std::vector<std::string> customline = ccx_export_iface.get_customline_data("BEFORE","AMPLITUDE",amplitudes_data[i][0]);
     for (size_t icl = 0; icl < customline.size(); icl++)
@@ -553,9 +621,9 @@ std::string CoreAmplitudes::get_amplitude_export() // get a list of the CalculiX
     // time_type
     if (amplitudes_data[i][4]==1)
     {
-      str_temp.append(", TIME=TOTAL TIME"); 
+      str_temp.append(", TIME=TOTAL TIME");
     }
-    
+
     amplitudes_export_list.push_back(str_temp);
 
     // second line
@@ -572,7 +640,7 @@ std::string CoreAmplitudes::get_amplitude_export() // get a list of the CalculiX
         str_temp.append(",");
       }
       ii = ii + 1;
-      
+
       str_temp.append(ccx_application_iface.to_string_scientific(amplitudevalues_amplitude_data[sub_data_ids[i]][1], 6));
       str_temp.append(",");
       str_temp.append(ccx_application_iface.to_string_scientific(amplitudevalues_amplitude_data[sub_data_ids[i]][2]));
@@ -594,7 +662,7 @@ std::string CoreAmplitudes::get_amplitude_export() // get a list of the CalculiX
     }
     // CUSTOMLINE END
   }
-  
+
   std::string amplitude_export;
 
   for (size_t i = 0; i < amplitudes_export_list.size(); i++)
@@ -631,7 +699,7 @@ std::string CoreAmplitudes::print_data()
   {
     str_return.append(shiftx_amplitude_data[i][0] + " " + shiftx_amplitude_data[i][1] + " \n");
   }
- 
+
   str_return.append("\n CoreAmplitudes shifty_amplitude_data: \n");
   str_return.append("shifty_amplitude_id, shifty_value \n");
 
@@ -670,7 +738,7 @@ bool CoreAmplitudes::update_sorted_vectors()
   {
     tmp_sorted_amplitudes_ids.push_back(amplitudes_data[i][0]);
     tmp_sorted_amplitudes_data_ids.push_back(int(i));
-  }  
+  }
   auto p = sort_permutation(tmp_sorted_amplitudes_ids);
   this->apply_permutation(tmp_sorted_amplitudes_ids, p);
   this->apply_permutation(tmp_sorted_amplitudes_data_ids, p);
@@ -679,7 +747,7 @@ bool CoreAmplitudes::update_sorted_vectors()
   {
     tmp_sorted_name_ids.push_back(std::stoi(name_amplitude_data[i][0]));
     tmp_sorted_name_data_ids.push_back(int(i));
-  }  
+  }
   p = sort_permutation(tmp_sorted_name_ids);
   this->apply_permutation(tmp_sorted_name_ids, p);
   this->apply_permutation(tmp_sorted_name_data_ids, p);
@@ -688,7 +756,7 @@ bool CoreAmplitudes::update_sorted_vectors()
   {
     tmp_sorted_shiftx_ids.push_back(std::stoi(shiftx_amplitude_data[i][0]));
     tmp_sorted_shiftx_data_ids.push_back(int(i));
-  }  
+  }
   p = sort_permutation(tmp_sorted_shiftx_ids);
   this->apply_permutation(tmp_sorted_shiftx_ids, p);
   this->apply_permutation(tmp_sorted_shiftx_data_ids, p);
@@ -697,7 +765,7 @@ bool CoreAmplitudes::update_sorted_vectors()
   {
     tmp_sorted_shifty_ids.push_back(std::stoi(shifty_amplitude_data[i][0]));
     tmp_sorted_shifty_data_ids.push_back(int(i));
-  }  
+  }
   p = sort_permutation(tmp_sorted_shifty_ids);
   this->apply_permutation(tmp_sorted_shifty_ids, p);
   this->apply_permutation(tmp_sorted_shifty_data_ids, p);
@@ -706,7 +774,7 @@ bool CoreAmplitudes::update_sorted_vectors()
   {
     tmp_sorted_amplitudevalues_ids.push_back(int(amplitudevalues_amplitude_data[i][0]));
     tmp_sorted_amplitudevalues_data_ids.push_back(int(i));
-  }  
+  }
   p = sort_permutation(tmp_sorted_amplitudevalues_ids);
   this->apply_permutation(tmp_sorted_amplitudevalues_ids, p);
   this->apply_permutation(tmp_sorted_amplitudevalues_data_ids, p);
@@ -725,7 +793,7 @@ bool CoreAmplitudes::update_sorted_vectors()
   return true;
 }
 //sorting of vectors
-template <typename T> 
+template <typename T>
 std::vector<std::size_t> CoreAmplitudes::sort_permutation(
     const std::vector<T>& vec)
 {
@@ -737,7 +805,7 @@ std::vector<std::size_t> CoreAmplitudes::sort_permutation(
     return p;
 }
 
-template <typename T> 
+template <typename T>
 void CoreAmplitudes::apply_permutation(
     std::vector<T>& vec,
     const std::vector<std::size_t>& p)
@@ -789,7 +857,11 @@ const std::string* CoreAmplitudes::find_amplitude_name(int amplitude_id)
 std::string CoreAmplitudes::get_amplitude_name(int amplitude_id)
 {
   const auto* name = find_amplitude_name(amplitude_id);
-  return name ? *name : std::string{};
+  if (name) {
+    return *name;
+  } else {
+    return std::string{};
+  }
 }
 
 std::vector<std::vector<std::string>> CoreAmplitudes::get_tree_data()
@@ -825,6 +897,16 @@ std::vector<int> CoreAmplitudes::get_amplitude_ids() const
 
 bool CoreAmplitudes::get_settings(int id, AmplitudesSettings& settings, std::string& error) const
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      error = unitError;
+      return false;
+    }
+    return candidate.get_settings(id, settings, error);
+  }
+
   settings = {};
   error.clear();
   const auto* record = SettingsRead::row(amplitudes_data, id, 6, error);
@@ -834,11 +916,19 @@ bool CoreAmplitudes::get_settings(int id, AmplitudesSettings& settings, std::str
     return false;
   }
 
+  const auto axis = axis_quantities.find(id);
+  if (axis != axis_quantities.end()) {
+    settings.axis = axis->second;
+  }
   settings.id = id;
   settings.name = SettingsRead::field(name_amplitude_data, (*record)[1], 1, error);
   settings.shiftX = SettingsRead::field(shiftx_amplitude_data, (*record)[2], 1, error);
   settings.shiftY = SettingsRead::field(shifty_amplitude_data, (*record)[3], 1, error);
-  settings.totalTime = (*record)[4] == 1 ? "YES" : "NO";
+  if ((*record)[4] == 1) {
+    settings.totalTime = "YES";
+  } else {
+    settings.totalTime = "NO";
+  }
 
   settings.points = SettingsRead::table(amplitudevalues_amplitude_data, (*record)[5], 2, error);
 

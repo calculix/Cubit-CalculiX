@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorProjectPersistence.hpp"
 #include "PostprocessorSessionCodec.hpp"
 #include "Framework/Storage/HDF5Tool.hpp"
@@ -18,7 +19,19 @@ bool Postprocessor::PostprocessorProjectPersistence::read(const std::string& fil
   try
   {
     HDF5Tool file(filename,false);
-    const auto effective = file.nameExists(root) ? root : file.nameExists(root+"-previous") ? root+"-previous" : std::string{};
+    const auto effective = [&]() -> std::common_type_t<decltype(root), std::common_type_t<decltype(root+"-previous"), decltype(std::string{})>> {
+      if (file.nameExists(root)) {
+        return root;
+      } else {
+        return [&]() -> std::common_type_t<decltype(root+"-previous"), decltype(std::string{})> {
+          if (file.nameExists(root+"-previous")) {
+            return root+"-previous";
+          } else {
+            return std::string{};
+          }
+        }();
+      }
+    }();
     if (effective.empty())
     {
       if (!file.close())
@@ -45,7 +58,13 @@ bool Postprocessor::PostprocessorProjectPersistence::read(const std::string& fil
         error = "Postprocessor payload is not a string dataset.";
         return false;
       }
-      const auto bytes = H5Tis_variable_str(type.getId()) > 0 ? dataset.getVlenBufSize(type,space) : static_cast<hsize_t>(type.getSize());
+      const auto bytes = [&]() -> std::common_type_t<decltype(dataset.getVlenBufSize(type,space)), decltype(static_cast<hsize_t>(type.getSize()))> {
+        if (H5Tis_variable_str(type.getId()) > 0) {
+          return dataset.getVlenBufSize(type,space);
+        } else {
+          return static_cast<hsize_t>(type.getSize());
+        }
+      }();
       if (bytes > PersistenceDefaults::maximum_payload_bytes+1)
       {
         error = "Postprocessor payload exceeds the configured size limit.";

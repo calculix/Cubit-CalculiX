@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostViewRotateCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -34,7 +35,13 @@ bool PostViewRotateCommand::execute(CubitCommandData& data)
     std::string error;
     if (!active || !data.get_value("yaw", yaw) || !data.get_value("pitch", pitch) || !active->rotate_camera(yaw, pitch, error))
     {
-      PRINT_ERROR("Cannot rotate Postprocessor camera: %s\n", error.empty() ? "missing application or values" : error.c_str());
+      PRINT_ERROR("Cannot rotate Postprocessor camera: %s\n", [&]() -> std::common_type_t<decltype("missing application or values"), decltype(error.c_str())> {
+        if (error.empty()) {
+          return "missing application or values";
+        } else {
+          return error.c_str();
+        }
+      }());
       return false;
     }
     return true;

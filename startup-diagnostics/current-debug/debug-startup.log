@@ -1,0 +1,6 @@
+2026-11-15T18:40:22.294 PID=6532 CubitSimComp startup withGUI=1
+2026-11-15T18:40:22.296 PID=6532 Framework acquired
+2026-11-15T18:40:22.304 PID=6532 Workspace host attached
+2026-11-15T18:40:24.997 PID=6532 Components started
+2026-11-15T18:40:25.088 PID=6532 CubitSimComp startup complete
+2026-11-15T18:40:30.098 PID=6532 Workspace shutdown

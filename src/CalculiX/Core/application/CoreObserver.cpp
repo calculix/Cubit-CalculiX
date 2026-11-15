@@ -40,7 +40,13 @@ void CoreObserver::notify_command_complete()
 
   CoreTopologyTrace::write("observer.core_update.enter");
   const bool updated = ccx_application_iface.core_update();
-  CoreTopologyTrace::write(updated ? "observer.core_update.success" : "observer.core_update.failure");
+  CoreTopologyTrace::write([&]() -> const char* {
+    if (updated) {
+      return "observer.core_update.success";
+    } else {
+      return "observer.core_update.failure";
+    }
+  }());
 
   if (updated && core_updated)
   {

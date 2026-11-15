@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostOpenCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -53,7 +54,13 @@ bool PostOpenCommand::execute(CubitCommandData& data)
 
     const bool file = data.find_keyword("FILE");
     std::string path;
-    if (file ? !data.get_string("file_path",path) : (!data.get_string("provider", prefix) || !data.get_value("job_id", job_id)))
+    if ([&]() -> std::common_type_t<decltype(!data.get_string("file_path",path)), decltype(!data.get_string("provider", prefix) || !data.get_value("job_id", job_id))> {
+      if (file) {
+        return !data.get_string("file_path",path);
+      } else {
+        return (!data.get_string("provider", prefix) || !data.get_value("job_id", job_id));
+      }
+    }())
     {
       PRINT_ERROR("Postprocessor opening requires a provider/job or a quoted result file path.\n");
       return false;
@@ -94,8 +101,19 @@ bool PostOpenCommand::execute(CubitCommandData& data)
         }
       }
     }
-    if (!(file ? active->open_file(data.find_keyword("CCX") ? "ccx" : "vtk",paths,name,error) :
-        active->open_job(prefix,job_id,name,error)))
+    if (!([&]() -> std::common_type_t<decltype(active->open_file(std::declval<const char*>(),paths,name,error)), decltype(active->open_job(prefix,job_id,name,error))> {
+      if (file) {
+        return active->open_file([&]() -> const char* {
+          if (data.find_keyword("CCX")) {
+            return "ccx";
+          } else {
+            return "vtk";
+          }
+        }(),paths,name,error);
+      } else {
+        return active->open_job(prefix,job_id,name,error);
+      }
+    }()))
     {
       PRINT_ERROR("Cannot open Postprocessor source: %s\n", error.c_str());
       return false;

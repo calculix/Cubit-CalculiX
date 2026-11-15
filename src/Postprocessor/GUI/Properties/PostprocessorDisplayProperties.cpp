@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorDisplayProperties.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include <QCheckBox>
@@ -39,7 +40,13 @@ namespace
     const auto color = QColor::fromRgbF(rgb[0],rgb[1],rgb[2]);
     button->setProperty("rgb",QVariantList{rgb[0],rgb[1],rgb[2]});
     button->setText(color.name(QColor::HexRgb).toUpper());
-    button->setStyleSheet(QStringLiteral("background-color: %1; color: %2;").arg(color.name(),color.lightnessF()>0.5 ? "black":"white"));
+    button->setStyleSheet(QStringLiteral("background-color: %1; color: %2;").arg(color.name(),[&]() -> const char* {
+      if (color.lightnessF()>0.5) {
+        return "black";
+      } else {
+        return "white";
+      }
+    }()));
   }
 
   std::array<double,3> color_value(const QPushButton* button)
@@ -278,9 +285,19 @@ void PostprocessorDisplayProperties::refresh()
   if (current.coloring.field)
   {
     const auto& selection = *current.coloring.field;
-    const auto* metadata = current.data && current.increment < current.data->increments.size() ?
-      Postprocessor::find_field(current.data->increments[current.increment],selection) : nullptr;
-    std::string label = metadata ? metadata->name : selection.array_name;
+    const auto* metadata = [&]() -> std::common_type_t<decltype(Postprocessor::find_field(current.data->increments[current.increment],selection)), decltype(nullptr)> {
+      if (current.data && current.increment < current.data->increments.size()) {
+        return Postprocessor::find_field(current.data->increments[current.increment],selection);
+      } else {
+        return nullptr;
+      }
+    }();
+    std::string label;
+    if (metadata) {
+      label = metadata->name;
+    } else {
+      label = selection.array_name;
+    }
     if (!metadata)
     {
       const auto active = application.lock();
@@ -298,8 +315,20 @@ void PostprocessorDisplayProperties::refresh()
         }
       }
     }
-    field->setText(QString::fromUtf8(label.c_str())+(metadata ? QString() : tr(" (unavailable)")));
-    component->setText(selection.magnitude ? tr("Magnitude") : QString::fromUtf8(selection.component.c_str()));
+    field->setText(QString::fromUtf8(label.c_str())+([&]() -> std::common_type_t<decltype(QString()), decltype(tr(" (unavailable)"))> {
+      if (metadata) {
+        return QString();
+      } else {
+        return tr(" (unavailable)");
+      }
+    }()));
+    component->setText([&]() -> std::common_type_t<decltype(tr("Magnitude")), decltype(QString::fromUtf8(selection.component.c_str()))> {
+      if (selection.magnitude) {
+        return tr("Magnitude");
+      } else {
+        return QString::fromUtf8(selection.component.c_str());
+      }
+    }());
   }
   update_enabled();
 }
@@ -374,7 +403,11 @@ bool PostprocessorDisplayProperties::draft(Postprocessor::ResultColoring& result
   result = baseline.coloring;
   result.palette = static_cast<Postprocessor::ColorPalette>(palette->currentData().toInt());
   result.reversed = reversed->isChecked();
-  result.bands = contours->currentData().toBool() ? std::optional<unsigned int>(static_cast<unsigned int>(bands->value())) : std::nullopt;
+  if (contours->currentData().toBool()) {
+    result.bands = std::optional<unsigned int>(static_cast<unsigned int>(bands->value()));
+  } else {
+    result.bands = std::nullopt;
+  }
   result.range_mode = static_cast<Postprocessor::ColorRangeMode>(range->currentData().toInt());
   if (result.range_mode == Postprocessor::ColorRangeMode::Fixed &&
       (!finite_value(rangeMinimum,result.fixed_range[0]) || !finite_value(rangeMaximum,result.fixed_range[1])))
@@ -413,7 +446,13 @@ bool PostprocessorDisplayProperties::commands(const Postprocessor::ResultColorin
 {
   using namespace Postprocessor;
   const auto name = QString::fromUtf8(baseline.source_name.c_str());
-  const QChar delimiter = name.contains('"') ? QChar(0x27) : QChar('"');
+  const QChar delimiter = [&]() -> QChar {
+    if (name.contains('"')) {
+      return QChar(0x27);
+    } else {
+      return QChar('"');
+    }
+  }();
   if (name.isEmpty() || name.contains(delimiter))
   {
     error = "The source name cannot be represented as one quoted command argument.";
@@ -458,14 +497,26 @@ bool PostprocessorDisplayProperties::commands(const Postprocessor::ResultColorin
       return false;
     }
   }
-  if (staged.reversed != target.reversed && !append(target.reversed ? "color reverse on" : "color reverse off",[&](ResultColoring& c)
+  if (staged.reversed != target.reversed && !append([&]() -> const char* {
+    if (target.reversed) {
+      return "color reverse on";
+    } else {
+      return "color reverse off";
+    }
+  }(),[&](ResultColoring& c)
     {
       c.reversed = target.reversed;
     }))
   {
     return false;
   }
-  if (staged.bands != target.bands && !append(target.bands ? "color bands "+std::to_string(*target.bands) : "color bands continuous",[&](ResultColoring& c)
+  if (staged.bands != target.bands && !append([&]() -> std::string {
+    if (target.bands) {
+      return "color bands "+std::to_string(*target.bands);
+    } else {
+      return "color bands continuous";
+    }
+  }(),[&](ResultColoring& c)
     {
       c.bands = target.bands;
     }))
@@ -499,13 +550,35 @@ bool PostprocessorDisplayProperties::commands(const Postprocessor::ResultColorin
   // including retained but disabled thresholds that cross an enabled endpoint.
   for (bool minimum : {true,false})
   {
-    const auto& old = minimum ? staged.minimum : staged.maximum;
-    const auto& desired = minimum ? target.minimum : target.maximum;
+    const auto& old = [&]() -> decltype((staged.minimum)) {
+      if (minimum) {
+        return staged.minimum;
+      } else {
+        return staged.maximum;
+      }
+    }();
+    const auto& desired = [&]() -> decltype((target.minimum)) {
+      if (minimum) {
+        return target.minimum;
+      } else {
+        return target.maximum;
+      }
+    }();
     if (old.enabled && (valuesChanged || !desired.enabled))
     {
-      if (!append(minimum ? "color limit minimum off" : "color limit maximum off",[minimum](ResultColoring& c)
+      if (!append([&]() -> const char* {
+        if (minimum) {
+          return "color limit minimum off";
+        } else {
+          return "color limit maximum off";
+        }
+      }(),[minimum](ResultColoring& c)
         {
-          (minimum ? c.minimum : c.maximum).enabled = false;
+          if (minimum) {
+            c.minimum.enabled = false;
+          } else {
+            c.maximum.enabled = false;
+          }
         }))
       {
         return false;
@@ -514,21 +587,55 @@ bool PostprocessorDisplayProperties::commands(const Postprocessor::ResultColorin
   }
   for (bool minimum : {true,false})
   {
-    const auto old = minimum ? staged.minimum : staged.maximum;
-    const auto desired = minimum ? target.minimum : target.maximum;
+    const auto old = [&]() -> std::common_type_t<decltype(staged.minimum), decltype(staged.maximum)> {
+      if (minimum) {
+        return staged.minimum;
+      } else {
+        return staged.maximum;
+      }
+    }();
+    const auto desired = [&]() -> std::common_type_t<decltype(target.minimum), decltype(target.maximum)> {
+      if (minimum) {
+        return target.minimum;
+      } else {
+        return target.maximum;
+      }
+    }();
     if (old.value != desired.value || old.color != desired.color)
     {
-      const auto operation = std::string("color limit ")+(minimum ? "minimum " : "maximum ")+number(desired.value)+
+      const auto operation = std::string("color limit ")+([&]() -> const char* {
+        if (minimum) {
+          return "minimum ";
+        } else {
+          return "maximum ";
+        }
+      }())+number(desired.value)+
         " color "+number(desired.color[0])+" "+number(desired.color[1])+" "+number(desired.color[2]);
       if (!append(operation,[minimum,desired](ResultColoring& c)
         {
-          auto& limit = minimum ? c.minimum : c.maximum;
+          auto& limit = [&]() -> decltype((c.minimum)) {
+            if (minimum) {
+              return c.minimum;
+            } else {
+              return c.maximum;
+            }
+          }();
           limit.value = desired.value;
           limit.color = desired.color;
           limit.enabled = true;
-        }) || !append(minimum ? "color limit minimum off" : "color limit maximum off",[minimum](ResultColoring& c)
+        }) || !append([&]() -> const char* {
+          if (minimum) {
+            return "color limit minimum off";
+          } else {
+            return "color limit maximum off";
+          }
+        }(),[minimum](ResultColoring& c)
         {
-          (minimum ? c.minimum : c.maximum).enabled = false;
+          if (minimum) {
+            c.minimum.enabled = false;
+          } else {
+            c.maximum.enabled = false;
+          }
         }))
       {
         return false;
@@ -537,17 +644,45 @@ bool PostprocessorDisplayProperties::commands(const Postprocessor::ResultColorin
   }
   for (bool minimum : {true,false})
   {
-    const auto& old = minimum ? staged.minimum : staged.maximum;
-    const auto& desired = minimum ? target.minimum : target.maximum;
-    if (!old.enabled && desired.enabled && !append(minimum ? "color limit minimum on" : "color limit maximum on",[minimum](ResultColoring& c)
+    const auto& old = [&]() -> decltype((staged.minimum)) {
+      if (minimum) {
+        return staged.minimum;
+      } else {
+        return staged.maximum;
+      }
+    }();
+    const auto& desired = [&]() -> decltype((target.minimum)) {
+      if (minimum) {
+        return target.minimum;
+      } else {
+        return target.maximum;
+      }
+    }();
+    if (!old.enabled && desired.enabled && !append([&]() -> const char* {
+      if (minimum) {
+        return "color limit minimum on";
+      } else {
+        return "color limit maximum on";
+      }
+    }(),[minimum](ResultColoring& c)
       {
-        (minimum ? c.minimum : c.maximum).enabled = true;
+        if (minimum) {
+            c.minimum.enabled = true;
+          } else {
+            c.maximum.enabled = true;
+          }
       }))
     {
       return false;
     }
   }
-  if (staged.legend_visible != target.legend_visible && !append(target.legend_visible ? "legend on" : "legend off",[&](ResultColoring& c)
+  if (staged.legend_visible != target.legend_visible && !append([&]() -> const char* {
+    if (target.legend_visible) {
+      return "legend on";
+    } else {
+      return "legend off";
+    }
+  }(),[&](ResultColoring& c)
     {
       c.legend_visible = target.legend_visible;
     }))

@@ -622,5 +622,9 @@ int main(int argc, char** argv)
     "The report-count limit allows replacement of an existing source");
   failures += reportImageTests(directory.path(), profiles);
   std::cout << failures << " report test failures\n";
-  return failures == 0 ? 0 : 1;
+  if (failures == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
 }

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PlotCommandText.hpp"
 #include "Postprocessor/Commands/FieldCommandText.hpp"
 #include <utility>
@@ -11,7 +12,13 @@ namespace Postprocessor
 {
   QString plot_quote(const std::string& value)
   {
-    const char delimiter = value.find('"') == std::string::npos ? '"' : '\'';
+    const char delimiter = [&]() -> char {
+      if (value.find('"') == std::string::npos) {
+        return '"';
+      } else {
+        return '\'';
+      }
+    }();
     if (value.empty() || value.find(delimiter) != std::string::npos ||
         std::any_of(value.begin(),value.end(),[](unsigned char c)
         {
@@ -76,7 +83,13 @@ namespace Postprocessor
       return {};
     }
     const auto key = field_command_text(selector);
-    const auto component = field->magnitude ? QStringLiteral("magnitude") : plot_quote(field->component);
+    const auto component = [&]() -> std::common_type_t<decltype(QStringLiteral("magnitude")), decltype(plot_quote(field->component))> {
+      if (field->magnitude) {
+        return QStringLiteral("magnitude");
+      } else {
+        return plot_quote(field->component);
+      }
+    }();
     if (key.isEmpty() || component.isEmpty())
     {
       return {};
@@ -113,7 +126,11 @@ namespace Postprocessor
       " "+key+" component "+component;
     if (reduction != PlotReduction::None)
     {
-      command += reduction == PlotReduction::Minimum ? " reduction minimum" : " reduction maximum";
+      if (reduction == PlotReduction::Minimum) {
+        command += " reduction minimum";
+      } else {
+        command += " reduction maximum";
+      }
     }
     command += " name "+plot_quote("curve_"+std::to_string(number))+" plot "+plot_quote(plotName);
     commands.push_back(command);

@@ -19,8 +19,7 @@
 
 class NavigationWidgetCache;
 
-class MyCmdWidgetFactory : public QObject, public NavigationWidgetFactory
-{
+class MyCmdWidgetFactory : public QObject, public NavigationWidgetFactory {
   Q_OBJECT
 
 public:
@@ -49,6 +48,7 @@ private:
   // example).
   QMap<QWidget*, NavigationWidgetCache*> widget_cache;
   QList<QPointer<QWidget>> topologyPanels;
+  bool openingMaterialEditor = false;
   QWidget* createWidget(const QString &name);
 };
 

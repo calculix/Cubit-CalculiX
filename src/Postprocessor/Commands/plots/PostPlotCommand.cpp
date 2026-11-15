@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Postprocessor/Commands/tables/TableCommandOptions.hpp"
 #include "Postprocessor/Commands/FieldCommandOptions.hpp"
 #include "PostPlotCommand.hpp"
@@ -100,8 +101,19 @@ bool PostPlotCommand::execute(CubitCommandData& data)
     }
     else if (data.find_keyword("CURVE"))
     {
-      accepted = active->change_plot_curve(plot,name,data.find_keyword("REMOVE") ? "remove" :
-        data.find_keyword("HIDE") ? "hide" : "show",error);
+      accepted = active->change_plot_curve(plot,name,[&]() -> std::common_type_t<decltype("remove"), const char*> {
+        if (data.find_keyword("REMOVE")) {
+          return "remove";
+        } else {
+          return [&]() -> const char* {
+            if (data.find_keyword("HIDE")) {
+              return "hide";
+            } else {
+              return "show";
+            }
+          }();
+        }
+      }(),error);
     }
     else if (data.find_keyword("ADD") && tableInput)
     {
@@ -114,8 +126,13 @@ bool PostPlotCommand::execute(CubitCommandData& data)
       const bool field = data.find_keyword("FIELD");
       Postprocessor::TableQualifiers tableQualifiers;
       Postprocessor::FieldQualifiers fieldQualifiers;
-      if (!(field ? Postprocessor::read_field_qualifiers(data,fieldQualifiers,error) :
-            Postprocessor::read_table_qualifiers(data,tableQualifiers,error)))
+      if (!([&]() -> std::common_type_t<decltype(Postprocessor::read_field_qualifiers(data,fieldQualifiers,error)), decltype(Postprocessor::read_table_qualifiers(data,tableQualifiers,error))> {
+        if (field) {
+          return Postprocessor::read_field_qualifiers(data,fieldQualifiers,error);
+        } else {
+          return Postprocessor::read_table_qualifiers(data,tableQualifiers,error);
+        }
+      }()))
       {
         PRINT_ERROR("Cannot select table: %s\n",error.c_str());
         return false;
@@ -146,8 +163,19 @@ bool PostPlotCommand::execute(CubitCommandData& data)
         PRINT_ERROR("Invalid entity ID; quote large decimal IDs.\n");
         return false;
       }
-      const auto kind = data.find_keyword("INTEGRATIONPOINT") ? Postprocessor::EntityKind::IntegrationPoint :
-        data.find_keyword("NODE") ? Postprocessor::EntityKind::Node : Postprocessor::EntityKind::Element;
+      const auto kind = [&]() -> std::common_type_t<decltype(Postprocessor::EntityKind::IntegrationPoint), std::common_type_t<decltype(Postprocessor::EntityKind::Node), decltype(Postprocessor::EntityKind::Element)>> {
+        if (data.find_keyword("INTEGRATIONPOINT")) {
+          return Postprocessor::EntityKind::IntegrationPoint;
+        } else {
+          return [&]() -> std::common_type_t<decltype(Postprocessor::EntityKind::Node), decltype(Postprocessor::EntityKind::Element)> {
+            if (data.find_keyword("NODE")) {
+              return Postprocessor::EntityKind::Node;
+            } else {
+              return Postprocessor::EntityKind::Element;
+            }
+          }();
+        }
+      }();
       std::optional<std::int64_t> ip;
       if (kind == Postprocessor::EntityKind::IntegrationPoint)
       {
@@ -187,15 +215,39 @@ bool PostPlotCommand::execute(CubitCommandData& data)
       {
         component = "magnitude";
       }
-      const auto reduction = data.find_keyword("MINIMUM") ? Postprocessor::PlotReduction::Minimum :
-        data.find_keyword("MAXIMUM") ? Postprocessor::PlotReduction::Maximum : Postprocessor::PlotReduction::None;
+      const auto reduction = [&]() -> std::common_type_t<decltype(Postprocessor::PlotReduction::Minimum), std::common_type_t<decltype(Postprocessor::PlotReduction::Maximum), decltype(Postprocessor::PlotReduction::None)>> {
+        if (data.find_keyword("MINIMUM")) {
+          return Postprocessor::PlotReduction::Minimum;
+        } else {
+          return [&]() -> std::common_type_t<decltype(Postprocessor::PlotReduction::Maximum), decltype(Postprocessor::PlotReduction::None)> {
+            if (data.find_keyword("MAXIMUM")) {
+              return Postprocessor::PlotReduction::Maximum;
+            } else {
+              return Postprocessor::PlotReduction::None;
+            }
+          }();
+        }
+      }();
       accepted = active->add_plot_entity(plot,name,source,dataset,kind,id,ip,field,component,magnitude,reduction,error,qualifiers);
     }
     else
     {
       data.get_string("replacement",replacement);
-      const std::string action = data.find_keyword("RENAME") ? "rename" : data.find_keyword("CLOSE") ? "close" :
-        data.find_keyword("REMOVE") ? "remove" : "show";
+      const std::string action = [&]() -> std::string {
+        if (data.find_keyword("RENAME")) {
+          return "rename";
+        } else {
+          if (data.find_keyword("CLOSE")) {
+            return "close";
+          } else {
+            if (data.find_keyword("REMOVE")) {
+              return "remove";
+            } else {
+              return "show";
+            }
+          }
+        }
+      }();
       accepted = active->change_plot(target,action,replacement,error);
     }
     if (!accepted)

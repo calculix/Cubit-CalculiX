@@ -84,6 +84,7 @@ private:
   QPointer<PostprocessorMouseOptionsPanel> mouseOptionsPanel;
   PostprocessorColorControls* colorControls = nullptr;
   QToolBar* navigationToolbar = nullptr;
+  QDockWidget* navigationDock = nullptr;
   QToolBar* fieldToolbar = nullptr;
   QToolBar* deformationToolbar = nullptr;
   QDockWidget* resultsDock = nullptr;

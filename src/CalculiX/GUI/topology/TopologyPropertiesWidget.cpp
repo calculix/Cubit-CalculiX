@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "TopologyPropertiesWidget.hpp"
 #include "Core/topology/CalculiXTopologyInterface.hpp"
 #include "Core/topology/CoreTopologyStructs.hpp"
@@ -23,21 +24,97 @@ bool TopologyPropertiesWidget::setTopology(int id)
   auto* general = addIdentity("Topology", id);
   addEditableName(general, id, QString::fromStdString(options.name));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
-  const QString method = options.method == TopologyMethod::Density ? "Density" : (options.method == TopologyMethod::LevelSet ? "Level set" : "Not set");
+  const QString method = [&]() -> QString {
+    if (options.method == TopologyMethod::Density) {
+      return "Density";
+    } else {
+      if (options.method == TopologyMethod::LevelSet) {
+        return "Level set";
+      } else {
+        return "Not set";
+      }
+    }
+  }();
   addValue(settingsGroup, "Method", method);
   const char* objective = topology_objective_name(options.objective);
-  addValue(settingsGroup, "Objective", objective == nullptr ? QString() : QString::fromLatin1(objective));
-  addValue(settingsGroup, "Volume fraction", options.has_volume_fraction ? QString::number(options.volume_fraction, 'g', 17) : QString());
-  addValue(settingsGroup, "Void stiffness ratio", options.has_void_ratio ? QString::number(options.void_ratio, 'g', 17) : QString());
-  addValue(settingsGroup, "Material cap", options.has_material_cap ? QString::number(options.material_cap) : QString());
-  addValue(settingsGroup, "Maximum iterations", options.has_maximum_iterations ? QString::number(options.maximum_iterations) : QString());
+  addValue(settingsGroup, "Objective", [&]() -> std::common_type_t<decltype(QString()), decltype(QString::fromLatin1(objective))> {
+    if (objective == nullptr) {
+      return QString();
+    } else {
+      return QString::fromLatin1(objective);
+    }
+  }());
+  addValue(settingsGroup, "Volume fraction", [&]() -> std::common_type_t<decltype(QString::number(options.volume_fraction, 'g', 17)), decltype(QString())> {
+    if (options.has_volume_fraction) {
+      return QString::number(options.volume_fraction, 'g', 17);
+    } else {
+      return QString();
+    }
+  }());
+  addValue(settingsGroup, "Void stiffness ratio", [&]() -> std::common_type_t<decltype(QString::number(options.void_ratio, 'g', 17)), decltype(QString())> {
+    if (options.has_void_ratio) {
+      return QString::number(options.void_ratio, 'g', 17);
+    } else {
+      return QString();
+    }
+  }());
+  addValue(settingsGroup, "Material cap", [&]() -> std::common_type_t<decltype(QString::number(options.material_cap)), decltype(QString())> {
+    if (options.has_material_cap) {
+      return QString::number(options.material_cap);
+    } else {
+      return QString();
+    }
+  }());
+  addValue(settingsGroup, "Maximum iterations", [&]() -> std::common_type_t<decltype(QString::number(options.maximum_iterations)), decltype(QString())> {
+    if (options.has_maximum_iterations) {
+      return QString::number(options.maximum_iterations);
+    } else {
+      return QString();
+    }
+  }());
   if (options.method == TopologyMethod::Density)
   {
-    addValue(settingsGroup, "Filter radius", options.has_filter_radius ? QString::number(options.filter_radius, 'g', 17) : QString());
-    addValue(settingsGroup, "Density move limit", options.has_move_limit ? QString::number(options.move_limit, 'g', 17) : QString());
-    addValue(settingsGroup, "Adaptive density moves", options.has_adaptive_move_limits ? (options.adaptive_move_limits ? QStringLiteral("Yes") : QStringLiteral("No")) : QString());
-    addValue(settingsGroup, "Minimum move limit", options.has_minimum_move_limit ? QString::number(options.minimum_move_limit, 'g', 17) : QString());
-    addValue(settingsGroup, "Density tolerance", options.has_density_tolerance ? QString::number(options.density_tolerance, 'g', 17) : QString());
+    addValue(settingsGroup, "Filter radius", [&]() -> std::common_type_t<decltype(QString::number(options.filter_radius, 'g', 17)), decltype(QString())> {
+      if (options.has_filter_radius) {
+        return QString::number(options.filter_radius, 'g', 17);
+      } else {
+        return QString();
+      }
+    }());
+    addValue(settingsGroup, "Density move limit", [&]() -> std::common_type_t<decltype(QString::number(options.move_limit, 'g', 17)), decltype(QString())> {
+      if (options.has_move_limit) {
+        return QString::number(options.move_limit, 'g', 17);
+      } else {
+        return QString();
+      }
+    }());
+    addValue(settingsGroup, "Adaptive density moves", [&]() -> std::common_type_t<std::common_type_t<decltype(QStringLiteral("Yes")), decltype(QStringLiteral("No"))>, decltype(QString())> {
+      if (options.has_adaptive_move_limits) {
+        return ([&]() -> std::common_type_t<decltype(QStringLiteral("Yes")), decltype(QStringLiteral("No"))> {
+          if (options.adaptive_move_limits) {
+            return QStringLiteral("Yes");
+          } else {
+            return QStringLiteral("No");
+          }
+        }());
+      } else {
+        return QString();
+      }
+    }());
+    addValue(settingsGroup, "Minimum move limit", [&]() -> std::common_type_t<decltype(QString::number(options.minimum_move_limit, 'g', 17)), decltype(QString())> {
+      if (options.has_minimum_move_limit) {
+        return QString::number(options.minimum_move_limit, 'g', 17);
+      } else {
+        return QString();
+      }
+    }());
+    addValue(settingsGroup, "Density tolerance", [&]() -> std::common_type_t<decltype(QString::number(options.density_tolerance, 'g', 17)), decltype(QString())> {
+      if (options.has_density_tolerance) {
+        return QString::number(options.density_tolerance, 'g', 17);
+      } else {
+        return QString();
+      }
+    }());
   }
   else if (options.method == TopologyMethod::LevelSet)
   {
@@ -51,9 +128,27 @@ bool TopologyPropertiesWidget::setTopology(int id)
     addValue(levelSet, "Integration tolerance", QString::number(options.level_set_settings.integration_tolerance, 'g', 17));
     addValue(levelSet, "Maximum integration refinements", QString::number(options.level_set_settings.integration_max_refinements));
   }
-  addValue(settingsGroup, "Relative objective tolerance", options.has_compliance_tolerance ? QString::number(options.compliance_tolerance, 'g', 17) : QString());
-  addReference(settingsGroup, PropertyReferenceKind::Nodeset, "Displacement nodeset", options.has_displacement_nodeset ? QString::number(options.displacement_nodeset) : QString());
-  addValue(settingsGroup, "Displacement component", options.has_displacement_component ? QString::number(options.displacement_component) : QString());
+  addValue(settingsGroup, "Relative objective tolerance", [&]() -> std::common_type_t<decltype(QString::number(options.compliance_tolerance, 'g', 17)), decltype(QString())> {
+    if (options.has_compliance_tolerance) {
+      return QString::number(options.compliance_tolerance, 'g', 17);
+    } else {
+      return QString();
+    }
+  }());
+  addReference(settingsGroup, PropertyReferenceKind::Nodeset, "Displacement nodeset", [&]() -> std::common_type_t<decltype(QString::number(options.displacement_nodeset)), decltype(QString())> {
+    if (options.has_displacement_nodeset) {
+      return QString::number(options.displacement_nodeset);
+    } else {
+      return QString();
+    }
+  }());
+  addValue(settingsGroup, "Displacement component", [&]() -> std::common_type_t<decltype(QString::number(options.displacement_component)), decltype(QString())> {
+    if (options.has_displacement_component) {
+      return QString::number(options.displacement_component);
+    } else {
+      return QString();
+    }
+  }());
   auto* run = addGroup("execution", "Execution", PropertySection::Settings);
   addValue(run, "State", QString::fromStdString(core.get_topology_run_state(id)));
   addValue(run, "Iterations", QString::number(static_cast<qulonglong>(core.get_topology_iteration_data(id).size())));

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorResultsTree.hpp"
 #include <QSignalBlocker>
 #include <QHeaderView>
@@ -55,11 +56,29 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
     auto* item = itemAt(position);
     if (!item || item->data(0,Kind).toInt() == static_cast<int>(ResultTreeItemKind::Source))
     {
-      const auto sourceId = item ? item->data(0,SourceId).toString().toStdString() : std::string{};
-      const auto sourceName = item ? item->data(0,SourceName).toString() : QString{};
+      const auto sourceId = [&]() -> std::common_type_t<decltype(item->data(0,SourceId).toString().toStdString()), decltype(std::string{})> {
+        if (item) {
+          return item->data(0,SourceId).toString().toStdString();
+        } else {
+          return std::string{};
+        }
+      }();
+      const auto sourceName = [&]() -> std::common_type_t<decltype(item->data(0,SourceName).toString()), decltype(QString{})> {
+        if (item) {
+          return item->data(0,SourceName).toString();
+        } else {
+          return QString{};
+        }
+      }();
       const auto viewId = activeView;
       const auto found = snapshots.find(sourceId);
-      const auto snapshot = found == snapshots.end() ? nullptr : found->second;
+      const auto snapshot = [&]() -> std::common_type_t<decltype(nullptr), decltype(found->second)> {
+        if (found == snapshots.end()) {
+          return nullptr;
+        } else {
+          return found->second;
+        }
+      }();
       std::vector<SimResults::ResultJobEntry> jobs;
       std::string error;
       const bool catalogueReady = available_jobs && available_jobs(jobs,error);
@@ -153,7 +172,13 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
     const auto id = item->data(0,SourceId).toString().toStdString();
     const auto dataset = static_cast<std::size_t>(item->data(0,Index).toULongLong());
     const auto snapshot = snapshots.find(id);
-    const auto data = snapshot == snapshots.end() ? nullptr : snapshot->second;
+    const auto data = [&]() -> std::common_type_t<decltype(nullptr), decltype(snapshot->second)> {
+      if (snapshot == snapshots.end()) {
+        return nullptr;
+      } else {
+        return snapshot->second;
+      }
+    }();
     const auto view = activeView;
     QMenu menu(this);
     QAction* show = nullptr;
@@ -181,7 +206,19 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
     }
     else if (chosen == show || chosen == hide || chosen == only)
     {
-      dataset_action(source,chosen == show ? Action::Show : chosen == hide ? Action::Hide : Action::ShowOnly,dataset);
+      dataset_action(source,[&]() -> std::common_type_t<decltype(Action::Show), std::common_type_t<decltype(Action::Hide), decltype(Action::ShowOnly)>> {
+        if (chosen == show) {
+          return Action::Show;
+        } else {
+          return [&]() -> std::common_type_t<decltype(Action::Hide), decltype(Action::ShowOnly)> {
+            if (chosen == hide) {
+              return Action::Hide;
+            } else {
+              return Action::ShowOnly;
+            }
+          }();
+        }
+      }(),dataset);
     }
   });
   connect(this,&QTreeWidget::itemDoubleClicked,this,[this](QTreeWidgetItem* item,int)
@@ -224,7 +261,13 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
         return;
       }
       const auto found = snapshots.find(id);
-      const auto snapshot = found == snapshots.end() ? nullptr : found->second;
+      const auto snapshot = [&]() -> std::common_type_t<decltype(nullptr), decltype(found->second)> {
+        if (found == snapshots.end()) {
+          return nullptr;
+        } else {
+          return found->second;
+        }
+      }();
       const auto view = activeView;
       QTimer::singleShot(0,this,[this,select,name,id,snapshot,view]()
       {
@@ -249,7 +292,13 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
     const bool shown = item->checkState(0) != Qt::Unchecked;
     const auto category = static_cast<Postprocessor::DatasetCategory>(item->data(0,Category).toInt());
     const auto found = snapshots.find(id);
-    const auto snapshot = found == snapshots.end() ? nullptr : found->second;
+    const auto snapshot = [&]() -> std::common_type_t<decltype(nullptr), decltype(found->second)> {
+      if (found == snapshots.end()) {
+        return nullptr;
+      } else {
+        return found->second;
+      }
+    }();
     const auto view = activeView;
     QTimer::singleShot(0,this,[this,visibility,name,id,dataset,shown,kind,category,snapshot,view]()
     {
@@ -268,8 +317,13 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
       }
       else if (kind == ResultTreeItemKind::Dataset && dataset_action)
       {
-        dataset_action(name,shown ? Postprocessor::DatasetVisibilityAction::Show :
-          Postprocessor::DatasetVisibilityAction::Hide,dataset);
+        dataset_action(name,[&]() -> std::common_type_t<decltype(Postprocessor::DatasetVisibilityAction::Show), decltype(Postprocessor::DatasetVisibilityAction::Hide)> {
+          if (shown) {
+            return Postprocessor::DatasetVisibilityAction::Show;
+          } else {
+            return Postprocessor::DatasetVisibilityAction::Hide;
+          }
+        }(),dataset);
       }
     });
   });
@@ -314,7 +368,13 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
     const auto sourceName = QString::fromUtf8(source.name.c_str());
     auto make = [&](QTreeWidgetItem* parent, const QString& text, ResultTreeItemKind kind, const QString& suffix, std::size_t index = 0)
     {
-      auto* item = parent ? new QTreeWidgetItem(parent, {text}) : new QTreeWidgetItem(this, {text});
+      auto* item = [&]() -> std::common_type_t<decltype(new QTreeWidgetItem(parent, {text})), decltype(new QTreeWidgetItem(this, {text}))> {
+        if (parent) {
+          return new QTreeWidgetItem(parent, {text});
+        } else {
+          return new QTreeWidgetItem(this, {text});
+        }
+      }();
       const auto key = sourceId + ":" + suffix;
       item->setData(0, Kind, static_cast<int>(kind));
       item->setData(0, SourceId, sourceId);
@@ -340,11 +400,23 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
     snapshots[source.id] = loadedData;
     // A local metadata-only fallback lets unavailable sources retain their
     // saved catalogue in the tree without publishing fabricated result data.
-    const auto data = loadedData ? loadedData : std::make_shared<SimResults::VtkResultsData>();
+    const auto data = [&]() -> std::common_type_t<decltype(loadedData), decltype(std::make_shared<SimResults::VtkResultsData>())> {
+      if (loadedData) {
+        return loadedData;
+      } else {
+        return std::make_shared<SimResults::VtkResultsData>();
+      }
+    }();
     if (!loadedData)
     {
       root->setText(0,sourceName+tr(" [Unavailable]"));
-      const auto reason = availability ? availability(source.id) : std::string("Result source is unavailable.");
+      const auto reason = [&]() -> std::common_type_t<decltype(availability(source.id)), decltype(std::string("Result source is unavailable."))> {
+        if (availability) {
+          return availability(source.id);
+        } else {
+          return std::string("Result source is unavailable.");
+        }
+      }();
       root->setToolTip(0,QString::fromUtf8(reason.c_str()));
     }
     std::optional<std::size_t> current;
@@ -376,14 +448,31 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
     if (displayable)
     {
       root->setFlags(root->flags() | Qt::ItemIsUserCheckable);
-      root->setCheckState(0, visible ? Qt::Checked : Qt::Unchecked);
+      root->setCheckState(0, [&]() -> std::common_type_t<decltype(Qt::Checked), decltype(Qt::Unchecked)> {
+        if (visible) {
+          return Qt::Checked;
+        } else {
+          return Qt::Unchecked;
+        }
+      }());
     }
     else if (loadedData)
     {
       root->setToolTip(0, tr("This source has no displayable mesh increment."));
     }
-    const auto datasetList = datasets ? datasets(source.id) :
-      (!data->datasets.empty() ? data->datasets : Postprocessor::result_dataset_catalogue(*data));
+    const auto datasetList = [&]() -> std::common_type_t<decltype(datasets(source.id)), std::common_type_t<decltype(data->datasets), decltype(Postprocessor::result_dataset_catalogue(*data))>> {
+      if (datasets) {
+        return datasets(source.id);
+      } else {
+        return ([&]() -> std::common_type_t<decltype(data->datasets), decltype(Postprocessor::result_dataset_catalogue(*data))> {
+          if (!data->datasets.empty()) {
+            return data->datasets;
+          } else {
+            return Postprocessor::result_dataset_catalogue(*data);
+          }
+        }());
+      }
+    }();
     std::set<std::size_t> available;
     if (current && *current < data->increments.size())
     {
@@ -418,14 +507,39 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
         }
         else
         {
-          const std::string category = dataset.kind == "Blocks" || dataset.kind == "DAT_Elements" ? "blocks" :
-            dataset.kind == "Nodesets" || dataset.kind == "DAT_Nodes" ? "nodesets" :
-            dataset.kind == "Surfaces" ? "sidesets" : "other";
+          const std::string category = [&]() -> std::string {
+            if (dataset.kind == "Blocks" || dataset.kind == "DAT_Elements") {
+              return "blocks";
+            } else {
+              if (dataset.kind == "Nodesets" || dataset.kind == "DAT_Nodes") {
+                return "nodesets";
+              } else {
+                if (dataset.kind == "Surfaces") {
+                  return "sidesets";
+                } else {
+                  return "other";
+                }
+              }
+            }
+          }();
           auto& group = categories[category];
           if (!group)
           {
-            const QString title = category == "blocks" ? tr("Blocks / Element sets") : category == "nodesets" ? tr("Node sets") :
-              category == "sidesets" ? tr("Side sets / Surfaces") : tr("Other datasets");
+            const QString title = [&]() -> QString {
+              if (category == "blocks") {
+                return tr("Blocks / Element sets");
+              } else {
+                if (category == "nodesets") {
+                  return tr("Node sets");
+                } else {
+                  if (category == "sidesets") {
+                    return tr("Side sets / Surfaces");
+                  } else {
+                    return tr("Other datasets");
+                  }
+                }
+              }
+            }();
             group = make(root,title,ResultTreeItemKind::MeshGroup,"mesh:"+QString::fromStdString(category));
           }
           parent = group;
@@ -458,7 +572,13 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
         if (displayable)
         {
           item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-          item->setCheckState(0,hidden.count(dataset.id) == 0 ? Qt::Checked : Qt::Unchecked);
+          item->setCheckState(0,[&]() -> std::common_type_t<decltype(Qt::Checked), decltype(Qt::Unchecked)> {
+            if (hidden.count(dataset.id) == 0) {
+              return Qt::Checked;
+            } else {
+              return Qt::Unchecked;
+            }
+          }());
         }
         auto tooltip = tr("Dataset %1: %2 points, %3 cells").arg(static_cast<qulonglong>(dataset.id))
           .arg(static_cast<qulonglong>(dataset.point_count)).arg(static_cast<qulonglong>(dataset.cell_count));
@@ -483,12 +603,34 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
       int shown = 0;
       for (int child = 0; child < category->childCount(); ++child)
       {
-        shown += category->child(child)->checkState(0) == Qt::Checked ? 1 : 0;
+        if (category->child(child)->checkState(0) == Qt::Checked) {
+          shown += 1;
+        } else {
+          shown += 0;
+        }
       }
       category->setFlags((category->flags() | Qt::ItemIsUserCheckable) & ~Qt::ItemIsSelectable);
-      category->setCheckState(0,shown == 0 ? Qt::Unchecked : shown == category->childCount() ? Qt::Checked : Qt::PartiallyChecked);
+      category->setCheckState(0,[&]() -> std::common_type_t<decltype(Qt::Unchecked), std::common_type_t<decltype(Qt::Checked), decltype(Qt::PartiallyChecked)>> {
+        if (shown == 0) {
+          return Qt::Unchecked;
+        } else {
+          return [&]() -> std::common_type_t<decltype(Qt::Checked), decltype(Qt::PartiallyChecked)> {
+            if (shown == category->childCount()) {
+              return Qt::Checked;
+            } else {
+              return Qt::PartiallyChecked;
+            }
+          }();
+        }
+      }());
     }
-    const auto groups = catalogue ? catalogue(source.id,current) : Postprocessor::result_field_groups(*data,current);
+    const auto groups = [&]() -> std::common_type_t<decltype(catalogue(source.id,current)), decltype(Postprocessor::result_field_groups(*data,current))> {
+      if (catalogue) {
+        return catalogue(source.id,current);
+      } else {
+        return Postprocessor::result_field_groups(*data,current);
+      }
+    }();
     if (!groups.empty())
     {
       auto* results = make(root,tr("Results"),ResultTreeItemKind::FieldsGroup,"results");
@@ -532,7 +674,13 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
           {
             components.append(QString::fromUtf8(component.c_str()));
           }
-          item->setToolTip(0,components.join(", ") + (group.available ? QString() : tr(" (unavailable in this frame)")));
+          item->setToolTip(0,components.join(", ") + ([&]() -> std::common_type_t<decltype(QString()), decltype(tr(" (unavailable in this frame)"))> {
+            if (group.available) {
+              return QString();
+            } else {
+              return tr(" (unavailable in this frame)");
+            }
+          }()));
           if (!group.available || field.association == SimResults::Association::Table)
           {
             item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
@@ -540,7 +688,13 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
         }
       }
     }
-    const auto tableList = tables ? tables(source.id) : Postprocessor::result_tables(*data,std::nullopt);
+    const auto tableList = [&]() -> std::common_type_t<decltype(tables(source.id)), decltype(Postprocessor::result_tables(*data,std::nullopt))> {
+      if (tables) {
+        return tables(source.id);
+      } else {
+        return Postprocessor::result_tables(*data,std::nullopt);
+      }
+    }();
     if (!tableList.empty())
     {
       auto* tableRoot = make(root,tr("Tables"),ResultTreeItemKind::MeshGroup,"tables");
@@ -570,5 +724,11 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
   {
     selected = activeField;
   }
-  setCurrentItem(selected != nullptr ? selected : activeRoot);
+  setCurrentItem([&]() -> std::common_type_t<decltype(selected), decltype(activeRoot)> {
+    if (selected != nullptr) {
+      return selected;
+    } else {
+      return activeRoot;
+    }
+  }());
 }

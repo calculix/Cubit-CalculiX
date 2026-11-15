@@ -174,5 +174,9 @@ int main(int argc,char** argv)
     }
   }
   check(second,"Second job did not publish its own legend/range");
-  return failures ? 1 : 0;
+  if (failures) {
+    return 1;
+  } else {
+    return 0;
+  }
 }

@@ -10,6 +10,7 @@ implementations are excluded.
 .. toctree::
    :maxdepth: 1
 
+   coding-style
    code-documentation
    framework
    calculix

@@ -36,10 +36,12 @@ CalculiX settings
 -----------------
 
 The CalculiX page configures solver and postprocessor paths, icon and Python
-resources, the material-library path, solver/converter thread counts, loaded
+resources, solver/converter thread counts, loaded
 result persistence and drawing defaults. Drawing size and visibility defaults
 apply to new or reset models; hover and selection colors update the current view.
-Changing Python or material-library paths does not reinitialize existing handles.
+Changing Python paths does not reinitialize existing handles. The shared
+material-library path is managed separately by Framework through
+``ccx materiallibrary file "libmaterial.hdf5"``.
 These are application preferences, not topology case settings.
 
 Postprocessor settings
@@ -91,7 +93,7 @@ CalculiX settings (Windows example paths)::
    ccx useroptions solver "Solver/ccx_2.23.exe"
    ccx useroptions icons "Icons/"
    ccx useroptions python_interface "."
-   ccx useroptions material_library "libmaterial.hdf5"
+   ccx materiallibrary file "libmaterial.hdf5"
    ccx useroptions solver_threads 8
    ccx useroptions converter_threads 8
    ccx useroptions quadrature_cache_mib 128

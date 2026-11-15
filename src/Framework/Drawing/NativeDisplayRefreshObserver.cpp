@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "NativeDisplayRefreshObserver.hpp"
 #include "GCubitModelSet.hpp"
 #include "GWindowFactory.hpp"
@@ -18,7 +19,13 @@ std::set<GCubitModelSet*> currentModels()
   {
     for (const auto& view : factory->views())
     {
-      auto* models = view == nullptr ? nullptr : dynamic_cast<GCubitModelSet*>(view->get_model_set());
+      auto* models = [&]() -> std::common_type_t<decltype(nullptr), decltype(dynamic_cast<GCubitModelSet*>(view->get_model_set()))> {
+        if (view == nullptr) {
+          return nullptr;
+        } else {
+          return dynamic_cast<GCubitModelSet*>(view->get_model_set());
+        }
+      }();
       if (models != nullptr)
       {
         result.insert(models);

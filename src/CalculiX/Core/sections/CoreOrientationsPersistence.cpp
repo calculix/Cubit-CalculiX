@@ -1,3 +1,6 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include "Core/units/CalculiXPhysicalModelUnits.hpp"
+#include <utility>
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/sections/CoreOrientationsPersistence.hpp"
 #include "Core/sections/CoreOrientations.hpp"
@@ -8,6 +11,33 @@
 
 bool CoreOrientationsPersistence::read(HDF5Tool& file, CoreOrientations& orientations)
 {
+  if (!orientations.domain_unit_view) {
+    CoreOrientations candidate;
+    candidate.is_initialized = orientations.is_initialized;
+    candidate.domain_unit_view = true;
+    if (!read(file, candidate)) {
+      return false;
+    }
+    std::string basis;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::read_basis(file, CalculiXModelSchema::path("Orientations"), basis, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return false;
+    }
+    if (basis.empty() && !CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Native, error)) {
+      PRINT_ERROR("Cannot restore Orientations units: %s\n", error.c_str());
+      return false;
+    }
+    auto validated = candidate;
+    if (!CalculiXDomainUnits::convert(validated, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("Cannot restore invalid physical values: %s\n", error.c_str());
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    orientations = std::move(candidate);
+    return true;
+  }
+
   try
   {
 
@@ -112,6 +142,12 @@ bool CoreOrientationsPersistence::read(HDF5Tool& file, CoreOrientations& orienta
 
 bool CoreOrientationsPersistence::write(HDF5Tool& file, const CoreOrientations& orientations)
 {
+  std::string unitError;
+  if (orientations.domain_unit_view || !CalculiXPhysicalModelUnits::write_basis(file, CalculiXModelSchema::path("Orientations"), "SI", unitError)) {
+    PRINT_ERROR("Cannot save Orientations canonical units: %s\n", unitError.c_str());
+    return false;
+  }
+
   try
   {
 

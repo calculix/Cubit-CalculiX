@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "TableCommandText.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/Commands/FieldCommandText.hpp"
@@ -52,11 +53,21 @@ namespace Postprocessor
     }
     if (selector.qualifiers.global)
     {
-      result += *selector.qualifiers.global ? " scope global" : " scope frame";
+      if (*selector.qualifiers.global) {
+        result += " scope global";
+      } else {
+        result += " scope frame";
+      }
     }
     if (selector.qualifiers.type)
     {
-      const auto type = selector.qualifiers.type->empty() ? QStringLiteral("\"\"") : plot_quote(*selector.qualifiers.type);
+      const auto type = [&]() -> std::common_type_t<decltype(QStringLiteral("\"\"")), decltype(plot_quote(*selector.qualifiers.type))> {
+        if (selector.qualifiers.type->empty()) {
+          return QStringLiteral("\"\"");
+        } else {
+          return plot_quote(*selector.qualifiers.type);
+        }
+      }();
       if (type.isEmpty())
       {
         error = "The table type cannot be quoted in a journal.";
@@ -89,6 +100,12 @@ namespace Postprocessor
       error = "The source name cannot be quoted in a journal.";
       return {};
     }
-    return QString(reference.field ? "post table field " : "post table open ")+selector+" source "+name;
+    return QString([&]() -> const char* {
+      if (reference.field) {
+        return "post table field ";
+      } else {
+        return "post table open ";
+      }
+    }())+selector+" source "+name;
   }
 }

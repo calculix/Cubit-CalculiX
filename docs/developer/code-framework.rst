@@ -106,3 +106,31 @@ startup stage. Add workspace assets to the host registration lifecycle and test
 headless use, repeated activation, failed startup and application teardown.
 The full source inventory is in :doc:`code-catalog/index` and provider declarations
 are extracted in :doc:`framework-api`.
+
+Component startup is synchronous within CubitSimComp::start_up. Framework
+acquisition initializes the shared material library; component providers then
+initialize Python and create their GUI before workspace registration. Headless startup
+omits GUI creation. See :doc:`framework-stage3` for lifecycle details.
+
+
+Shared editor toolbar integration
+----------------------------------
+
+``WorkspaceView::modelManagementToolbar`` is a borrowed workspace toolbar.
+``ModelEditorManager`` owns its actions and moves them onto the active toolbar
+after workspace activation, removing them from the previous toolbar first.
+Actions are appended last: Materials then Units for CalculiX, Units only for
+Postprocessor and Report. Toolbar bindings and actions use QPointer; editor
+cleanup deletes the shared actions without deleting workspace-owned toolbars.
+
+``GUI/Resources/FrameworkIconLoader.hpp`` and ``.cpp`` form the Framework sibling
+of ReportIconLoader, PostprocessorIconLoader and CalculiX's CoreIconLoader. SVG
+files are staged to the shared component Icons directory by CMake, matching the
+existing workspace deployment pattern. Framework GUI code does not call solver
+icon services.
+
+Postprocessor result navigation uses the existing graphicsBottomDock contract,
+with layout revision 2 to migrate saved upper-toolbar layouts. Navigation is
+owned by its dock; the workspace deletes the dock once, allowing Qt to delete
+its toolbar and controls. The dock is separate from the viewport and command
+line, preserving the Qt resize dividers above and below it.

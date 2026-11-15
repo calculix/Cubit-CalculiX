@@ -344,7 +344,19 @@ bool ccxWrapCommand::execute(CubitCommandData& data)
             return false;
         }
 
-        PRINT_INFO("Alpha wrap parameters used: alpha=%.17g (%s), offset=%.17g (%s), in model length units.\n", alpha, automatic_alpha ? "automatic" : "specified", offset, automatic_offset ? "automatic: alpha / 30" : "specified");
+        PRINT_INFO("Alpha wrap parameters used: alpha=%.17g (%s), offset=%.17g (%s), in model length units.\n", alpha, [&]() -> const char* {
+          if (automatic_alpha) {
+            return "automatic";
+          } else {
+            return "specified";
+          }
+        }(), offset, [&]() -> const char* {
+          if (automatic_offset) {
+            return "automatic: alpha / 30";
+          } else {
+            return "specified";
+          }
+        }());
         PRINT_INFO("To override, specify alpha <value> and/or offset <value> in the wrap command, or enter positive values in the wrapping widget.\n");
         PRINT_INFO("Smaller alpha retains finer detail; larger alpha gives a coarser wrap. Smaller offset gives a tighter fit; larger offset gives a looser fit.\n");
 

@@ -24,16 +24,17 @@ std::vector<std::string> ccxAmplitudeCreateCommand::get_syntax()
   syntax.append("[shiftx <value:label='shiftx',help='<shiftx>'>] ");
   syntax.append("[shifty <value:label='shifty',help='<shifty>'>] ");
   syntax.append("[totaltime] ");
-  
+
+  syntax.append("[axis <string:type='unquoted',number='1',label='axis'>] ");
   syntax_list.push_back(syntax);
-  
+
   return syntax_list;
 }
 
 std::vector<std::string> ccxAmplitudeCreateCommand::get_syntax_help()
 {
   std::vector<std::string> help(5);
-  help[0] = "ccx create amplitude name <name> time_amplitude <time_amplitude>... [shiftx <value>] [shifty <value>] [totaltime]"; 
+  help[0] = "ccx create amplitude name <name> time_amplitude <time_amplitude>... [axis time|frequency] [shiftx <value>] [shifty <value>] [totaltime]";
 
   return help;
 }
@@ -51,7 +52,7 @@ bool ccxAmplitudeCreateCommand::execute(CubitCommandData &data)
 
 
   std::string output;
-  std::vector<std::string> options;  
+  std::vector<std::string> options;
   std::vector<std::vector<std::string>> options2;
   double shiftx_value;
   double shifty_value;
@@ -61,7 +62,7 @@ bool ccxAmplitudeCreateCommand::execute(CubitCommandData &data)
   std::vector<double> amplitudevalues;
 
   data.get_values("time_amplitude", amplitudevalues);
-  
+
   if (amplitudevalues.size() % 2 != 0)
   {
     output = "Failed! numbers count is not even!\n";
@@ -108,13 +109,17 @@ bool ccxAmplitudeCreateCommand::execute(CubitCommandData &data)
   {
     options.push_back("-1");
   }
-  
+
+  std::string axis = "time";
+  data.get_string("axis", axis);
+  options.push_back(axis);
   if (!ccx_amplitudes_iface.create_amplitude(options,options2))
   {
     output = "Failed!\n";
-    PRINT_ERROR(output.c_str());
+    PRINT_ERROR("%s", output.c_str());
+    return false;
   }
   options.clear();
-    
+
   return true;
 }

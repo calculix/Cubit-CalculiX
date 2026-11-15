@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorPlotChart.hpp"
 #include "PostprocessorPlotRendering.hpp"
 #include <utility>
@@ -129,9 +130,27 @@ void PostprocessorPlotChart::apply_axes(const Postprocessor::PlotAxes& value)
   axes = value;
   for (int index = 0; index < 2; ++index)
   {
-    auto* axis = chart->GetAxis(index == 0 ? vtkAxis::BOTTOM : vtkAxis::LEFT);
-    const auto& range = index == 0 ? axes.x : axes.y;
-    axis->SetBehavior(range ? vtkAxis::FIXED : vtkAxis::AUTO);
+    auto* axis = chart->GetAxis([&]() -> std::common_type_t<decltype(vtkAxis::BOTTOM), decltype(vtkAxis::LEFT)> {
+      if (index == 0) {
+        return vtkAxis::BOTTOM;
+      } else {
+        return vtkAxis::LEFT;
+      }
+    }());
+    const auto& range = [&]() -> decltype((axes.x)) {
+      if (index == 0) {
+        return axes.x;
+      } else {
+        return axes.y;
+      }
+    }();
+    axis->SetBehavior([&]() -> std::common_type_t<decltype(vtkAxis::FIXED), decltype(vtkAxis::AUTO)> {
+      if (range) {
+        return vtkAxis::FIXED;
+      } else {
+        return vtkAxis::AUTO;
+      }
+    }());
     if (range)
     {
       axis->SetRange((*range)[0],(*range)[1]);

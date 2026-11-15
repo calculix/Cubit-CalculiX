@@ -191,12 +191,11 @@ and through commands.
 Result navigation toolbar
 -------------------------
 
-Three separate movable/floatable toolbars share this row in the order **Field
-selection**, **Deformation**, **Result navigation**. Each has its own View-menu
-toggle. Navigation is last so its slider can use the remaining width. Framework
-restores that default ordering on workspace activation, with a row break before
-Field selection. The main toolbar retains source/view actions and :doc:`selection`
-controls.
+Field selection and Deformation remain movable/floatable toolbars in the upper
+results row. Result navigation occupies a separate bottom dock directly above
+the shared command line. Its View-menu toggle controls the whole navigation
+dock. The main workspace toolbar ends with the Units icon; Postprocessor has no
+Materials button.
 
 The Deformation toolbar contains:
 **Deform**, displacement field, **Scale**, and **Undeformed**. There is no Apply
@@ -239,12 +238,18 @@ edit. Hiding the toolbar cancels an owned preview silently. A net-zero scale edi
 restores silently rather than adding a journal entry. Each completed checkbox,
 field or scale action is independent.
 
-Result navigation is the last toolbar on the shared results row beneath the
-main Postprocessor toolbar. It contains frame buttons, Play/Pause, the frame
-selector, slider, FPS and Loop without an expanding dock area. The toolbar can
-be moved or floated; View > Result navigation controls visibility. The Framework
-reasserts workspace toolbar row grouping on activation and preserves visibility.
-Command Line remains in its own full center-column dock.
+Result navigation is docked in the center column above Command Line. It contains
+frame buttons, Play/Pause, the frame selector, slider, FPS and Loop. Its toolbar
+is embedded in the dock and cannot move or float into the upper toolbar rows.
+View > Result navigation controls visibility. The central viewport has no new
+fixed height or maximum-height constraint: the Qt dock divider above navigation
+and the divider above Command Line remain available for resizing. The viewport's
+internal results/table splitter remains independent.
+
+The Framework's existing bottom-dock layout revision migrates previously saved
+Postprocessor layouts once to this placement. Subsequent workspace switches use
+the saved layout and visibility. Command Line retains its own center-column dock.
+
 
 Animation controls
 -------------------

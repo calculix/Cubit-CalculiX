@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PropertyTreeWidget.hpp"
 #include "PropertyEditDelegate.hpp"
 #include "PropertyCommandText.hpp"
@@ -111,8 +112,20 @@ void PropertyTreeWidget::restoreViewState(const PropertyViewState& state, bool r
     restoreExpansion(topLevelItem(index), state);
   }
   doItemsLayout();
-  verticalScrollBar()->setValue(restoreScroll ? state.verticalScroll : 0);
-  horizontalScrollBar()->setValue(restoreScroll ? state.horizontalScroll : 0);
+  verticalScrollBar()->setValue([&]() -> std::common_type_t<decltype(state.verticalScroll), decltype(0)> {
+    if (restoreScroll) {
+      return state.verticalScroll;
+    } else {
+      return 0;
+    }
+  }());
+  horizontalScrollBar()->setValue([&]() -> std::common_type_t<decltype(state.horizontalScroll), decltype(0)> {
+    if (restoreScroll) {
+      return state.horizontalScroll;
+    } else {
+      return 0;
+    }
+  }());
 }
 
 QTreeWidgetItem* PropertyTreeWidget::addGroup(const QString& key, const QString& title, PropertySection section)
@@ -226,7 +239,13 @@ void PropertyTreeWidget::addCommandChoice(QTreeWidgetItem* group, int id, const 
 
 void PropertyTreeWidget::addValue(QTreeWidgetItem* group, const QString& property, const QString& value)
 {
-  const QString display = value.isEmpty() ? tr("Not set") : value;
+  const QString display = [&]() -> QString {
+    if (value.isEmpty()) {
+      return tr("Not set");
+    } else {
+      return value;
+    }
+  }();
   auto* row = new QTreeWidgetItem(group, {property, display});
   row->setToolTip(0, property);
   row->setToolTip(1, display);
@@ -273,7 +292,13 @@ void PropertyTreeWidget::addTableRows(QTreeWidgetItem* group, const QStringList&
     row->setData(0, SectionKeyRole, QString("row_%1").arg(static_cast<qulonglong>(index)));
     for (std::size_t column = 0; column < values[index].size(); ++column)
     {
-      const QString label = static_cast<int>(column) < columns.size() ? columns[static_cast<int>(column)] : tr("Value %1").arg(static_cast<qulonglong>(column + 1));
+      const QString label = [&]() -> QString {
+        if (static_cast<int>(column) < columns.size()) {
+          return columns[static_cast<int>(column)];
+        } else {
+          return tr("Value %1").arg(static_cast<qulonglong>(column + 1));
+        }
+      }();
       addNumber(row, label, values[index][column]);
     }
   }

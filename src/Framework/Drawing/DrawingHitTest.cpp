@@ -37,7 +37,13 @@ Point closestPoint(const Point& a, const Point& b, double x, double y)
   const double dx = b[0] - a[0];
   const double dy = b[1] - a[1];
   const double length = dx * dx + dy * dy;
-  const double t = length > 0 ? std::clamp(((x - a[0]) * dx + (y - a[1]) * dy) / length, 0.0, 1.0) : 0;
+  const double t = [&]() -> double {
+    if (length > 0) {
+      return std::clamp(((x - a[0]) * dx + (y - a[1]) * dy) / length, 0.0, 1.0);
+    } else {
+      return 0;
+    }
+  }();
   return {a[0] + t * dx, a[1] + t * dy, a[2] + t * (b[2] - a[2])};
 }
 
@@ -195,7 +201,13 @@ bool DrawingHitTest::pick(GView& view, float x, float y, const DrawingPickSnapsh
       }
       else
       {
-        const std::size_t edges = primitive.kind == DrawingPrimitiveKind::Polygon ? points.size() : points.size() - 1;
+        const std::size_t edges = [&]() -> std::size_t {
+          if (primitive.kind == DrawingPrimitiveKind::Polygon) {
+            return points.size();
+          } else {
+            return points.size() - 1;
+          }
+        }();
         for (std::size_t edge = 0; edge < edges; ++edge)
         {
           const auto point = closestPoint(points[edge], points[(edge + 1) % points.size()], x, y);

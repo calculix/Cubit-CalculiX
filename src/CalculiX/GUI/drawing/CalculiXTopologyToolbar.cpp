@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CalculiXTopologyToolbar.hpp"
 #include "Core/topology/CalculiXTopologyInterface.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
@@ -38,7 +39,17 @@ CalculiXTopologyToolbar::CalculiXTopologyToolbar(QWidget* parent)
     action->setToolTip(tip);
     connect(action, &QAction::triggered, this, [this, destination]()
     {
-      const int index = destination == -2 ? 0 : destination == 2 ? iterations->count() - 1 : iterations->currentIndex() + destination;
+      const int index = [&]() -> int {
+        if (destination == -2) {
+          return 0;
+        } else {
+          if (destination == 2) {
+            return iterations->count() - 1;
+          } else {
+            return iterations->currentIndex() + destination;
+          }
+        }
+      }();
       if (index >= 0 && index < iterations->count())
       {
         iterations->setCurrentIndex(index);
@@ -159,8 +170,26 @@ void CalculiXTopologyToolbar::refresh()
     }
   }
   const int index = cases->findData(selected);
-  cases->setCurrentIndex(index < 0 ? (cases->count() > 0 ? 0 : -1) : index);
-  refreshIterations(index < 0 ? -1 : iteration);
+  cases->setCurrentIndex([&]() -> std::common_type_t<std::common_type_t<decltype(0), decltype(-1)>, decltype(index)> {
+    if (index < 0) {
+      return ([&]() -> std::common_type_t<decltype(0), decltype(-1)> {
+        if (cases->count() > 0) {
+          return 0;
+        } else {
+          return -1;
+        }
+      }());
+    } else {
+      return index;
+    }
+  }());
+  refreshIterations([&]() -> std::common_type_t<decltype(-1), decltype(iteration)> {
+    if (index < 0) {
+      return -1;
+    } else {
+      return iteration;
+    }
+  }());
   CalculiXDrawInterface drawing;
   const auto state = drawing.drawing_state();
   const auto group = state.groups.find(DrawGroup::Topology);
@@ -204,7 +233,13 @@ void CalculiXTopologyToolbar::refreshIterations(int selected)
     }
   }
   const int index = iterations->findData(selected);
-  iterations->setCurrentIndex(index < 0 ? iterations->count() - 1 : index);
+  iterations->setCurrentIndex([&]() -> std::common_type_t<decltype(iterations->count() - 1), decltype(index)> {
+    if (index < 0) {
+      return iterations->count() - 1;
+    } else {
+      return index;
+    }
+  }());
 }
 
 void CalculiXTopologyToolbar::synchronize()

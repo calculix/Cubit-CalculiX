@@ -1,3 +1,4 @@
+#include <type_traits>
 #pragma once
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitCommandInterface.hpp"
@@ -34,8 +35,20 @@ namespace Postprocessor
         {
           const auto& filter = entry.second;
           const auto input = application->session().sources.find(filter.input.object_id);
-          PRINT_INFO("%s | %s | source %s\n",filter.name.c_str(),filter.kind == FilterKind::Clip ? "Clip" : "Section",
-            input == application->session().sources.end() ? "unavailable" : input->second.name.c_str());
+          PRINT_INFO("%s | %s | source %s\n",filter.name.c_str(),[&]() -> const char* {
+            if (filter.kind == FilterKind::Clip) {
+              return "Clip";
+            } else {
+              return "Section";
+            }
+          }(),
+            [&]() -> std::common_type_t<decltype("unavailable"), decltype(input->second.name.c_str())> {
+              if (input == application->session().sources.end()) {
+                return "unavailable";
+              } else {
+                return input->second.name.c_str();
+              }
+            }());
         }
         return true;
       }
@@ -54,7 +67,11 @@ namespace Postprocessor
         requested.name = name;
         requested.kind = *kind;
         requested.plane = plane;
-        requested.keep = data.find_keyword("NEGATIVE") ? ClipSide::Negative : ClipSide::Positive;
+        if (data.find_keyword("NEGATIVE")) {
+          requested.keep = ClipSide::Negative;
+        } else {
+          requested.keep = ClipSide::Positive;
+        }
         accepted = application->create_filter(requested,source,error);
       }
       else if (error.empty())
@@ -71,11 +88,36 @@ namespace Postprocessor
             error = "No filter of this kind has that name.";
           }
         }
-        const std::string action = data.find_keyword("PLANE") ? "plane" : data.find_keyword("KEEP") ? "keep" :
-          data.find_keyword("SHOW") ? "show" : data.find_keyword("HIDE") ? "hide" : data.find_keyword("RENAME") ? "rename" : "remove";
+        const std::string action = [&]() -> std::string {
+          if (data.find_keyword("PLANE")) {
+            return "plane";
+          } else {
+            if (data.find_keyword("KEEP")) {
+              return "keep";
+            } else {
+              if (data.find_keyword("SHOW")) {
+                return "show";
+              } else {
+                if (data.find_keyword("HIDE")) {
+                  return "hide";
+                } else {
+                  if (data.find_keyword("RENAME")) {
+                    return "rename";
+                  } else {
+                    return "remove";
+                  }
+                }
+              }
+            }
+          }
+        }();
         if (action == "keep")
         {
-          value = data.find_keyword("NEGATIVE") ? "negative" : "positive";
+          if (data.find_keyword("NEGATIVE")) {
+            value = "negative";
+          } else {
+            value = "positive";
+          }
         }
         if (error.empty())
         {
@@ -91,7 +133,13 @@ namespace Postprocessor
     {
       error = exception.what();
     }
-    PRINT_ERROR("Cannot change filter: %s\n",error.empty() ? "Invalid filter arguments." : error.c_str());
+    PRINT_ERROR("Cannot change filter: %s\n",[&]() -> std::common_type_t<decltype("Invalid filter arguments."), decltype(error.c_str())> {
+      if (error.empty()) {
+        return "Invalid filter arguments.";
+      } else {
+        return error.c_str();
+      }
+    }());
     return false;
   }
 }

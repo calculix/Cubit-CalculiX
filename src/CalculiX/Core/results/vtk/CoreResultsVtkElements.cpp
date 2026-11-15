@@ -79,7 +79,11 @@ bool CoreResultsVtkElements::describe(const std::string& calculix_type, Descript
   if (type == "C3D8" || type == "C3D8R" || type == "C3D8I")
   {
     frd = 1;
-    rule = type == "C3D8I" ? "C3D8" : type;
+    if (type == "C3D8I") {
+      rule = "C3D8";
+    } else {
+      rule = type;
+    }
   }
   else if (type == "C3D6")
   {
@@ -244,13 +248,21 @@ bool CoreResultsVtkElements::exodus_side(const std::string& calculix_type, int s
     case 7:
     case 8:
     {
-      mapping = shell ? std::vector<int>{2, 1, 3, 4, 5} : std::vector<int>{1, 2, 3};
+      if (shell) {
+        mapping = std::vector<int>{2, 1, 3, 4, 5};
+      } else {
+        mapping = std::vector<int>{1, 2, 3};
+      }
       break;
     }
     case 9:
     case 10:
     {
-      mapping = shell ? std::vector<int>{2, 1, 3, 4, 5, 6} : std::vector<int>{1, 2, 3, 4};
+      if (shell) {
+        mapping = std::vector<int>{2, 1, 3, 4, 5, 6};
+      } else {
+        mapping = std::vector<int>{1, 2, 3, 4};
+      }
       break;
     }
     default:
@@ -278,7 +290,13 @@ bool CoreResultsVtkElements::surface(const Description& element, const std::stri
     return false;
   }
   std::vector<int> indices;
-  const int number = side.size() == 2 ? side[1] - '0' : 0;
+  const int number = [&]() -> int {
+    if (side.size() == 2) {
+      return side[1] - '0';
+    } else {
+      return 0;
+    }
+  }();
   int type = 0;
   if (element.frd_type == 1 || element.frd_type == 4)
   {
@@ -289,8 +307,18 @@ bool CoreResultsVtkElements::surface(const Description& element, const std::stri
       error = "A solid hex requires a numeric CCX side.";
       return false;
     }
-    indices.assign(faces[number - 1], faces[number - 1] + (quadratic ? 8 : 4));
-    type = quadratic ? 23 : 9;
+    indices.assign(faces[number - 1], faces[number - 1] + ([&]() -> int {
+      if (quadratic) {
+        return 8;
+      } else {
+        return 4;
+      }
+    }()));
+    if (quadratic) {
+      type = 23;
+    } else {
+      type = 9;
+    }
   }
   else if (element.frd_type == 3 || element.frd_type == 6)
   {
@@ -301,8 +329,18 @@ bool CoreResultsVtkElements::surface(const Description& element, const std::stri
       error = "A solid tetrahedron requires a numeric CCX side.";
       return false;
     }
-    indices.assign(faces[number - 1], faces[number - 1] + (quadratic ? 6 : 3));
-    type = quadratic ? 22 : 5;
+    indices.assign(faces[number - 1], faces[number - 1] + ([&]() -> int {
+      if (quadratic) {
+        return 6;
+      } else {
+        return 3;
+      }
+    }()));
+    if (quadratic) {
+      type = 22;
+    } else {
+      type = 5;
+    }
   }
   else if (element.frd_type == 2 || element.frd_type == 5)
   {
@@ -314,9 +352,35 @@ bool CoreResultsVtkElements::surface(const Description& element, const std::stri
       return false;
     }
     const bool triangle = number <= 2;
-    const int count = triangle ? (quadratic ? 6 : 3) : (quadratic ? 8 : 4);
+    const int count = [&]() -> int {
+      if (triangle) {
+        if (quadratic) {
+          return 6;
+        } else {
+          return 3;
+        }
+      } else {
+        if (quadratic) {
+          return 8;
+        } else {
+          return 4;
+        }
+      }
+    }();
     indices.assign(faces[number - 1], faces[number - 1] + count);
-    type = triangle ? (quadratic ? 22 : 5) : (quadratic ? 23 : 9);
+    if (triangle) {
+      if (quadratic) {
+        type = 22;
+      } else {
+        type = 5;
+      }
+    } else {
+      if (quadratic) {
+        type = 23;
+      } else {
+        type = 9;
+      }
+    }
   }
   else if (element.frd_type >= 7 && element.frd_type <= 10)
   {
@@ -329,13 +393,31 @@ bool CoreResultsVtkElements::surface(const Description& element, const std::stri
     const bool shell = formulation[0] == 'S';
     const bool triangle = element.frd_type == 7 || element.frd_type == 8;
     const bool quadratic = element.frd_type == 8 || element.frd_type == 10;
-    const int corners = triangle ? 3 : 4;
+    const int corners = [&]() -> int {
+      if (triangle) {
+        return 3;
+      } else {
+        return 4;
+      }
+    }();
     if (side == "SPOS" || side == "SNEG" || (shell && number >= 1 && number <= 2))
     {
       const bool reverse = side == "SNEG" || number == 1;
       if (reverse)
       {
-        indices = triangle ? (quadratic ? std::vector<int>{0, 2, 1, 5, 4, 3} : std::vector<int>{0, 2, 1}) : (quadratic ? std::vector<int>{0, 3, 2, 1, 7, 6, 5, 4} : std::vector<int>{0, 3, 2, 1});
+        if (triangle) {
+          if (quadratic) {
+            indices = std::vector<int>{0, 2, 1, 5, 4, 3};
+          } else {
+            indices = std::vector<int>{0, 2, 1};
+          }
+        } else {
+          if (quadratic) {
+            indices = std::vector<int>{0, 3, 2, 1, 7, 6, 5, 4};
+          } else {
+            indices = std::vector<int>{0, 3, 2, 1};
+          }
+        }
       }
       else
       {
@@ -348,7 +430,13 @@ bool CoreResultsVtkElements::surface(const Description& element, const std::stri
     }
     else
     {
-      const int edge = shell ? number - 3 : number - 1;
+      const int edge = [&]() -> int {
+        if (shell) {
+          return number - 3;
+        } else {
+          return number - 1;
+        }
+      }();
       if (edge < 0 || edge >= corners)
       {
         error = "Invalid shell/plane edge label.";
@@ -359,7 +447,11 @@ bool CoreResultsVtkElements::surface(const Description& element, const std::stri
       {
         indices.push_back(corners + edge);
       }
-      type = quadratic ? 21 : 3;
+      if (quadratic) {
+        type = 21;
+      } else {
+        type = 3;
+      }
     }
   }
   else

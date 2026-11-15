@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "../application/PostprocessorCore.hpp"
 #include "../representations/ResultMesh.hpp"
 #include <exception>
@@ -85,8 +86,13 @@ namespace Postprocessor
     const auto view = state.views.find(view_id);
     if (source_operation_active || view == state.views.end() || state.sources.count(entity.source_id) == 0 ||
         (entity.kind != EntityKind::Node && entity.kind != EntityKind::Element && entity.kind != EntityKind::IntegrationPoint) ||
-        entity.entity_id < 0 || (entity.kind == EntityKind::IntegrationPoint ?
-          !entity.integration_point || *entity.integration_point <= 0 || *entity.integration_point > 2147483647 : entity.integration_point.has_value()) ||
+        entity.entity_id < 0 || ([&]() -> std::common_type_t<decltype(!entity.integration_point || *entity.integration_point <= 0 || *entity.integration_point > 2147483647), decltype(entity.integration_point.has_value())> {
+          if (entity.kind == EntityKind::IntegrationPoint) {
+            return !entity.integration_point || *entity.integration_point <= 0 || *entity.integration_point > 2147483647;
+          } else {
+            return entity.integration_point.has_value();
+          }
+        }()) ||
         view->second.selection.revision == std::numeric_limits<std::uint64_t>::max())
     {
       error = "The source/view or original entity identity is invalid for selection.";

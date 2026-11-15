@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "AlphaWrapPanel.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
 #include "Core/topology/CalculiXTopologyInterface.hpp"
@@ -165,7 +166,19 @@ void AlphaWrapPanel::refresh()
       }
     }
     const int index = cases->findData(preferred);
-    cases->setCurrentIndex(index >= 0 ? index : (cases->count() > 0 ? 0 : -1));
+    cases->setCurrentIndex([&]() -> std::common_type_t<decltype(index), std::common_type_t<decltype(0), decltype(-1)>> {
+      if (index >= 0) {
+        return index;
+      } else {
+        return ([&]() -> std::common_type_t<decltype(0), decltype(-1)> {
+          if (cases->count() > 0) {
+            return 0;
+          } else {
+            return -1;
+          }
+        }());
+      }
+    }());
   }
   refreshIterations();
 }
@@ -186,7 +199,13 @@ void AlphaWrapPanel::refreshIterations()
       }
     }
     const int index = iterations->findData(preferred);
-    iterations->setCurrentIndex(index >= 0 ? index : iterations->count() - 1);
+    iterations->setCurrentIndex([&]() -> std::common_type_t<decltype(index), decltype(iterations->count() - 1)> {
+      if (index >= 0) {
+        return index;
+      } else {
+        return iterations->count() - 1;
+      }
+    }());
   }
   updateControls();
 }

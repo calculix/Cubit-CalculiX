@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostPickCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -41,8 +42,19 @@ bool PostPickCommand::execute(CubitCommandData& data)
       return false;
     }
     using Kind = Postprocessor::EntityKind;
-    const auto kind = data.find_keyword("INTEGRATIONPOINT") ? Kind::IntegrationPoint :
-      data.find_keyword("NODE") ? Kind::Node : Kind::Element;
+    const auto kind = [&]() -> std::common_type_t<decltype(Kind::IntegrationPoint), std::common_type_t<decltype(Kind::Node), decltype(Kind::Element)>> {
+      if (data.find_keyword("INTEGRATIONPOINT")) {
+        return Kind::IntegrationPoint;
+      } else {
+        return [&]() -> std::common_type_t<decltype(Kind::Node), decltype(Kind::Element)> {
+          if (data.find_keyword("NODE")) {
+            return Kind::Node;
+          } else {
+            return Kind::Element;
+          }
+        }();
+      }
+    }();
     std::string error;
     bool accepted = false;
     if (data.find_keyword("CLEAR"))

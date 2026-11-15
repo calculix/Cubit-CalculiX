@@ -1,11 +1,13 @@
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include "CalculiXReportDomainSettings.hpp"
 #include "CalculiXReportModelSnapshot.hpp"
+#include "CalculiXReportMaterials.hpp"
 #include "CalculiXReportImageSettings.hpp"
 #include "CalculiXReportTemplateProvider.hpp"
 #include "Framework/Reporting/ReportDocument.hpp"
 #include "Framework/Reporting/ReportTemplate.hpp"
 #include "Framework/Reporting/ReportRequest.hpp"
 #include "CalculiX/Core/mesh/CalculiXMeshInterface.hpp"
-#include "CalculiX/Core/materials/CalculiXMaterialsInterface.hpp"
 #include "CalculiX/Core/sections/CalculiXSectionsInterface.hpp"
 #include "CalculiX/Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "CalculiX/Core/amplitudes/CalculiXAmplitudesInterface.hpp"
@@ -24,60 +26,55 @@
 
 namespace
 {
-QJsonValue jsonValue(const std::string& value)
-{
+QJsonValue jsonValue(const std::string& value) {
   return QString::fromStdString(value);
 }
 
-QJsonValue jsonValue(double value)
-{
+QJsonValue jsonValue(double value) {
   return value;
 }
 
-QJsonValue jsonValue(int value)
-{
+QJsonValue jsonValue(int value) {
   return value;
 }
 
 template<class T>
-QJsonValue jsonValue(const std::vector<T>& values)
-{
+QJsonValue jsonValue(const std::vector<T>& values) {
   QJsonArray result;
-  for (const auto& value : values)
-  {
+  for (const auto& value : values) {
     result.append(jsonValue(value));
   }
   return result;
 }
 
 template<class T>
-void field(ReportTable& table, const char* label, const T& value)
-{
+void field(ReportTable& table, const char* label, const T& value) {
   auto json = jsonValue(value);
-  if (json.isArray())
-  {
+  if (json.isArray()) {
     json = QString::fromUtf8(QJsonDocument(json.toArray()).toJson(QJsonDocument::Compact));
   }
   table.rows.push_back({label, json});
 }
 
-int rowId(const std::vector<std::string>& row)
-{
+int rowId(const std::vector<std::string>& row) {
   bool ok = false;
-  const int id = row.empty() ? -1 : QString::fromStdString(row.front()).toInt(&ok);
-  return ok && id > 0 ? id : -1;
+  int id = -1;
+  if (!row.empty()) {
+    id = QString::fromStdString(row.front()).toInt(&ok);
+  }
+  if (ok && id > 0) {
+    return id;
+  }
+  return -1;
 }
 
-ReportTable listing(const std::string& title, const std::vector<std::vector<std::string>>& rows)
-{
+ReportTable listing(const std::string& title, const std::vector<std::vector<std::string>>& rows) {
   ReportTable result;
   result.title = title;
   result.columns = {"ID", "Definition"};
-  for (const auto& row : rows)
-  {
+  for (const auto& row : rows) {
     QStringList details;
-    for (std::size_t i = 1; i < row.size(); ++i)
-    {
+    for (std::size_t i = 1; i < row.size(); ++i) {
       details.append(QString::fromStdString(row[i]));
     }
     result.rows.push_back({rowId(row), details.join(" | ")});
@@ -92,7 +89,6 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
   ReportDocument& output, std::string& error) const
 {
   CalculiXMeshInterface mesh;
-  CalculiXMaterialsInterface materials;
   CalculiXSectionsInterface sections;
   CalculiXInteractionsInterface interactions;
   CalculiXAmplitudesInterface amplitudes;
@@ -101,24 +97,20 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
   CalculiXBCsInterface bcs;
   CalculiXExportInterface custom;
   ReportTemplate definition;
-  if (!CalculiXReportTemplateProvider().describe(definition, error))
-  {
+  if (!CalculiXReportTemplateProvider().describe(definition, error)) {
     return false;
   }
   std::map<std::string, ReportSection> groups;
-  for (const auto& item : definition.sections)
-  {
+  for (const auto& item : definition.sections) {
     groups[item.id] = item;
   }
   auto& meshSection = groups["ccx.model.mesh"];
   ReportTable meshTable;
   meshTable.title = "Current mesh blocks";
   meshTable.columns = {"Block", "Name", "Cubit type", "CalculiX type", "Nodes", "Elements"};
-  for (int id : mesh.get_blocks())
-  {
+  for (int id : mesh.get_blocks()) {
     MeshProperties properties;
-    if (!mesh.get_block_properties(id, properties, error))
-    {
+    if (!mesh.get_block_properties(id, properties, error)) {
       return false;
     }
     meshTable.rows.push_back({id, QString::fromStdString(properties.name), QString::fromStdString(properties.elementType),
@@ -126,45 +118,13 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
   }
   meshSection.tables.push_back(meshTable);
   groups["ccx.model.blocks"].tables.push_back(std::move(meshTable));
-  for (const auto& row : materials.get_material_tree_data())
-  {
-    MaterialProperties properties;
-    if (!materials.get_material_properties(rowId(row), properties, error))
-    {
-      return false;
-    }
-    for (const auto& property : properties.properties)
-    {
-      ReportTable table;
-      table.title = properties.name + " / " + property.name;
-      std::size_t width = 1;
-      for (const auto& values : property.values)
-      {
-        width = std::max(width, values.size());
-      }
-      for (std::size_t i = 0; i < width; ++i)
-      {
-        table.columns.push_back("Value " + std::to_string(i + 1));
-      }
-      for (const auto& values : property.values)
-      {
-        std::vector<QJsonValue> cells;
-        for (double value : values)
-        {
-          cells.push_back(value);
-        }
-        cells.resize(width, QJsonValue(QString()));
-        table.rows.push_back(std::move(cells));
-      }
-      groups["ccx.model.materials"].tables.push_back(std::move(table));
-    }
+  if (!CalculiXReportMaterials::collect(groups["ccx.model.materials"], error)) {
+    return false;
   }
 
-  for (const auto& row : sections.get_sections_tree_data())
-  {
+  for (const auto& row : sections.get_sections_tree_data()) {
     SectionsSettings settings;
-    if (!sections.get_section_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -192,11 +152,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.model.sections"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : sections.get_orientations_tree_data())
-  {
+  for (const auto& row : sections.get_orientations_tree_data()) {
     OrientationsSettings settings;
-    if (!sections.get_orientation_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -213,11 +171,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.model.sections"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : interactions.get_constraints_tree_data())
-  {
+  for (const auto& row : interactions.get_constraints_tree_data()) {
     ConstraintsSettings settings;
-    if (!interactions.get_constraint_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -238,11 +194,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.model.interactions"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : interactions.get_surfaceinteractions_tree_data())
-  {
+  for (const auto& row : interactions.get_surfaceinteractions_tree_data()) {
     SurfaceInteractionsSettings settings;
-    if (!interactions.get_surfaceinteraction_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -268,11 +222,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.model.interactions"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : interactions.get_contactpairs_tree_data())
-  {
+  for (const auto& row : interactions.get_contactpairs_tree_data()) {
     ContactPairsSettings settings;
-    if (!interactions.get_contactpair_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -289,11 +241,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.model.interactions"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : amplitudes.get_amplitudes_tree_data())
-  {
+  for (const auto& row : amplitudes.get_amplitudes_tree_data()) {
     AmplitudesSettings settings;
-    if (!amplitudes.get_amplitude_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -303,17 +253,16 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
+    field(table, "Axis", settings.axis);
     field(table, "Shift x", settings.shiftX);
     field(table, "Shift y", settings.shiftY);
     field(table, "Total time", settings.totalTime);
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : bcs.get_bcsdisplacements_tree_data())
-  {
+  for (const auto& row : bcs.get_bcsdisplacements_tree_data()) {
     BCsDisplacementsSettings settings;
-    if (!bcs.get_displacement_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -335,11 +284,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : bcs.get_bcstemperatures_tree_data())
-  {
+  for (const auto& row : bcs.get_bcstemperatures_tree_data()) {
     BCsTemperaturesSettings settings;
-    if (!bcs.get_temperature_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -357,11 +304,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : steps.get_initialconditions_tree_data())
-  {
+  for (const auto& row : steps.get_initialconditions_tree_data()) {
     InitialConditionsSettings settings;
-    if (!steps.get_initialcondition_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -376,11 +321,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.model.initial_conditions"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : steps.get_fieldoutputs_tree_data())
-  {
+  for (const auto& row : steps.get_fieldoutputs_tree_data()) {
     FieldOutputsSettings settings;
-    if (!steps.get_fieldoutput_settings(rowId(row), settings, error))
-    {
+    if (!steps.get_fieldoutput_settings(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -394,11 +337,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.steps"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : steps.get_historyoutputs_tree_data())
-  {
+  for (const auto& row : steps.get_historyoutputs_tree_data()) {
     HistoryOutputsSettings settings;
-    if (!steps.get_historyoutput_settings(rowId(row), settings, error))
-    {
+    if (!steps.get_historyoutput_settings(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -412,11 +353,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.steps"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : loads.get_loadsforces_tree_data())
-  {
+  for (const auto& row : loads.get_loadsforces_tree_data()) {
     LoadsForcesSettings settings;
-    if (!loads.get_force_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -438,11 +377,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : loads.get_loadspressures_tree_data())
-  {
+  for (const auto& row : loads.get_loadspressures_tree_data()) {
     LoadsPressuresSettings settings;
-    if (!loads.get_pressure_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -459,11 +396,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : loads.get_loadsheatfluxes_tree_data())
-  {
+  for (const auto& row : loads.get_loadsheatfluxes_tree_data()) {
     LoadsHeatfluxesSettings settings;
-    if (!loads.get_heatflux_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -480,11 +415,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : loads.get_loadsgravity_tree_data())
-  {
+  for (const auto& row : loads.get_loadsgravity_tree_data()) {
     LoadsGravitySettings settings;
-    if (!loads.get_gravity_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -502,11 +435,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : loads.get_loadscentrifugal_tree_data())
-  {
+  for (const auto& row : loads.get_loadscentrifugal_tree_data()) {
     LoadsCentrifugalSettings settings;
-    if (!loads.get_centrifugal_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -525,11 +456,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : loads.get_loadstrajectory_tree_data())
-  {
+  for (const auto& row : loads.get_loadstrajectory_tree_data()) {
     LoadsTrajectorySettings settings;
-    if (!loads.get_trajectory_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -551,11 +480,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : loads.get_loadsfilm_tree_data())
-  {
+  for (const auto& row : loads.get_loadsfilm_tree_data()) {
     LoadsFilmSettings settings;
-    if (!loads.get_film_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -575,11 +502,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : loads.get_loadsradiation_tree_data())
-  {
+  for (const auto& row : loads.get_loadsradiation_tree_data()) {
     LoadsRadiationSettings settings;
-    if (!loads.get_radiation_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -601,11 +526,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : loads.get_loadssurfacetraction_tree_data())
-  {
+  for (const auto& row : loads.get_loadssurfacetraction_tree_data()) {
     LoadsSurfaceTractionSettings settings;
-    if (!loads.get_surfacetraction_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -624,11 +547,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : loads.get_loadsbodyheatflux_tree_data())
-  {
+  for (const auto& row : loads.get_loadsbodyheatflux_tree_data()) {
     LoadsBodyHeatfluxSettings settings;
-    if (!loads.get_bodyheatflux_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -646,11 +567,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : steps.get_physicalconstants_tree_data())
-  {
+  for (const auto& row : steps.get_physicalconstants_tree_data()) {
     PhysicalConstantsSettings settings;
-    if (!steps.get_physicalconstants_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -664,11 +583,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : steps.get_damping_tree_data())
-  {
+  for (const auto& row : steps.get_damping_tree_data()) {
     DampingSettings settings;
-    if (!steps.get_damping_settings(rowId(row), settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -681,11 +598,9 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  for (const auto& row : custom.get_customlines_tree_data())
-  {
+  for (const auto& row : custom.get_customlines_tree_data()) {
     CustomLinesSettings settings;
-    if (!custom.get_customline_settings(rowId(row), settings, error))
-    {
+    if (!custom.get_customline_settings(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
@@ -704,12 +619,10 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
   groups["ccx.model.sets"].tables.push_back(listing("Node sets", mesh.get_nodeset_tree_data()));
   groups["ccx.model.sets"].tables.push_back(listing("Side sets", mesh.get_sideset_tree_data()));
   int stepOrdinal = 0;
-  for (int id : steps.get_steps_ids())
-  {
+  for (int id : steps.get_steps_ids()) {
     ++stepOrdinal;
     StepsSettings settings;
-    if (!steps.get_step_settings(id, settings, error))
-    {
+    if (!CalculiXReportDomainSettings::get(id, settings, error)) {
       return false;
     }
     ReportSection step;
@@ -763,51 +676,61 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
 
     groups["ccx.steps"].children.push_back(std::move(step));
   }
-  groups["ccx.model.overview"].paragraphs.push_back("Current model captured from CalculiX Core. This is not the input of a historical job. No physical units or result values are inferred.");
+  ReportTable modelUnits;
+  modelUnits.title = "Model presentation units";
+  modelUnits.columns = {"Quantity", "Unit"};
+  for (const auto& quantity : framework_units().quantity_ids()) {
+    std::string unit;
+    if (!framework_units().display_unit("report", quantity, unit, error)) {
+      return false;
+    }
+    modelUnits.rows.push_back({QString::fromStdString(quantity), QString::fromStdString(unit)});
+  }
+  for (auto& group : groups) {
+    if (group.first.rfind("ccx.", 0) == 0 && (!group.second.tables.empty() || !group.second.children.empty())) {
+      group.second.tables.push_back(modelUnits);
+    }
+  }
+  groups["ccx.model.overview"].paragraphs.push_back("Current model captured from CalculiX Core. Physical model values use Report presentation units. Amplitude ordinates and normalized offsets are dimensionless. Custom solver text retains its literal representation. Historical jobs retain their original source units.");
   ReportDocument candidate = output;
   candidate.source = source;
   // Hash the entire captured report content before display selection is applied.
   // This identifies this reporting snapshot, not an unrecorded solver run.
   QJsonArray captured;
-  for (const auto& item : groups)
-  {
+  for (const auto& item : groups) {
     captured.append(item.second.to_json());
   }
   candidate.source.snapshot_fingerprint = QCryptographicHash::hash(QJsonDocument(captured).toJson(QJsonDocument::Compact), QCryptographicHash::Sha256).toHex().toStdString();
-  const auto enabled = [&](const std::string& key)
-  {
+  const auto enabled = [&](const std::string& key) {
     const auto found = request.overrides.values.find(key);
     return found != request.overrides.values.end() && found->second == "true";
   };
   std::set<int> selected;
   const auto selection = request.overrides.values.find("steps");
   std::vector<int> selectedIds;
-  if (!CalculiXReportImageSettings::select_steps(steps.get_steps_ids(),
-        selection == request.overrides.values.end() ? "all" : selection->second, selectedIds, error))
-  {
+  std::string requestedSteps = "all";
+  if (selection != request.overrides.values.end()) {
+    requestedSteps = selection->second;
+  }
+  if (!CalculiXReportImageSettings::select_steps(steps.get_steps_ids(), requestedSteps, selectedIds, error)) {
     return false;
   }
   selected.insert(selectedIds.begin(), selectedIds.end());
   auto& stepSections = groups["ccx.steps"].children;
-  stepSections.erase(std::remove_if(stepSections.begin(), stepSections.end(), [&](ReportSection& step)
-  {
+  stepSections.erase(std::remove_if(stepSections.begin(), stepSections.end(), [&](ReportSection& step) {
     const int id = QString::fromStdString(step.id).section('.', -1).toInt();
-    step.children.erase(std::remove_if(step.children.begin(), step.children.end(), [&](const ReportSection& child)
-    {
+    step.children.erase(std::remove_if(step.children.begin(), step.children.end(), [&](const ReportSection& child) {
       const auto key = "ccx.steps." + QString::fromStdString(child.id).section('.', -1).toStdString();
       return !enabled(key);
     }), step.children.end());
-    if (!enabled("ccx.steps.parameters"))
-    {
+    if (!enabled("ccx.steps.parameters")) {
       step.tables.clear();
     }
     return !selected.empty() && selected.count(id) == 0;
   }), stepSections.end());
   candidate.sections.clear();
-  for (const auto& item : definition.sections)
-  {
-    if (item.id.rfind("post.", 0) != 0 && enabled(item.id))
-    {
+  for (const auto& item : definition.sections) {
+    if (item.id.rfind("post.", 0) != 0 && enabled(item.id)) {
       candidate.sections.push_back(std::move(groups[item.id]));
     }
   }

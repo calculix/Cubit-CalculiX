@@ -2,7 +2,6 @@
 
 #include "Core/mesh/CoreBlocks.hpp"
 #include "Core/materials/CoreMaterials.hpp"
-#include "Core/materials/CoreMaterialsLibrary.hpp"
 #include "Core/sections/CoreSections.hpp"
 #include "Core/sections/CoreOrientations.hpp"
 #include "Core/interactions/CoreConstraints.hpp"
@@ -17,6 +16,8 @@
 #include "Core/loads/CoreLoadsGravity.hpp"
 #include "Core/loads/CoreLoadsCentrifugal.hpp"
 #include "Core/loads/CoreLoadsTrajectory.hpp"
+#include "Core/loads/CoreLoadsTrajectoryHeatflux.hpp"
+#include "Core/loads/CoreLoadsTrajectoryBodyHeatfluxSphere.hpp"
 #include "Core/loads/CoreLoadsFilm.hpp"
 #include "Core/loads/CoreLoadsRadiation.hpp"
 #include "Core/loads/CoreLoadsSurfaceTraction.hpp"
@@ -57,7 +58,6 @@ CalculiXCore::~CalculiXCore()
 
   delete cb;
   delete mat;
-  delete mat_library;
   delete sections;
   delete constraints;
   delete surfaceinteractions;
@@ -71,6 +71,12 @@ CalculiXCore::~CalculiXCore()
   delete loadsheatfluxes;
   delete loadsgravity;
   delete loadscentrifugal;
+  if (loadstrajectory != nullptr) {
+    delete loadstrajectory->heatflux;
+    loadstrajectory->heatflux = nullptr;
+    delete loadstrajectory->bodyheatfluxsphere;
+    loadstrajectory->bodyheatfluxsphere = nullptr;
+  }
   delete loadstrajectory;
   delete loadsfilm;
   delete loadsradiation;

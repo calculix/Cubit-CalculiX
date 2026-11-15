@@ -197,7 +197,13 @@ void LoadsBodyHeatfluxModifyPanel::on_pushButton_apply_clicked(bool)
     if (!lineEdit_4->text().trimmed().isEmpty() &&
         (fieldChanged("comboBox_3", comboBox_3->currentText()) || fieldChanged("lineEdit_4", lineEdit_4->text())))
     {
-      command.append(comboBox_3->currentIndex() == 0 ? " block " : " element ");
+      command.append([&]() -> const char* {
+        if (comboBox_3->currentIndex() == 0) {
+          return " block ";
+        } else {
+          return " element ";
+        }
+      }());
       command.append(lineEdit_4->text());
     }
 

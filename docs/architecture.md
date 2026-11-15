@@ -77,3 +77,41 @@ Changing vector layout is therefore potentially a file-format change. Check init
 XML exporter writes optional VTU/VTPC/VTT/PVD output. The old `CoreResultsVtkWriterLegacy` is archived without build bindings or active callers. Python query methods in [CalculiXPythonInterface.cpp](../src/CalculiX/PythonInterface/CalculiXPythonInterface.cpp) forward through the Jobs, Topology, FRD, DAT and Loads interfaces.
 
 For a complete step-dependent feature trace, see the [surface-traction walkthrough](adding-a-feature.md), including its conversion from distributed total force components to nodal `*CLOAD` entries.
+
+## Framework units and materials
+
+`cubitsim_model` is the shared lower-level unit/material service. It depends on
+storage, never on workspace modules or the GUI host. `CoreFrameworkUnits` owns
+independent workspace presets and display units. `CoreFrameworkMaterials` owns
+compiled material definitions, workspace stores, and the single Framework
+`libmaterial.hdf5`. Materials are independent values in their owning workspace;
+there are no Cubit materials, material revisions, or material-property snapshots.
+
+The existing material editor was moved into `Framework/GUI/materials` and is
+hosted by `ModelEditorManager`. Workspace commands reach the editor through the
+callback-only `ModelEditorInterface`, avoiding a module/host DLL dependency cycle.
+The shared Units and Materials toolbar and CalculiX navigation entry dispatch
+commands through Cubit's command window. Headless commands report missing GUI
+services through Cubit messages.
+
+`ProjectStateCoordinator` persists units under `cubit-sim/framework/units`, local
+CalculiX materials under `cubit-sim/framework/materials/calculix`, and the project
+identity under `cubit-sim/framework/model`. These groups are independent of
+Postprocessor and Report subtree replacement. Workspace reset clears local model
+data; global reset also starts a new material identity scope. Neither resets the
+shared library. Editor windows are cleared on project reset/read and unbound on
+host teardown.
+
+Materials and the migrated load/boundary-condition domains use canonical SI.
+Remaining raw CalculiX domains capture their coherent input preset; changing it
+is refused while those values depend on it. This is a documented development
+restriction, not automatic conversion of every existing model field. Cubit mesh
+coordinates have a separately declared length unit and are converted at export.
+
+Exported decks record the actual unit preset and project/material mapping. Job
+records and loaded result readers retain that source metadata. VTK conversion,
+file export/import, Postprocessor presentation, and Report results carry it
+forward. Material IDs are categorical and meaningful only inside their recorded
+project/workspace scope. A Report generated from the current model uses current
+workspace materials; result provenance does not reconstruct historical material
+properties. See the Framework units/materials manual chapters for detailed limits.

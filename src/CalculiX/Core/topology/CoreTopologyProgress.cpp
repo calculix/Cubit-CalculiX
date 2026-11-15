@@ -60,9 +60,13 @@ bool CoreTopologyProgress::poll()
   }
   previous = now;
 
-  const double fraction = total > 0
-    ? static_cast<double>(completed) / static_cast<double>(total)
-    : 0.0;
+  const double fraction = [&]() -> double {
+    if (total > 0) {
+      return static_cast<double>(completed) / static_cast<double>(total);
+    } else {
+      return 0.0;
+    }
+  }();
   CoreTopologyTrace::write("progress.periodic_percent.enter");
   progress->percent((std::min)(0.99, fraction));
   CoreTopologyTrace::write("progress.periodic_percent.leave");

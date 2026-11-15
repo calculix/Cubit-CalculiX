@@ -4,7 +4,7 @@
 #include "CubitCommandInterface.hpp"
 
 /*!
- * \brief The Command will export a cubit material into the material library
+ * \brief The Command will export a workspace material into the material library
  */
 class ccxMaterialLibraryExportMaterialCommand : public CubitCommand
 {

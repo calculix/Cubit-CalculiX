@@ -13,6 +13,7 @@ class CoreSections
 {
 
 public:
+  bool domain_unit_view = false;
   bool get_settings(int id, SectionsSettings& settings, std::string& error) const;
   std::vector<int> get_section_ids() const;
   CoreSections();

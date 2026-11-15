@@ -1,3 +1,4 @@
+#include <type_traits>
 #ifndef CORERESULTSVTKPIPELINE_HPP
 #define CORERESULTSVTKPIPELINE_HPP
 
@@ -108,7 +109,13 @@ public:
       {
         while (!cancelled.load(std::memory_order_relaxed) && (next < rows || !pending.empty()))
         {
-          if (!poll(rows == 0 ? 1.0 : static_cast<double>(completed) / static_cast<double>(rows)))
+          if (!poll([&]() -> std::common_type_t<decltype(1.0), decltype(static_cast<double>(completed) / static_cast<double>(rows))> {
+            if (rows == 0) {
+              return 1.0;
+            } else {
+              return static_cast<double>(completed) / static_cast<double>(rows);
+            }
+          }()))
           {
             cancelled.store(true, std::memory_order_relaxed);
             break;
@@ -150,7 +157,13 @@ public:
           const auto task = pending.front();
           while (!task->finished.load(std::memory_order_acquire))
           {
-            if (!poll(rows == 0 ? 1.0 : static_cast<double>(completed) / static_cast<double>(rows)))
+            if (!poll([&]() -> std::common_type_t<decltype(1.0), decltype(static_cast<double>(completed) / static_cast<double>(rows))> {
+              if (rows == 0) {
+                return 1.0;
+              } else {
+                return static_cast<double>(completed) / static_cast<double>(rows);
+              }
+            }()))
             {
               cancelled.store(true, std::memory_order_relaxed);
               break;
@@ -167,7 +180,11 @@ public:
           }
           if (!task->success)
           {
-            error = task->error.empty() ? "VTK conversion worker failed." : task->error;
+            if (task->error.empty()) {
+              error = "VTK conversion worker failed.";
+            } else {
+              error = task->error;
+            }
             success = false;
             break;
           }
@@ -201,7 +218,11 @@ public:
       {
         if (task->finished.load(std::memory_order_acquire) && !task->success && error.empty())
         {
-          error = task->error.empty() ? "VTK conversion worker failed." : task->error;
+          if (task->error.empty()) {
+            error = "VTK conversion worker failed.";
+          } else {
+            error = task->error;
+          }
         }
       }
       return false;

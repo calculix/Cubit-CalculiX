@@ -11,6 +11,7 @@ class CoreContactPairs
 {
 
 public:
+  bool domain_unit_view = false;
   bool get_settings(int id, ContactPairsSettings& settings, std::string& error) const;
   std::vector<int> get_contactpair_ids() const;
   std::vector<std::string> get_contactpair_master_slave(MeshExportInterface& mesh, int contactpair_id);

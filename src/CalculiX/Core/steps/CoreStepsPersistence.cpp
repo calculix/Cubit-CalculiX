@@ -1,3 +1,6 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include "Core/units/CalculiXPhysicalModelUnits.hpp"
+#include <utility>
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/steps/CoreStepsPersistence.hpp"
 #include "Core/steps/CoreSteps.hpp"
@@ -8,6 +11,33 @@
 
 bool CoreStepsPersistence::read(HDF5Tool& file, CoreSteps& steps)
 {
+  if (!steps.domain_unit_view) {
+    CoreSteps candidate;
+    candidate.is_initialized = steps.is_initialized;
+    candidate.domain_unit_view = true;
+    if (!read(file, candidate)) {
+      return false;
+    }
+    std::string basis;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::read_basis(file, CalculiXModelSchema::path("Steps"), basis, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return false;
+    }
+    if (basis.empty() && !CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Native, error)) {
+      PRINT_ERROR("Cannot restore Steps units: %s\n", error.c_str());
+      return false;
+    }
+    auto validated = candidate;
+    if (!CalculiXDomainUnits::convert(validated, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("Cannot restore invalid physical values: %s\n", error.c_str());
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    steps = std::move(candidate);
+    return true;
+  }
+
   try
   {
 
@@ -296,6 +326,12 @@ bool CoreStepsPersistence::read(HDF5Tool& file, CoreSteps& steps)
 
 bool CoreStepsPersistence::write(HDF5Tool& file, const CoreSteps& steps)
 {
+  std::string unitError;
+  if (steps.domain_unit_view || !CalculiXPhysicalModelUnits::write_basis(file, CalculiXModelSchema::path("Steps"), "SI", unitError)) {
+    PRINT_ERROR("Cannot save Steps canonical units: %s\n", unitError.c_str());
+    return false;
+  }
+
   try
   {
 

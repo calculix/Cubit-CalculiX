@@ -1,0 +1,15 @@
+2026-11-15T15:57:46.992 PID=12424 CubitSimComp startup withGUI=1
+2026-11-15T15:57:46.992 PID=12424 Framework acquired
+2026-11-15T15:57:46.992 PID=12424 Workspace host attached
+2026-11-15T15:58:44.226 PID=2024 CubitSimComp startup withGUI=1
+2026-11-15T15:58:44.227 PID=2024 Framework acquired
+2026-11-15T15:58:44.234 PID=2024 Workspace host attached
+2026-11-15T15:58:47.326 PID=2024 Components started
+2026-11-15T15:58:47.417 PID=2024 CubitSimComp startup complete
+2026-11-15T15:58:52.192 PID=2024 Workspace shutdown
+2026-11-15T15:59:51.851 PID=100 CubitSimComp startup withGUI=1
+2026-11-15T15:59:51.851 PID=100 Framework acquired
+2026-11-15T15:59:51.866 PID=100 Workspace host attached
+2026-11-15T15:59:55.060 PID=100 Components started
+2026-11-15T15:59:55.157 PID=100 CubitSimComp startup complete
+2026-11-15T16:00:03.377 PID=100 Workspace shutdown

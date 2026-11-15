@@ -23,8 +23,8 @@ public:
   bool create_materiallibrary_material(std::string name, std::string groupname);
   bool modify_materiallibrary_material(std::string name, std::string groupname, std::string data, int mode, std::vector<double> value_data);
   bool delete_materiallibrary_material(std::string name, std::string groupname);
-  bool export_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name);
-  bool import_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name);
+  bool export_materiallibrary_material(std::string name, std::string groupname, std::string material_name);
+  bool import_materiallibrary_material(std::string name, std::string groupname, std::string material_name);
   std::vector<std::vector<std::string>> get_material_tree_data(); // gets the data from core to build the tree
   std::vector<std::vector<std::string>> get_material_group_properties(); // gets the data from core to build the item in the material management
   std::vector<std::vector<std::string>> get_materiallibrary_tree_data(); // gets the data from materiallibrary to build the tree in the material management

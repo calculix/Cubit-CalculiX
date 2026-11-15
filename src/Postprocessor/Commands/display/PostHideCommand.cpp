@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostHideCommand.hpp"
 #include "DatasetCommandSupport.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -47,7 +48,13 @@ bool PostHideCommand::execute(CubitCommandData& data)
     }
     if (!active || !data.get_string("source_name", name) || !active->set_source_visible(name, false, error))
     {
-      PRINT_ERROR("Cannot hide Postprocessor source: %s\n", error.empty() ? "application unavailable or missing quoted source name" : error.c_str());
+      PRINT_ERROR("Cannot hide Postprocessor source: %s\n", [&]() -> std::common_type_t<decltype("application unavailable or missing quoted source name"), decltype(error.c_str())> {
+        if (error.empty()) {
+          return "application unavailable or missing quoted source name";
+        } else {
+          return error.c_str();
+        }
+      }());
       return false;
     }
     return true;

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "BlocksPropertiesWidget.hpp"
 #include "GUI/properties/PropertyCommandText.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
@@ -94,15 +95,31 @@ void BlocksPropertiesWidget::applyEdit(const PropertyEditRequest& request)
   else if (request.field == "cubit_element_type" || request.field == "calculix_element_type")
   {
     const bool native = request.field == "cubit_element_type";
-    original = QString::fromStdString(native ? properties.elementType : properties.calculixElementType);
-    const auto choices = elementChoices(native ? core.get_valid_block_element_types(currentBlockId) : core.get_compatible_ccx_element_types(currentBlockId));
+    original = QString::fromStdString([&]() -> std::common_type_t<decltype(properties.elementType), decltype(properties.calculixElementType)> {
+      if (native) {
+        return properties.elementType;
+      } else {
+        return properties.calculixElementType;
+      }
+    }());
+    const auto choices = elementChoices([&]() -> std::common_type_t<decltype(core.get_valid_block_element_types(currentBlockId)), decltype(core.get_compatible_ccx_element_types(currentBlockId))> {
+      if (native) {
+        return core.get_valid_block_element_types(currentBlockId);
+      } else {
+        return core.get_compatible_ccx_element_types(currentBlockId);
+      }
+    }());
     if (!choices.contains(request.value, Qt::CaseInsensitive))
     {
       PRINT_ERROR("The selected element type is no longer available for block %d.\n", currentBlockId);
       reload();
       return;
     }
-    command = native ? QString("block %1 element type %2").arg(currentBlockId).arg(request.value.toUpper()) : QString("ccx block %1 element_type %2").arg(currentBlockId).arg(request.value.toUpper());
+    if (native) {
+      command = QString("block %1 element type %2").arg(currentBlockId).arg(request.value.toUpper());
+    } else {
+      command = QString("ccx block %1 element_type %2").arg(currentBlockId).arg(request.value.toUpper());
+    }
   }
   else
   {

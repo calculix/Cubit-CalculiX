@@ -95,7 +95,13 @@ std::vector<int> CoreIdSelection::parse(const std::string& text, std::vector<int
 
   if (has_except)
   {
-    const auto& excluded_ids = has_range ? range_ids : input_ids;
+    const auto& excluded_ids = [&]() -> const std::vector<int>& {
+      if (has_range) {
+        return range_ids;
+      } else {
+        return input_ids;
+      }
+    }();
 
     for (int id : excluded_ids)
     {

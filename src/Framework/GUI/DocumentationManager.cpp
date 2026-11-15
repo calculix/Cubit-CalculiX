@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "DocumentationManager.hpp"
 #include "CommandDispatcher.hpp"
 #include "Claro.hpp"
@@ -74,7 +75,13 @@ void DocumentationManager::set_native_workspace(bool native)
     nativeHelp->menuAction()->setVisible(false);
   }
 
-  auto* helpAction = showNative ? nativeHelp->menuAction() : frameworkHelp->menuAction();
+  auto* helpAction = [&]() -> std::common_type_t<decltype(nativeHelp->menuAction()), decltype(frameworkHelp->menuAction())> {
+    if (showNative) {
+      return nativeHelp->menuAction();
+    } else {
+      return frameworkHelp->menuAction();
+    }
+  }();
   auto* menuBar = host->menuBar();
 
   // Workspace menus may have been appended after attach(). Reorder the active

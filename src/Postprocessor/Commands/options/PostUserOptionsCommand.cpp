@@ -13,7 +13,11 @@ PostUserOptionsCommand::PostUserOptionsCommand(std::weak_ptr<PostprocessorApplic
 std::vector<std::string> PostUserOptionsCommand::get_syntax()
 {
   const auto active = application.lock();
-  return active ? PostprocessorOptionCommands::syntax(active->user_option_definitions()) : std::vector<std::string>{};
+  if (active) {
+    return PostprocessorOptionCommands::syntax(active->user_option_definitions());
+  } else {
+    return std::vector<std::string>{};
+  }
 }
 
 std::vector<std::string> PostUserOptionsCommand::get_syntax_help()

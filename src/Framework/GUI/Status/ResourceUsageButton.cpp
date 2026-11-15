@@ -38,7 +38,11 @@ void ResourceUsageButton::paintEvent(QPaintEvent*)
   QStyleOptionButton option;
   option.initFrom(this);
   option.rect = rect();
-  option.state |= isDown() ? QStyle::State_Sunken : QStyle::State_Raised;
+  if (isDown()) {
+    option.state |= QStyle::State_Sunken;
+  } else {
+    option.state |= QStyle::State_Raised;
+  }
   style()->drawPrimitive(QStyle::PE_PanelButtonCommand, &option, &painter, this);
 
   const QRect content = rect().adjusted(3, 3, -3, -3);

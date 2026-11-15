@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "AnnotationTests.hpp"
 #include "PlotTests.hpp"
@@ -86,12 +87,48 @@ namespace
         grid->SetPoints(points);
         grid->Allocate(1);
         vtkIdType ids[] = {0,1,2,3};
-        grid->InsertNextCell(dataset == 0 ? VTK_TETRA : VTK_VERTEX,dataset == 0 ? 4 : 1,ids);
+        grid->InsertNextCell([&]() -> std::common_type_t<decltype(VTK_TETRA), decltype(VTK_VERTEX)> {
+          if (dataset == 0) {
+            return VTK_TETRA;
+          } else {
+            return VTK_VERTEX;
+          }
+        }(),[&]() -> int {
+          if (dataset == 0) {
+            return 4;
+          } else {
+            return 1;
+          }
+        }(),ids);
         auto pointIds = vtkSmartPointer<vtkTypeInt64Array>::New();
-        pointIds->SetName(dataset == 0 ? "OriginalNodeId" : "OriginalElementId");
+        pointIds->SetName([&]() -> const char* {
+          if (dataset == 0) {
+            return "OriginalNodeId";
+          } else {
+            return "OriginalElementId";
+          }
+        }());
         for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i)
         {
-          pointIds->InsertNextValue(dataset == 1 ? 120 : i == 0 ? (frame == 0 ? largeNode : 999) : 42+i);
+          pointIds->InsertNextValue([&]() -> std::common_type_t<decltype(120), std::common_type_t<std::common_type_t<decltype(largeNode), decltype(999)>, decltype(42+i)>> {
+            if (dataset == 1) {
+              return 120;
+            } else {
+              return [&]() -> std::common_type_t<std::common_type_t<decltype(largeNode), decltype(999)>, decltype(42+i)> {
+                if (i == 0) {
+                  return ([&]() -> std::common_type_t<decltype(largeNode), decltype(999)> {
+                    if (frame == 0) {
+                      return largeNode;
+                    } else {
+                      return 999;
+                    }
+                  }());
+                } else {
+                  return 42+i;
+                }
+              }();
+            }
+          }());
         }
         grid->GetPointData()->AddArray(pointIds);
         auto cellIds = vtkSmartPointer<vtkTypeInt64Array>::New();
@@ -102,11 +139,23 @@ namespace
         {
           auto ipIds = vtkSmartPointer<vtkTypeInt64Array>::New();
           ipIds->SetName("IntegrationPointId");
-          ipIds->InsertNextValue(frame == 0 ? 3 : 4);
+          ipIds->InsertNextValue([&]() -> int {
+            if (frame == 0) {
+              return 3;
+            } else {
+              return 4;
+            }
+          }());
           grid->GetPointData()->AddArray(ipIds);
         }
         auto values = vtkSmartPointer<vtkDoubleArray>::New();
-        values->SetName(dataset == 0 ? "stress" : "ip_stress");
+        values->SetName([&]() -> const char* {
+          if (dataset == 0) {
+            return "stress";
+          } else {
+            return "ip_stress";
+          }
+        }());
         auto mask = vtkSmartPointer<vtkDoubleArray>::New();
         mask->SetName("valid_stress");
         auto vectors = vtkSmartPointer<vtkDoubleArray>::New();
@@ -116,11 +165,29 @@ namespace
         vectorMask->SetName("valid_motion");
         for (vtkIdType i = 0; i < points->GetNumberOfPoints(); ++i)
         {
-          values->InsertNextValue(dataset == 0 ? 10*(i+1) : 100);
-          mask->InsertNextValue(i == 1 ? 0 : 1);
+          values->InsertNextValue([&]() -> std::common_type_t<decltype(10*(i+1)), decltype(100)> {
+            if (dataset == 0) {
+              return 10*(i+1);
+            } else {
+              return 100;
+            }
+          }());
+          mask->InsertNextValue([&]() -> int {
+            if (i == 1) {
+              return 0;
+            } else {
+              return 1;
+            }
+          }());
           const double xyz[] = {3,999,1,2}; // Z, magnitude, X, Y.
           vectors->InsertNextTuple(xyz);
-          vectorMask->InsertNextValue(i == 1 ? 0 : 1);
+          vectorMask->InsertNextValue([&]() -> int {
+            if (i == 1) {
+              return 0;
+            } else {
+              return 1;
+            }
+          }());
         }
         grid->GetPointData()->AddArray(values);
         grid->GetPointData()->AddArray(mask);
@@ -131,15 +198,27 @@ namespace
         cellValues->InsertNextValue(84);
         grid->GetCellData()->AddArray(cellValues);
         SimResults::Field field;
-        field.name = dataset == 0 ? "Stress" : "IPStress";
+        if (dataset == 0) {
+          field.name = "Stress";
+        } else {
+          field.name = "IPStress";
+        }
         field.array_name = values->GetName();
         field.validity_array = "valid_stress";
         field.components = {"SXX"};
         field.dataset_id = dataset;
-        field.association = dataset == 0 ? SimResults::Association::Node : SimResults::Association::IntegrationPoint;
+        if (dataset == 0) {
+          field.association = SimResults::Association::Node;
+        } else {
+          field.association = SimResults::Association::IntegrationPoint;
+        }
         increment.fields.push_back(field);
         auto motion = field;
-        motion.name = dataset == 0 ? "DISP" : "IntegrationPointDisplacement";
+        if (dataset == 0) {
+          motion.name = "DISP";
+        } else {
+          motion.name = "IntegrationPointDisplacement";
+        }
         motion.array_name = "motion";
         motion.validity_array = "valid_motion";
         motion.components = {"Z","Magnitude","X","Y"};
@@ -418,5 +497,9 @@ int main(int argc,char** argv)
   check(core.refresh_result(registry.provider,coreSource,error) && !core.session().views.at("view1").selection.entity,"Refresh retained a stale selection");
   check(core.reset(error) && core.session().views.at("view1").selection.mode == SelectionDefaults::mode,"Reset did not restore pick defaults");
   // No Render(): GL rendering and native command parsing await an authorized build.
-  return failures == 0 ? 0 : 1;
+  if (failures == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
 }

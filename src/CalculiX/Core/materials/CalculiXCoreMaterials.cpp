@@ -25,12 +25,12 @@ std::string CalculiXCore::get_material_export_data(int topology_id, int iteratio
 
 std::vector<std::vector<std::string>> CalculiXCore::get_material_tree_data()
 {
-  return CoreMaterialsTreeData::get_material_tree_data(*mat, *mat_iface);
+  return CoreMaterialsTreeData::get_material_tree_data(*mat, *mat->mat_iface);
 }
 
 std::vector<std::vector<std::string>> CalculiXCore::get_material_group_properties()
 {
-  return mat->group_properties;
+  return mat->material_api.get_group_properties();
 }
 
 int CalculiXCore::get_group_property_size(std::string group_property)

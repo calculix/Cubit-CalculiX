@@ -2,9 +2,12 @@ Automatic reports
 =================
 
 The Report workspace follows Postprocessor. It assembles workspace-owned model
-content and, when available, content supplied by Postprocessor. Batch A supplies
-CalculiX model/step reporting. Result evaluation and screenshots are Batch B
-provider capabilities; missing contributions are explicitly listed as diagnostics.
+content and, when available, content supplied by Postprocessor. CalculiX supplies
+model and step reporting. Postprocessor supplies result tables and component
+extrema for an opened source matching the exact recorded solver launch; missing
+contributions are explicitly listed as diagnostics. Material and result numeric
+tables use independent Report units. See :doc:`../postprocessor/units` for source
+provenance, shared unit-editor commands and the current verification status.
 
 Commands
 --------
@@ -243,3 +246,15 @@ Examples::
 
 Remove the image with ``report configure logo remove``. Logo changes, text and
 layout settings made in the settings dialog are submitted as one atomic command.
+
+Model presentation units
+------------------------
+
+Current-model physical tables use the Report workspace unit preferences,
+independently of CalculiX. This includes sections, orientations, interactions,
+steps, amplitudes, trajectories, initial conditions, damping and constants, as
+well as materials, static loads and boundary conditions. A quantity/unit legend
+accompanies model sections. Curve ordinates and normalized offsets remain
+dimensionless. Historical jobs and VTK fields retain source-unit metadata;
+changing a model's units does not alter their interpretation. Custom solver text
+is shown literally and is not dimensionally converted.

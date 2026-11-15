@@ -30,7 +30,13 @@ bool format_camera_command(const Postprocessor::CameraDefinition& camera, std::s
   {
     text << ' ' << value;
   }
-  text << " projection " << (camera.parallel_projection ? "parallel" : "perspective")
+  text << " projection " << ([&]() -> const char* {
+    if (camera.parallel_projection) {
+      return "parallel";
+    } else {
+      return "perspective";
+    }
+  }())
     << " angle " << camera.vertical_view_angle_degrees << " scale " << camera.parallel_scale;
   command = text.str();
   return true;

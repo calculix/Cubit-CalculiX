@@ -1,3 +1,4 @@
+#include <type_traits>
 #include <vtkSmartPointer.h>
 #include "PostprocessorPlotRendering.hpp"
 #include "Postprocessor/Core/session/PostprocessorSession.hpp"
@@ -36,8 +37,20 @@ void populate_plot_chart(vtkChartXY* chart,const Postprocessor::PlotDefinition& 
     for (const auto& sample : values.samples)
     {
       const double missing = std::numeric_limits<double>::quiet_NaN();
-      x->InsertNextValue(sample.valid ? sample.x : missing);
-      y->InsertNextValue(sample.valid ? sample.y : missing);
+      x->InsertNextValue([&]() -> std::common_type_t<decltype(sample.x), decltype(missing)> {
+        if (sample.valid) {
+          return sample.x;
+        } else {
+          return missing;
+        }
+      }());
+      y->InsertNextValue([&]() -> std::common_type_t<decltype(sample.y), decltype(missing)> {
+        if (sample.valid) {
+          return sample.y;
+        } else {
+          return missing;
+        }
+      }());
     }
     samples->AddColumn(x);
     samples->AddColumn(y);
@@ -68,8 +81,20 @@ void populate_plot_chart(vtkChartXY* chart,const Postprocessor::PlotDefinition& 
       }
     }
   }
-  chart->GetAxis(vtkAxis::BOTTOM)->SetTitle(xTitle.empty() ? std::string("X") : xTitle);
-  chart->GetAxis(vtkAxis::LEFT)->SetTitle(data.curves.size() == 1 ? data.curves.front().y_title : "Value");
+  chart->GetAxis(vtkAxis::BOTTOM)->SetTitle([&]() -> std::common_type_t<decltype(std::string("X")), decltype(xTitle)> {
+    if (xTitle.empty()) {
+      return std::string("X");
+    } else {
+      return xTitle;
+    }
+  }());
+  chart->GetAxis(vtkAxis::LEFT)->SetTitle([&]() -> std::common_type_t<decltype(data.curves.front().y_title), decltype("Value")> {
+    if (data.curves.size() == 1) {
+      return data.curves.front().y_title;
+    } else {
+      return "Value";
+    }
+  }());
   chart->SetShowLegend(Postprocessor::PlotDefaults::legend_visible);
   chart->SetIgnoreNanInBounds(true);
   for (int axis : {vtkAxis::BOTTOM,vtkAxis::LEFT})
@@ -81,8 +106,20 @@ void populate_plot_chart(vtkChartXY* chart,const Postprocessor::PlotDefinition& 
       value->GetLabelProperties()->SetFontSize(std::max(1,static_cast<int>(std::lround(value->GetLabelProperties()->GetFontSize()*scale))));
       value->GetTitleProperties()->SetFontSize(std::max(1,static_cast<int>(std::lround(value->GetTitleProperties()->GetFontSize()*scale))));
     }
-    const auto& range = axis == vtkAxis::BOTTOM ? definition.axes.x : definition.axes.y;
-    value->SetBehavior(range ? vtkAxis::FIXED : vtkAxis::AUTO);
+    const auto& range = [&]() -> decltype((definition.axes.x)) {
+      if (axis == vtkAxis::BOTTOM) {
+        return definition.axes.x;
+      } else {
+        return definition.axes.y;
+      }
+    }();
+    value->SetBehavior([&]() -> std::common_type_t<decltype(vtkAxis::FIXED), decltype(vtkAxis::AUTO)> {
+      if (range) {
+        return vtkAxis::FIXED;
+      } else {
+        return vtkAxis::AUTO;
+      }
+    }());
     if (range)
     {
       value->SetRange((*range)[0],(*range)[1]);

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "Postprocessor/Core/representations/ResultMesh.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -191,7 +192,13 @@ void coloring_scene_checks()
   check(scene.synchronize(application,error),"Cannot synchronize scalar coloring");
   renderer->GetActors()->InitTraversal();
   auto* actor = renderer->GetActors()->GetNextActor();
-  auto* mapper = actor ? vtkPolyDataMapper::SafeDownCast(actor->GetMapper()) : nullptr;
+  auto* mapper = [&]() -> std::common_type_t<decltype(vtkPolyDataMapper::SafeDownCast(actor->GetMapper())), decltype(nullptr)> {
+    if (actor) {
+      return vtkPolyDataMapper::SafeDownCast(actor->GetMapper());
+    } else {
+      return nullptr;
+    }
+  }();
   check(mapper && mapper->GetScalarVisibility(),"Result mapper did not enable scalars");
   if (mapper)
   {
@@ -234,14 +241,50 @@ std::shared_ptr<SimResults::VtkResultsData> ranged_result(double peak,bool inval
       const auto object = grid(domain*10);
       auto* mesh = vtkDataSet::SafeDownCast(object.get());
       auto* values = mesh->GetPointData()->GetScalars();
-      values->SetComponent(0,0,domain == 1 ? peak : (frame == 0 ? -10 : 20));
-      values->SetComponent(1,0,domain == 1 ? 5 : (frame == 0 ? 4 : 40));
+      values->SetComponent(0,0,[&]() -> std::common_type_t<decltype(peak), std::common_type_t<decltype(-10), decltype(20)>> {
+        if (domain == 1) {
+          return peak;
+        } else {
+          return ([&]() -> std::common_type_t<decltype(-10), decltype(20)> {
+            if (frame == 0) {
+              return -10;
+            } else {
+              return 20;
+            }
+          }());
+        }
+      }());
+      values->SetComponent(1,0,[&]() -> std::common_type_t<decltype(5), int> {
+        if (domain == 1) {
+          return 5;
+        } else {
+          return ([&]() -> int {
+            if (frame == 0) {
+              return 4;
+            } else {
+              return 40;
+            }
+          }());
+        }
+      }());
       values->SetComponent(2,0,9000); // Masked outlier must never set the range.
       values->SetComponent(3,0,std::numeric_limits<double>::quiet_NaN());
       auto mask = vtkSmartPointer<vtkUnsignedCharArray>::New();
       mask->SetName("valid");
-      mask->InsertNextValue(invalid ? 0 : 1);
-      mask->InsertNextValue(invalid ? 0 : 1);
+      mask->InsertNextValue([&]() -> int {
+        if (invalid) {
+          return 0;
+        } else {
+          return 1;
+        }
+      }());
+      mask->InsertNextValue([&]() -> int {
+        if (invalid) {
+          return 0;
+        } else {
+          return 1;
+        }
+      }());
       mask->InsertNextValue(0);
       mask->InsertNextValue(1);
       mesh->GetPointData()->AddArray(mask);
@@ -297,7 +340,13 @@ void all_frame_range_checks()
     check(application.set_frame("Mesh",frame,error) && scene.synchronize(application,error),"Cannot show all-frame coloring");
     renderer->GetActors()->InitTraversal();
     auto* actor = renderer->GetActors()->GetNextActor();
-    auto* mapper = actor ? actor->GetMapper() : nullptr;
+    auto* mapper = [&]() -> std::common_type_t<decltype(actor->GetMapper()), decltype(nullptr)> {
+      if (actor) {
+        return actor->GetMapper();
+      } else {
+        return nullptr;
+      }
+    }();
     check(mapper && mapper->GetLookupTable()->GetRange()[0] == -10 && mapper->GetLookupTable()->GetRange()[1] == 1000,
       "Color/legend range changed while navigating frames");
   }
@@ -356,7 +405,13 @@ void dataset_visibility_checks()
   check(scene.synchronize(application,error),"Cannot show visibility fixture");
   renderer->GetActors()->InitTraversal();
   vtkSmartPointer<vtkActor> firstActor = renderer->GetActors()->GetNextActor();
-  auto* scalarGeometry = firstActor ? firstActor->GetMapper()->GetInput() : nullptr;
+  auto* scalarGeometry = [&]() -> std::common_type_t<decltype(firstActor->GetMapper()->GetInput()), decltype(nullptr)> {
+    if (firstActor) {
+      return firstActor->GetMapper()->GetInput();
+    } else {
+      return nullptr;
+    }
+  }();
   check(application.set_dataset_visibility("",Action::Hide,Selector{integration.name},error),"Named dataset hide failed");
   const auto& display = application.session().representations.begin()->second;
   check(display.hidden_datasets == std::set<std::size_t>{1} && display.visible,"Named hide changed master visibility or wrong dataset");
@@ -718,7 +773,13 @@ void scene_checks()
     {
       overlay->GetActors()->InitTraversal();
       auto* arrows = overlay->GetActors()->GetNextActor();
-      auto* data = arrows ? arrows->GetMapper()->GetInput() : nullptr;
+      auto* data = [&]() -> std::common_type_t<decltype(arrows->GetMapper()->GetInput()), decltype(nullptr)> {
+        if (arrows) {
+          return arrows->GetMapper()->GetInput();
+        } else {
+          return nullptr;
+        }
+      }();
       check(data != nullptr, "Triad geometry must be available without rendering.");
       if (data != nullptr)
       {
@@ -770,7 +831,13 @@ void scene_checks()
     // Bow one midside node: edge display must retain it, not replace the
     // quadratic element with a corner-only linear hex.
     quadraticPoints->InsertNextPoint(coordinates[3 * i], coordinates[3 * i + 1],
-      coordinates[3 * i + 2] + (i == 8 ? -0.2 : 0.0));
+      coordinates[3 * i + 2] + ([&]() -> std::common_type_t<decltype(-0.2), decltype(0.0)> {
+        if (i == 8) {
+          return -0.2;
+        } else {
+          return 0.0;
+        }
+      }()));
     quadratic->GetPointIds()->SetId(i, i);
   }
   quadraticGrid->SetPoints(quadraticPoints);
@@ -789,7 +856,13 @@ void scene_checks()
   auto* quadraticSurface = renderer->GetActors()->GetNextActor();
   auto* quadraticEdges = renderer->GetActors()->GetNextActor();
   check(quadraticSurface != nullptr && !quadraticSurface->GetProperty()->GetEdgeVisibility(), "Quadratic surface exposes tessellation diagonals");
-  auto* edgeData = quadraticEdges ? vtkPolyData::SafeDownCast(quadraticEdges->GetMapper()->GetInput()) : nullptr;
+  auto* edgeData = [&]() -> std::common_type_t<decltype(vtkPolyData::SafeDownCast(quadraticEdges->GetMapper()->GetInput())), decltype(nullptr)> {
+    if (quadraticEdges) {
+      return vtkPolyData::SafeDownCast(quadraticEdges->GetMapper()->GetInput());
+    } else {
+      return nullptr;
+    }
+  }();
   check(edgeData != nullptr && edgeData->GetNumberOfLines() == 24 && edgeData->GetNumberOfPolys() == 0,
     "HEX20 must display only its 12 element edges split at midside nodes");
   if (edgeData != nullptr && edgeData->GetNumberOfPoints() > 8)
@@ -817,5 +890,9 @@ int main()
   dataset_visibility_checks();
   coloring_scene_checks();
   scene_checks();
-  return failures == 0 ? 0 : 1;
+  if (failures == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
 }

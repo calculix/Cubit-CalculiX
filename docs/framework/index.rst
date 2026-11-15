@@ -21,3 +21,9 @@ Solver-specific modeling, commands and mathematics belong to workspace chapters.
    :maxdepth: 1
 
    drawing
+
+.. toctree::
+   :maxdepth: 1
+
+   units
+   materials

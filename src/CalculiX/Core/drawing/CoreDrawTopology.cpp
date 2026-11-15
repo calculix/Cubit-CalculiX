@@ -28,7 +28,13 @@ bool CoreDraw::draw_topology(int topologyId, int iterationId, double threshold)
       return false;
     }
     const bool removed = row[3] == 0 && row[1] < threshold;
-    if (!CoreDrawMeshGeometry::append("element", static_cast<int>(row[0]), removed, removed ? "red" : "green", geometry))
+    if (!CoreDrawMeshGeometry::append("element", static_cast<int>(row[0]), removed, [&]() -> const char* {
+      if (removed) {
+        return "red";
+      } else {
+        return "green";
+      }
+    }(), geometry))
     {
       PRINT_ERROR("Unable to build topology preview element %.0f.\n", row[0]);
       return false;

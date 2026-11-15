@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorAnnotationControls.hpp"
 #include <utility>
 #include "PostprocessorAnnotationMenu.hpp"
@@ -42,12 +43,24 @@ PostprocessorAnnotationControls::PostprocessorAnnotationControls(std::weak_ptr<P
   }
   connect(extrema,&QToolButton::clicked,this,[this](bool checked)
   {
-    submit(QStringLiteral("post labels extrema ")+(checked ? "on" : "off"));
+    submit(QStringLiteral("post labels extrema ")+([&]() -> const char* {
+      if (checked) {
+        return "on";
+      } else {
+        return "off";
+      }
+    }()));
     refresh();
   });
   connect(visible,&QToolButton::clicked,this,[this](bool checked)
   {
-    submit(QStringLiteral("post labels ")+(checked ? "show" : "hide"));
+    submit(QStringLiteral("post labels ")+([&]() -> const char* {
+      if (checked) {
+        return "show";
+      } else {
+        return "hide";
+      }
+    }()));
     refresh();
   });
   connect(add,&QToolButton::clicked,this,[this]()
@@ -89,5 +102,11 @@ void PostprocessorAnnotationControls::refresh()
   std::string fieldError;
   add->setEnabled(view->second.selection.entity &&
     !annotation_add_command(*app,view->first,*view->second.selection.entity,&fieldError).isEmpty());
-  add->setToolTip(fieldError.empty() ? tr("Label the selected result entity") : QString::fromUtf8(fieldError.c_str()));
+  add->setToolTip([&]() -> std::common_type_t<decltype(tr("Label the selected result entity")), decltype(QString::fromUtf8(fieldError.c_str()))> {
+    if (fieldError.empty()) {
+      return tr("Label the selected result entity");
+    } else {
+      return QString::fromUtf8(fieldError.c_str());
+    }
+  }());
 }

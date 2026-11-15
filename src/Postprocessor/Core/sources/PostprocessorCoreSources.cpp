@@ -77,7 +77,11 @@ namespace
     {
       return 2;
     }
-    return Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::IntegrationPoints) ? 3 : 4;
+    if (Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::IntegrationPoints)) {
+      return 3;
+    } else {
+      return 4;
+    }
   }
 
   // New sources only: choose blocks, otherwise the first present category in
@@ -357,7 +361,13 @@ namespace Postprocessor
         }
       }
 
-      const std::string resolved_name = name ? *name : published.suggested_name;
+      const std::string resolved_name = [&]() -> std::string {
+        if (name) {
+          return *name;
+        } else {
+          return published.suggested_name;
+        }
+      }();
 
       if (!valid_name(resolved_name) || !source_id_from_name(resolved_name).empty())
       {

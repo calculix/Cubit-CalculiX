@@ -1,7 +1,7 @@
 #include "CalculiXMaterialsInterface.hpp"
 #include "CoreMaterialsTreeData.hpp"
 #include "CoreMaterials.hpp"
-#include "CoreMaterialsLibrary.hpp"
+#include "Framework/Core/materials/FrameworkMaterialsInterface.hpp"
 #include <string>
 #include <vector>
 #include "CubitMessage.hpp"
@@ -46,67 +46,67 @@ std::string CalculiXMaterialsInterface::get_material_export_data(int topology_id
 
 bool CalculiXMaterialsInterface::create_materiallibrary_group(std::string name)
 {
-  return ccx_core.mat_library->create_group(name);
+  return FrameworkMaterialsInterface("calculix").create_materiallibrary_group(name);
 }
 
 bool CalculiXMaterialsInterface::modify_materiallibrary_group(std::string name, std::string data, int mode)
 {
-  return ccx_core.mat_library->modify_group(name, data, mode);
+  return FrameworkMaterialsInterface("calculix").modify_materiallibrary_group(name, data, mode);
 }
 
 bool CalculiXMaterialsInterface::delete_materiallibrary_group(std::string name)
 {
-  return ccx_core.mat_library->delete_group(name);
+  return FrameworkMaterialsInterface("calculix").delete_materiallibrary_group(name);
 }
 
 bool CalculiXMaterialsInterface::create_materiallibrary_material(std::string name, std::string groupname)
 {
-  return ccx_core.mat_library->create_material(name, groupname);
+  return FrameworkMaterialsInterface("calculix").create_materiallibrary_material(name, groupname);
 }
 
 bool CalculiXMaterialsInterface::modify_materiallibrary_material(std::string name, std::string groupname, std::string data, int mode, std::vector<double> value_data)
 {
-  return ccx_core.mat_library->modify_material(name, groupname, data, mode, value_data);
+  return FrameworkMaterialsInterface("calculix").modify_materiallibrary_material(name, groupname, data, mode, value_data);
 }
 
 bool CalculiXMaterialsInterface::delete_materiallibrary_material(std::string name, std::string groupname)
 {
-  return ccx_core.mat_library->delete_material(name, groupname);
+  return FrameworkMaterialsInterface("calculix").delete_materiallibrary_material(name, groupname);
 }
 
-bool CalculiXMaterialsInterface::export_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name)
+bool CalculiXMaterialsInterface::export_materiallibrary_material(std::string name, std::string groupname, std::string material_name)
 {
-  return ccx_core.mat_library->export_material(name, groupname, cubit_name);
+  return FrameworkMaterialsInterface("calculix").export_materiallibrary_material(name, groupname, material_name);
 }
 
-bool CalculiXMaterialsInterface::import_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name)
+bool CalculiXMaterialsInterface::import_materiallibrary_material(std::string name, std::string groupname, std::string material_name)
 {
-  return ccx_core.mat_library->import_material(name, groupname, cubit_name);
+  return FrameworkMaterialsInterface("calculix").import_materiallibrary_material(name, groupname, material_name);
 }
 
 std::vector<std::vector<std::string>> CalculiXMaterialsInterface::get_material_tree_data()
 { 
-  return CoreMaterialsTreeData::get_material_tree_data(*ccx_core.mat, *ccx_core.mat_iface);
+  return CoreMaterialsTreeData::get_material_tree_data(*ccx_core.mat, *ccx_core.mat->mat_iface);
 }
 
 std::vector<std::vector<std::string>> CalculiXMaterialsInterface::get_material_group_properties()
 { 
-  return ccx_core.mat->group_properties;
+  return ccx_core.mat->material_api.get_group_properties();
 }
 
 std::vector<std::vector<std::string>> CalculiXMaterialsInterface::get_materiallibrary_tree_data()
 { 
-  return ccx_core.mat_library->get_materiallibrary_tree_data();
+  return FrameworkMaterialsInterface("calculix").get_materiallibrary_tree_data();
 }
 
 std::vector<std::vector<std::string>> CalculiXMaterialsInterface::get_materiallibrary_material_properties(std::string name, std::string group)
 { 
-  return ccx_core.mat_library->get_materiallibrary_material_properties(name, group);
+  return FrameworkMaterialsInterface("calculix").get_materiallibrary_material_properties(name, group);
 }
 
 std::vector<std::vector<double>> CalculiXMaterialsInterface::get_materiallibrary_material_values(std::string name, std::string group, std::string property)
 {
-  return ccx_core.mat_library->get_materiallibrary_material_values(name, group, property);
+  return FrameworkMaterialsInterface("calculix").get_materiallibrary_material_values(name, group, property);
 }
 
 

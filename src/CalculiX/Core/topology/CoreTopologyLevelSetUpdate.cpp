@@ -65,8 +65,16 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
     }
     problem.indices.emplace(node.first, index);
     problem.qp.origin[index] = node.second;
-    problem.qp.lower[index] = fixed ? 1.0 : (std::max)(-1.0, node.second - source.settings.move_limit);
-    problem.qp.upper[index] = fixed ? 1.0 : (std::min)(1.0, node.second + source.settings.move_limit);
+    if (fixed) {
+      problem.qp.lower[index] = 1.0;
+    } else {
+      problem.qp.lower[index] = (std::max)(-1.0, node.second - source.settings.move_limit);
+    }
+    if (fixed) {
+      problem.qp.upper[index] = 1.0;
+    } else {
+      problem.qp.upper[index] = (std::min)(1.0, node.second + source.settings.move_limit);
+    }
     problem.qp.right[index] = -objective->second / objective_scale;
     problem.qp.volume[index] = volume->second;
     ++index;
@@ -181,7 +189,13 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
   {
     const double total_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
     PRINT_INFO("Level-set iteration %d proposal [ms]: source geometry %.3f; graph assembly %.3f; QP solve %.3f; total %.3f; status %s.\n",
-      source.iteration_id, source_geometry_ms, assembly_ms, qp_ms, total_ms, succeeded ? "complete" : "incomplete");
+      source.iteration_id, source_geometry_ms, assembly_ms, qp_ms, total_ms, [&]() -> const char* {
+        if (succeeded) {
+          return "complete";
+        } else {
+          return "incomplete";
+        }
+      }());
   });
   proposal = {};
   const auto controls = CoreTopologyLevelSet::default_update_controls();
@@ -221,7 +235,17 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
     PRINT_ERROR("Level-set target volume is below the fully pinned-element lower bound.\n");
     return false;
   }
-  const double objective_scale = source.objective_scale > 0.0 ? source.objective_scale : evaluation.compliance > 0.0 ? evaluation.compliance : 1.0;
+  const double objective_scale = [&]() -> double {
+    if (source.objective_scale > 0.0) {
+      return source.objective_scale;
+    } else {
+      if (evaluation.compliance > 0.0) {
+        return evaluation.compliance;
+      } else {
+        return 1.0;
+      }
+    }
+  }();
   Problem problem;
   const auto assembly_begin = std::chrono::steady_clock::now();
   const bool assembly_succeeded = build_problem(prepared, evaluation, element_volumes, objective_scale, problem);
@@ -289,7 +313,13 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
   {
     const double total_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
     PRINT_INFO("Level-set update after iteration %d acceptance [ms]: source geometry %.3f; trial geometry %.3f; total %.3f; status %s.\n",
-      source_iteration, source_geometry_ms, trial_geometry_ms, total_ms, succeeded ? "complete" : "incomplete");
+      source_iteration, source_geometry_ms, trial_geometry_ms, total_ms, [&]() -> const char* {
+        if (succeeded) {
+          return "complete";
+        } else {
+          return "incomplete";
+        }
+      }());
     if (succeeded)
     {
       PRINT_INFO("Level-set update after iteration %d acceptance: trials %d; backtracking reductions %d; accepted scale %.9g.\n",
@@ -352,8 +382,20 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
     const auto value = proposal.node_values.find(node.first);
     const auto volume = proposal.volume_fraction_derivatives.find(node.first);
     const bool fixed = source.fixed_nodes.count(node.first) != 0;
-    const double lower = fixed ? 1.0 : (std::max)(-1.0, node.second - source.settings.move_limit);
-    const double upper = fixed ? 1.0 : (std::min)(1.0, node.second + source.settings.move_limit);
+    const double lower = [&]() -> double {
+      if (fixed) {
+        return 1.0;
+      } else {
+        return (std::max)(-1.0, node.second - source.settings.move_limit);
+      }
+    }();
+    const double upper = [&]() -> double {
+      if (fixed) {
+        return 1.0;
+      } else {
+        return (std::min)(1.0, node.second + source.settings.move_limit);
+      }
+    }();
     if (value == proposal.node_values.end() || volume == proposal.volume_fraction_derivatives.end() ||
         !std::isfinite(value->second) || value->second < lower || value->second > upper || !std::isfinite(volume->second) || (fixed && volume->second != 0.0))
     {
@@ -383,8 +425,20 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
     for (const auto& node : source.node_values)
     {
       const bool fixed = source.fixed_nodes.count(node.first) != 0;
-      const double lower = fixed ? 1.0 : (std::max)(-1.0, node.second - source.settings.move_limit);
-      const double upper = fixed ? 1.0 : (std::min)(1.0, node.second + source.settings.move_limit);
+      const double lower = [&]() -> double {
+        if (fixed) {
+          return 1.0;
+        } else {
+          return (std::max)(-1.0, node.second - source.settings.move_limit);
+        }
+      }();
+      const double upper = [&]() -> double {
+        if (fixed) {
+          return 1.0;
+        } else {
+          return (std::min)(1.0, node.second + source.settings.move_limit);
+        }
+      }();
       const double value = clamp(node.second + scale * (proposal.node_values.at(node.first) - node.second), lower, upper);
       candidate.node_values.at(node.first) = value;
       maximum_change = (std::max)(maximum_change, std::abs(value - node.second));

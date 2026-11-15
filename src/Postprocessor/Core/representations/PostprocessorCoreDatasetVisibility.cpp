@@ -8,7 +8,11 @@ namespace Postprocessor
   std::vector<SimResults::Dataset> PostprocessorCore::mesh_datasets(const std::string& source_id) const
   {
     const auto loaded = runtime.find(source_id);
-    return loaded == runtime.end() ? std::vector<SimResults::Dataset>{} : loaded->second.datasets;
+    if (loaded == runtime.end()) {
+      return std::vector<SimResults::Dataset>{};
+    } else {
+      return loaded->second.datasets;
+    }
   }
 
   bool PostprocessorCore::set_dataset_visibility(const std::string& source_id, const std::string& view_id,

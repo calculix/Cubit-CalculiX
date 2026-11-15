@@ -37,6 +37,7 @@ namespace Postprocessor
     // Union payload column -> this segment's native/spatial column; -1 means
     // unavailable. Segment metadata references immutable inputs, not copied rows.
     std::vector<int> column_map;
+    std::vector<SimUnits::QuantityUnit> column_units;
   };
   // Read-only borrowed VTK access, retained by the immutable owner snapshot.
   // Frame histories prepend Frame (1-based), Step, Increment and Time. Global
@@ -48,6 +49,7 @@ namespace Postprocessor
     std::shared_ptr<vtkTable> table;
     std::vector<ResultTablePart> parts;
     std::vector<std::string> columns;
+    std::vector<SimUnits::QuantityUnit> column_units;
     std::vector<bool> numeric;
     std::string title, status;
     std::size_t rows = 0;
@@ -59,5 +61,6 @@ namespace Postprocessor
   // Binary-search the frame owning a logical row. Globals have no frame.
   std::optional<std::size_t> result_table_row_frame(const ResultTableData& data, std::size_t row);
   std::string result_table_cell(const ResultTableData& data, std::size_t row, std::size_t column);
+  std::string result_table_column_unit(const ResultTableData& data, std::size_t column);
 }
 #endif

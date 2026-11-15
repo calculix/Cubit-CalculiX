@@ -188,7 +188,8 @@ using Cubit/Exodus coordinates and CalculiX integration rules. The shared
 element-type IDs must match the installed Cubit SDK.
 
 Cross-core operations pass through the domain-specific interfaces (see :doc:`interface-layout`); geometry and
-materials are supplied through the existing core and Cubit interfaces.
+materials are supplied through the CalculiX material adapter and Framework
+workspace store. Cubit supplies mesh and geometry, not material identities.
 
 See :doc:`topology-verification` for verification scope and evidence status.
 See :doc:`../user/topology` for the user workflow.

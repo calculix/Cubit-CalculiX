@@ -1,4 +1,8 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsSourceMetadata.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsSourceMetadata.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsUnits.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsUnits.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsExternalSource.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsExternalSource.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsIdentity.cpp

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportImageCommand.hpp"
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -38,7 +39,11 @@ bool ReportImageCommand::execute(CubitCommandData& data)
     ReportImageRequest request;
     request.provider = "postprocessor";
     ReportVisualReference visual;
-    visual.kind = data.find_keyword("PLOT") ? ReportVisualKind::Plot : ReportVisualKind::View;
+    if (data.find_keyword("PLOT")) {
+      visual.kind = ReportVisualKind::Plot;
+    } else {
+      visual.kind = ReportVisualKind::View;
+    }
     std::string caption;
     bool valid = active && data.get_string("visual_name",visual.reference) && !visual.reference.empty();
     request.visual = visual;
@@ -85,6 +90,12 @@ bool ReportImageCommand::execute(CubitCommandData& data)
   {
     error = exception.what();
   }
-  PRINT_ERROR("Cannot add Report figure: %s\n",error.empty() ? "Invalid image arguments." : error.c_str());
+  PRINT_ERROR("Cannot add Report figure: %s\n",[&]() -> std::common_type_t<decltype("Invalid image arguments."), decltype(error.c_str())> {
+    if (error.empty()) {
+      return "Invalid image arguments.";
+    } else {
+      return error.c_str();
+    }
+  }());
   return false;
 }

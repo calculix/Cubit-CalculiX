@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostViewZoomCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -33,7 +34,13 @@ bool PostViewZoomCommand::execute(CubitCommandData& data)
     std::string error;
     if (!active || !data.get_value("factor", factor) || !active->zoom_camera(factor, error))
     {
-      PRINT_ERROR("Cannot zoom Postprocessor camera: %s\n", error.empty() ? "missing application or values" : error.c_str());
+      PRINT_ERROR("Cannot zoom Postprocessor camera: %s\n", [&]() -> std::common_type_t<decltype("missing application or values"), decltype(error.c_str())> {
+        if (error.empty()) {
+          return "missing application or values";
+        } else {
+          return error.c_str();
+        }
+      }());
       return false;
     }
     return true;

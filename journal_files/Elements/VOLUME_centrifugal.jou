@@ -6,21 +6,19 @@ subtract volume 2 from volume 1
 block 1 add volume 1
 volume 1 size 10
 
-create material "Steel" property_group "SIM_CCX"
-modify material "Steel" scalar_properties "CCX_ELASTIC_USE_CARD" 1
-modify material "Steel" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1
-modify material "Steel" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0 
-modify material "Steel" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1
-modify material "Steel" scalar_properties "CCX_DENSITY_USE_CARD" 1
-modify material "Steel" matrix_property "CCX_DENSITY_DENSITY" 0.0078 0 
-modify material "Steel" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1
-modify material "Steel" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 0.5 0 
-modify material "Steel" scalar_properties "CCX_EXPANSION_USE_CARD" 1
-modify material "Steel" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1
-modify material "Steel" matrix_property "CCX_EXPANSION_ISO_A_TEMPERATURE" 1.2e-05 0 
-modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1
-modify material "Steel" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1
-modify material "Steel" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 52 0 
+ccx units system "N-mm-s"
+ccx units geometry unit "mm"
+ccx create material "Steel"
+ccx modify material 1 add card elastic model iso
+ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"
+ccx modify material 1 add card density model default
+ccx modify material 1 card density row 1 values 7800 273.15 unit "SI"
+ccx modify material 1 add card specific_heat model default
+ccx modify material 1 card specific_heat row 1 values 500 273.15 unit "SI"
+ccx modify material 1 add card expansion model iso
+ccx modify material 1 card expansion row 1 values 1.2e-05 273.15 unit "SI"
+ccx modify material 1 add card conductivity model iso
+ccx modify material 1 card conductivity row 1 values 52 273.15 unit "SI"
 
 ccx create section solid block 1 material 1
 

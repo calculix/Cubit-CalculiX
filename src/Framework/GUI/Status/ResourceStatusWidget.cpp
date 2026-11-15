@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ResourceStatusWidget.hpp"
 #include "FrameworkOptionsPanel.hpp"
 #include "ResourceUsageButton.hpp"
@@ -20,12 +21,20 @@ namespace
 {
 QString memory(const std::optional<std::uint64_t>& bytes)
 {
-  return bytes ? QString::number(static_cast<double>(*bytes) / (1024.0 * 1024.0 * 1024.0), 'f', 1) + " GiB" : QString(QChar(0x2014));
+  if (bytes) {
+    return QString::number(static_cast<double>(*bytes) / (1024.0 * 1024.0 * 1024.0), 'f', 1) + " GiB";
+  } else {
+    return QString(QChar(0x2014));
+  }
 }
 
 QString percent(const std::optional<double>& value)
 {
-  return value ? QString::number(*value, 'f', 0) + "%" : QString(QChar(0x2014));
+  if (value) {
+    return QString::number(*value, 'f', 0) + "%";
+  } else {
+    return QString(QChar(0x2014));
+  }
 }
 
 QString stateName(JobRunState state)
@@ -181,7 +190,13 @@ void ResourceStatusWidget::tick()
         }
         else
         {
-          errors.push_back(error.empty() ? "Job provider unavailable" : error);
+          errors.push_back([&]() -> std::common_type_t<decltype("Job provider unavailable"), decltype(error)> {
+            if (error.empty()) {
+              return "Job provider unavailable";
+            } else {
+              return error;
+            }
+          }());
         }
       }
     }
@@ -233,11 +248,20 @@ void ResourceStatusWidget::display_snapshot()
       {
         return QString(QChar(0x2014));
       }
-      return cpu ? QString::number(*measured, 'f', 1) + "%"
-        : QString::number(*measured / (1024.0 * 1024.0 * 1024.0), 'f', 1) + " GiB";
+      if (cpu) {
+        return QString::number(*measured, 'f', 1) + "%";
+      } else {
+        return QString::number(*measured / (1024.0 * 1024.0 * 1024.0), 'f', 1) + " GiB";
+      }
     };
     const QString jobs = format(std::optional<double>(value.jobsMeasured)) +
-      (value.jobsIncomplete ? tr(" known; some measurements unavailable") : QString());
+      ([&]() -> std::common_type_t<decltype(tr(" known; some measurements unavailable")), decltype(QString())> {
+        if (value.jobsIncomplete) {
+          return tr(" known; some measurements unavailable");
+        } else {
+          return QString();
+        }
+      }());
     QString text = tr("Cubit: %1\nSolver jobs: %2\nColors: Cubit, solver jobs, then remaining / shared usage.\nAttribution is approximate; these are original, unscaled measurements.\nClick for individual jobs.")
       .arg(format(value.cubitMeasured), jobs);
     if (cpu)
@@ -268,7 +292,13 @@ void ResourceStatusWidget::display_snapshot()
   {
     return job.job.state == JobRunState::Running || job.job.state == JobRunState::Waiting;
   });
-  jobsButton->setText(latest->providerErrors.empty() ? tr("Jobs %1").arg(static_cast<qlonglong>(count)) : tr("Jobs unavailable"));
+  jobsButton->setText([&]() -> std::common_type_t<decltype(tr("Jobs %1").arg(static_cast<qlonglong>(count))), decltype(tr("Jobs unavailable"))> {
+    if (latest->providerErrors.empty()) {
+      return tr("Jobs %1").arg(static_cast<qlonglong>(count));
+    } else {
+      return tr("Jobs unavailable");
+    }
+  }());
   jobsButton->setToolTip(tr("Show machine and individual solver-process measurements."));
   if (detailsTree != nullptr)
   {

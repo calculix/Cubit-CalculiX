@@ -10,6 +10,7 @@ struct AmplitudesSettings
   int id = -1;
   int type = 0;
   std::string name;
+  std::string axis = "time";
   std::string shiftX;
   std::string shiftY;
   std::string totalTime;

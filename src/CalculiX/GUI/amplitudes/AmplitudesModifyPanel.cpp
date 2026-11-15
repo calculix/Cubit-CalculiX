@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CubitMessage.hpp"
 #include "Core/amplitudes/CalculiXAmplitudesInterface.hpp"
 #include "AmplitudesModifyPanel.hpp"
@@ -114,7 +115,13 @@ void AmplitudesModifyPanel::on_pushButton_apply_clicked(bool)
   changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
   changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
   changed = changed || fieldChanged("lineEdit_3", lineEdit_3->text());
-  changed = changed || fieldChanged("checkBox_4", (checkBox_4->isChecked() ? QStringLiteral("YES") : QStringLiteral("NO")));
+  changed = changed || fieldChanged("checkBox_4", ([&]() -> std::common_type_t<decltype(QStringLiteral("YES")), decltype(QStringLiteral("NO"))> {
+    if (checkBox_4->isChecked()) {
+      return QStringLiteral("YES");
+    } else {
+      return QStringLiteral("NO");
+    }
+  }()));
   changed = changed || fieldChanged("widget_5", widget_5->snapshot());
   if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
   {
@@ -200,7 +207,13 @@ void AmplitudesModifyPanel::on_pushButton_apply_clicked(bool)
     {
       command.append(" shifty " +lineEdit_3->text());
     }
-    if (fieldChanged("checkBox_4", checkBox_4->isChecked() ? "YES" : "NO"))
+    if (fieldChanged("checkBox_4", [&]() -> const char* {
+      if (checkBox_4->isChecked()) {
+        return "YES";
+      } else {
+        return "NO";
+      }
+    }()))
     {
       if (checkBox_4->isChecked())
       {
@@ -258,12 +271,22 @@ bool AmplitudesModifyPanel::setAmplitude(int id)
   lineEdit_3->setText(QString::fromStdString(settings.shiftY));
   checkBox_4->setChecked(settings.totalTime == "YES");
 
-  widget_5->update({"Time", "Amplitude"}, settings.points);
+  QString axisTitle = "Time";
+  if (settings.axis == "frequency") {
+    axisTitle = "Frequency";
+  }
+  widget_5->update({axisTitle, "Amplitude"}, settings.points);
   originalValues.insert("lineEdit_0", lineEdit_0->text());
   originalValues.insert("lineEdit_1", lineEdit_1->text());
   originalValues.insert("lineEdit_2", lineEdit_2->text());
   originalValues.insert("lineEdit_3", lineEdit_3->text());
-  originalValues.insert("checkBox_4", (checkBox_4->isChecked() ? QStringLiteral("YES") : QStringLiteral("NO")));
+  originalValues.insert("checkBox_4", ([&]() -> std::common_type_t<decltype(QStringLiteral("YES")), decltype(QStringLiteral("NO"))> {
+    if (checkBox_4->isChecked()) {
+      return QStringLiteral("YES");
+    } else {
+      return QStringLiteral("NO");
+    }
+  }()));
   originalValues.insert("widget_5", widget_5->snapshot());
   loadedEntityId = id;
   pushButton_apply->setEnabled(true);

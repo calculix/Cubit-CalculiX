@@ -95,7 +95,11 @@ bool PostprocessorApplicationInterface::resolve_project_sources(std::string& err
     else
     {
       runtime.availability = Postprocessor::SourceAvailability::Unavailable;
-      runtime.unavailable_reason = issue.empty() ? "The saved result reference could not be verified." : issue;
+      if (issue.empty()) {
+        runtime.unavailable_reason = "The saved result reference could not be verified.";
+      } else {
+        runtime.unavailable_reason = issue;
+      }
       const auto catalogue = preparedProject->definitions.catalogues.find(item.first);
       if (catalogue != preparedProject->definitions.catalogues.end())
       {

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CalculiXReportModelProvider.hpp"
 #include "CalculiX/Core/jobs/CalculiXJobRunRecord.hpp"
 #include "CalculiXReportModelSnapshot.hpp"
@@ -194,7 +195,13 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
             candidate.diagnostics.push_back(issue);
             continue;
           }
-          for (int dof = first; dof <= (lastOk ? last : first); ++dof)
+          for (int dof = first; dof <= ([&]() -> std::common_type_t<decltype(last), decltype(first)> {
+            if (lastOk) {
+              return last;
+            } else {
+              return first;
+            }
+          }()); ++dof)
           {
             activeBoundaries[parts.value(0).trimmed() + "/" + QString::number(dof)] = value.toString();
           }
@@ -253,7 +260,11 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
         const int id = value.toString().section(',', 0, 0).trimmed().toInt(&ok);
         if (ok && id > 0)
         {
-          (keyword == "NODE" ? nodeIds : elementIds).insert(id);
+          if (keyword == "NODE") {
+      nodeIds.insert(id);
+    } else {
+      elementIds.insert(id);
+    }
           ++count;
         }
       }
@@ -278,7 +289,13 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
     const std::set<QString> materialKeywords = {"MATERIAL", "ELASTIC", "PLASTIC", "DENSITY", "EXPANSION",
       "CONDUCTIVITY", "SPECIFIC HEAT", "CREEP", "HYPERELASTIC", "HYPERFOAM", "DEFORMATION PLASTICITY",
       "USER MATERIAL", "DEPVAR", "DAMPING", "CYCLIC HARDENING", "GAP CONDUCTANCE"};
-    const std::string target = material && materialKeywords.count(keyword) != 0 ? "ccx.model.materials" : group;
+    const std::string target = [&]() -> std::string {
+      if (material && materialKeywords.count(keyword) != 0) {
+        return "ccx.model.materials";
+      } else {
+        return group;
+      }
+    }();
     if (sections.count(target) != 0)
     {
       sections[target].tables.push_back(recordTable(record));

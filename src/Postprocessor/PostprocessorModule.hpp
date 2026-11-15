@@ -13,6 +13,7 @@
 class ResultSourceRegistryInterface;
 class PostprocessorApplicationInterface;
 class PostprocessorReportImageProvider;
+class PostprocessorReportResultProvider;
 class PostprocessorCommands;
 class PostprocessorGui;
 class PostprocessorModelObserver;
@@ -28,6 +29,7 @@ public:
 
   std::string module_id() const override;
   ReportImageProviderInterface* report_image_provider() noexcept override;
+  ReportResultProviderInterface* report_result_provider() noexcept override;
   ProjectStateProviderInterface* project_state_provider() noexcept override;
   std::string project_state_id() const override;
   bool prepare_project_read(const ProjectStateContext& context, std::string& error) override;
@@ -52,6 +54,7 @@ private:
   std::shared_ptr<PostprocessorApplicationInterface> application;
   std::unique_ptr<PostprocessorCommands> commands;
   std::unique_ptr<PostprocessorReportImageProvider> imageProvider;
+  std::unique_ptr<PostprocessorReportResultProvider> resultProvider;
   std::unique_ptr<PostprocessorGui> gui;
   std::unique_ptr<PostprocessorModelObserver> modelObserver;
   std::function<bool(const std::string&, std::string&)> submitCommand;

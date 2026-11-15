@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Postprocessor/Commands/FieldCommandOptions.hpp"
 #include "PostLabelCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -76,8 +77,19 @@ bool PostLabelCommand::execute(CubitCommandData& data)
         PRINT_ERROR("Invalid label entity ID; quote large IDs.\n");
         return false;
       }
-      const auto kind = data.find_keyword("INTEGRATIONPOINT") ? Postprocessor::EntityKind::IntegrationPoint :
-        data.find_keyword("NODE") ? Postprocessor::EntityKind::Node : Postprocessor::EntityKind::Element;
+      const auto kind = [&]() -> std::common_type_t<decltype(Postprocessor::EntityKind::IntegrationPoint), std::common_type_t<decltype(Postprocessor::EntityKind::Node), decltype(Postprocessor::EntityKind::Element)>> {
+        if (data.find_keyword("INTEGRATIONPOINT")) {
+          return Postprocessor::EntityKind::IntegrationPoint;
+        } else {
+          return [&]() -> std::common_type_t<decltype(Postprocessor::EntityKind::Node), decltype(Postprocessor::EntityKind::Element)> {
+            if (data.find_keyword("NODE")) {
+              return Postprocessor::EntityKind::Node;
+            } else {
+              return Postprocessor::EntityKind::Element;
+            }
+          }();
+        }
+      }();
       std::optional<std::int64_t> ip;
       if (kind == Postprocessor::EntityKind::IntegrationPoint)
       {
@@ -122,8 +134,25 @@ bool PostLabelCommand::execute(CubitCommandData& data)
     else
     {
       std::array<double,2> position = Postprocessor::AnnotationDefaults::position;
-      const std::string action = data.find_keyword("POSITION") ? "position" : data.find_keyword("RENAME") ? "rename" :
-        data.find_keyword("SHOW") ? "show" : data.find_keyword("HIDE") ? "hide" : "remove";
+      const std::string action = [&]() -> std::string {
+        if (data.find_keyword("POSITION")) {
+          return "position";
+        } else {
+          if (data.find_keyword("RENAME")) {
+            return "rename";
+          } else {
+            if (data.find_keyword("SHOW")) {
+              return "show";
+            } else {
+              if (data.find_keyword("HIDE")) {
+                return "hide";
+              } else {
+                return "remove";
+              }
+            }
+          }
+        }
+      }();
       if (action == "position" && (!data.get_value("x",position[0]) || !data.get_value("y",position[1])))
       {
         return false;

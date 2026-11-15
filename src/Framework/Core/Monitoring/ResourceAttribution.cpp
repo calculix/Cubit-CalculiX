@@ -77,10 +77,28 @@ ResourceAttribution attribute(const ResourceSnapshot& snapshot, bool cpu, bool i
     return result;
   }
   const double machineUsed = std::clamp(*used, 0.0, capacity);
-  const double cubit = includeCubit && cubitValid ? *result.cubitMeasured : 0;
-  const double jobs = includeJobs ? result.jobsMeasured : 0;
+  const double cubit = [&]() -> double {
+    if (includeCubit && cubitValid) {
+      return *result.cubitMeasured;
+    } else {
+      return 0;
+    }
+  }();
+  const double jobs = [&]() -> double {
+    if (includeJobs) {
+      return result.jobsMeasured;
+    } else {
+      return 0;
+    }
+  }();
   const double sum = cubit + jobs;
-  const double scale = sum > machineUsed && sum > 0 ? machineUsed / sum : 1.0;
+  const double scale = [&]() -> double {
+    if (sum > machineUsed && sum > 0) {
+      return machineUsed / sum;
+    } else {
+      return 1.0;
+    }
+  }();
   result.available = true;
   result.adjusted = scale < 1.0;
   result.cubit = cubit * scale / capacity;

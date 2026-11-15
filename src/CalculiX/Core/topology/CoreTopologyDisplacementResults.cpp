@@ -139,7 +139,13 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
         displacement[axis] = values[columns[axis]];
       }
 
-      const double measured_value = component == 0 ? std::hypot(displacement[0], displacement[1], displacement[2]) : std::abs(displacement[component - 1]);
+      const double measured_value = [&]() -> double {
+        if (component == 0) {
+          return std::hypot(displacement[0], displacement[1], displacement[2]);
+        } else {
+          return std::abs(displacement[component - 1]);
+        }
+      }();
 
       if (!std::isfinite(measured_value) || !measured.emplace(record[0], displacement).second)
       {

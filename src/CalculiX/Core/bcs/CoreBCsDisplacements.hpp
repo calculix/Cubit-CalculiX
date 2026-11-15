@@ -9,6 +9,8 @@
 class CoreBCsDisplacements
 {
 public:
+  std::string value_unit_system = "SI";
+  bool unit_view = false;
   bool get_settings(int id, BCsDisplacementsSettings& settings, std::string& error) const;
   std::vector<int> get_bc_ids() const;
   CoreBCsDisplacements();

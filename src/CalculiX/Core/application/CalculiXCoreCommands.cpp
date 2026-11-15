@@ -20,7 +20,13 @@ bool CalculiXCore::silent_cmd(std::string cmd)
   try
   {
     const bool result = CubitInterface::silent_cmd(cmd.c_str());
-    CoreTopologyTrace::write(result ? "command.silent.success" : "command.silent.failure");
+    CoreTopologyTrace::write([&]() -> const char* {
+      if (result) {
+        return "command.silent.success";
+      } else {
+        return "command.silent.failure";
+      }
+    }());
     return result;
   }
   catch (const std::exception& error)

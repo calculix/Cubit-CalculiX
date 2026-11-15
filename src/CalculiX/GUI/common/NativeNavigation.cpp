@@ -41,7 +41,11 @@ public:
     auto* factory = inheritedFactory(model->getNode(index));
 
     // Native panels receive their original model/index, including unmarked nodes.
-    return factory == nullptr ? nullptr : factory->getWidget(model.data(), index, parent);
+    if (factory == nullptr) {
+      return nullptr;
+    } else {
+      return factory->getWidget(model.data(), index, parent);
+    }
   }
 
 private:

@@ -97,5 +97,9 @@ bool PostprocessorGui::workspace_view(WorkspaceView& view, std::string& error)
 
 std::array<int,2> PostprocessorGui::capture_reference_size(Postprocessor::CaptureTarget target,const std::string& id) const
 {
-  return workspace ? workspace->capture_reference_size(target,id) : std::array<int,2>{Postprocessor::CaptureDefaults::width,Postprocessor::CaptureDefaults::height};
+  if (workspace) {
+    return workspace->capture_reference_size(target,id);
+  } else {
+    return std::array<int,2>{Postprocessor::CaptureDefaults::width,Postprocessor::CaptureDefaults::height};
+  }
 }

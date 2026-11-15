@@ -26,10 +26,12 @@ namespace Postprocessor
     SourceRuntime() = default;
     SourceRuntime(std::shared_ptr<const SimResults::VtkResultsData> snapshot, std::uint64_t generation,
       std::optional<std::size_t> first)
-      : data(std::move(snapshot)), availability(data ? SourceAvailability::Available : SourceAvailability::Unresolved), revision(generation), first_mesh_increment(first),
-        groups(data ? result_field_groups(*data,std::nullopt) : std::vector<ResultFieldGroup>{}),
-        datasets(data ? result_dataset_catalogue(*data) : std::vector<SimResults::Dataset>{})
-    {
+      : data(std::move(snapshot)), revision(generation), first_mesh_increment(first) {
+      if (data) {
+        availability = SourceAvailability::Available;
+        groups = result_field_groups(*data, std::nullopt);
+        datasets = result_dataset_catalogue(*data);
+      }
     }
     std::shared_ptr<const SimResults::VtkResultsData> data;
     SourceAvailability availability = SourceAvailability::Unresolved;
@@ -44,6 +46,7 @@ namespace Postprocessor
     // Per-field/per-dataset extrema, valid for this immutable snapshot. Visible
     // combinations are merged on demand and never create new cache entries.
     mutable std::map<std::string,std::optional<std::array<double,2>>> all_frame_ranges;
+    mutable std::uint64_t unit_generation = 0;
     // Owned adjacency indexes; published meshes are never modified by BuildLinks.
     mutable std::map<vtkDataSet*,std::shared_ptr<vtkStaticCellLinks>> node_links;
   };

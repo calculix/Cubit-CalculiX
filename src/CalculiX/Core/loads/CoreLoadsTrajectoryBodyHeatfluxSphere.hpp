@@ -7,6 +7,7 @@ class CoreLoadsTrajectoryBodyHeatfluxSphere
 {
 
 public:
+  bool domain_unit_view = false;
   CoreLoadsTrajectoryBodyHeatfluxSphere();
   ~CoreLoadsTrajectoryBodyHeatfluxSphere();
 

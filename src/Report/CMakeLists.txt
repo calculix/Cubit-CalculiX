@@ -1,6 +1,8 @@
 find_package(Qt6 COMPONENTS Svg REQUIRED)
 
 add_library(report_module SHARED
+  Commands/ReportUnitsCommand.cpp
+  Commands/ReportUnitsCommand.hpp
   Commands/ReportImageCommand.cpp
   Core/ReportImages.cpp
   Commands/ReportSourceCommand.cpp Commands/ReportSourceCommand.hpp
@@ -67,7 +69,7 @@ add_library(report_module SHARED
 )
 target_compile_features(report_module PUBLIC cxx_std_17)
 target_include_directories(report_module PUBLIC "${CUBITSIM_SOURCE_ROOT}")
-target_link_libraries(report_module PRIVATE cubitsim_reporting cubitsim_storage cubiti cubit_util clarogui clarofw Qt6::Widgets Qt6::Svg)
+target_link_libraries(report_module PRIVATE cubitsim_reporting cubitsim_storage cubitsim_model cubiti cubit_util clarogui clarofw Qt6::Widgets Qt6::Svg)
 set_target_properties(report_module PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"
   LIBRARY_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"

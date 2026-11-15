@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorPlotControls.hpp"
 #include "Postprocessor/Commands/tables/TableCommandText.hpp"
 #include <QMessageBox>
@@ -74,9 +75,21 @@ void plot_table_dialog(QWidget* parent,const PostprocessorApplicationInterface& 
     filter->addItem(name,static_cast<int>(index));
   }
   const int time = x->findText("Time");
-  x->setCurrentIndex(time >= 0 ? time : 0);
+  x->setCurrentIndex([&]() -> std::common_type_t<decltype(time), decltype(0)> {
+    if (time >= 0) {
+      return time;
+    } else {
+      return 0;
+    }
+  }());
   const int selected = y->findData(static_cast<int>(column));
-  y->setCurrentIndex(selected >= 0 ? selected : 0);
+  y->setCurrentIndex([&]() -> std::common_type_t<decltype(selected), decltype(0)> {
+    if (selected >= 0) {
+      return selected;
+    } else {
+      return 0;
+    }
+  }());
   plot->addItem(QObject::tr("New plot"),QString());
   for (const auto& entry : plots)
   {
@@ -114,14 +127,31 @@ void plot_table_dialog(QWidget* parent,const PostprocessorApplicationInterface& 
   const auto sourceArg = plot_quote(sourceName);
   const auto xArg = plot_quote(x->currentText().toUtf8().toStdString());
   const auto yArg = plot_quote(y->currentText().toUtf8().toStdString());
-  const auto filterArg = filter->currentIndex() > 0 ? plot_quote(filter->currentText().toUtf8().toStdString()) : QString();
-  const auto valueArg = value->text().isEmpty() ? QStringLiteral("\"\"") : plot_quote(value->text().toUtf8().toStdString());
+  const auto filterArg = [&]() -> std::common_type_t<decltype(plot_quote(filter->currentText().toUtf8().toStdString())), decltype(QString())> {
+    if (filter->currentIndex() > 0) {
+      return plot_quote(filter->currentText().toUtf8().toStdString());
+    } else {
+      return QString();
+    }
+  }();
+  const auto valueArg = [&]() -> std::common_type_t<decltype(QStringLiteral("\"\"")), decltype(plot_quote(value->text().toUtf8().toStdString()))> {
+    if (value->text().isEmpty()) {
+      return QStringLiteral("\"\"");
+    } else {
+      return plot_quote(value->text().toUtf8().toStdString());
+    }
+  }();
   if (selector.isEmpty() || sourceArg.isEmpty() || xArg.isEmpty() || yArg.isEmpty() ||
       (filter->currentIndex() > 0 && (filterArg.isEmpty() || valueArg.isEmpty())) ||
       application.result_data(reference.source_id) != data.owner)
   {
-    QMessageBox::warning(parent,QObject::tr("Plot table columns"),error.empty() ?
-      QObject::tr("The table changed or its command arguments cannot be quoted. Reopen it before plotting.") : QString::fromUtf8(error.c_str()));
+    QMessageBox::warning(parent,QObject::tr("Plot table columns"),[&]() -> std::common_type_t<decltype(QObject::tr("The table changed or its command arguments cannot be quoted. Reopen it before plotting.")), decltype(QString::fromUtf8(error.c_str()))> {
+      if (error.empty()) {
+        return QObject::tr("The table changed or its command arguments cannot be quoted. Reopen it before plotting.");
+      } else {
+        return QString::fromUtf8(error.c_str());
+      }
+    }());
     return;
   }
   std::string plotName;
@@ -145,7 +175,13 @@ void plot_table_dialog(QWidget* parent,const PostprocessorApplicationInterface& 
     }
     submit(QStringLiteral("post plot create ")+plot_quote(plotName));
   }
-  auto command = QString(reference.field ? "post plot add field " : "post plot add table ")+selector+
+  auto command = QString([&]() -> const char* {
+    if (reference.field) {
+      return "post plot add field ";
+    } else {
+      return "post plot add table ";
+    }
+  }())+selector+
     " x "+xArg+" y "+yArg;
   if (filter->currentIndex() > 0)
   {

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorImportDialog.hpp"
 #include <QFileDialog>
 #include <QFileInfo>
@@ -12,7 +13,13 @@ namespace
 {
   QString quote(const QString& value)
   {
-    const QChar delimiter = value.contains('"') ? QChar(0x27) : QChar('"');
+    const QChar delimiter = [&]() -> QChar {
+      if (value.contains('"')) {
+        return QChar(0x27);
+      } else {
+        return QChar('"');
+      }
+    }();
     if (value.contains(delimiter))
     {
       return {};
@@ -69,9 +76,21 @@ QString PostprocessorImportDialog::command(QWidget* parent)
     QLineEdit* datEdit = nullptr;
     if (extension == "frd")
     {
-      datEdit = row(QObject::tr("DAT (optional)"),QObject::tr("CalculiX DAT (*.dat)"),QFileInfo::exists(base+"dat") ? base+"dat" : QString{});
+      datEdit = row(QObject::tr("DAT (optional)"),QObject::tr("CalculiX DAT (*.dat)"),[&]() -> std::common_type_t<decltype(base+"dat"), decltype(QString{})> {
+        if (QFileInfo::exists(base+"dat")) {
+          return base+"dat";
+        } else {
+          return QString{};
+        }
+      }());
     }
-    auto* inputEdit = row(QObject::tr("INP (optional)"),QObject::tr("CalculiX input (*.inp)"),QFileInfo::exists(base+"inp") ? base+"inp" : QString{});
+    auto* inputEdit = row(QObject::tr("INP (optional)"),QObject::tr("CalculiX input (*.inp)"),[&]() -> std::common_type_t<decltype(base+"inp"), decltype(QString{})> {
+      if (QFileInfo::exists(base+"inp")) {
+        return base+"inp";
+      } else {
+        return QString{};
+      }
+    }());
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel,&dialog);
     layout->addRow(buttons);
     QObject::connect(buttons,&QDialogButtonBox::accepted,&dialog,&QDialog::accept);
@@ -80,18 +99,39 @@ QString PostprocessorImportDialog::command(QWidget* parent)
     {
       return {};
     }
-    dat = datEdit ? datEdit->text().trimmed() : QString{};
+    if (datEdit) {
+      dat = datEdit->text().trimmed();
+    } else {
+      dat = QString{};
+    }
     input = inputEdit->text().trimmed();
   }
   const auto primary = quote(path);
-  const auto datArgument = dat.isEmpty() ? QString{} : quote(dat);
-  const auto inputArgument = input.isEmpty() ? QString{} : quote(input);
+  const auto datArgument = [&]() -> std::common_type_t<decltype(QString{}), decltype(quote(dat))> {
+    if (dat.isEmpty()) {
+      return QString{};
+    } else {
+      return quote(dat);
+    }
+  }();
+  const auto inputArgument = [&]() -> std::common_type_t<decltype(QString{}), decltype(quote(input))> {
+    if (input.isEmpty()) {
+      return QString{};
+    } else {
+      return quote(input);
+    }
+  }();
   if (primary.isEmpty() || (!dat.isEmpty() && datArgument.isEmpty()) || (!input.isEmpty() && inputArgument.isEmpty()))
   {
     QMessageBox::warning(parent,QObject::tr("Import results"),QObject::tr("A file path cannot be represented by a quoted command argument."));
     return {};
   }
-  QString command = extension == "frd" || extension == "dat" ? QStringLiteral("post open ccx file ") : QStringLiteral("post open file ");
+  QString command;
+  if (extension == "frd" || extension == "dat") {
+    command = QStringLiteral("post open ccx file ");
+  } else {
+    command = QStringLiteral("post open file ");
+  }
   command += primary;
   if (!dat.isEmpty())
   {

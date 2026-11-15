@@ -11,8 +11,20 @@ namespace Postprocessor
     {
       const auto& value = item.second;
       result.append(QJsonObject{{"id",QString::fromStdString(value.id)},{"name",QString::fromStdString(value.name)},
-        {"source",QString::fromStdString(value.input.object_id)},{"kind",value.kind == FilterKind::Clip ? "clip" : "section"},
-        {"keep",value.keep == ClipSide::Positive ? "positive" : "negative"},
+        {"source",QString::fromStdString(value.input.object_id)},{"kind",[&]() -> const char* {
+          if (value.kind == FilterKind::Clip) {
+            return "clip";
+          } else {
+            return "section";
+          }
+        }()},
+        {"keep",[&]() -> const char* {
+          if (value.keep == ClipSide::Positive) {
+            return "positive";
+          } else {
+            return "negative";
+          }
+        }()},
         {"origin",QJsonArray{value.plane.origin[0],value.plane.origin[1],value.plane.origin[2]}},
         {"normal",QJsonArray{value.plane.normal[0],value.plane.normal[1],value.plane.normal[2]}}});
     }
@@ -55,12 +67,26 @@ namespace Postprocessor
         error = "Invalid saved filter kind or side.";
         return false;
       }
-      filter.kind = kind == "clip" ? FilterKind::Clip : FilterKind::Section;
-      filter.keep = keep == "positive" ? ClipSide::Positive : ClipSide::Negative;
+      if (kind == "clip") {
+        filter.kind = FilterKind::Clip;
+      } else {
+        filter.kind = FilterKind::Section;
+      }
+      if (keep == "positive") {
+        filter.keep = ClipSide::Positive;
+      } else {
+        filter.keep = ClipSide::Negative;
+      }
       for (const auto* key : {"origin","normal"})
       {
         const auto values = object.value(QLatin1String(key)).toArray();
-        auto& vector = key[0] == 'o' ? filter.plane.origin : filter.plane.normal;
+        auto& vector = [&]() -> decltype((filter.plane.origin)) {
+          if (key[0] == 'o') {
+            return filter.plane.origin;
+          } else {
+            return filter.plane.normal;
+          }
+        }();
         if (values.size() != 3)
         {
           error = "A saved plane requires three finite coordinates.";

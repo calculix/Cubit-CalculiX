@@ -21,7 +21,6 @@
 class CoreTopologyLevelSetGeometryCache;
 class CoreBlocks;
 class CoreMaterials;
-class CoreMaterialsLibrary;
 class CoreSections;
 class CoreConstraints;
 class CoreSurfaceInteractions;
@@ -57,7 +56,6 @@ class CoreCustomLines;
 class CoreDraw;
 
 class MeshExportInterface;
-class MaterialInterface;
 
 class CalculiXCore
 {
@@ -74,7 +72,6 @@ public:
   bool bool_init = false;
   bool bool_init2 = false;
   bool bool_init_pythoninterface = false;
-  bool bool_init_materiallibrary = false;
   bool bool_gui_updated = false;
   bool bool_block_core_update = false;
   bool bool_block_gui_update = false;
@@ -92,7 +89,6 @@ public:
   bool init();
   bool init2();
   bool init_pythoninterface();
-  bool init_materiallibrary();
   bool init_completed();
 
   // Maintenance
@@ -193,8 +189,8 @@ public:
   bool create_materiallibrary_material(std::string name, std::string groupname);
   bool modify_materiallibrary_material(std::string name, std::string groupname, std::string data, int mode, std::vector<double> value_data);
   bool delete_materiallibrary_material(std::string name, std::string groupname);
-  bool export_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name);
-  bool import_materiallibrary_material(std::string name, std::string groupname, std::string cubit_name);
+  bool export_materiallibrary_material(std::string name, std::string groupname, std::string material_name);
+  bool import_materiallibrary_material(std::string name, std::string groupname, std::string material_name);
 
   // Material library queries
   std::vector<std::vector<std::string>> get_materiallibrary_tree_data();
@@ -796,7 +792,6 @@ public:
 
   CoreBlocks* cb = nullptr;
   CoreMaterials* mat = nullptr;
-  CoreMaterialsLibrary* mat_library = nullptr;
   CoreSections* sections = nullptr;
   CoreConstraints* constraints = nullptr;
   CoreSurfaceInteractions* surfaceinteractions = nullptr;
@@ -830,7 +825,6 @@ public:
   CoreCustomLines* customlines = nullptr;
   CoreDraw* draw = nullptr;
   MeshExportInterface* me_iface = nullptr;
-  MaterialInterface* mat_iface = nullptr;
 
 private:
   CoreLoadsQueryData get_load_query_data() const;

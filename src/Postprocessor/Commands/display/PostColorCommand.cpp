@@ -95,7 +95,13 @@ bool PostColorCommand::execute(CubitCommandData& data)
     }
     else if (data.find_keyword("LIMIT"))
     {
-      auto& limit = data.find_keyword("MINIMUM") ? c.minimum : c.maximum;
+      auto& limit = [&]() -> decltype((c.minimum)) {
+        if (data.find_keyword("MINIMUM")) {
+          return c.minimum;
+        } else {
+          return c.maximum;
+        }
+      }();
       if (data.find_keyword("OFF") || data.find_keyword("ON"))
       {
         limit.enabled = data.find_keyword("ON");

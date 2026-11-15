@@ -16,6 +16,7 @@ namespace Postprocessor
   struct PlotCurveData
   {
     std::string name, source_name, x_title, y_title, status;
+    std::string x_unit, y_unit, time_unit;
     bool time_axis = false, frame_axis = false;
     std::vector<PlotSample> samples;
   };

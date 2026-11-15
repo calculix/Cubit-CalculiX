@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CoreTopologyLevelSetEvaluation.hpp"
 #include "CoreTopologyLevelSet.hpp"
 #include "CoreTopologyLevelSetGeometry.hpp"
@@ -202,13 +203,37 @@ bool CoreTopologyLevelSetEvaluation::build_geometry(TopologyLevelSetDesign& desi
   const int configured_workers = ccx_uo.mConverterThreads;
   const int configured_budget_mib = ccx_uo.mTopologyQuadratureCacheMiB;
   const bool valid_budget = configured_budget_mib > 0 && static_cast<std::size_t>(configured_budget_mib) <= (std::numeric_limits<std::size_t>::max)() / (1024 * 1024);
-  const std::size_t budget_bytes = valid_budget ? static_cast<std::size_t>(configured_budget_mib) * 1024 * 1024 : 0;
-  CoreTopologyLevelSetPipeline pipeline(configured_workers > 0 ? static_cast<std::size_t>(configured_workers) : 0, budget_bytes);
+  const std::size_t budget_bytes = [&]() -> std::size_t {
+    if (valid_budget) {
+      return static_cast<std::size_t>(configured_budget_mib) * 1024 * 1024;
+    } else {
+      return 0;
+    }
+  }();
+  CoreTopologyLevelSetPipeline pipeline([&]() -> std::common_type_t<decltype(static_cast<std::size_t>(configured_workers)), decltype(0)> {
+    if (configured_workers > 0) {
+      return static_cast<std::size_t>(configured_workers);
+    } else {
+      return 0;
+    }
+  }(), budget_bytes);
   const auto begin = std::chrono::steady_clock::now();
   double query_ms = 0.0;
   double cache_ms = 0.0;
-  const std::size_t hits_before = cache ? cache->hit_count() : 0;
-  const std::size_t misses_before = cache ? cache->miss_count() : 0;
+  const std::size_t hits_before = [&]() -> std::size_t {
+    if (cache) {
+      return cache->hit_count();
+    } else {
+      return 0;
+    }
+  }();
+  const std::size_t misses_before = [&]() -> std::size_t {
+    if (cache) {
+      return cache->miss_count();
+    } else {
+      return 0;
+    }
+  }();
   double slowest_element_ms = 0.0;
   std::size_t completed = 0;
   int slowest_element = -1;
@@ -221,9 +246,27 @@ bool CoreTopologyLevelSetEvaluation::build_geometry(TopologyLevelSetDesign& desi
     const auto statistics = pipeline.statistics();
     const double other_ms = (std::max)(0.0, total_ms - query_ms - statistics.wall_ms - cache_ms);
     PRINT_INFO("Level-set iteration %d geometry [ms]: total %.3f; mesh queries %.3f; integration wall %.3f; other %.3f; status %s.\n",
-      design.iteration_id, total_ms, query_ms, statistics.wall_ms, other_ms, succeeded ? "complete" : "incomplete");
+      design.iteration_id, total_ms, query_ms, statistics.wall_ms, other_ms, [&]() -> const char* {
+        if (succeeded) {
+          return "complete";
+        } else {
+          return "incomplete";
+        }
+      }());
     PRINT_INFO("Level-set iteration %d geometry cache: hits %zu; misses %zu; lookup/copy/validation %.3f ms.\n",
-      design.iteration_id, cache ? cache->hit_count() - hits_before : 0, cache ? cache->miss_count() - misses_before : 0, cache_ms);
+      design.iteration_id, [&]() -> std::common_type_t<decltype(cache->hit_count() - hits_before), decltype(0)> {
+        if (cache) {
+          return cache->hit_count() - hits_before;
+        } else {
+          return 0;
+        }
+      }(), [&]() -> std::common_type_t<decltype(cache->miss_count() - misses_before), decltype(0)> {
+        if (cache) {
+          return cache->miss_count() - misses_before;
+        } else {
+          return 0;
+        }
+      }(), cache_ms);
     PRINT_INFO("Level-set iteration %d geometry quadrature: rule hits %zu; builds %zu; budget fallbacks %zu; retained bytes %zu.\n",
       design.iteration_id, statistics.rule_hits, statistics.rule_builds, statistics.rule_fallbacks, statistics.retained_bytes);
     PRINT_INFO("Level-set iteration %d integration workers: configured %d; active %zu; aggregate integration %.3f ms.\n",
@@ -345,7 +388,13 @@ bool CoreTopologyLevelSetEvaluation::build_factors(const TopologyLevelSetDesign&
       PRINT_ERROR("Invalid level-set fraction/preservation for stiffness interpolation.\n");
       return false;
     }
-    const double factor = flag->second ? 1.0 : design.void_ratio + (1.0 - design.void_ratio) * fraction.second;
+    const double factor = [&]() -> double {
+      if (flag->second) {
+        return 1.0;
+      } else {
+        return design.void_ratio + (1.0 - design.void_ratio) * fraction.second;
+      }
+    }();
     if (!std::isfinite(factor) || factor <= 0.0 || factor > 1.0)
     {
       PRINT_ERROR("Invalid level-set stiffness factor.\n");
@@ -362,13 +411,37 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
   const int configured_workers = ccx_uo.mConverterThreads;
   const int configured_budget_mib = ccx_uo.mTopologyQuadratureCacheMiB;
   const bool valid_budget = configured_budget_mib > 0 && static_cast<std::size_t>(configured_budget_mib) <= (std::numeric_limits<std::size_t>::max)() / (1024 * 1024);
-  const std::size_t budget_bytes = valid_budget ? static_cast<std::size_t>(configured_budget_mib) * 1024 * 1024 : 0;
-  CoreTopologyLevelSetPipeline pipeline(configured_workers > 0 ? static_cast<std::size_t>(configured_workers) : 0, budget_bytes);
+  const std::size_t budget_bytes = [&]() -> std::size_t {
+    if (valid_budget) {
+      return static_cast<std::size_t>(configured_budget_mib) * 1024 * 1024;
+    } else {
+      return 0;
+    }
+  }();
+  CoreTopologyLevelSetPipeline pipeline([&]() -> std::common_type_t<decltype(static_cast<std::size_t>(configured_workers)), decltype(0)> {
+    if (configured_workers > 0) {
+      return static_cast<std::size_t>(configured_workers);
+    } else {
+      return 0;
+    }
+  }(), budget_bytes);
   const auto begin = std::chrono::steady_clock::now();
   double query_ms = 0.0;
   double cache_ms = 0.0;
-  const std::size_t hits_before = cache ? cache->hit_count() : 0;
-  const std::size_t misses_before = cache ? cache->miss_count() : 0;
+  const std::size_t hits_before = [&]() -> std::size_t {
+    if (cache) {
+      return cache->hit_count();
+    } else {
+      return 0;
+    }
+  }();
+  const std::size_t misses_before = [&]() -> std::size_t {
+    if (cache) {
+      return cache->miss_count();
+    } else {
+      return 0;
+    }
+  }();
   double slowest_element_ms = 0.0;
   std::size_t completed = 0;
   int slowest_element = -1;
@@ -381,9 +454,27 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
     const auto statistics = pipeline.statistics();
     const double other_ms = (std::max)(0.0, total_ms - query_ms - statistics.wall_ms - cache_ms);
     PRINT_INFO("Level-set iteration %d sensitivities [ms]: total %.3f; mesh queries %.3f; integration wall %.3f; other %.3f; status %s.\n",
-      design.iteration_id, total_ms, query_ms, statistics.wall_ms, other_ms, succeeded ? "complete" : "incomplete");
+      design.iteration_id, total_ms, query_ms, statistics.wall_ms, other_ms, [&]() -> const char* {
+        if (succeeded) {
+          return "complete";
+        } else {
+          return "incomplete";
+        }
+      }());
     PRINT_INFO("Level-set iteration %d sensitivities cache: hits %zu; misses %zu; lookup/copy/validation %.3f ms.\n",
-      design.iteration_id, cache ? cache->hit_count() - hits_before : 0, cache ? cache->miss_count() - misses_before : 0, cache_ms);
+      design.iteration_id, [&]() -> std::common_type_t<decltype(cache->hit_count() - hits_before), decltype(0)> {
+        if (cache) {
+          return cache->hit_count() - hits_before;
+        } else {
+          return 0;
+        }
+      }(), [&]() -> std::common_type_t<decltype(cache->miss_count() - misses_before), decltype(0)> {
+        if (cache) {
+          return cache->miss_count() - misses_before;
+        } else {
+          return 0;
+        }
+      }(), cache_ms);
     PRINT_INFO("Level-set iteration %d sensitivities quadrature: rule hits %zu; builds %zu; budget fallbacks %zu; retained bytes %zu.\n",
       design.iteration_id, statistics.rule_hits, statistics.rule_builds, statistics.rule_fallbacks, statistics.retained_bytes);
     PRINT_INFO("Level-set iteration %d integration workers: configured %d; active %zu; aggregate integration %.3f ms.\n",

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CoreTopologyLevelSetInitialization.hpp"
 #include "CoreTopologyLevelSet.hpp"
 #include "CoreTopologyLevelSetGeometry.hpp"
@@ -174,7 +175,13 @@ bool CoreTopologyLevelSetInitialization::initialize(const TopologyLevelSetSettin
   }
   if (!transition)
   {
-    candidate.node_values.at(fallback > 0 ? fallback : anchor) = 0.0;
+    candidate.node_values.at([&]() -> std::common_type_t<decltype(fallback), decltype(anchor)> {
+      if (fallback > 0) {
+        return fallback;
+      } else {
+        return anchor;
+      }
+    }()) = 0.0;
     candidate.transition_node_inserted = true;
   }
   candidate.iteration_id = 1;

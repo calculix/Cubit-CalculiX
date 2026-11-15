@@ -43,7 +43,12 @@ inline double parse_with_precision(std::string text, int precision = 6)
     text.erase(0, 1);
   }
 
-  double value = text == "INF" ? 1.255070e+29 : parse(text);
+  double value;
+  if (text == "INF") {
+    value = 1.255070e+29;
+  } else {
+    value = parse(text);
+  }
 
   if (negative)
   {

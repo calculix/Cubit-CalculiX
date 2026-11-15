@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "DrawingPicker.hpp"
 #include "DrawingHitTest.hpp"
 #include "GWindowFactory.hpp"
@@ -197,7 +198,13 @@ void DrawingPicker::deactivate() noexcept
       }
       if (restore != nullptr || fallback != nullptr)
       {
-        SVSelection::set_pick_type(restore == nullptr ? fallback : restore, true);
+        SVSelection::set_pick_type([&]() -> std::common_type_t<decltype(fallback), decltype(restore)> {
+          if (restore == nullptr) {
+            return fallback;
+          } else {
+            return restore;
+          }
+        }(), true);
       }
     }
   }

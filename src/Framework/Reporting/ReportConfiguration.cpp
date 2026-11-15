@@ -8,7 +8,13 @@ QJsonObject ReportConfiguration::to_json() const
 {
   QJsonObject result;
   result.insert("values", ReportJson::strings(values));
-  result.insert("company_logo", company_logo ? QJsonValue(company_logo->to_json()) : QJsonValue(QJsonValue::Null));
+  result.insert("company_logo", [&]() -> QJsonValue {
+    if (company_logo) {
+      return QJsonValue(company_logo->to_json());
+    } else {
+      return QJsonValue(QJsonValue::Null);
+    }
+  }());
   return result;
 }
 

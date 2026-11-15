@@ -359,7 +359,13 @@ bool CoreTopologyResults::select_maximum_displacement(const std::map<int, std::a
   for (const auto& measurement : measured)
   {
     const auto& displacement = measurement.second;
-    const double measured_value = component == 0 ? std::hypot(displacement[0], displacement[1], displacement[2]) : std::abs(displacement[component - 1]);
+    const double measured_value = [&]() -> double {
+      if (component == 0) {
+        return std::hypot(displacement[0], displacement[1], displacement[2]);
+      } else {
+        return std::abs(displacement[component - 1]);
+      }
+    }();
 
     if (node_id < 0 || measured_value > value)
     {

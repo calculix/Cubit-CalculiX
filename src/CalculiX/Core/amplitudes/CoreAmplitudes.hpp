@@ -3,12 +3,15 @@
 
 #include "AmplitudesSettings.hpp"
 
+#include <map>
 #include <vector>
 #include <string>
 class CoreAmplitudes
 {
 
 public:
+  bool domain_unit_view = false;
+  std::map<int, std::string> axis_quantities;
   bool get_settings(int id, AmplitudesSettings& settings, std::string& error) const;
   std::vector<int> get_amplitude_ids() const;
   CoreAmplitudes();

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Postprocessor/Core/sources/VtkFileSourceProvider.hpp"
 #include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "Postprocessor/GUI/Sources/PostprocessorSourceControls.hpp"
@@ -57,7 +58,13 @@ int main(int argc,char** argv)
   if (publication.data && !publication.data->increments.empty())
   {
     auto* mesh = vtkUnstructuredGrid::SafeDownCast(publication.data->increments[0].dataset.get());
-    auto* retained = mesh ? vtkTypeInt64Array::SafeDownCast(mesh->GetPointData()->GetArray("OriginalNodeId")) : nullptr;
+    auto* retained = [&]() -> std::common_type_t<decltype(vtkTypeInt64Array::SafeDownCast(mesh->GetPointData()->GetArray("OriginalNodeId"))), decltype(nullptr)> {
+      if (mesh) {
+        return vtkTypeInt64Array::SafeDownCast(mesh->GetPointData()->GetArray("OriginalNodeId"));
+      } else {
+        return nullptr;
+      }
+    }();
     check(retained && retained->GetValue(0) == 9007199254740993LL,"VTU import changed original 64-bit node IDs");
     check(publication.data->increments[0].fields.size() == 2,"VTU field catalogue is missing numeric arrays");
   }
@@ -128,5 +135,9 @@ int main(int argc,char** argv)
     add->click();
     check(additions == 1,"Add did not dispatch exactly once");
   }
-  return failures ? 1 : 0;
+  if (failures) {
+    return 1;
+  } else {
+    return 0;
+  }
 }

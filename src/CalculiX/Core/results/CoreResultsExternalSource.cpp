@@ -83,7 +83,13 @@ namespace
         spatial.push_back(block);
         continue;
       }
-      const int association = mapping.front().size() >= 3 ? mapping.front()[2] : 0;
+      const int association = [&]() -> int {
+        if (mapping.front().size() >= 3) {
+          return mapping.front()[2];
+        } else {
+          return 0;
+        }
+      }();
       if (association < 1 || association > 3)
       {
         error = "Invalid detached DAT record association.";
@@ -91,7 +97,17 @@ namespace
       }
       const auto& rows = dat.result_block_data[block[4]];
       const auto& columns = dat.result_block_components[block[4]];
-      const std::size_t offset = association == 1 ? 0 : association == 2 ? 2 : 1;
+      const std::size_t offset = [&]() -> std::size_t {
+        if (association == 1) {
+          return 0;
+        } else {
+          if (association == 2) {
+            return 2;
+          } else {
+            return 1;
+          }
+        }
+      }();
       if (columns.size() <= offset)
       {
         error = "Invalid detached DAT component layout.";
@@ -129,7 +145,13 @@ namespace
         else if (association == 2)
         {
           const auto found = formulations.find(row[0]);
-          const std::string type = found == formulations.end() ? std::string{} : found->second;
+          const std::string type = [&]() -> std::string {
+            if (found == formulations.end()) {
+              return std::string{};
+            } else {
+              return found->second;
+            }
+          }();
           auto rule = knownRules.find(type);
           if (rule == knownRules.end())
           {
@@ -211,7 +233,20 @@ bool CoreResultsExternalSource::open(const SimResults::FileSourceReference& requ
         return false;
       }
       const auto suffix = file.suffix().toLower();
-      std::string* destination = suffix == "frd" ? &frdPath : suffix == "dat" ? &datPath : suffix == "inp" ? &inputPath : nullptr;
+      std::string* destination;
+      if (suffix == "frd") {
+        destination = &frdPath;
+      } else {
+        if (suffix == "dat") {
+          destination = &datPath;
+        } else {
+          if (suffix == "inp") {
+            destination = &inputPath;
+          } else {
+            destination = nullptr;
+          }
+        }
+      }
       if (!destination || !destination->empty())
       {
         error = "Supply at most one FRD, DAT and INP file.";

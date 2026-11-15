@@ -29,6 +29,7 @@ public:
   bool note(const std::string& section, const std::string& text, std::string& error);
   void restore(ReportSession session);
   void reset();
+  void units_changed();
 
 private:
   std::shared_ptr<const ReportDocument> find_document(const ReportRequest& source, const std::string& workspace = "") const;

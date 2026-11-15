@@ -42,12 +42,9 @@ void swapOptions(UserOptions& first, UserOptions& second) noexcept
   first.mPathPythonInterfaceName.swap(second.mPathPythonInterfaceName);
   swap(first.mSaveLoadedResults, second.mSaveLoadedResults);
   first.mSaveLoadedResultsName.swap(second.mSaveLoadedResultsName);
-  first.mPathMaterialLibrary.swap(second.mPathMaterialLibrary);
-  first.mPathMaterialLibraryName.swap(second.mPathMaterialLibraryName);
 }
 
-bool samePath(const QString& first, const QString& second)
-{
+bool samePath(const QString& first, const QString& second) {
   const QString firstPath = QDir::cleanPath(QDir::fromNativeSeparators(first));
   const QString secondPath = QDir::cleanPath(QDir::fromNativeSeparators(second));
 #ifdef _WIN32
@@ -57,34 +54,28 @@ bool samePath(const QString& first, const QString& second)
 #endif
 }
 
-bool positiveInteger(const UserOptionValue& value)
-{
+bool positiveInteger(const UserOptionValue& value) {
   return std::get<int>(value) > 0;
 }
 
-bool positiveReal(const UserOptionValue& value)
-{
+bool positiveReal(const UserOptionValue& value) {
   return std::isfinite(std::get<double>(value)) && std::get<double>(value) > 0;
 }
 
-bool validQuadratureBudget(const UserOptionValue& value)
-{
+bool validQuadratureBudget(const UserOptionValue& value) {
   const int mib = std::get<int>(value);
   return mib > 0 && static_cast<std::size_t>(mib) <= (std::numeric_limits<std::size_t>::max)() / (1024 * 1024);
 }
 
-bool validColor(const UserOptionValue& value)
-{
+bool validColor(const UserOptionValue& value) {
   const std::array<std::string, 9> colors =
     {"red", "yellow", "green", "blue", "cyan", "magenta", "white", "black", "orange"};
   return std::find(colors.begin(), colors.end(), std::get<std::string>(value)) != colors.end();
 }
 
-bool validPath(const UserOptionValue& value)
-{
+bool validPath(const UserOptionValue& value) {
   const auto& path = std::get<std::string>(value);
-  if (path.empty() || path.find('\0') != std::string::npos || path.find_first_of("\"\r\n") != std::string::npos)
-  {
+  if (path.empty() || path.find('\0') != std::string::npos || path.find_first_of("\"\r\n") != std::string::npos) {
     return false;
   }
   const QString normalized = QDir::cleanPath(QDir::fromNativeSeparators(QString::fromUtf8(path.c_str())));
@@ -95,8 +86,7 @@ bool validPath(const UserOptionValue& value)
 // The authoritative defaults for every CalculiX user option live here.
 // Relative resource paths are resolved against the host component directory;
 // existence is checked when the resource is used, not when options are loaded.
-std::vector<UserOption> definitions()
-{
+std::vector<UserOption> definitions() {
 #ifdef _WIN32
   const char* solverDefault = "Solver/ccx_2.23.exe";
 #else
@@ -107,7 +97,6 @@ std::vector<UserOption> definitions()
     {"paths/solver", UserOptionKind::ComponentPath, std::string(solverDefault), validPath},
     {"paths/icons", UserOptionKind::ComponentPath, std::string("Icons/"), validPath},
     {"paths/python_interface", UserOptionKind::ComponentPath, std::string("."), validPath},
-    {"paths/material_library", UserOptionKind::ComponentPath, std::string("libmaterial.hdf5"), validPath},
     {"execution/solver_threads", UserOptionKind::Integer, 8, positiveInteger},
     {"execution/converter_threads", UserOptionKind::Integer, 8, positiveInteger},
     {"topology/quadrature_cache_mib", UserOptionKind::Integer, CoreTopologyLevelSetQuadrature::default_budget_mib, validQuadratureBudget},
@@ -121,8 +110,7 @@ std::vector<UserOption> definitions()
     {"drawing/labels_values", UserOptionKind::Boolean, labelDefaults.showValues},
     {"drawing/labels_amplitudes", UserOptionKind::Boolean, labelDefaults.showAmplitude},
     {"drawing/labels_leaders", UserOptionKind::Boolean, labelDefaults.leaderLines},
-    {"drawing/labels_offset", UserOptionKind::Real, labelDefaults.offsetFactor, [](const UserOptionValue& value)
-    {
+    {"drawing/labels_offset", UserOptionKind::Real, labelDefaults.offsetFactor, [](const UserOptionValue& value) {
       const auto* factor = std::get_if<double>(&value);
       return factor != nullptr && std::isfinite(*factor) && *factor >= 0 && *factor <= 100;
     }},
@@ -138,20 +126,19 @@ std::vector<UserOption> definitions()
   };
 }
 
-QString resolvedPath(const std::string& value)
-{
+QString resolvedPath(const std::string& value) {
   const QString path = QDir::fromNativeSeparators(QString::fromUtf8(value.c_str()));
-  return QDir::cleanPath(QFileInfo(path).isAbsolute() ? path :
-    QDir(QString::fromUtf8(optionsStore->component_directory().c_str())).absoluteFilePath(path));
+  if (QFileInfo(path).isAbsolute()) {
+    return QDir::cleanPath(path);
+  }
+  return QDir::cleanPath(QDir(QString::fromUtf8(optionsStore->component_directory().c_str())).absoluteFilePath(path));
 }
 
-UserOptions runtimeOptions(const UserOptionValues& values)
-{
+UserOptions runtimeOptions(const UserOptionValues& values) {
   UserOptions result;
   result.mPathSolver = resolvedPath(std::get<std::string>(values.at("paths/solver")));
   result.mPathIcons = resolvedPath(std::get<std::string>(values.at("paths/icons")));
   result.mPathPythonInterface = resolvedPath(std::get<std::string>(values.at("paths/python_interface")));
-  result.mPathMaterialLibrary = resolvedPath(std::get<std::string>(values.at("paths/material_library")));
   result.mSolverThreads = std::get<int>(values.at("execution/solver_threads"));
   result.mConverterThreads = std::get<int>(values.at("execution/converter_threads"));
   result.mTopologyQuadratureCacheMiB = std::get<int>(values.at("topology/quadrature_cache_mib"));
@@ -182,19 +169,16 @@ UserOptions runtimeOptions(const UserOptionValues& values)
   result.mPathIconsName = "Path to Icons";
   result.mPathPythonInterfaceName = "Path to Python Interface";
   result.mSaveLoadedResultsName = "Save loaded FRD and DAT data";
-  result.mPathMaterialLibraryName = "Path to MaterialLibrary";
   return result;
 }
 
 
 }
 
-bool CoreUserOptions::initialize(UserOptionsInterface& store, std::string& error)
-{
+bool CoreUserOptions::initialize(UserOptionsInterface& store, std::string& error) {
   optionsStore = &store;
   UserOptionValues values;
-  if (!store.load("calculix", definitions(), values, error))
-  {
+  if (!store.load("calculix", definitions(), values, error)) {
     optionsStore = nullptr;
     return false;
   }
@@ -210,63 +194,52 @@ void CoreUserOptions::detach() noexcept
   optionsStore = nullptr;
 }
 
-UserOptions CoreUserOptions::current()
-{
-  return optionsStore == nullptr ? ccx_uo : configuredOptions;
+UserOptions CoreUserOptions::current() {
+  if (optionsStore == nullptr) {
+    return ccx_uo;
+  }
+  return configuredOptions;
 }
 
-std::vector<std::string> CoreUserOptions::restart_required()
-{
+std::vector<std::string> CoreUserOptions::restart_required() {
   std::vector<std::string> labels;
-  if (optionsStore == nullptr)
-  {
+  if (optionsStore == nullptr) {
     return labels;
   }
-  if (!samePath(configuredOptions.mPathIcons, ccx_uo.mPathIcons))
-  {
+  if (!samePath(configuredOptions.mPathIcons, ccx_uo.mPathIcons)) {
     labels.push_back(configuredOptions.mPathIconsName.toStdString());
   }
-  if (!samePath(configuredOptions.mPathPythonInterface, ccx_uo.mPathPythonInterface))
-  {
+  if (!samePath(configuredOptions.mPathPythonInterface, ccx_uo.mPathPythonInterface)) {
     labels.push_back(configuredOptions.mPathPythonInterfaceName.toStdString());
-  }
-  if (!samePath(configuredOptions.mPathMaterialLibrary, ccx_uo.mPathMaterialLibrary))
-  {
-    labels.push_back(configuredOptions.mPathMaterialLibraryName.toStdString());
   }
   return labels;
 }
 
-std::string CoreUserOptions::component_directory()
-{
-  return optionsStore == nullptr ? std::string() : optionsStore->component_directory();
+std::string CoreUserOptions::component_directory() {
+  if (optionsStore == nullptr) {
+    return {};
+  }
+  return optionsStore->component_directory();
 }
 
-bool CoreUserOptions::apply(const UserOptionValues& changes, std::string& error)
-{
+bool CoreUserOptions::apply(const UserOptionValues& changes, std::string& error) {
   error.clear();
-  if (optionsStore == nullptr)
-  {
+  if (optionsStore == nullptr) {
     error = "CalculiX user options are not initialized.";
     return false;
   }
-  try
-  {
+  try {
     const auto schema = definitions();
     UserOptionValues values;
     if (!optionsStore->load("calculix", schema, values, error) ||
-      !merge_user_option_changes(schema, changes, values, error))
-    {
+      !merge_user_option_changes(schema, changes, values, error)) {
       return false;
     }
-    for (const auto& item : schema)
-    {
-      if (item.kind == UserOptionKind::ComponentPath)
-      {
+    for (const auto& item : schema) {
+      if (item.kind == UserOptionKind::ComponentPath) {
         const auto path = QDir::fromNativeSeparators(QString::fromUtf8(std::get<std::string>(values.at(item.key)).c_str()));
         const auto relative = QDir(QString::fromUtf8(optionsStore->component_directory().c_str())).relativeFilePath(QDir::cleanPath(path));
-        if (QFileInfo(path).isAbsolute() && relative != ".." && !relative.startsWith("../") && !QFileInfo(relative).isAbsolute())
-        {
+        if (QFileInfo(path).isAbsolute() && relative != ".." && !relative.startsWith("../") && !QFileInfo(relative).isAbsolute()) {
           values[item.key] = relative.toUtf8().toStdString();
         }
       }
@@ -277,49 +250,39 @@ bool CoreUserOptions::apply(const UserOptionValues& changes, std::string& error)
     auto active = configured;
     active.mPathIcons = ccx_uo.mPathIcons;
     active.mPathPythonInterface = ccx_uo.mPathPythonInterface;
-    active.mPathMaterialLibrary = ccx_uo.mPathMaterialLibrary;
-    if (!optionsStore->save("calculix", schema, values, error))
-    {
+    if (!optionsStore->save("calculix", schema, values, error)) {
       return false;
     }
     swapOptions(configuredOptions, configured);
     swapOptions(ccx_uo, active);
     // Drawing size/visibility remain defaults for new/reset models; colors
     // update the current view, matching the existing options-panel behavior.
-    try
-    {
+    try {
       std::string drawingError;
-      if (!CalculiXDrawInterface().apply_drawing_options(drawingError))
-      {
+      if (!CalculiXDrawInterface().apply_drawing_options(drawingError)) {
         PRINT_WARNING("Options were saved, but drawing colors could not be refreshed: %s\n", drawingError.c_str());
       }
     }
-    catch (const std::exception& exception)
-    {
+    catch (const std::exception& exception) {
       PRINT_WARNING("Options were saved, but drawing colors could not be refreshed: %s\n", exception.what());
     }
-    catch (...)
-    {
+    catch (...) {
       PRINT_WARNING("Options were saved, but drawing colors could not be refreshed.\n");
     }
     return true;
   }
-  catch (const std::exception& exception)
-  {
+  catch (const std::exception& exception) {
     error = exception.what();
     return false;
   }
 }
 
-std::vector<UserOption> CoreUserOptions::user_option_definitions()
-{
+std::vector<UserOption> CoreUserOptions::user_option_definitions() {
   return definitions();
 }
 
-bool CoreUserOptions::values(UserOptionValues& snapshot, std::string& error)
-{
-  if (optionsStore == nullptr)
-  {
+bool CoreUserOptions::values(UserOptionValues& snapshot, std::string& error) {
+  if (optionsStore == nullptr) {
     error = "CalculiX user options are unavailable.";
     return false;
   }

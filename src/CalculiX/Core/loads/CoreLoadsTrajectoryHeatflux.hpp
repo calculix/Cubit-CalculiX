@@ -7,6 +7,7 @@ class CoreLoadsTrajectoryHeatflux
 {
 
 public:
+  bool domain_unit_view = false;
   CoreLoadsTrajectoryHeatflux();
   ~CoreLoadsTrajectoryHeatflux();
 

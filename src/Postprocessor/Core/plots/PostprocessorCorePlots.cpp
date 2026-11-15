@@ -139,7 +139,11 @@ namespace Postprocessor
     {
       if (error.empty())
       {
-        error = values.status.empty() ? "The curve has no valid samples." : values.status;
+        if (values.status.empty()) {
+          error = "The curve has no valid samples.";
+        } else {
+          error = values.status;
+        }
       }
       return false;
     }

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorTableView.hpp"
 #include "PostprocessorTableModel.hpp"
 #include <QLabel>
@@ -93,7 +94,13 @@ void PostprocessorTableView::set_plot_reference(const std::optional<Postprocesso
 }
 void PostprocessorTableView::show_data(Postprocessor::ResultTableData data)
 {
-  title->setText(QString::fromUtf8((data.title+(data.status.empty() ? "" : " — "+data.status)).c_str()));
+  title->setText(QString::fromUtf8((data.title+([&]() -> std::string {
+    if (data.status.empty()) {
+      return "";
+    } else {
+      return " — "+data.status;
+    }
+  }())).c_str()));
   const bool newTable = shown.owner != data.owner || shown.title != data.title || shown.columns != data.columns || shown.frame_columns != data.frame_columns;
   bool same = !newTable && shown.table == data.table && shown.rows == data.rows && shown.parts.size() == data.parts.size();
   for (std::size_t index = 0; same && index < data.parts.size(); ++index)
@@ -154,7 +161,13 @@ void PostprocessorTableView::resize_columns_to_contents()
   const int samples = std::min(count,Postprocessor::TableDefaults::sizing_sample_rows);
   for (int index = 0; index < samples; ++index)
   {
-    rows.push_back(samples <= 1 ? 0 : static_cast<int>(static_cast<qint64>(index)*(count-1)/(samples-1)));
+    rows.push_back([&]() -> std::common_type_t<decltype(0), decltype(static_cast<int>(static_cast<qint64>(index)*(count-1)/(samples-1)))> {
+      if (samples <= 1) {
+        return 0;
+      } else {
+        return static_cast<int>(static_cast<qint64>(index)*(count-1)/(samples-1));
+      }
+    }());
   }
   measure_rows(rows,true);
 }

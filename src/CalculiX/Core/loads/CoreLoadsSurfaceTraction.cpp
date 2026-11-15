@@ -1,3 +1,5 @@
+#include "CubitMessage.hpp"
+#include "Core/units/CalculiXPhysicalModelUnits.hpp"
 #include "Core/application/SettingsRead.hpp"
 #include "Core/loads/CoreLoadsSurfaceTraction.hpp"
 #include <algorithm>
@@ -9,30 +11,26 @@
 #include "CubitInterface.hpp"
 #include "MeshExportInterface.hpp"
 
-CoreLoadsSurfaceTraction::CoreLoadsSurfaceTraction()
-{}
+CoreLoadsSurfaceTraction::CoreLoadsSurfaceTraction() {}
 
-CoreLoadsSurfaceTraction::~CoreLoadsSurfaceTraction()
-{}
+CoreLoadsSurfaceTraction::~CoreLoadsSurfaceTraction() {}
 
-bool CoreLoadsSurfaceTraction::init()
-{
-  if (is_initialized)
-  {
+bool CoreLoadsSurfaceTraction::init() {
+  if (is_initialized) {
     return false; // already initialized
-  }else{
-    is_initialized = true;  
+  } else {
+    is_initialized = true;
     return true;
   }
 }
 
-bool CoreLoadsSurfaceTraction::update()
-{ 
+bool CoreLoadsSurfaceTraction::update() {
   return true;
 }
 
-bool CoreLoadsSurfaceTraction::reset()
-{
+bool CoreLoadsSurfaceTraction::reset() {
+  value_unit_system = "SI";
+  unit_view = false;
   loads_data.clear();
   time_delay_data.clear();
   force_data.clear();
@@ -41,13 +39,20 @@ bool CoreLoadsSurfaceTraction::reset()
   return true;
 }
 
-bool CoreLoadsSurfaceTraction::check_initialized()
-{
+bool CoreLoadsSurfaceTraction::check_initialized() {
   return is_initialized;
 }
 
-bool CoreLoadsSurfaceTraction::create_load(std::vector<std::string> options, std::vector<double> options2)
-{
+bool CoreLoadsSurfaceTraction::create_load(std::vector<std::string> options, std::vector<double> options2) {
+  if (value_unit_system != "SI" || unit_view) {
+    return false;
+  }
+  std::string unitError;
+  if (!CalculiXPhysicalModelUnits::input("traction", options, options2, {}, unitError)) {
+    PRINT_ERROR("%s\n", unitError.c_str());
+    return false;
+  }
+
   int load_id;
   int load_last;
   int sub_id;
@@ -58,30 +63,24 @@ bool CoreLoadsSurfaceTraction::create_load(std::vector<std::string> options, std
   int time_delay_id;
   int force_id;
   int name_id;
-  
-  if (loads_data.size()==0)
-  {
+
+  if (loads_data.size()==0) {
     load_id = 1;
-  }
-  else
-  {
+  } else {
     load_last = int(loads_data.size()) - 1;
     load_id = loads_data[load_last][0] + 1;
   }
 
   // OP MODE
   op_mode = std::stoi(options[0]);
-  
+
   // AMPLITUDE
   amplitude_id = std::stoi(options[1]);
 
   // time_delay
-  if (time_delay_data.size()==0)
-  {
+  if (time_delay_data.size()==0) {
     sub_id = 1;
-  }
-  else
-  {
+  } else {
     sub_last = int(time_delay_data.size()) - 1;
     sub_id = std::stoi(time_delay_data[sub_last][0]) + 1;
   }
@@ -90,14 +89,11 @@ bool CoreLoadsSurfaceTraction::create_load(std::vector<std::string> options, std
 
   // SIDESET
   sideset_id = std::stoi(options[3]);
-  
+
   // FORCES
-  if (force_data.size()==0)
-  {
+  if (force_data.size()==0) {
     sub_id = 1;
-  }
-  else
-  {
+  } else {
     sub_last = int(force_data.size()) - 1;
     sub_id = int(force_data[sub_last][0]) + 1;
   }
@@ -105,12 +101,9 @@ bool CoreLoadsSurfaceTraction::create_load(std::vector<std::string> options, std
   this->add_force(double(sub_id), options2[0], options2[1], options2[2]);
 
   // name
-  if (name_data.size()==0)
-  {
+  if (name_data.size()==0) {
     sub_id = 1;
-  }
-  else
-  {
+  } else {
     sub_last = int(name_data.size()) - 1;
     sub_id = std::stoi(name_data[sub_last][0]) + 1;
   }
@@ -121,65 +114,63 @@ bool CoreLoadsSurfaceTraction::create_load(std::vector<std::string> options, std
   return true;
 }
 
-bool CoreLoadsSurfaceTraction::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int sideset_id, int force_id, int name_id)
-{
+bool CoreLoadsSurfaceTraction::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int sideset_id, int force_id, int name_id) {
   std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, sideset_id, force_id, name_id};
-      
+
   loads_data.push_back(v);
 
   return true;
 }
 
-bool CoreLoadsSurfaceTraction::modify_load(int load_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker)
-{
+bool CoreLoadsSurfaceTraction::modify_load(int load_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker) {
+  if (value_unit_system != "SI" || unit_view) {
+    return false;
+  }
+  std::string unitError;
+  if (!CalculiXPhysicalModelUnits::input("traction", options, options2, options_marker, unitError)) {
+    PRINT_ERROR("%s\n", unitError.c_str());
+    return false;
+  }
+
   int sub_data_id;
   std::vector<int> sub_data_ids;
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
-  
-  if (loads_data_id == -1)
-  {
+
+  if (loads_data_id == -1) {
     return false;
   } else {
     // OP MODE
-    if (options_marker[0]==1)
-    {
+    if (options_marker[0]==1) {
       loads_data[loads_data_id][1] = std::stoi(options[0]);
     }
     // AMPLITUDE
-    if (options_marker[1]==1)
-    {
+    if (options_marker[1]==1) {
       loads_data[loads_data_id][2] = std::stoi(options[1]);
     }
     // time delay
-    if (options_marker[2]==1)
-    {
+    if (options_marker[2]==1) {
       sub_data_id = get_time_delay_data_id_from_time_delay_id(loads_data[loads_data_id][3]);
       time_delay_data[sub_data_id][1] = options[2];
     }
     // SIDESET
-    if (options_marker[3]==1)
-    {
+    if (options_marker[3]==1) {
       loads_data[loads_data_id][4] = std::stoi(options[3]);
     }
     // FORCES
-    if (options_marker[4]==1)
-    {
+    if (options_marker[4]==1) {
       sub_data_id = get_force_data_id_from_force_id(loads_data[loads_data_id][5]);
       force_data[sub_data_id][1] = options2[0];
     }
-    if (options_marker[5]==1)
-    {
+    if (options_marker[5]==1) {
       sub_data_id = get_force_data_id_from_force_id(loads_data[loads_data_id][5]);
       force_data[sub_data_id][2] = options2[1];
     }
-    if (options_marker[6]==1)
-    {
+    if (options_marker[6]==1) {
       sub_data_id = get_force_data_id_from_force_id(loads_data[loads_data_id][5]);
       force_data[sub_data_id][3] = options2[2];
     }
     // name
-    if (options_marker[7]==1)
-    {
+    if (options_marker[7]==1) {
       sub_data_id = get_name_data_id_from_name_id(loads_data[loads_data_id][6]);
       name_data[sub_data_id][1] = options[4];
     }
@@ -187,12 +178,10 @@ bool CoreLoadsSurfaceTraction::modify_load(int load_id, std::vector<std::string>
   }
 }
 
-bool CoreLoadsSurfaceTraction::delete_load(int load_id)
-{
+bool CoreLoadsSurfaceTraction::delete_load(int load_id) {
   int sub_data_id;
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
-  if (loads_data_id == -1)
-  {
+  if (loads_data_id == -1) {
     return false;
   } else {
     // time delay
@@ -216,87 +205,71 @@ bool CoreLoadsSurfaceTraction::delete_load(int load_id)
   }
 }
 
-bool CoreLoadsSurfaceTraction::add_time_delay(std::string time_delay_id, std::string time_delay_value)
-{
+bool CoreLoadsSurfaceTraction::add_time_delay(std::string time_delay_id, std::string time_delay_value) {
   std::vector<std::string> v = {time_delay_id, time_delay_value};
-      
+
   time_delay_data.push_back(v);
 
   return true;
 }
 
-bool CoreLoadsSurfaceTraction::add_force(double force_id, double dof_1_value, double dof_2_value, double dof_3_value)
-{
+bool CoreLoadsSurfaceTraction::add_force(double force_id, double dof_1_value, double dof_2_value, double dof_3_value) {
   std::vector<double> v = {force_id, dof_1_value, dof_2_value, dof_3_value};
-      
+
   force_data.push_back(v);
 
   return true;
 }
 
-bool CoreLoadsSurfaceTraction::add_name(std::string name_id, std::string name)
-{
+bool CoreLoadsSurfaceTraction::add_name(std::string name_id, std::string name) {
   std::vector<std::string> v = {name_id, name};
-  
+
   name_data.push_back(v);
-  
+
   return true;
 }
 
-int CoreLoadsSurfaceTraction::get_loads_data_id_from_load_id(int load_id)
-{ 
+int CoreLoadsSurfaceTraction::get_loads_data_id_from_load_id(int load_id) {
   int return_int = -1;
-  for (size_t i = 0; i < loads_data.size(); i++)
-  {
-    if (loads_data[i][0]==load_id)
-    {
+  for (size_t i = 0; i < loads_data.size(); i++) {
+    if (loads_data[i][0]==load_id) {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
-int CoreLoadsSurfaceTraction::get_time_delay_data_id_from_time_delay_id(int time_delay_id)
-{ 
+int CoreLoadsSurfaceTraction::get_time_delay_data_id_from_time_delay_id(int time_delay_id) {
   int return_int = -1;
-  for (size_t i = 0; i < time_delay_data.size(); i++)
-  {
-    if (time_delay_data[i][0]==std::to_string(time_delay_id))
-    {
+  for (size_t i = 0; i < time_delay_data.size(); i++) {
+    if (time_delay_data[i][0]==std::to_string(time_delay_id)) {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
-int CoreLoadsSurfaceTraction::get_force_data_id_from_force_id(int temperature_id)
-{ 
+int CoreLoadsSurfaceTraction::get_force_data_id_from_force_id(int temperature_id) {
   int return_int = -1;
-  for (size_t i = 0; i < force_data.size(); i++)
-  {
-    if (force_data[i][0]==double(temperature_id))
-    {
+  for (size_t i = 0; i < force_data.size(); i++) {
+    if (force_data[i][0]==double(temperature_id)) {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
-int CoreLoadsSurfaceTraction::get_name_data_id_from_name_id(int name_id)
-{ 
+int CoreLoadsSurfaceTraction::get_name_data_id_from_name_id(int name_id) {
   int return_int = -1;
-  for (size_t i = 0; i < name_data.size(); i++)
-  {
-    if (name_data[i][0]==std::to_string(name_id))
-    {
+  for (size_t i = 0; i < name_data.size(); i++) {
+    if (name_data[i][0]==std::to_string(name_id)) {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
-std::vector<double> CoreLoadsSurfaceTraction::calc_consistent_load(std::vector<int> connectivity, double load)
-{
+std::vector<double> CoreLoadsSurfaceTraction::calc_consistent_load(std::vector<int> connectivity, double load) {
   std::vector<double> consistent_load;
 
   if (connectivity.size()==3)  //linear tri
@@ -304,7 +277,7 @@ std::vector<double> CoreLoadsSurfaceTraction::calc_consistent_load(std::vector<i
     consistent_load.push_back(1./3. * load);
     consistent_load.push_back(1./3. * load);
     consistent_load.push_back(1./3. * load);
-  }else if (connectivity.size()==6) //quadratic tri
+  } else if (connectivity.size()==6) //quadratic tri
   {
     consistent_load.push_back(0.);
     consistent_load.push_back(0.);
@@ -312,13 +285,13 @@ std::vector<double> CoreLoadsSurfaceTraction::calc_consistent_load(std::vector<i
     consistent_load.push_back(1./3. * load);
     consistent_load.push_back(1./3. * load);
     consistent_load.push_back(1./3. * load);
-  }else if (connectivity.size()==4)  //linear quad
+  } else if (connectivity.size()==4)  //linear quad
   {
     consistent_load.push_back(1./4. * load);
     consistent_load.push_back(1./4. * load);
     consistent_load.push_back(1./4. * load);
     consistent_load.push_back(1./4. * load);
-  }else if (connectivity.size()==8) //quadratic quad
+  } else if (connectivity.size()==8) //quadratic quad
   {
     consistent_load.push_back(-1./12. * load);
     consistent_load.push_back(-1./12. * load);
@@ -329,13 +302,22 @@ std::vector<double> CoreLoadsSurfaceTraction::calc_consistent_load(std::vector<i
     consistent_load.push_back(1./3. * load);
     consistent_load.push_back(1./3. * load);
   }
-  
+
   return consistent_load;
 }
-  
 
-std::string CoreLoadsSurfaceTraction::get_load_export(int load_id)
-{
+
+std::string CoreLoadsSurfaceTraction::get_load_export(int load_id) {
+  if (!unit_view) {
+    auto converted = *this;
+    std::string unitError;
+    if (!CalculiXPhysicalModelUnits::convert(converted, CalculiXUnitView::Solver, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return {};
+    }
+    return converted.get_load_export(load_id);
+  }
+
   CalculiXAmplitudesInterface ccx_amplitudes_iface;
   CalculiXApplicationInterface ccx_application_iface;
 
@@ -351,57 +333,49 @@ std::string CoreLoadsSurfaceTraction::get_load_export(int load_id)
   double area = 0; // sum area of sideset
 
   std::string str_temp = "";
-  
+
   load_data_id = get_loads_data_id_from_load_id(load_id);
   str_temp.append("*CLOAD");
-  if (loads_data[load_data_id][1]==0)
-  {
+  if (loads_data[load_data_id][1]==0) {
     //str_temp.append(",OP=MOD");
-  }else if (loads_data[load_data_id][1]==1)
-  {
+  } else if (loads_data[load_data_id][1]==1) {
     str_temp.append(",OP=NEW");
   }
-  if (loads_data[load_data_id][2]!=-1)
-  {
+  if (loads_data[load_data_id][2]!=-1) {
     str_temp.append(",AMPLITUDE=" + ccx_amplitudes_iface.get_amplitude_name(loads_data[load_data_id][2]));
   }
   sub_data_id = get_time_delay_data_id_from_time_delay_id(loads_data[load_data_id][3]);
-  if (time_delay_data[sub_data_id][1]!="")
-  {
+  if (time_delay_data[sub_data_id][1]!="") {
     str_temp.append(",TIME DELAY=" + time_delay_data[sub_data_id][1]);
   }
   str_temp.append("\n");
 
   force_data_id = get_force_data_id_from_force_id(loads_data[load_data_id][5]);
-  if (force_data_id == -1)
-  {
+  if (force_data_id == -1) {
     return "ERROR: SOMETHING WENT WRONG WITH SURFACE TRACTION ID " + std::to_string(load_id);
   }
-  
-  
+
+
   //get all faces in the sideset
-  node_ids = CubitInterface::parse_cubit_list("node", "all in sideset " + std::to_string(loads_data[load_data_id][4])); 
-  tri_ids = CubitInterface::parse_cubit_list("tri", "all in sideset " + std::to_string(loads_data[load_data_id][4])); 
-  quad_ids = CubitInterface::parse_cubit_list("face", "all in sideset " + std::to_string(loads_data[load_data_id][4])); 
+  node_ids = CubitInterface::parse_cubit_list("node", "all in sideset " + std::to_string(loads_data[load_data_id][4]));
+  tri_ids = CubitInterface::parse_cubit_list("tri", "all in sideset " + std::to_string(loads_data[load_data_id][4]));
+  quad_ids = CubitInterface::parse_cubit_list("face", "all in sideset " + std::to_string(loads_data[load_data_id][4]));
 
   /*
   str_temp.append("node_ids\n");
-  for (size_t i = 0; i < node_ids.size(); i++)
-  {
+  for (size_t i = 0; i < node_ids.size(); i++) {
     str_temp.append(std::to_string(node_ids[i]) + " ");
   }
   str_temp.append("\n");
 
   str_temp.append("tri_ids\n");
-  for (size_t i = 0; i < tri_ids.size(); i++)
-  {
+  for (size_t i = 0; i < tri_ids.size(); i++) {
     str_temp.append(std::to_string(tri_ids[i]) + " ");
   }
   str_temp.append("\n");
 
   str_temp.append("quad_ids\n");
-  for (size_t i = 0; i < quad_ids.size(); i++)
-  {
+  for (size_t i = 0; i < quad_ids.size(); i++) {
     str_temp.append(std::to_string(quad_ids[i]) + " ");
   }
   str_temp.append("\n");
@@ -410,47 +384,39 @@ std::string CoreLoadsSurfaceTraction::get_load_export(int load_id)
   //sum area
   tri_area = CubitInterface::get_quality_values("tri", tri_ids, "element area");
   quad_area = CubitInterface::get_quality_values("quad", quad_ids, "element area");
- 
+
   //str_temp.append("tri_area\n");
-  for (size_t i = 0; i < tri_area.size(); i++)
-  {
+  for (size_t i = 0; i < tri_area.size(); i++) {
     //str_temp.append(std::to_string(tri_area[i]) + " ");
     area = area + tri_area[i];
   }
   //str_temp.append("\n");
 
   //str_temp.append("quad_area\n");
-  for (size_t i = 0; i < quad_area.size(); i++)
-  {
+  for (size_t i = 0; i < quad_area.size(); i++) {
     //str_temp.append(std::to_string(quad_area[i]) + " ");
     area = area + quad_area[i];
   }
   //str_temp.append("\n");
 
   //str_temp.append("area\n");
-  //str_temp.append(std::to_string(area) + "\n");    
+  //str_temp.append(std::to_string(area) + "\n");
 
   //assign forces to node ids
-  for (size_t i = 0; i < node_ids.size(); i++)
-  {
+  for (size_t i = 0; i < node_ids.size(); i++) {
     force_values.push_back({0.,0.,0.});
   }
 
   auto p = sort_permutation(node_ids);
   this->apply_permutation(node_ids, p);
 
-  for (size_t i = 0; i < tri_ids.size(); i++)
-  {
+  for (size_t i = 0; i < tri_ids.size(); i++) {
     std::vector<int> connectivity = CubitInterface::get_expanded_connectivity("tri",tri_ids[i]);
-    for (size_t ii = 1; ii < 4; ii++)
-    {
+    for (size_t ii = 1; ii < 4; ii++) {
       std::vector<double> tmp_load = calc_consistent_load(connectivity,(force_data[force_data_id][ii] * tri_area[i]/area));
-      if((tmp_load.size()!=0)&&(tmp_load.size()==connectivity.size()))
-      {
-        for (size_t iii = 0; iii < connectivity.size(); iii++)
-        {
-          if (std::binary_search(node_ids.begin(), node_ids.end(), connectivity[iii]))
-          {
+      if((tmp_load.size()!=0)&&(tmp_load.size()==connectivity.size())) {
+        for (size_t iii = 0; iii < connectivity.size(); iii++) {
+          if (std::binary_search(node_ids.begin(), node_ids.end(), connectivity[iii])) {
             auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), connectivity[iii]);
             force_values[lower - node_ids.begin()][ii-1] += tmp_load[iii];
           }
@@ -459,18 +425,13 @@ std::string CoreLoadsSurfaceTraction::get_load_export(int load_id)
     }
   }
 
-  for (size_t i = 0; i < quad_ids.size(); i++)
-  {
+  for (size_t i = 0; i < quad_ids.size(); i++) {
     std::vector<int> connectivity = CubitInterface::get_expanded_connectivity("quad",quad_ids[i]);
-    for (size_t ii = 1; ii < 4; ii++)
-    {
+    for (size_t ii = 1; ii < 4; ii++) {
       std::vector<double> tmp_load = calc_consistent_load(connectivity,(force_data[force_data_id][ii] * quad_area[i]/area));
-      if((tmp_load.size()!=0)&&(tmp_load.size()==connectivity.size()))
-      {
-        for (size_t iii = 0; iii < connectivity.size(); iii++)
-        {
-          if (std::binary_search(node_ids.begin(), node_ids.end(), connectivity[iii]))
-          {
+      if((tmp_load.size()!=0)&&(tmp_load.size()==connectivity.size())) {
+        for (size_t iii = 0; iii < connectivity.size(); iii++) {
+          if (std::binary_search(node_ids.begin(), node_ids.end(), connectivity[iii])) {
             auto lower = std::lower_bound(node_ids.begin(), node_ids.end(), connectivity[iii]);
             force_values[lower - node_ids.begin()][ii-1] += tmp_load[iii];
           }
@@ -480,23 +441,19 @@ std::string CoreLoadsSurfaceTraction::get_load_export(int load_id)
   }
 
   // write node ids and forces
-  for (size_t i = 0; i < force_values.size(); i++)
-  {
+  for (size_t i = 0; i < force_values.size(); i++) {
     /*
     str_temp.append("force_values[" + std::to_string(i)+ "][0] " + std::to_string(force_values[i][0])+ "\n");
     str_temp.append("force_values[" + std::to_string(i)+ "][1] " + std::to_string(force_values[i][1])+ "\n");
     str_temp.append("force_values[" + std::to_string(i)+ "][2] " + std::to_string(force_values[i][2])+ "\n");
     */
-    if (force_values[i][0] != 0.)
-    {
+    if (force_values[i][0] != 0.) {
       str_temp.append(std::to_string(node_ids[i]) + ",1," + ccx_application_iface.to_string_scientific(force_values[i][0])+ "\n");
     }
-    if (force_values[i][1] != 0.)
-    {
+    if (force_values[i][1] != 0.) {
       str_temp.append(std::to_string(node_ids[i]) + ",2," + ccx_application_iface.to_string_scientific(force_values[i][1])+ "\n");
     }
-    if (force_values[i][2] != 0.)
-    {
+    if (force_values[i][2] != 0.) {
       str_temp.append(std::to_string(node_ids[i]) + ",3," + ccx_application_iface.to_string_scientific(force_values[i][2])+ "\n");
     }
   }
@@ -504,38 +461,33 @@ std::string CoreLoadsSurfaceTraction::get_load_export(int load_id)
   return str_temp;
 }
 
-std::string CoreLoadsSurfaceTraction::print_data()
-{
+std::string CoreLoadsSurfaceTraction::print_data() {
   std::string str_return;
   str_return = "\n CoreLoadsSurfaceTraction loads_data: \n";
   str_return.append("load_id, OP MODE, amplitude_id, time_delay_id, sideset_id, force_id, name_id \n");
 
-  for (size_t i = 0; i < loads_data.size(); i++)
-  {
+  for (size_t i = 0; i < loads_data.size(); i++) {
     str_return.append(std::to_string(loads_data[i][0]) + " " + std::to_string(loads_data[i][1]) + " " + std::to_string(loads_data[i][2]) + " " + std::to_string(loads_data[i][3]) + " " + std::to_string(loads_data[i][4]) + " " + std::to_string(loads_data[i][5]) + " " + std::to_string(loads_data[i][6])  + " \n");
   }
 
   str_return.append("\n CoreLoadsSurfaceTraction time_delay_data: \n");
   str_return.append("time_delay_id, time_delay_value \n");
 
-  for (size_t i = 0; i < time_delay_data.size(); i++)
-  {
+  for (size_t i = 0; i < time_delay_data.size(); i++) {
     str_return.append(time_delay_data[i][0] + " " + time_delay_data[i][1] + " \n");
   }
 
   str_return.append("\n CoreLoadsSurfaceTraction force_data: \n");
   str_return.append("force_id,dof_1_value,dof_2_value,dof_3_value  \n");
 
-  for (size_t i = 0; i < force_data.size(); i++)
-  {
+  for (size_t i = 0; i < force_data.size(); i++) {
     str_return.append(std::to_string(force_data[i][0]) + " " + std::to_string(force_data[i][1]) + " " + std::to_string(force_data[i][2]) + " " + std::to_string(force_data[i][3]) + " \n");
   }
-  
+
   str_return.append("\n CoreLoadsSurfaceTraction name_data: \n");
   str_return.append("name_id, name \n");
 
-  for (size_t i = 0; i < name_data.size(); i++)
-  {
+  for (size_t i = 0; i < name_data.size(); i++) {
     str_return.append(name_data[i][0] + " " + name_data[i][1] + " \n");
   }
 
@@ -545,10 +497,9 @@ std::string CoreLoadsSurfaceTraction::print_data()
 
 
 //sorting of vectors
-template <typename T> 
+template <typename T>
 std::vector<std::size_t> CoreLoadsSurfaceTraction::sort_permutation(
-    const std::vector<T>& vec)
-{
+    const std::vector<T>& vec) {
     std::vector<std::size_t> p(vec.size());
     std::iota(p.begin(), p.end(), 0);
     std::sort(p.begin(), p.end(),
@@ -557,23 +508,19 @@ std::vector<std::size_t> CoreLoadsSurfaceTraction::sort_permutation(
     return p;
 }
 
-template <typename T> 
+template <typename T>
 void CoreLoadsSurfaceTraction::apply_permutation(
     std::vector<T>& vec,
-    const std::vector<std::size_t>& p)
-{
+    const std::vector<std::size_t>& p) {
     std::vector<bool> done(vec.size());
-    for (std::size_t i = 0; i < vec.size(); ++i)
-    {
-        if (done[i])
-        {
+    for (std::size_t i = 0; i < vec.size(); ++i) {
+        if (done[i]) {
             continue;
         }
         done[i] = true;
         std::size_t prev_j = i;
         std::size_t j = p[i];
-        while (i != j)
-        {
+        while (i != j) {
             std::swap(vec[prev_j], vec[j]);
             done[j] = true;
             prev_j = j;
@@ -587,8 +534,7 @@ std::vector<int> CoreLoadsSurfaceTraction::get_load_ids() const
   std::vector<int> ids;
   ids.reserve(loads_data.size());
 
-  for (const auto& load : loads_data)
-  {
+  for (const auto& load : loads_data) {
     ids.push_back(load[0]);
   }
 
@@ -598,12 +544,19 @@ std::vector<int> CoreLoadsSurfaceTraction::get_load_ids() const
 
 bool CoreLoadsSurfaceTraction::get_settings(int id, LoadsSurfaceTractionSettings& settings, std::string& error) const
 {
+  if (!unit_view) {
+    auto converted = *this;
+    if (!CalculiXPhysicalModelUnits::convert(converted, CalculiXUnitView::Display, error)) {
+      return false;
+    }
+    return converted.get_settings(id, settings, error);
+  }
+
   settings = {};
   error.clear();
   const auto* record = SettingsRead::row(loads_data, id, 7, error);
 
-  if (record == nullptr)
-  {
+  if (record == nullptr) {
     return false;
   }
 
@@ -611,14 +564,17 @@ bool CoreLoadsSurfaceTraction::get_settings(int id, LoadsSurfaceTractionSettings
   settings.name = SettingsRead::field(name_data, (*record)[6], 1, error);
   settings.amplitude = SettingsRead::optional_id((*record)[2]);
   settings.timeDelay = SettingsRead::field(time_delay_data, (*record)[3], 1, error);
-  settings.operation = (*record)[1] == 1 ? "new" : "mod";
+  if ((*record)[1] == 1) {
+    settings.operation = "new";
+  } else {
+    settings.operation = "mod";
+  }
   settings.sideset = SettingsRead::text((*record)[4]);
   settings.component1 = SettingsRead::field(force_data, (*record)[5], 1, error);
   settings.component2 = SettingsRead::field(force_data, (*record)[5], 2, error);
   settings.component3 = SettingsRead::field(force_data, (*record)[5], 3, error);
 
-  if (!error.empty())
-  {
+  if (!error.empty()) {
     settings = {};
     return false;
   }

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostProbeCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -24,10 +25,22 @@ bool PostProbeCommand::execute(CubitCommandData&)
   {
     const auto active = application.lock();
     std::string error;
-    const auto result = active ? active->probe(error) : std::nullopt;
+    const auto result = [&]() -> std::common_type_t<decltype(active->probe(error)), decltype(std::nullopt)> {
+      if (active) {
+        return active->probe(error);
+      } else {
+        return std::nullopt;
+      }
+    }();
     if (!result)
     {
-      PRINT_ERROR("Cannot probe selection: %s\n",error.empty() ? "application unavailable" : error.c_str());
+      PRINT_ERROR("Cannot probe selection: %s\n",[&]() -> std::common_type_t<decltype("application unavailable"), decltype(error.c_str())> {
+        if (error.empty()) {
+          return "application unavailable";
+        } else {
+          return error.c_str();
+        }
+      }());
       return false;
     }
     const auto text = Postprocessor::probe_text(*result);

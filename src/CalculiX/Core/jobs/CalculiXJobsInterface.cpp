@@ -154,8 +154,16 @@ bool CalculiXJobsInterface::get_report_source(int id, ReportSource& output, std:
     source.workspace_id = "calculix";
     source.job_id = id;
     source.solver_launch_id = archived->launchId;
-    source.setup_snapshot_id = archived->setup ? archived->setup->id : "";
-    source.snapshot_fingerprint = archived->setup ? archived->setup->fingerprint : archived->input.manifestFingerprint;
+    if (archived->setup) {
+      source.setup_snapshot_id = archived->setup->id;
+    } else {
+      source.setup_snapshot_id = "";
+    }
+    if (archived->setup) {
+      source.snapshot_fingerprint = archived->setup->fingerprint;
+    } else {
+      source.snapshot_fingerprint = archived->input.manifestFingerprint;
+    }
     source.input_files = archived->input.order;
     for (const auto& path : source.input_files)
     {

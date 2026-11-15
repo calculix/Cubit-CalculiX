@@ -29,6 +29,7 @@ public:
   bool capture_file(const Postprocessor::CaptureDefinition& request,const std::string& path,std::string& error) const;
   using DatasetSelector = std::variant<std::size_t,std::string>;
   explicit PostprocessorApplicationInterface(ResultSourceRegistryInterface& providers);
+  bool configure_units(const std::string& system, const std::string& quantity, const std::string& unit, std::string& error);
   bool read_project_definitions(const std::string& filename, std::string& error);
   bool resolve_project_sources(std::string& error);
   bool commit_project_restore(std::string& error);

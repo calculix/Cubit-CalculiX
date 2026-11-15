@@ -57,7 +57,11 @@ public:
   {
     for (const auto& definition : definitions)
     {
-      values[definition.key] = saved.count(definition.key) ? saved.at(definition.key) : definition.defaultValue;
+      if (saved.count(definition.key)) {
+        values[definition.key] = saved.at(definition.key);
+      } else {
+        values[definition.key] = definition.defaultValue;
+      }
     }
     return true;
   }
@@ -411,5 +415,9 @@ int main(int argc, char** argv)
     summary->metrics[static_cast<std::size_t>(CameraTimingStage::CommandOutsideHandler)].count > 0 &&
     summary->unpairedDispatches == 0,
     "Controller dispatches must pair handler/Core timings with their originating gesture.");
-  return failures == 0 ? 0 : 1;
+  if (failures == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
 }

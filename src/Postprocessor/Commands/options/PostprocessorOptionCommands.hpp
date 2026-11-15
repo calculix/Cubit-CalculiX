@@ -44,7 +44,13 @@ bool read(Data& data, const std::vector<UserOption>& schema, UserOptionValues& c
     error = "Background requires three RGB components.";
     return false;
   }
-  const std::string key = data.find_keyword("TOP") ? "background/top" : "background/bottom";
+  const std::string key = [&]() -> std::string {
+    if (data.find_keyword("TOP")) {
+      return "background/top";
+    } else {
+      return "background/bottom";
+    }
+  }();
   changes = {{key, Postprocessor::format_background_color(color)}};
   UserOptionValues candidate;
   return merge_user_option_changes(schema, changes, candidate, error);

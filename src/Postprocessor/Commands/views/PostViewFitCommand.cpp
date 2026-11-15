@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostViewFitCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -32,7 +33,13 @@ bool PostViewFitCommand::execute(CubitCommandData&)
     std::string error;
     if (!active || !active->request_camera_fit(error))
     {
-      PRINT_ERROR("Cannot fit Postprocessor view: %s\n", error.empty() ? "application unavailable" : error.c_str());
+      PRINT_ERROR("Cannot fit Postprocessor view: %s\n", [&]() -> std::common_type_t<decltype("application unavailable"), decltype(error.c_str())> {
+        if (error.empty()) {
+          return "application unavailable";
+        } else {
+          return error.c_str();
+        }
+      }());
       return false;
     }
     return true;

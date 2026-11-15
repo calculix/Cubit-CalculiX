@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "HDF5Tool.hpp"
 #include "CubitMessage.hpp"
 #include <algorithm>
@@ -270,7 +271,13 @@ HDF5Tool::HDF5Tool(std::string filename, bool createIfMissing)
     throw std::runtime_error("The HDF5 file does not exist: " + filename);
   }
   // Exclusive creation cannot truncate an existing file after an access failure.
-  file = new H5::H5File(filename, exists ? H5F_ACC_RDWR : H5F_ACC_EXCL);
+  file = new H5::H5File(filename, [&]() -> std::common_type_t<decltype(H5F_ACC_RDWR), decltype(H5F_ACC_EXCL)> {
+    if (exists) {
+      return H5F_ACC_RDWR;
+    } else {
+      return H5F_ACC_EXCL;
+    }
+  }());
 }
 
 HDF5Tool::~HDF5Tool() noexcept

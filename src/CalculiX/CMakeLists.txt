@@ -115,14 +115,6 @@ if (UNIX)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../Library/Linux/libQt6Charts.so.6.2.4 DESTINATION ${CMAKE_BINARY_DIR}/)
 endif (UNIX)
 
-#copy material default library into build directory
-if (WIN32)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libmaterial.hdf5 DESTINATION ${CMAKE_BINARY_DIR}/Release/)
-endif (WIN32)
-if (UNIX)
- file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libmaterial.hdf5 DESTINATION ${CMAKE_BINARY_DIR}/)
-endif (UNIX)
-
 #copy setup scripts
 if (WIN32)
  file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/../set_cubit_plugin_dir.bat DESTINATION ${CMAKE_BINARY_DIR}/Release/)
@@ -338,3 +330,11 @@ add_custom_command(TARGET calculix_pythoninterface POST_BUILD
 )
 
 endif()
+
+target_link_libraries(calculix_core cubitsim_model cubitsim_results_io)
+target_link_libraries(calculix_commands cubitsim_model)
+target_link_libraries(calculix_gui cubitsim_model)
+
+target_sources(calculix_core PRIVATE Core/reporting/CalculiXReportMaterials.cpp Core/reporting/CalculiXReportMaterials.hpp)
+
+target_sources(calculix_core PRIVATE Core/reporting/CalculiXReportDomainSettings.cpp Core/reporting/CalculiXReportDomainSettings.hpp)

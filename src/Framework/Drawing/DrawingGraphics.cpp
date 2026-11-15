@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "DrawingGraphics.hpp"
 #include "CubitColorTable.hpp"
 #include "CubitVector.hpp"
@@ -39,7 +40,13 @@ bool DrawingGraphics::synchronize(const std::string& workspace, const std::map<s
   std::set<GCubitModelSet*> visited;
   for (const auto& view : factory->views())
   {
-    auto* models = view == nullptr ? nullptr : dynamic_cast<GCubitModelSet*>(view->get_model_set());
+    auto* models = [&]() -> std::common_type_t<decltype(nullptr), decltype(dynamic_cast<GCubitModelSet*>(view->get_model_set()))> {
+      if (view == nullptr) {
+        return nullptr;
+      } else {
+        return dynamic_cast<GCubitModelSet*>(view->get_model_set());
+      }
+    }();
     if (models == nullptr || !visited.insert(models).second)
     {
       continue;
@@ -159,7 +166,13 @@ void DrawingGraphics::detach() noexcept
   std::set<GCubitModelSet*> visited;
   for (const auto& view : factory->views())
   {
-    auto* models = view == nullptr ? nullptr : dynamic_cast<GCubitModelSet*>(view->get_model_set());
+    auto* models = [&]() -> std::common_type_t<decltype(nullptr), decltype(dynamic_cast<GCubitModelSet*>(view->get_model_set()))> {
+      if (view == nullptr) {
+        return nullptr;
+      } else {
+        return dynamic_cast<GCubitModelSet*>(view->get_model_set());
+      }
+    }();
     if (models == nullptr || !visited.insert(models).second)
     {
       continue;

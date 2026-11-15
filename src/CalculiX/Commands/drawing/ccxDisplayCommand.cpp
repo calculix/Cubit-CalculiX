@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ccxDisplayCommand.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
 #include "CubitMessage.hpp"
@@ -159,7 +160,13 @@ bool ccxDisplayCommand::execute(CubitCommandData& data)
   }
   if (!success)
   {
-    PRINT_ERROR("Drawing command failed: %s\n", error.empty() ? "invalid request" : error.c_str());
+    PRINT_ERROR("Drawing command failed: %s\n", [&]() -> std::common_type_t<decltype("invalid request"), decltype(error.c_str())> {
+      if (error.empty()) {
+        return "invalid request";
+      } else {
+        return error.c_str();
+      }
+    }());
   }
   return success;
 }

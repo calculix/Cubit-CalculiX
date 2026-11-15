@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "TopologyManagement.hpp"
 #include "TopologyManagementDensitySettingsWidget.hpp"
 #include "TopologyManagementLevelSetSettingsWidget.hpp"
@@ -295,7 +296,11 @@ void TopologyManagement::refresh()
   }
   if (!creating && existing.count(currentTopologyId) == 0)
   {
-    currentTopologyId = caseTree->topLevelItemCount() > 0 ? caseTree->topLevelItem(0)->data(0, Qt::UserRole).toInt() : -1;
+    if (caseTree->topLevelItemCount() > 0) {
+      currentTopologyId = caseTree->topLevelItem(0)->data(0, Qt::UserRole).toInt();
+    } else {
+      currentTopologyId = -1;
+    }
     loadSettings();
     refreshLists();
   }
@@ -312,7 +317,13 @@ void TopologyManagement::refresh()
   {
     iterationRecords.clear();
     refreshIterations();
-    heading->setText(creating ? "New topology case" : "Select a topology case or create a new case.");
+    heading->setText([&]() -> const char* {
+      if (creating) {
+        return "New topology case";
+      } else {
+        return "Select a topology case or create a new case.";
+      }
+    }());
   }
   else
   {
@@ -381,10 +392,46 @@ void TopologyManagement::refreshIterations(int preferred_iteration)
       item->setText(0, QString::number(id));
       item->setText(1, QString::fromStdString(row[JobId]));
       const int status = QString::fromStdString(row[JobStatus]).toInt();
-      item->setText(2, status == 2 ? "Finished" : (status == 1 || status == 5 ? "Running" : (status == 3 ? "Killed" : (status == 4 ? "Failed" : "Not started"))));
+      item->setText(2, [&]() -> std::common_type_t<decltype("Finished"), std::common_type_t<decltype("Running"), std::common_type_t<decltype("Killed"), const char*>>> {
+        if (status == 2) {
+          return "Finished";
+        } else {
+          return ([&]() -> std::common_type_t<decltype("Running"), std::common_type_t<decltype("Killed"), const char*>> {
+            if (status == 1 || status == 5) {
+              return "Running";
+            } else {
+              return ([&]() -> std::common_type_t<decltype("Killed"), const char*> {
+                if (status == 3) {
+                  return "Killed";
+                } else {
+                  return ([&]() -> const char* {
+                    if (status == 4) {
+                      return "Failed";
+                    } else {
+                      return "Not started";
+                    }
+                  }());
+                }
+              }());
+            }
+          }());
+        }
+      }());
       item->setText(3, QString::fromStdString(row[Objective]));
       item->setText(4, QString::fromStdString(row[VolumeFraction]));
-      item->setText(5, row[Converged].empty() ? "—" : (row[Converged] == "1" ? "Yes" : "No"));
+      item->setText(5, [&]() -> std::common_type_t<decltype("—"), const char*> {
+        if (row[Converged].empty()) {
+          return "—";
+        } else {
+          return ([&]() -> const char* {
+            if (row[Converged] == "1") {
+              return "Yes";
+            } else {
+              return "No";
+            }
+          }());
+        }
+      }());
       if (status == 2 && !row[Objective].empty())
       {
         rows.emplace(id, row);
@@ -396,7 +443,13 @@ void TopologyManagement::refreshIterations(int preferred_iteration)
       wrapIterations->addItem(QString("Iteration %1").arg(entry.first), entry.first);
     }
     const int index = iterations->findData(preferred_iteration);
-    iterations->setCurrentIndex(index >= 0 || explicitIteration ? index : iterations->count() - 1);
+    iterations->setCurrentIndex([&]() -> std::common_type_t<decltype(index), decltype(iterations->count() - 1)> {
+      if (index >= 0 || explicitIteration) {
+        return index;
+      } else {
+        return iterations->count() - 1;
+      }
+    }());
   }
   updateDisplay();
   if (!explicitIteration && previousCase == currentTopologyId)

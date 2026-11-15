@@ -64,7 +64,13 @@ bool CoreStepsCleanup::cleanup_bcs(CoreSteps& steps, int step_id, int bcs_id, Co
       if (reference[1] == bc_type)
       {
         const int bc_id = reference[2];
-        const bool exists = bc_type == 1 ? displacements.get_bcs_data_id_from_bc_id(bc_id) != -1 : temperatures.get_bcs_data_id_from_bc_id(bc_id) != -1;
+        const bool exists = [&]() -> bool {
+          if (bc_type == 1) {
+            return displacements.get_bcs_data_id_from_bc_id(bc_id) != -1;
+          } else {
+            return temperatures.get_bcs_data_id_from_bc_id(bc_id) != -1;
+          }
+        }();
 
         if (!exists)
         {

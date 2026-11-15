@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ElementIntegration.hpp"
 #include "ElementInterpolation.hpp"
 #include "CubitMessage.hpp"
@@ -54,9 +55,39 @@ bool ElementIntegration::get_rule(const std::string& calculix_type, std::vector<
   else if (calculix_type == "C3D8" || calculix_type == "C3D20")
   {
     const bool quadratic = calculix_type == "C3D20";
-    const std::size_t count = quadratic ? 3 : 2;
-    const double positions[3] = {quadratic ? -g3 : -g2, quadratic ? 0.0 : g2, g3};
-    const double weights[3] = {quadratic ? 5.0 / 9.0 : 1.0, quadratic ? 8.0 / 9.0 : 1.0, 5.0 / 9.0};
+    const std::size_t count = [&]() -> std::size_t {
+      if (quadratic) {
+        return 3;
+      } else {
+        return 2;
+      }
+    }();
+    const double positions[3] = {[&]() -> std::common_type_t<decltype(-g3), decltype(-g2)> {
+      if (quadratic) {
+        return -g3;
+      } else {
+        return -g2;
+      }
+    }(), [&]() -> std::common_type_t<decltype(0.0), decltype(g2)> {
+      if (quadratic) {
+        return 0.0;
+      } else {
+        return g2;
+      }
+    }(), g3};
+    const double weights[3] = {[&]() -> std::common_type_t<decltype(5.0 / 9.0), decltype(1.0)> {
+      if (quadratic) {
+        return 5.0 / 9.0;
+      } else {
+        return 1.0;
+      }
+    }(), [&]() -> std::common_type_t<decltype(8.0 / 9.0), decltype(1.0)> {
+      if (quadratic) {
+        return 8.0 / 9.0;
+      } else {
+        return 1.0;
+      }
+    }(), 5.0 / 9.0};
 
     // CalculiX numbering: xi changes fastest, then eta, then zeta.
     for (std::size_t z = 0; z < count; ++z)
@@ -81,7 +112,17 @@ bool ElementIntegration::get_rule(const std::string& calculix_type, std::vector<
 
 bool ElementIntegration::shape_functions(const std::string& calculix_type, const Coordinates& reference, std::vector<double>& values)
 {
-  const std::string type = calculix_type == "C3D8R" ? "C3D8" : calculix_type == "C3D20R" ? "C3D20" : calculix_type;
+  const std::string type = [&]() -> std::string {
+    if (calculix_type == "C3D8R") {
+      return "C3D8";
+    } else {
+      if (calculix_type == "C3D20R") {
+        return "C3D20";
+      } else {
+        return calculix_type;
+      }
+    }
+  }();
   std::vector<Coordinates> gradients;
   // Reuse the shared interpolation kernel; reduced integration changes the
   // evaluation point, not the geometric shape functions.

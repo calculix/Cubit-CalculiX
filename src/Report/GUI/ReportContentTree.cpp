@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportContentTree.hpp"
 #include "ReportCommandText.hpp"
 #include "Framework/Reporting/ReportTemplate.hpp"
@@ -11,7 +12,13 @@ ReportContentTree::ReportContentTree(QWidget* parent, std::function<bool(const s
   {
     std::string key, error;
     if (!ReportCommandText::quote(item->data(0, Qt::UserRole).toString(), key, error) ||
-        !submit("report configure " + key + (item->checkState(0) == Qt::Checked ? " \"true\"" : " \"false\""), error))
+        !submit("report configure " + key + ([&]() -> const char* {
+          if (item->checkState(0) == Qt::Checked) {
+            return " \"true\"";
+          } else {
+            return " \"false\"";
+          }
+        }()), error))
     {
       PRINT_ERROR("Cannot change report content: %s\n", error.c_str());
     }
@@ -23,7 +30,13 @@ ReportContentTree::~ReportContentTree() = default;
 void ReportContentTree::refresh(const ReportTemplate& definition, const ReportConfiguration& configuration)
 {
   QSignalBlocker guard(this);
-  const QString selected = currentItem() ? currentItem()->data(0, Qt::UserRole).toString() : QString();
+  const QString selected = [&]() -> QString {
+    if (currentItem()) {
+      return currentItem()->data(0, Qt::UserRole).toString();
+    } else {
+      return QString();
+    }
+  }();
   clear();
   for (const auto& option : definition.options)
   {
@@ -36,7 +49,13 @@ void ReportContentTree::refresh(const ReportTemplate& definition, const ReportCo
     item->setData(0, Qt::UserRole, QString::fromStdString(option.key));
     item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
     const auto entry = configuration.values.find(option.key);
-    item->setCheckState(0, entry != configuration.values.end() && entry->second == "true" ? Qt::Checked : Qt::Unchecked);
+    item->setCheckState(0, [&]() -> std::common_type_t<decltype(Qt::Checked), decltype(Qt::Unchecked)> {
+      if (entry != configuration.values.end() && entry->second == "true") {
+        return Qt::Checked;
+      } else {
+        return Qt::Unchecked;
+      }
+    }());
     if (item->data(0, Qt::UserRole).toString() == selected)
     {
       setCurrentItem(item);

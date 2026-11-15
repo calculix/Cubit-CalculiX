@@ -44,7 +44,11 @@ namespace
   }
   QJsonValue range_json(const std::optional<std::array<double,2>>& range)
   {
-    return range ? QJsonValue(QJsonArray{(*range)[0],(*range)[1]}) : QJsonValue(QJsonValue::Null);
+    if (range) {
+      return QJsonValue(QJsonArray{(*range)[0],(*range)[1]});
+    } else {
+      return QJsonValue(QJsonValue::Null);
+    }
   }
   bool range_read(const QJsonValue& value,std::optional<std::array<double,2>>& output)
   {
@@ -79,7 +83,13 @@ namespace Postprocessor
         {
           item.insert("input",QJsonObject{{"type","entity"},{"source",q(entity->entity.source_id)},
             {"kind",static_cast<int>(entity->entity.kind)},{"id",q(std::to_string(entity->entity.entity_id))},
-            {"ip",entity->entity.integration_point ? QJsonValue(q(std::to_string(*entity->entity.integration_point))) : QJsonValue(QJsonValue::Null)},
+            {"ip",[&]() -> QJsonValue {
+              if (entity->entity.integration_point) {
+                return QJsonValue(q(std::to_string(*entity->entity.integration_point)));
+              } else {
+                return QJsonValue(QJsonValue::Null);
+              }
+            }()},
             {"dataset_kind",q(entity->dataset_kind)},{"dataset_name",q(entity->dataset_name)},{"model",entity->model_id},
             {"array",q(entity->field.array_name)},{"association",static_cast<int>(entity->field.association)},
             {"component",q(entity->field.component)},{"magnitude",entity->field.magnitude},

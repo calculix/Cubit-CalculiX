@@ -10,7 +10,6 @@
 #include "GUI/mesh/NodesetTree.hpp"
 #include "GUI/mesh/SidesetTree.hpp"
 #include "GUI/materials/MaterialTree.hpp"
-#include "GUI/materials/MaterialManagement.hpp"
 #include "GUI/sections/SectionsTree.hpp"
 #include "GUI/interactions/ConstraintsTree.hpp"
 #include "GUI/interactions/SurfaceInteractionsTree.hpp"

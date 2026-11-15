@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostViewPanCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -34,7 +35,13 @@ bool PostViewPanCommand::execute(CubitCommandData& data)
     std::string error;
     if (!active || !data.get_value("horizontal", horizontal) || !data.get_value("vertical", vertical) || !active->pan_camera(horizontal, vertical, error))
     {
-      PRINT_ERROR("Cannot pan Postprocessor camera: %s\n", error.empty() ? "missing application or values" : error.c_str());
+      PRINT_ERROR("Cannot pan Postprocessor camera: %s\n", [&]() -> std::common_type_t<decltype("missing application or values"), decltype(error.c_str())> {
+        if (error.empty()) {
+          return "missing application or values";
+        } else {
+          return error.c_str();
+        }
+      }());
       return false;
     }
     return true;

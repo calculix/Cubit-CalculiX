@@ -129,7 +129,17 @@ DrawScope readScope(HDF5Tool& file, const std::string& group, const std::string&
 
 void writeScope(HDF5Tool& file, const std::string& group, const std::string& prefix, const DrawScope& scope)
 {
-  const std::string kind = scope.kind == DrawScopeKind::Step ? "step" : scope.kind == DrawScopeKind::Custom ? "custom" : "model";
+  const std::string kind = [&]() -> std::string {
+    if (scope.kind == DrawScopeKind::Step) {
+      return "step";
+    } else {
+      if (scope.kind == DrawScopeKind::Custom) {
+        return "custom";
+      } else {
+        return "model";
+      }
+    }
+  }();
   require(file.write_dataset_string_rank_1(prefix + "kind", group, {kind}), "Cannot write drawing scope.");
   writeInt(file, group, prefix + "step_id", scope.stepId);
 }

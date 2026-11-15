@@ -1,3 +1,4 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
 #include "Core/application/SettingsRead.hpp"
 #include "Core/loads/CoreLoadsTrajectory.hpp"
 #include <string>
@@ -28,13 +29,13 @@ bool CoreLoadsTrajectory::init()
   }else{
     heatflux->init();
     bodyheatfluxsphere->init();
-    is_initialized = true;  
+    is_initialized = true;
     return true;
   }
 }
 
 bool CoreLoadsTrajectory::update()
-{ 
+{
   return true;
 }
 
@@ -90,7 +91,7 @@ bool CoreLoadsTrajectory::create_load(std::string load_type, std::vector<std::st
     PRINT_INFO(output.c_str());
     return false;
   }
-  
+
   this->add_load(load_id,load_type_int,sub_id);
 
   return true;
@@ -99,7 +100,7 @@ bool CoreLoadsTrajectory::create_load(std::string load_type, std::vector<std::st
 bool CoreLoadsTrajectory::add_load(int load_id, int load_type, int sub_load_id)
 {
   std::vector<int> v = {load_id, load_type, sub_load_id};
-      
+
   loads_data.push_back(v);
 
   return true;
@@ -110,7 +111,7 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
   //int sub_data_id;
   std::vector<int> sub_data_ids;
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
-  
+
   if (loads_data_id == -1)
   {
     return false;
@@ -126,7 +127,7 @@ bool CoreLoadsTrajectory::modify_load(int load_id, std::vector<std::string> opti
       return bodyheatfluxsphere->modify_load(loads_data[loads_data_id][2],options,options_marker,options2,options3);
     }else{
      return false;
-    }    
+    }
   }
   return false;
 }
@@ -167,7 +168,7 @@ bool CoreLoadsTrajectory::delete_load(int load_id)
 }
 
 int CoreLoadsTrajectory::get_loads_data_id_from_load_id(int load_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < loads_data.size(); i++)
   {
@@ -180,10 +181,10 @@ int CoreLoadsTrajectory::get_loads_data_id_from_load_id(int load_id)
 }
 
 std::string CoreLoadsTrajectory::get_load_type(int load_id)
-{ 
+{
   std::string return_str = "";
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
-  
+
   if (loads_data_id == -1)
   {
     return return_str;
@@ -196,30 +197,30 @@ std::string CoreLoadsTrajectory::get_load_type(int load_id)
       return_str = "BODYHEATFLUXSPHERE";
     }
   }
-  
+
   return return_str;
 }
 
 int CoreLoadsTrajectory::get_subload_id(int load_id)
-{ 
+{
   int return_int = -1;
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
-  
+
   if (loads_data_id == -1)
   {
     return return_int;
   } else {
     return_int = loads_data[loads_data_id][2];
   }
-  
+
   return return_int;
 }
 
 std::string CoreLoadsTrajectory::get_name_from_load_id(int load_id)
-{ 
+{
   std::string return_str = "";
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
-  
+
   if (loads_data_id == -1)
   {
     return return_str;
@@ -234,7 +235,7 @@ std::string CoreLoadsTrajectory::get_name_from_load_id(int load_id)
       return_str = bodyheatfluxsphere->name_data[name_data_id][1];
     }
   }
-  
+
   return return_str;
 }
 
@@ -264,7 +265,7 @@ bool CoreLoadsTrajectory::clean_export()
   const bool restore_ok = ccx_steps_iface.step_utility_load_backup();
 
   return sphere_ok && heatflux_ok && restore_ok;
-}  
+}
 
 std::string CoreLoadsTrajectory::print_data()
 {
@@ -418,6 +419,23 @@ std::vector<std::vector<double>> CoreLoadsTrajectory::get_bodyheatfluxsphere_mag
 
 bool CoreLoadsTrajectory::get_settings(int id, LoadsTrajectorySettings& settings, std::string& error) const
 {
+  if (!domain_unit_view) {
+    if (heatflux == nullptr || bodyheatfluxsphere == nullptr) {
+      error = "Trajectory storage is unavailable.";
+      return false;
+    }
+    auto heat = *heatflux;
+    auto body = *bodyheatfluxsphere;
+    if (!CalculiXDomainUnits::convert(heat, CalculiXDomainUnitView::Display, error) || !CalculiXDomainUnits::convert(body, CalculiXDomainUnitView::Display, error)) {
+      return false;
+    }
+    auto candidate = *this;
+    candidate.domain_unit_view = true;
+    candidate.heatflux = &heat;
+    candidate.bodyheatfluxsphere = &body;
+    return candidate.get_settings(id, settings, error);
+  }
+
   settings = {};
   error.clear();
   const auto* record = SettingsRead::row(loads_data, id, 3, error);
@@ -438,7 +456,11 @@ bool CoreLoadsTrajectory::get_settings(int id, LoadsTrajectorySettings& settings
     }
     settings.name = SettingsRead::field(heatflux->name_data, (*sub)[9], 1, error);
     settings.loadType = "Heatflux";
-    settings.operation = (*sub)[1] == 1 ? "new" : "mod";
+    if ((*sub)[1] == 1) {
+      settings.operation = "new";
+    } else {
+      settings.operation = "mod";
+    }
     settings.curve = SettingsRead::optional_id((*sub)[2]);
     settings.vertex = SettingsRead::optional_id((*sub)[3]);
     settings.direction = SettingsRead::field(heatflux->direction_data, (*sub)[5], 1, error) + " " + SettingsRead::field(heatflux->direction_data, (*sub)[5], 2, error) + " " + SettingsRead::field(heatflux->direction_data, (*sub)[5], 3, error);
@@ -476,8 +498,20 @@ bool CoreLoadsTrajectory::get_settings(int id, LoadsTrajectorySettings& settings
     }
     settings.name = SettingsRead::field(bodyheatfluxsphere->name_data, (*sub)[10], 1, error);
     settings.loadType = "BodyHeatfluxSphere";
-    settings.modelChange = (*sub)[11] == 1 ? "add" : ((*sub)[11] == 2 ? "remove" : "off");
-    settings.operation = (*sub)[1] == 1 ? "new" : "mod";
+    if ((*sub)[11] == 1) {
+      settings.modelChange = "add";
+    } else {
+      if ((*sub)[11] == 2) {
+        settings.modelChange = "remove";
+      } else {
+        settings.modelChange = "off";
+      }
+    }
+    if ((*sub)[1] == 1) {
+      settings.operation = "new";
+    } else {
+      settings.operation = "mod";
+    }
     settings.curve = SettingsRead::optional_id((*sub)[2]);
     settings.vertex = SettingsRead::optional_id((*sub)[3]);
     settings.direction = SettingsRead::field(bodyheatfluxsphere->direction_data, (*sub)[5], 1, error) + " " + SettingsRead::field(bodyheatfluxsphere->direction_data, (*sub)[5], 2, error) + " " + SettingsRead::field(bodyheatfluxsphere->direction_data, (*sub)[5], 3, error);

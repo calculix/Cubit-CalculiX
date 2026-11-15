@@ -23,12 +23,17 @@ bool AmplitudesPropertiesWidget::setAmplitude(int id)
   auto* general = addIdentity("Amplitude", settings.id);
   addEditableName(general, id, QString::fromStdString(settings.name));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
+  addValue(settingsGroup, "Axis", QString::fromStdString(settings.axis));
   addValue(settingsGroup, "Shift x", QString::fromStdString(settings.shiftX));
   addValue(settingsGroup, "Shift y", QString::fromStdString(settings.shiftY));
   addValue(settingsGroup, "Time=TotalTime", QString::fromStdString(settings.totalTime));
   if (!settings.points.empty())
   {
-    addTable("points", "Points", {"Time", "Amplitude"}, settings.points);
+    QString axisTitle = "Time";
+    if (settings.axis == "frequency") {
+      axisTitle = "Frequency";
+    }
+    addTable("points", "Points", {axisTitle, "Amplitude"}, settings.points);
   }
   return true;
 }

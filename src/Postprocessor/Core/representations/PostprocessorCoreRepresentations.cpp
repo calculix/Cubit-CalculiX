@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "../application/PostprocessorCore.hpp"
 #include "ResultMesh.hpp"
 #include <exception>
@@ -201,8 +202,13 @@ namespace Postprocessor
           if (coloring.field && (activateResult || !same_field(display.coloring.field,coloring.field)))
           {
             const auto data = result_data(source_id);
-            const auto* field = data && display.increment_index < data->increments.size() ?
-              find_field(data->increments[display.increment_index],*coloring.field) : nullptr;
+            const auto* field = [&]() -> std::common_type_t<decltype(find_field(data->increments[display.increment_index],*coloring.field)), decltype(nullptr)> {
+              if (data && display.increment_index < data->increments.size()) {
+                return find_field(data->increments[display.increment_index],*coloring.field);
+              } else {
+                return nullptr;
+              }
+            }();
             if (!field || field->association == SimResults::Association::Table ||
                 (coloring.field->magnitude && !field->vector_components) ||
                 (!coloring.field->magnitude && std::find(field->components.begin(),field->components.end(),coloring.field->component) == field->components.end()))

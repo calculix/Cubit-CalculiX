@@ -16,7 +16,11 @@ void CameraTimingMetric::add(double milliseconds) noexcept
 
 double CameraTimingMetric::average() const noexcept
 {
-  return count == 0 ? 0 : totalMilliseconds / static_cast<double>(count);
+  if (count == 0) {
+    return 0;
+  } else {
+    return totalMilliseconds / static_cast<double>(count);
+  }
 }
 
 CameraTimings::Report* CameraTimings::find(Id id) noexcept
@@ -77,12 +81,20 @@ void CameraTimings::end(bool cancelled) noexcept
 
 CameraTimings::Stamp CameraTimings::stamp() const noexcept
 {
-  return contains(active) ? Stamp{active, Clock::now()} : Stamp{};
+  if (contains(active)) {
+    return Stamp{active, Clock::now()};
+  } else {
+    return Stamp{};
+  }
 }
 
 CameraTimings::Stamp CameraTimings::frame_stamp() const noexcept
 {
-  return contains(inFlight) ? Stamp{inFlight, Clock::now()} : Stamp{};
+  if (contains(inFlight)) {
+    return Stamp{inFlight, Clock::now()};
+  } else {
+    return Stamp{};
+  }
 }
 
 void CameraTimings::record(CameraTimingStage stage, Stamp started) noexcept

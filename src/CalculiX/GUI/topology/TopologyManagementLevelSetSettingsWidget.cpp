@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "TopologyManagementLevelSetSettingsWidget.hpp"
 #include "Core/topology/CoreTopologyStructs.hpp"
 #include <array>
@@ -39,7 +40,13 @@ TopologyManagementLevelSetSettingsWidget::TopologyManagementLevelSetSettingsWidg
   for (std::size_t i = 0; i < fields.size(); ++i)
   {
     fields[i] = new QLineEdit(settings);
-    fields[i]->setPlaceholderText(modifying ? "" : "Optional: use Core default");
+    fields[i]->setPlaceholderText([&]() -> const char* {
+      if (modifying) {
+        return "";
+      } else {
+        return "Optional: use Core default";
+      }
+    }());
     form->addRow(labels[static_cast<int>(i)], fields[i]);
   }
   fields[5]->setToolTip("Relative objective change allowed for convergence; 0.001 corresponds to 0.1 percent.");
@@ -53,7 +60,13 @@ TopologyManagementLevelSetSettingsWidget::TopologyManagementLevelSetSettingsWidg
   fields[12]->setToolTip("Refinement tolerance for element solid fractions and their nodal derivatives.");
   fields[13]->setToolTip("Integer integration refinement limit from 1 to 5. Larger limits increase integration cost.");
   objective = new QComboBox(settings);
-  objective->addItem(modifying ? "Keep current" : "Default", "");
+  objective->addItem([&]() -> const char* {
+    if (modifying) {
+      return "Keep current";
+    } else {
+      return "Default";
+    }
+  }(), "");
   objective->addItem("Compliance", "compliance");
   objective->addItem("Displacement (unavailable for level set)", "displacement");
   objective->addItem("Mass (unavailable)", "mass");
@@ -93,7 +106,13 @@ TopologyManagementLevelSetSettingsWidget::TopologyManagementLevelSetSettingsWidg
   layout->addWidget(reload);
   QObject::connect(reload, &QPushButton::clicked, this, [this]()
   {
-    drafts.erase(modifying ? currentCase : 0);
+    drafts.erase([&]() -> std::common_type_t<decltype(currentCase), decltype(0)> {
+      if (modifying) {
+        return currentCase;
+      } else {
+        return 0;
+      }
+    }());
     loaded_id = -1;
     setContext(currentCase, !modifying, id->value());
   });
@@ -140,7 +159,13 @@ void TopologyManagementLevelSetSettingsWidget::refreshNodesets(int preferred_id)
     index = displacementNodeset->count() - 1;
   }
 
-  displacementNodeset->setCurrentIndex(index >= 0 ? index : 0);
+  displacementNodeset->setCurrentIndex([&]() -> std::common_type_t<decltype(index), decltype(0)> {
+    if (index >= 0) {
+      return index;
+    } else {
+      return 0;
+    }
+  }());
   displacementComponent->setEnabled(displacementNodeset->currentData().toInt() > 0);
 }
 
@@ -154,8 +179,20 @@ QStringList TopologyManagementLevelSetSettingsWidget::values() const
   result.append(objective->currentData().toString());
   const int nodeset_id = displacementNodeset->currentData().toInt();
   const bool include_measurement = modifying || nodeset_id > 0;
-  result.append(include_measurement ? QString::number(nodeset_id) : QString());
-  result.append(include_measurement ? displacementComponent->currentData().toString() : QString());
+  result.append([&]() -> std::common_type_t<decltype(QString::number(nodeset_id)), decltype(QString())> {
+    if (include_measurement) {
+      return QString::number(nodeset_id);
+    } else {
+      return QString();
+    }
+  }());
+  result.append([&]() -> std::common_type_t<decltype(displacementComponent->currentData().toString()), decltype(QString())> {
+    if (include_measurement) {
+      return displacementComponent->currentData().toString();
+    } else {
+      return QString();
+    }
+  }());
   return result;
 }
 
@@ -203,8 +240,20 @@ void TopologyManagementLevelSetSettingsWidget::load()
   fields[12]->setText(QString::number(options.level_set_settings.integration_tolerance, 'g', 17));
   fields[13]->setText(QString::number(options.level_set_settings.integration_max_refinements));
   const char* objectiveName = topology_objective_name(options.objective);
-  const int objectiveIndex = objective->findData(objectiveName == nullptr ? QString() : QString::fromLatin1(objectiveName));
-  objective->setCurrentIndex(objectiveIndex >= 0 ? objectiveIndex : 0);
+  const int objectiveIndex = objective->findData([&]() -> std::common_type_t<decltype(QString()), decltype(QString::fromLatin1(objectiveName))> {
+    if (objectiveName == nullptr) {
+      return QString();
+    } else {
+      return QString::fromLatin1(objectiveName);
+    }
+  }());
+  objective->setCurrentIndex([&]() -> std::common_type_t<decltype(objectiveIndex), decltype(0)> {
+    if (objectiveIndex >= 0) {
+      return objectiveIndex;
+    } else {
+      return 0;
+    }
+  }());
   refreshNodesets(options.displacement_nodeset);
   displacementComponent->setCurrentIndex(options.displacement_component);
   original = values();
@@ -236,7 +285,13 @@ void TopologyManagementLevelSetSettingsWidget::apply()
 {
   CalculiXTopologyInterface ccx_topology_iface;
 
-  const int topology_id = modifying ? currentCase : id->value();
+  const int topology_id = [&]() -> int {
+    if (modifying) {
+      return currentCase;
+    } else {
+      return id->value();
+    }
+  }();
   if (modifying && (loaded_id != topology_id || original.size() != 17))
   {
     PRINT_ERROR("Load a topology case before modifying its settings.\n");
@@ -299,8 +354,20 @@ void TopologyManagementLevelSetSettingsWidget::apply()
       bool valid = false;
       const double count = value.toDouble(&valid);
       const bool refinements = keywords[i] == "level_set_integration_max_refinements";
-      const double maximum = refinements ? 5.0 : static_cast<double>((std::numeric_limits<int>::max)());
-      const int iterations = valid && std::isfinite(count) && count >= 1.0 && count <= maximum && std::floor(count) == count ? static_cast<int>(count) : 0;
+      const double maximum = [&]() -> double {
+        if (refinements) {
+          return 5.0;
+        } else {
+          return static_cast<double>((std::numeric_limits<int>::max)());
+        }
+      }();
+      const int iterations = [&]() -> int {
+        if (valid && std::isfinite(count) && count >= 1.0 && count <= maximum && std::floor(count) == count) {
+          return static_cast<int>(count);
+        } else {
+          return 0;
+        }
+      }();
       if (!valid || iterations <= 0)
       {
         PRINT_ERROR("Topology count settings must be positive integers.\n");
@@ -345,7 +412,13 @@ void TopologyManagementLevelSetSettingsWidget::apply()
   }
 
   // Submission alone is not success; confirm every supplied value in Core.
-  const QString command = QString("ccx %1 topology %2").arg(modifying ? "modify" : "create").arg(topology_id) + arguments;
+  const QString command = QString("ccx %1 topology %2").arg([&]() -> const char* {
+    if (modifying) {
+      return "modify";
+    } else {
+      return "create";
+    }
+  }()).arg(topology_id) + arguments;
   const bool submitted = submit && submit(command);
   TopologyOptions stored;
   bool exists = false;
@@ -368,7 +441,13 @@ void TopologyManagementLevelSetSettingsWidget::apply()
     feedback->setText("Settings were not confirmed in Core. Entered values retained; see command output.");
     return;
   }
-  drafts.erase(modifying ? currentCase : 0);
+  drafts.erase([&]() -> std::common_type_t<decltype(currentCase), decltype(0)> {
+    if (modifying) {
+      return currentCase;
+    } else {
+      return 0;
+    }
+  }());
   loaded_id = -1;
   feedback->setText("Stored topology settings confirmed.");
   if (applied)
@@ -428,7 +507,19 @@ void TopologyManagementLevelSetSettingsWidget::setContext(int topology_id, bool 
   rememberDraft();
   currentCase = topology_id;
   modifying = !create;
-  id->setValue(create ? new_id : (topology_id > 0 ? topology_id : 1));
+  id->setValue([&]() -> std::common_type_t<decltype(new_id), std::common_type_t<decltype(topology_id), decltype(1)>> {
+    if (create) {
+      return new_id;
+    } else {
+      return ([&]() -> std::common_type_t<decltype(topology_id), decltype(1)> {
+        if (topology_id > 0) {
+          return topology_id;
+        } else {
+          return 1;
+        }
+      }());
+    }
+  }());
   id->setEnabled(create);
   if (!create)
   {
@@ -468,7 +559,11 @@ void TopologyManagementLevelSetSettingsWidget::setEditable(bool enabled)
 
 int TopologyManagementLevelSetSettingsWidget::topologyId() const
 {
-  return modifying ? currentCase : id->value();
+  if (modifying) {
+    return currentCase;
+  } else {
+    return id->value();
+  }
 }
 
 QStringList TopologyManagementLevelSetSettingsWidget::values(const TopologyOptions& options) const
@@ -490,8 +585,20 @@ QStringList TopologyManagementLevelSetSettingsWidget::values(const TopologyOptio
   result.append(QString::number(options.level_set_settings.integration_max_refinements));
   const char* objectiveName = topology_objective_name(options.objective);
   const QStringList components = {"magnitude", "x", "y", "z"};
-  result.append(objectiveName == nullptr ? QString() : QString::fromLatin1(objectiveName));
+  result.append([&]() -> std::common_type_t<decltype(QString()), decltype(QString::fromLatin1(objectiveName))> {
+    if (objectiveName == nullptr) {
+      return QString();
+    } else {
+      return QString::fromLatin1(objectiveName);
+    }
+  }());
   result.append(QString::number(options.displacement_nodeset));
-  result.append(options.displacement_component >= 0 && options.displacement_component < components.size() ? components[options.displacement_component] : QString());
+  result.append([&]() -> std::common_type_t<decltype(components[options.displacement_component]), decltype(QString())> {
+    if (options.displacement_component >= 0 && options.displacement_component < components.size()) {
+      return components[options.displacement_component];
+    } else {
+      return QString();
+    }
+  }());
   return result;
 }

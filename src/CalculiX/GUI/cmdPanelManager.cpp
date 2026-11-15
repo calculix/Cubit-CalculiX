@@ -59,7 +59,8 @@ void cmdPanelManager::clear()
 
     // Remove the factory reference from my navigation nodes
     QStringList my_markers;
-    my_markers.push_back("CCXBlocksModify");
+    my_markers.push_back("CCXMaterials");
+  my_markers.push_back("CCXBlocksModify");
     my_markers.push_back("CCXSectionsCreateSolid");
     my_markers.push_back("CCXSectionsCreateShell");
     my_markers.push_back("CCXSectionsCreateBeam");
@@ -126,7 +127,7 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXLoadsSurfaceTractionDelete");
     my_markers.push_back("CCXLoadsBodyHeatfluxCreate");
     my_markers.push_back("CCXLoadsBodyHeatfluxModify");
-    my_markers.push_back("CCXLoadsBodyHeatfluxDelete");    
+    my_markers.push_back("CCXLoadsBodyHeatfluxDelete");
     my_markers.push_back("CCXBCsDisplacementsCreate");
     my_markers.push_back("CCXBCsDisplacementsModify");
     my_markers.push_back("CCXBCsDisplacementsDelete");
@@ -217,7 +218,7 @@ void cmdPanelManager::initialize_from_code()
   {
     return;
   }
-  
+
   NavigationNode* root_node;
   NavigationNode* node;
 
@@ -225,8 +226,8 @@ void cmdPanelManager::initialize_from_code()
   root_node = model->addNode("CCX", model->getRoot());
   root_node->setTitle("CCX");
   root_node->setIcon(ccx_gui_resources_iface.getIcon("CCX"));
-  model->setNodeMarker(root_node, "CCX"); 
-  model->updateNode(root_node); 
+  model->setNodeMarker(root_node, "CCX");
+  model->updateNode(root_node);
 
   //##############################
   root_node = model->getMarkedNode("CCX");
@@ -252,6 +253,12 @@ void cmdPanelManager::initialize_from_code()
 
   //##############################
   // add Materials and Section Nodes
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Materials", root_node);
+  node->setTitle("Materials");
+  model->setNodeMarker(node, "CCXMaterials");
+  node->setIcon(ccx_gui_resources_iface.getIcon("MaterialTree"));
+
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("Sections", root_node);
   node->setTitle("Sections");
@@ -388,7 +395,7 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXContactPairsCreateFromCubitContactPair");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXContactPairsUtility"));
   node->setToolTip("Create from Cubit Contact Pair");
-  
+
   //##############################
   // add Amplitudes Nodes
   root_node = model->getMarkedNode("CCX");
@@ -694,7 +701,7 @@ void cmdPanelManager::initialize_from_code()
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXBCsTemperaturesDelete"));
 
   //##############################
-  // add History Outputs Nodes 
+  // add History Outputs Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("History Outputs", root_node);
   node->setTitle("History Outputs");
@@ -725,7 +732,7 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Section", root_node);
   model->setNodeMarker(node, "CCXHistoryOutputsModifySection");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXHistoryOutputsModifySection"));
-  
+
   //##############################
   // add Field Outputs Nodes
   root_node = model->getMarkedNode("CCX");
@@ -755,13 +762,13 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Contact", root_node);
   model->setNodeMarker(node, "CCXFieldOutputsModifyContact");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXFieldOutputsModifyContact"));
-  
+
   //##############################
   // add Initial Conditions Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("Initial Conditions", root_node);
   node->setTitle("Initial Conditions");
-  model->setNodeMarker(node, "CCXInitialConditions");  
+  model->setNodeMarker(node, "CCXInitialConditions");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXInitialConditions"));
 
   root_node = model->getMarkedNode("CCXInitialConditions");
@@ -804,7 +811,7 @@ void cmdPanelManager::initialize_from_code()
   node = model->addNode("Delete", root_node);
   model->setNodeMarker(node, "CCXStepsDelete");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXStepsDelete"));
-  
+
   root_node = model->getMarkedNode("CCXStepsModify");
   node = model->addNode("Parameter", root_node);
   model->setNodeMarker(node, "CCXStepsModifyParameter");
@@ -845,7 +852,7 @@ void cmdPanelManager::initialize_from_code()
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("Custom Lines", root_node);
   node->setTitle("Custom Lines");
-  model->setNodeMarker(node, "CCXCustomLines");  
+  model->setNodeMarker(node, "CCXCustomLines");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXCustomLines"));
 
   root_node = model->getMarkedNode("CCXCustomLines");
@@ -864,7 +871,7 @@ void cmdPanelManager::initialize_from_code()
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("Jobs", root_node);
   node->setTitle("Jobs");
-  model->setNodeMarker(node, "CCXJobs");  
+  model->setNodeMarker(node, "CCXJobs");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXJobs"));
 
   root_node = model->getMarkedNode("CCXJobs");
@@ -946,6 +953,7 @@ void cmdPanelManager::associate_panels_with_nodes()
   // we did not include our root marker because we do not need to create a
   // command panel for it.
   QStringList my_markers;
+  my_markers.push_back("CCXMaterials");
   my_markers.push_back("CCXBlocksModify");
   my_markers.push_back("CCXSectionsCreateSolid");
   my_markers.push_back("CCXSectionsCreateShell");

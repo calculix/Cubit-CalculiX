@@ -1,15 +1,28 @@
 cmake_minimum_required(VERSION 3.20)
-project(PostprocessorDisplayTests LANGUAGES CXX)
+project(PostprocessorDisplayTests LANGUAGES C CXX)
 
 get_filename_component(CUBITSIM_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets OpenGLWidgets)
 if (WIN32)
   set(CUBIT_ROOT "C:/Program Files/Coreform Cubit 2026.11" CACHE PATH "Cubit installation")
+  set(HDF5_ROOT "${CUBITSIM_SOURCE_ROOT}/Utility/HDF5/Win/1.14.6" CACHE PATH "HDF5 development files")
+else()
+  set(CUBIT_ROOT "$ENV{HOME}/Downloads/Coreform-Cubit-2026.11" CACHE PATH "Cubit installation")
+  set(HDF5_ROOT "${CUBITSIM_SOURCE_ROOT}/Utility/HDF5/Linux/1.14.6" CACHE PATH "HDF5 development files")
 endif ()
 include("${CUBITSIM_SOURCE_ROOT}/cmake/CubitVtkSDK.cmake")
+find_package(Cubit REQUIRED CONFIG PATHS "${CUBIT_ROOT}/cmake" NO_DEFAULT_PATH)
+find_package(HDF5 REQUIRED COMPONENTS C CXX)
+add_compile_definitions(H5_BUILT_AS_DYNAMIC_LIB)
+include_directories("${CUBIT_ROOT}/include")
+set(CUBITSIM_DEPLOY_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Reporting" reporting)
+add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Storage" storage)
+add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Core" model)
 add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Results" results)
 
 add_library(postprocessor_display_code STATIC
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/application/PostprocessorCoreUnits.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/PlaneOperations.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/ClipFilter.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/SectionFilter.cpp"
@@ -87,7 +100,7 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Navigation/PostprocessorFrameNavigation.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Navigation/PostprocessorDeformationControls.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/ResultsTree/PostprocessorResultsTree.cpp")
-target_link_libraries(postprocessor_display_code PUBLIC cubitsim_results VTK::IOXML VTK::CommonDataModel
+target_link_libraries(postprocessor_display_code PUBLIC cubitsim_results cubitsim_results_io VTK::IOXML VTK::CommonDataModel
   VTK::FiltersGeneral VTK::FiltersCore VTK::FiltersGeometry VTK::RenderingCore VTK::RenderingAnnotation VTK::RenderingOpenGL2 Qt6::Core Qt6::Widgets)
 target_compile_features(postprocessor_display_code PUBLIC cxx_std_17)
 add_executable(postprocessor_display_tests DisplayTests.cpp)
@@ -212,4 +225,11 @@ add_test(NAME postprocessor_filters COMMAND postprocessor_filter_tests)
 set_tests_properties(postprocessor_filters PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 if (WIN32)
   set_property(TEST postprocessor_filters APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
+endif ()
+
+add_executable(postprocessor_units_metadata_tests UnitsMetadataTests.cpp)
+target_link_libraries(postprocessor_units_metadata_tests PRIVATE postprocessor_display_code)
+add_test(NAME postprocessor_units_metadata COMMAND postprocessor_units_metadata_tests)
+if (WIN32)
+  set_property(TEST postprocessor_units_metadata APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
 endif ()

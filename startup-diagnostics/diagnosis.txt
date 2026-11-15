@@ -1,0 +1,10 @@
+ClaroX startup investigation, 2026-11-15
+
+Windows reports access violation 0xc0000005 in bundled Qt6Widgets.dll.
+With the current command plugin enabled, isolated startup PID 12904 completed Framework acquisition, workspace attachment, component startup and workspace registration, then crashed.
+First-fault debugger evidence: Qt6Widgets.dll+0x22b18c; stack contains toolbar layout internals, main-window layout internals and QWidget::setVisible/show called from _emclaro3.pyd.
+The later Qt6Widgets.dll+0x22acfb failure occurs during cleanup and QMainWindow::saveState. It is secondary evidence, not the original fault.
+With CUBIT_PLUGIN_DIR pointed at a temporary empty directory, a separate hidden diagnostic process stayed alive for 20 seconds and was then terminated by the diagnostic launcher.
+Likely cause: Framework toolbar/layout registration modifies the main-window layout before native Claro startup and the first show have completed. Source inspection identifies early attach/register_view/restore_native/apply and toolbar removal/reinsertion in place_workspace_toolbars.
+Recommended next change: defer GUI workspace attachment, component GUI startup and workspace registration until native Claro startup/layout restoration is complete, with cancellation tied to component/host lifetime. Preserve the synchronous headless path.
+No production source changes, rebuilds, persisted-settings resets or project-data changes were performed in this investigation.

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportExportDialog.hpp"
 #include "ReportCommandText.hpp"
 #include <QFileDialog>
@@ -17,7 +18,19 @@ bool ReportExportDialog::run(QWidget* parent, const std::string& format,
   QFileDialog dialog(parent, QObject::tr("Export report"));
   dialog.setAcceptMode(QFileDialog::AcceptSave);
   dialog.setFileMode(QFileDialog::AnyFile);
-  dialog.setNameFilter(format == "pdf" ? "PDF (*.pdf)" : format == "odt" ? "OpenDocument text (*.odt)" : "Output base name (*)");
+  dialog.setNameFilter([&]() -> std::common_type_t<decltype("PDF (*.pdf)"), const char*> {
+    if (format == "pdf") {
+      return "PDF (*.pdf)";
+    } else {
+      return [&]() -> const char* {
+        if (format == "odt") {
+          return "OpenDocument text (*.odt)";
+        } else {
+          return "Output base name (*)";
+        }
+      }();
+    }
+  }());
   if (format != "both")
   {
     dialog.setDefaultSuffix(QString::fromStdString(format));
@@ -30,7 +43,13 @@ bool ReportExportDialog::run(QWidget* parent, const std::string& format,
     return true;
   }
   const auto filename = dialog.selectedFiles().front();
-  const QStringList targets = format == "both" ? QStringList{filename + ".pdf", filename + ".odt"} : QStringList{filename};
+  const QStringList targets = [&]() -> QStringList {
+    if (format == "both") {
+      return QStringList{filename + ".pdf", filename + ".odt"};
+    } else {
+      return QStringList{filename};
+    }
+  }();
   QStringList existing;
   for (const auto& target : targets)
   {
@@ -57,5 +76,11 @@ bool ReportExportDialog::run(QWidget* parent, const std::string& format,
   {
     return false;
   }
-  return submit("report export " + format + " " + quoted + (overwrite ? " overwrite" : ""), error);
+  return submit("report export " + format + " " + quoted + ([&]() -> const char* {
+    if (overwrite) {
+      return " overwrite";
+    } else {
+      return "";
+    }
+  }()), error);
 }

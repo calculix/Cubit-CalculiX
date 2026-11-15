@@ -1,99 +1,100 @@
-#include "GUI/properties/PropertyCommandText.hpp"
-#include "MaterialCardPresentation.hpp"
-#include <map>
 #include "MaterialPropertiesWidget.hpp"
-#include "Core/materials/CalculiXMaterialsInterface.hpp"
+#include "GUI/properties/PropertyCommandText.hpp"
+#include "Framework/Core/materials/FrameworkMaterialsInterface.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "CubitMessage.hpp"
-
-MaterialPropertiesWidget::MaterialPropertiesWidget(QWidget* parent)
-  : PropertyTreeWidget(parent)
-{
+MaterialPropertiesWidget::MaterialPropertiesWidget(QWidget* parent) : PropertyTreeWidget(parent) {
 }
-
-bool MaterialPropertiesWidget::setMaterial(int id)
-{
+bool MaterialPropertiesWidget::setMaterial(int id) {
   clear();
   currentEntityId = -1;
-  CalculiXMaterialsInterface core;
-  MaterialProperties properties;
-  std::string error;
-  if (!core.get_material_properties(id, properties, error))
-  {
-    PRINT_ERROR("Cannot load material properties %d: %s\n", id, error.c_str());
+  FrameworkMaterialsInterface materials("calculix");
+  const auto* material = materials.find(id);
+  if (material == nullptr) {
+    PRINT_ERROR("Cannot load material %d from the CalculiX workspace.\n", id);
     return false;
   }
   currentEntityId = id;
   auto* general = addIdentity("Material", id);
-  addEditableName(general, id, QString::fromStdString(properties.name));
-  addValue(addGroup("definition", "Definition", PropertySection::Classification), "Property group", QString::fromStdString(properties.group));
-  std::map<QString, QTreeWidgetItem*> cards;
-  for (const auto& property : properties.properties)
-  {
-    const QString rawName = QString::fromStdString(property.name);
-    if (rawName.endsWith("_USE_CARD"))
-    {
+  addEditableName(general, id, QString::fromStdString(material->data.name));
+  addValue(addGroup("definition", "Definition", PropertySection::Classification), "Workspace", "CalculiX");
+  for (const auto& entry : material->data.cards) {
+    const auto* definition = framework_materials().definitions().card(entry.first);
+    if (definition == nullptr) {
       continue;
     }
-    const auto* definition = MaterialCardPresentation::find(property.name);
-    if (definition != nullptr && !MaterialCardPresentation::enabled(*definition, properties))
-    {
+    const auto* model = framework_materials().definitions().model(*definition, entry.second.model);
+    if (model == nullptr) {
       continue;
     }
-    QString title = definition == nullptr ? rawName : definition->title;
-    if (definition == nullptr)
-    {
-      if (title.startsWith("CCX_"))
-      {
-        title.remove(0, 4);
+    auto* card = addGroup("material/" + QString::fromStdString(entry.first), QString::fromStdString(definition->title));
+    QString state = "Inactive";
+    if (entry.second.state == MaterialCardState::Active) {
+      state = "Active";
+    }
+    addValue(card, "State", state);
+    if (!model->title.empty()) {
+      addValue(card, "Model", QString::fromStdString(model->title));
+    }
+    QStringList columns;
+    for (const auto& column : model->columns) {
+      QString label = QString::fromStdString(column.title);
+      std::string unit;
+      std::string error;
+      if (column.quantity == "creep_coefficient") {
+        std::string stressUnit;
+        std::string timeUnit;
+        if (framework_units().display_unit("calculix", "stress", stressUnit, error) && framework_units().display_unit("calculix", "time", timeUnit, error)) {
+          label += " [(" + QString::fromStdString(stressUnit) + ")^(-n) " + QString::fromStdString(timeUnit) + "^(-(m+1))]";
+        } else {
+          PRINT_ERROR("%s\n", error.c_str());
+        }
+      } else if (framework_units().display_unit("calculix", column.quantity, unit, error)) {
+        if (unit != "1") {
+          label += " [" + QString::fromStdString(unit) + "]";
+        }
+      } else {
+        PRINT_ERROR("%s\n", error.c_str());
       }
-      title.replace('_', ' ');
+      columns.push_back(label);
     }
-    auto*& card = cards[title];
-    if (card == nullptr)
-    {
-      const QString key = definition == nullptr ? rawName : QString::fromStdString(definition->parentSwitch);
-      card = addGroup("material/" + key, title);
+    if (model->scalar && entry.second.values.scalar.has_value()) {
+      double value = 0.0;
+      if (materials.get_material_property_value(id, model->property, value)) {
+        addNumber(card, columns.front(), value);
+      }
+    } else if (!model->scalar && !entry.second.values.rows.empty()) {
+      std::vector<std::vector<double>> rows;
+      if (materials.get_material_property_value(id, model->property, rows)) {
+        addTableRows(card, columns, rows);
+      }
     }
-    if (definition != nullptr && !definition->model.isEmpty())
-    {
-      addValue(card, "Model", definition->model);
-    }
-    const auto columns = definition == nullptr ? QStringList{} : definition->columns;
-    if (property.values.size() == 1 && property.values.front().size() == 1)
-    {
-      addNumber(card, columns.isEmpty() ? tr("Value") : columns.front(), property.values.front().front());
-    }
-    else
-    {
-      addTableRows(card, columns, property.values);
+    if (entry.second.values.referenceTemperature.has_value()) {
+      double value = 0.0;
+      if (materials.get_material_property_value(id, "CCX_EXPANSION_ZERO", value)) {
+        std::string unit;
+        std::string error;
+        if (framework_units().display_unit("calculix", "temperature", unit, error)) {
+          addNumber(card, "Reference temperature [" + QString::fromStdString(unit) + "]", value);
+        }
+      }
     }
   }
-
   return true;
 }
-
-void MaterialPropertiesWidget::applyEdit(const PropertyEditRequest& request)
-{
-  QString quotedName;
-  if (!prepareNameEdit(request, currentEntityId, quotedName))
-  {
+void MaterialPropertiesWidget::applyEdit(const PropertyEditRequest& request) {
+  QString name;
+  if (!prepareNameEdit(request, currentEntityId, name)) {
     return;
   }
-  CalculiXMaterialsInterface core;
-  MaterialProperties properties;
-  std::string error;
-  if (!core.get_material_properties(request.entityId, properties, error))
-  {
-    PRINT_ERROR("Cannot reload the selected entity for renaming: %s\n", error.c_str());
+  FrameworkMaterialsInterface materials("calculix");
+  const auto* material = materials.find(request.entityId);
+  if (material == nullptr) {
+    PRINT_ERROR("The selected material no longer exists.\n");
     return;
   }
-  QString originalName;
-  QString quoteError;
-  if (!PropertyCommandText::quoteName(QString::fromStdString(properties.name), originalName, quoteError))
-  {
-    PRINT_ERROR("Cannot quote the current material name: %s\n", quoteError.toStdString().c_str());
-    return;
-  }
-  const QString command = QString("modify material %1 name %2").arg(originalName).arg(quotedName);
-  submitNameCommand(request, QString::fromStdString(properties.name), command, [this, id = request.entityId]() { return setMaterial(id); });
+  const QString command = QString("ccx modify material %1 name %2").arg(request.entityId).arg(name);
+  submitNameCommand(request, QString::fromStdString(material->data.name), command, [this, id = request.entityId]() {
+    return setMaterial(id);
+  });
 }

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorDeformationControls.hpp"
 #include "Postprocessor/Commands/FieldCommandText.hpp"
 #include <QCheckBox>
@@ -26,7 +27,13 @@ namespace
 {
   std::string quote(const std::string& value)
   {
-    const char delimiter = value.find('"') == std::string::npos ? '"' : '\'';
+    const char delimiter = [&]() -> char {
+      if (value.find('"') == std::string::npos) {
+        return '"';
+      } else {
+        return '\'';
+      }
+    }();
     if (value.empty() || value.find(delimiter) != std::string::npos ||
         std::any_of(value.begin(),value.end(),[](unsigned char c)
         {
@@ -160,7 +167,11 @@ void PostprocessorDeformationControls::populate_fields(const Context& context,
   fields->addItem(tr("Automatic displacement"),-1);
   const auto& selection = settings.field;
   const auto active = application.lock();
-  catalogue = active ? active->field_groups(context.source,context.frame) : std::vector<Postprocessor::ResultFieldGroup>{};
+  if (active) {
+    catalogue = active->field_groups(context.source,context.frame);
+  } else {
+    catalogue = std::vector<Postprocessor::ResultFieldGroup>{};
+  }
   int selected = 0;
   for (std::size_t i = 0; i < catalogue.size(); ++i)
   {
@@ -264,7 +275,13 @@ bool PostprocessorDeformationControls::dispatch(const std::string& operation,
   }
   const auto owner = *baseline;
   const auto source = quote(owner.name);
-  const auto& callback = preview ? silent : submit;
+  const auto& callback = [&]() -> decltype((silent)) {
+    if (preview) {
+      return silent;
+    } else {
+      return submit;
+    }
+  }();
   if (source.empty() || !callback)
   {
     error = "The deformation command callback or quoted source name is unavailable.";
@@ -320,11 +337,29 @@ void PostprocessorDeformationControls::change_flag(bool deformation, bool value)
     return;
   }
   auto target = baseline->settings;
-  auto& flag = deformation ? target.enabled : target.overlay;
+  auto& flag = [&]() -> decltype((target.enabled)) {
+    if (deformation) {
+      return target.enabled;
+    } else {
+      return target.overlay;
+    }
+  }();
   if (flag != value)
   {
     flag = value;
-    const auto operation = std::string(deformation ? "" : "overlay ")+(value ? "on" : "off");
+    const auto operation = std::string([&]() -> const char* {
+      if (deformation) {
+        return "";
+      } else {
+        return "overlay ";
+      }
+    }())+([&]() -> const char* {
+      if (value) {
+        return "on";
+      } else {
+        return "off";
+      }
+    }());
     dispatch(operation,target,false,error);
   }
   scaleOrigin.reset();
@@ -356,8 +391,13 @@ void PostprocessorDeformationControls::select_field(int index)
   else if (item >= 0 && static_cast<std::size_t>(item) < catalogue.size())
   {
     const auto& group = catalogue[static_cast<std::size_t>(item)];
-    auto dataset = selection.field && selection.field->group_key == group.key ?
-      selection.field->dataset_id : std::optional<std::size_t>{};
+    auto dataset = [&]() -> std::common_type_t<decltype(selection.field->dataset_id), decltype(std::optional<std::size_t>{})> {
+      if (selection.field && selection.field->group_key == group.key) {
+        return selection.field->dataset_id;
+      } else {
+        return std::optional<std::size_t>{};
+      }
+    }();
     if (!dataset && std::count_if(catalogue.begin(),catalogue.end(),[&](const Postprocessor::ResultFieldGroup& other)
         {
           return other.field.array_name == group.field.array_name && Postprocessor::deformation_vector(other.field);
@@ -374,7 +414,13 @@ void PostprocessorDeformationControls::select_field(int index)
       const auto argument = Postprocessor::field_command_text(selector);
       if (!argument.isEmpty())
       {
-        operation = argument.toUtf8().toStdString()+(dataset ? " dataset "+std::to_string(*dataset) : "");
+        operation = argument.toUtf8().toStdString()+([&]() -> std::string {
+          if (dataset) {
+            return " dataset "+std::to_string(*dataset);
+          } else {
+            return "";
+          }
+        }());
       }
     }
   }
@@ -553,7 +599,13 @@ void PostprocessorDeformationControls::hideEvent(QHideEvent* event)
 
 void PostprocessorDeformationControls::show_error(const std::string& error)
 {
-  errorLabel->setText(error.empty() ? QString() : tr("Error"));
+  errorLabel->setText([&]() -> std::common_type_t<decltype(QString()), decltype(tr("Error"))> {
+    if (error.empty()) {
+      return QString();
+    } else {
+      return tr("Error");
+    }
+  }());
   errorLabel->setToolTip(QString::fromUtf8(error.c_str()));
   errorLabel->setAccessibleName(QString::fromUtf8(error.c_str()));
 }

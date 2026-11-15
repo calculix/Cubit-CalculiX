@@ -305,7 +305,13 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
           configuration.maximum_iterations,
           configuration.displacement_nodeset,
           configuration.displacement_component,
-          configuration.adaptive_move_limits ? 1 : 0,
+          [&]() -> int {
+            if (configuration.adaptive_move_limits) {
+              return 1;
+            } else {
+              return 0;
+            }
+          }(),
           configuration.material_cap
       };
 
@@ -510,9 +516,13 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
             return false;
           }
 
-          auto& target = selection[0] == 1
-              ? configuration.added_preserved_sets
-              : configuration.removed_preserved_sets;
+          auto& target = [&]() -> decltype((configuration.added_preserved_sets)) {
+            if (selection[0] == 1) {
+              return configuration.added_preserved_sets;
+            } else {
+              return configuration.removed_preserved_sets;
+            }
+          }();
 
           if (!target[selection[1]].insert(selection[2]).second)
           {
@@ -1098,7 +1108,13 @@ bool CoreTopology::evaluate_displacement(int topology_id, int iteration_id, doub
     {
       stiffness_sensitivity = -integral.second / factor->second;
 
-      const double power = design.penalization == 1.0 ? 1.0 : std::pow(rho, design.penalization - 1.0);
+      const double power = [&]() -> double {
+        if (design.penalization == 1.0) {
+          return 1.0;
+        } else {
+          return std::pow(rho, design.penalization - 1.0);
+        }
+      }();
       const double factor_derivative = (1.0 - design.void_ratio) * design.penalization * power;
 
       // Grouped solves use the continuous SIMP derivative as a surrogate.
@@ -1179,7 +1195,13 @@ bool CoreTopology::build_density_design(int topology_id,int iteration_id,const s
       return false;
     }
 
-    const double rho = preserved->second ? 1.0 : density.second;
+    const double rho = [&]() -> double {
+      if (preserved->second) {
+        return 1.0;
+      } else {
+        return density.second;
+      }
+    }();
 
     const double factor = candidate.void_ratio + (1.0 - candidate.void_ratio) * std::pow(rho, candidate.penalization);
 
@@ -1290,7 +1312,13 @@ bool CoreTopology::evaluate_density_volume(int topology_id,int iteration_id,cons
   {
     const bool preserved = configuration.element_preserved.find(element.first)->second;
 
-    const double sensitivity = preserved ? 0.0 : element.second / evaluation.total_volume;
+    const double sensitivity = [&]() -> double {
+      if (preserved) {
+        return 0.0;
+      } else {
+        return element.second / evaluation.total_volume;
+      }
+    }();
 
     evaluation.density_sensitivities.emplace(element.first, sensitivity);
   }
@@ -1345,7 +1373,13 @@ bool CoreTopology::select_density_move_limit(const TopologyCase& configuration, 
   constexpr double volume_tolerance = 1.0e-6;
   constexpr double minimum_squared_change = 1.0e-24;
 
-  const double minimum_move = configuration.minimum_move_limit > 0.0 ? configuration.minimum_move_limit : automatic_minimum_ratio * configuration.move_limit;
+  const double minimum_move = [&]() -> double {
+    if (configuration.minimum_move_limit > 0.0) {
+      return configuration.minimum_move_limit;
+    } else {
+      return automatic_minimum_ratio * configuration.move_limit;
+    }
+  }();
 
   if (current == configuration.iteration_density_designs.begin())
   {
@@ -2311,19 +2345,32 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
 
   const auto& current_progress = current_evaluation->second;
   const bool displacement = configuration.objective == TopologyObjective::Displacement;
-  const bool residual_available = displacement
-    ? current_progress.projected_proposal_residual_available
-    : current_progress.oc_proposal_residual_available;
-  const double residual = displacement
-    ? current_progress.projected_proposal_residual
-    : current_progress.oc_proposal_residual;
+  const bool residual_available = [&]() -> bool {
+    if (displacement) {
+      return current_progress.projected_proposal_residual_available;
+    } else {
+      return current_progress.oc_proposal_residual_available;
+    }
+  }();
+  const double residual = [&]() -> double {
+    if (displacement) {
+      return current_progress.projected_proposal_residual;
+    } else {
+      return current_progress.oc_proposal_residual;
+    }
+  }();
   if (residual_available && (!std::isfinite(residual) || residual < 0.0))
   {
     PRINT_ERROR("Invalid ordinary density proposal residual.\n");
     return false;
   }
   const bool residual_passed = residual_available && residual <= density_tolerance;
-  const char* residual_name = displacement ? "Ordinary projected proposal residual" : "Ordinary OC proposal residual";
+  const char* residual_name;
+  if (displacement) {
+    residual_name = "Ordinary projected proposal residual";
+  } else {
+    residual_name = "Ordinary OC proposal residual";
+  }
 
   constexpr double volume_tolerance = 1.0e-6;
 
@@ -2340,18 +2387,48 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
   progress.convergence_checked = true;
 
   PRINT_INFO("Topology %d iteration %d convergence:\n", topology_id, current_iteration);
-  PRINT_INFO("  Maximum density change: %.6g / %.6g (%.2fx limit) [%s]\n", maximum_change, density_tolerance, maximum_change / density_tolerance, maximum_change <= density_tolerance ? "PASS" : "WAIT");
+  PRINT_INFO("  Maximum density change: %.6g / %.6g (%.2fx limit) [%s]\n", maximum_change, density_tolerance, maximum_change / density_tolerance, [&]() -> const char* {
+    if (maximum_change <= density_tolerance) {
+      return "PASS";
+    } else {
+      return "WAIT";
+    }
+  }());
   if (residual_available)
   {
-    PRINT_INFO("  %s: %.6g / %.6g (%.2fx limit) [%s]\n", residual_name, residual, density_tolerance, residual / density_tolerance, residual_passed ? "PASS" : "WAIT");
+    PRINT_INFO("  %s: %.6g / %.6g (%.2fx limit) [%s]\n", residual_name, residual, density_tolerance, residual / density_tolerance, [&]() -> const char* {
+      if (residual_passed) {
+        return "PASS";
+      } else {
+        return "WAIT";
+      }
+    }());
   }
   else
   {
     PRINT_INFO("  %s: unavailable [WAIT]\n", residual_name);
   }
-  PRINT_INFO("  Relative %s change: %.6g / %.6g (%.2fx limit) [%s]\n", objective_name, relative_change, objective_tolerance, relative_change / objective_tolerance, relative_change <= objective_tolerance ? "PASS" : "WAIT");
-  PRINT_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration.target_volume_fraction + volume_tolerance, fraction <= configuration.target_volume_fraction + volume_tolerance ? "PASS" : "WAIT");
-  PRINT_INFO("  Converged: %s\n", converged ? "YES" : "NO");
+  PRINT_INFO("  Relative %s change: %.6g / %.6g (%.2fx limit) [%s]\n", objective_name, relative_change, objective_tolerance, relative_change / objective_tolerance, [&]() -> const char* {
+    if (relative_change <= objective_tolerance) {
+      return "PASS";
+    } else {
+      return "WAIT";
+    }
+  }());
+  PRINT_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration.target_volume_fraction + volume_tolerance, [&]() -> const char* {
+    if (fraction <= configuration.target_volume_fraction + volume_tolerance) {
+      return "PASS";
+    } else {
+      return "WAIT";
+    }
+  }());
+  PRINT_INFO("  Converged: %s\n", [&]() -> const char* {
+    if (converged) {
+      return "YES";
+    } else {
+      return "NO";
+    }
+  }());
 
   return true;
 }
@@ -2946,7 +3023,13 @@ std::vector<std::vector<int>> CoreTopology::get_topology_element_preservation(in
 
   for (const auto& flag : flags)
   {
-    rows.push_back({flag.first, flag.second ? 1 : 0});
+    rows.push_back({flag.first, [&]() -> int {
+      if (flag.second) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }()});
   }
 
   return rows;

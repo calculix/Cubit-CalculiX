@@ -118,8 +118,14 @@ bool CoreMaterialsTopologyGrouping::apply(const std::map<int, int>& element_base
       {
         return fail("Previous topology factor does not match the stable palette.");
       }
-      const double lower = old_index == 0 ? minimum_factor : 0.5 * (level(old_index - 1) + old);
-      const double upper = old_index == budget - 1 ? 1.0 : 0.5 * (old + level(old_index + 1));
+      double lower = minimum_factor;
+      if (old_index != 0) {
+        lower = 0.5 * (level(old_index - 1) + old);
+      }
+      double upper = 1.0;
+      if (old_index != budget - 1) {
+        upper = 0.5 * (old + level(old_index + 1));
+      }
       const double margin = hysteresis_fraction * spacing;
       if (value >= lower - margin && value <= upper + margin)
       {

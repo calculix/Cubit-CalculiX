@@ -107,7 +107,13 @@ void PostprocessorTriad::update(vtkCamera* camera, bool visible,
     colors->InsertNextTypedTuple(color.data());
   };
   const std::array<unsigned char, 3> axisColors[] = {{220, 35, 35}, {30, 180, 45}, {40, 90, 235}};
-  const unsigned char ink = background[0] * 0.2126 + background[1] * 0.7152 + background[2] * 0.0722 > 0.5 ? 20 : 245;
+  const unsigned char ink = [&]() -> unsigned char {
+    if (background[0] * 0.2126 + background[1] * 0.7152 + background[2] * 0.0722 > 0.5) {
+      return 20;
+    } else {
+      return 245;
+    }
+  }();
   const std::array<unsigned char, 3> labelColor = {ink, ink, ink};
   for (std::size_t axis = 0; axis < 3; ++axis)
   {

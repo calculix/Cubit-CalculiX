@@ -109,5 +109,9 @@ int main()
   check(find_field(result.increments[0],grouped) != nullptr,"Grouped selection did not resolve a compatible field");
   grouped.dataset_id = 99;
   check(find_field(result.increments[0],grouped) == nullptr,"Explicit dataset scope was ignored");
-  return failures == 0 ? 0 : 1;
+  if (failures == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
 }

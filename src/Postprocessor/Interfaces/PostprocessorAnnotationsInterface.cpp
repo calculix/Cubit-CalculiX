@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorApplicationInterface.hpp"
 #include <utility>
 #include <algorithm>
@@ -15,8 +16,20 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
     return false;
   }
   const auto& state = core.session();
-  const auto viewId = view.empty() ? state.active_view_id : view;
-  const auto source = sourceName.empty() ? state.active_source_id : core.source_id_from_name(sourceName);
+  const auto viewId = [&]() -> std::common_type_t<decltype(state.active_view_id), decltype(view)> {
+    if (view.empty()) {
+      return state.active_view_id;
+    } else {
+      return view;
+    }
+  }();
+  const auto source = [&]() -> std::common_type_t<decltype(state.active_source_id), decltype(core.source_id_from_name(sourceName))> {
+    if (sourceName.empty()) {
+      return state.active_source_id;
+    } else {
+      return core.source_id_from_name(sourceName);
+    }
+  }();
   std::optional<std::size_t> dataset;
   if (selector)
   {
@@ -45,14 +58,30 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
         return false;
       }
       const auto& value = group.field;
-      const bool useMagnitude = component.empty() ? value.vector_components.has_value() : magnitude;
+      const bool useMagnitude = [&]() -> bool {
+        if (component.empty()) {
+          return value.vector_components.has_value();
+        } else {
+          return magnitude;
+        }
+      }();
       field = Postprocessor::FieldSelection{dataset,value.array_name,value.association,
-        component.empty() && !useMagnitude && !value.components.empty() ? value.components.front() : component,
+        [&]() -> std::common_type_t<decltype(value.components.front()), decltype(component)> {
+          if (component.empty() && !useMagnitude && !value.components.empty()) {
+            return value.components.front();
+          } else {
+            return component;
+          }
+        }(),
         useMagnitude,group.key};
     }
     else if (field && !component.empty())
     {
-      field->component = magnitude ? std::string{} : component;
+      if (magnitude) {
+        field->component = std::string{};
+      } else {
+        field->component = component;
+      }
       field->magnitude = magnitude;
     }
     if (!field)
@@ -100,11 +129,23 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
 bool PostprocessorApplicationInterface::change_label(const std::string& view, const std::string& name,
   const std::string& action, const std::string& replacement, const std::array<double,2>& position, std::string& error)
 {
-  return core.change_label(view.empty() ? core.session().active_view_id : view,name,action,replacement,position,error);
+  return core.change_label([&]() -> std::common_type_t<decltype(core.session().active_view_id), decltype(view)> {
+    if (view.empty()) {
+      return core.session().active_view_id;
+    } else {
+      return view;
+    }
+  }(),name,action,replacement,position,error);
 }
 bool PostprocessorApplicationInterface::set_labels(const std::string& view, bool extrema, bool visible, std::string& error)
 {
-  return core.set_labels(view.empty() ? core.session().active_view_id : view,extrema,visible,error);
+  return core.set_labels([&]() -> std::common_type_t<decltype(core.session().active_view_id), decltype(view)> {
+    if (view.empty()) {
+      return core.session().active_view_id;
+    } else {
+      return view;
+    }
+  }(),extrema,visible,error);
 }
 std::vector<Postprocessor::EvaluatedAnnotation> PostprocessorApplicationInterface::annotations(const std::string& view) const
 {

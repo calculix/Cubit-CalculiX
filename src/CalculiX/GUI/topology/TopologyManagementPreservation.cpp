@@ -266,7 +266,12 @@ void TopologyManagement::refreshLists()
       status.append("Available");
     }
 
-    QTreeWidget *target = state.effective ? preserved : available;
+    QTreeWidget* target;
+    if (state.effective) {
+      target = preserved;
+    } else {
+      target = available;
+    }
     QTreeWidgetItem *item = new QTreeWidgetItem(target);
     item->setText(0, named.second);
     item->setText(1, QString::number(named.first));
@@ -335,7 +340,12 @@ void TopologyManagement::changeSelection(bool adding)
     return;
   }
 
-  QTreeWidget *source = adding ? available : preserved;
+  QTreeWidget* source;
+  if (adding) {
+    source = available;
+  } else {
+    source = preserved;
+  }
   QStringList ids;
 
   for (QTreeWidgetItem *item : source->selectedItems())
@@ -378,7 +388,13 @@ void TopologyManagement::changeSelection(bool adding)
   }
 
   submitCommand(QString("ccx topology %1 %2 preserved %3 %4")
-    .arg(topology_id).arg(adding ? "add" : "remove")
+    .arg(topology_id).arg([&]() -> const char* {
+      if (adding) {
+        return "add";
+      } else {
+        return "remove";
+      }
+    }())
     .arg(keyword).arg(ids.join(" ")));
 
   // Reload actual core state even if the command was rejected.

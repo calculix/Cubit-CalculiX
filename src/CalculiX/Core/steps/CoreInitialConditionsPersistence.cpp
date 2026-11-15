@@ -1,3 +1,6 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include "Core/units/CalculiXPhysicalModelUnits.hpp"
+#include <utility>
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/steps/CoreInitialConditionsPersistence.hpp"
 #include "Core/steps/CoreInitialConditions.hpp"
@@ -9,6 +12,33 @@
 
 bool CoreInitialConditionsPersistence::read(HDF5Tool& file, CoreInitialConditions& conditions)
 {
+  if (!conditions.domain_unit_view) {
+    CoreInitialConditions candidate;
+    candidate.is_initialized = conditions.is_initialized;
+    candidate.domain_unit_view = true;
+    if (!read(file, candidate)) {
+      return false;
+    }
+    std::string basis;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::read_basis(file, CalculiXModelSchema::path("InitialConditions"), basis, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return false;
+    }
+    if (basis.empty() && !CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Native, error)) {
+      PRINT_ERROR("Cannot restore InitialConditions units: %s\n", error.c_str());
+      return false;
+    }
+    auto validated = candidate;
+    if (!CalculiXDomainUnits::convert(validated, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("Cannot restore invalid physical values: %s\n", error.c_str());
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    conditions = std::move(candidate);
+    return true;
+  }
+
   try
   {
 
@@ -123,6 +153,12 @@ bool CoreInitialConditionsPersistence::read(HDF5Tool& file, CoreInitialCondition
 
 bool CoreInitialConditionsPersistence::write(HDF5Tool& file, const CoreInitialConditions& conditions)
 {
+  std::string unitError;
+  if (conditions.domain_unit_view || !CalculiXPhysicalModelUnits::write_basis(file, CalculiXModelSchema::path("InitialConditions"), "SI", unitError)) {
+    PRINT_ERROR("Cannot save InitialConditions canonical units: %s\n", unitError.c_str());
+    return false;
+  }
+
   try
   {
 

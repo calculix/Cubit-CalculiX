@@ -14,7 +14,11 @@ namespace
 {
 bool validScope(const DrawScope& scope)
 {
-  return (scope.kind == DrawScopeKind::Model || scope.kind == DrawScopeKind::Custom) ? scope.stepId == -1 : scope.kind == DrawScopeKind::Step && scope.stepId > 0;
+  if ((scope.kind == DrawScopeKind::Model || scope.kind == DrawScopeKind::Custom)) {
+    return scope.stepId == -1;
+  } else {
+    return scope.kind == DrawScopeKind::Step && scope.stepId > 0;
+  }
 }
 
 bool validFeature(DrawFeature feature)
@@ -254,7 +258,11 @@ void CoreDraw::resetToDefaults()
   scene.state.labels.offsetFactor = defaults.labelsOffset;
   scene.state.labels.color = defaults.labelsColor;
 
-  scene.state.sizeFactor = std::isfinite(defaults.sizeFactor) && defaults.sizeFactor > 0 ? defaults.sizeFactor : 1.0;
+  if (std::isfinite(defaults.sizeFactor) && defaults.sizeFactor > 0) {
+    scene.state.sizeFactor = defaults.sizeFactor;
+  } else {
+    scene.state.sizeFactor = 1.0;
+  }
   scene.state.overlayVisible = defaults.overlayVisible;
   scene.state.groups[DrawGroup::BoundaryConditions].enabled = defaults.boundaryConditions;
   scene.state.groups[DrawGroup::Loads].enabled = defaults.loads;

@@ -56,7 +56,13 @@ namespace Postprocessor
       const auto& label = entry.second;
       labels.append(QJsonObject{{"name",q(label.name)},{"source",q(label.entity.source_id)},
         {"kind",static_cast<int>(label.entity.kind)},{"id",q(std::to_string(label.entity.entity_id))},
-        {"ip",label.entity.integration_point ? QJsonValue(q(std::to_string(*label.entity.integration_point))) : QJsonValue(QJsonValue::Null)},
+        {"ip",[&]() -> QJsonValue {
+          if (label.entity.integration_point) {
+            return QJsonValue(q(std::to_string(*label.entity.integration_point)));
+          } else {
+            return QJsonValue(QJsonValue::Null);
+          }
+        }()},
         {"dataset_kind",q(label.dataset_kind)},{"dataset_name",q(label.dataset_name)},{"model",label.model_id},
         {"array",q(label.field.array_name)},{"association",static_cast<int>(label.field.association)},
         {"component",q(label.field.component)},{"magnitude",label.field.magnitude},{"group",q(label.field.group_key)},

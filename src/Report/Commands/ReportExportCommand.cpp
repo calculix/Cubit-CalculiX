@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportExportCommand.hpp"
 #include <utility>
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
@@ -49,7 +50,13 @@ bool ReportExportCommand::execute(CubitCommandData& data)
   {
     error = "Unknown Report failure.";
   }
-  PRINT_ERROR("Report: %s\n", error.empty() ? "Invalid command arguments." : error.c_str());
+  PRINT_ERROR("Report: %s\n", [&]() -> std::common_type_t<decltype("Invalid command arguments."), decltype(error.c_str())> {
+    if (error.empty()) {
+      return "Invalid command arguments.";
+    } else {
+      return error.c_str();
+    }
+  }());
   return false;
 }
 
@@ -61,5 +68,17 @@ bool ReportExportCommand::run(CubitCommandData& data, const std::shared_ptr<Repo
     error = "Report export needs a quoted destination.";
     return false;
   }
-  return active->export_document(data.find_keyword("PDF") ? "pdf" : data.find_keyword("ODT") ? "odt" : "both", filename, error, data.find_keyword("OVERWRITE"));
+  return active->export_document([&]() -> std::common_type_t<decltype("pdf"), const char*> {
+    if (data.find_keyword("PDF")) {
+      return "pdf";
+    } else {
+      return [&]() -> const char* {
+        if (data.find_keyword("ODT")) {
+          return "odt";
+        } else {
+          return "both";
+        }
+      }();
+    }
+  }(), filename, error, data.find_keyword("OVERWRITE"));
 }

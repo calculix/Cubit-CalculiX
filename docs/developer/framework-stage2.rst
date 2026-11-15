@@ -87,8 +87,9 @@ Component startup
 
 ``CubitSimComp`` starts every component provider with the original ``withGUI``
 flag. A null Qt host is valid for headless startup; providers decide which
-features require a GUI. CalculiX initializes its material library and Python
-interface in both modes, and creates its GUI only when ``withGUI > 0``.
+features require a GUI. Framework owns the shared material library in both
+modes. CalculiX initializes its Python interface in both modes, and creates
+its GUI only when ``withGUI > 0``.
 
 The ``cubitsim_comp`` SWIG binding enables threading so native component calls
 release the caller's Python GIL before re-entering Cubit's interpreter.

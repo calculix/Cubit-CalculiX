@@ -1,3 +1,6 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include "Core/units/CalculiXPhysicalModelUnits.hpp"
+#include <utility>
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/interactions/CoreInteractionsPersistence.hpp"
 #include "Core/interactions/CoreConstraints.hpp"
@@ -10,6 +13,33 @@
 
 bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreConstraints& constraints)
 {
+  if (!constraints.domain_unit_view) {
+    CoreConstraints candidate;
+    candidate.is_initialized = constraints.is_initialized;
+    candidate.domain_unit_view = true;
+    if (!read(file, candidate)) {
+      return false;
+    }
+    std::string basis;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::read_basis(file, CalculiXModelSchema::path("Constraints"), basis, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return false;
+    }
+    if (basis.empty() && !CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Native, error)) {
+      PRINT_ERROR("Cannot restore Constraints units: %s\n", error.c_str());
+      return false;
+    }
+    auto validated = candidate;
+    if (!CalculiXDomainUnits::convert(validated, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("Cannot restore invalid physical values: %s\n", error.c_str());
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    constraints = std::move(candidate);
+    return true;
+  }
+
   try
   {
 
@@ -143,6 +173,12 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreConstraints& constrai
 
 bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreConstraints& constraints)
 {
+  std::string unitError;
+  if (constraints.domain_unit_view || !CalculiXPhysicalModelUnits::write_basis(file, CalculiXModelSchema::path("Constraints"), "SI", unitError)) {
+    PRINT_ERROR("Cannot save Constraints canonical units: %s\n", unitError.c_str());
+    return false;
+  }
+
   try
   {
 
@@ -267,6 +303,33 @@ bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreConstraints& c
 
 bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreSurfaceInteractions& interactions)
 {
+  if (!interactions.domain_unit_view) {
+    CoreSurfaceInteractions candidate;
+    candidate.is_initialized = interactions.is_initialized;
+    candidate.domain_unit_view = true;
+    if (!read(file, candidate)) {
+      return false;
+    }
+    std::string basis;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::read_basis(file, CalculiXModelSchema::path("SurfaceInteractions"), basis, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return false;
+    }
+    if (basis.empty() && !CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Native, error)) {
+      PRINT_ERROR("Cannot restore SurfaceInteractions units: %s\n", error.c_str());
+      return false;
+    }
+    auto validated = candidate;
+    if (!CalculiXDomainUnits::convert(validated, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("Cannot restore invalid physical values: %s\n", error.c_str());
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    interactions = std::move(candidate);
+    return true;
+  }
+
   try
   {
 
@@ -429,6 +492,12 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreSurfaceInteractions& 
 
 bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreSurfaceInteractions& interactions)
 {
+  std::string unitError;
+  if (interactions.domain_unit_view || !CalculiXPhysicalModelUnits::write_basis(file, CalculiXModelSchema::path("SurfaceInteractions"), "SI", unitError)) {
+    PRINT_ERROR("Cannot save SurfaceInteractions canonical units: %s\n", unitError.c_str());
+    return false;
+  }
+
   try
   {
 
@@ -578,6 +647,33 @@ bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreSurfaceInterac
 
 bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreContactPairs& contacts)
 {
+  if (!contacts.domain_unit_view) {
+    CoreContactPairs candidate;
+    candidate.is_initialized = contacts.is_initialized;
+    candidate.domain_unit_view = true;
+    if (!read(file, candidate)) {
+      return false;
+    }
+    std::string basis;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::read_basis(file, CalculiXModelSchema::path("ContactPairs"), basis, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return false;
+    }
+    if (basis.empty() && !CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Native, error)) {
+      PRINT_ERROR("Cannot restore ContactPairs units: %s\n", error.c_str());
+      return false;
+    }
+    auto validated = candidate;
+    if (!CalculiXDomainUnits::convert(validated, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("Cannot restore invalid physical values: %s\n", error.c_str());
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    contacts = std::move(candidate);
+    return true;
+  }
+
   try
   {
 
@@ -631,6 +727,12 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreContactPairs& contact
 
 bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreContactPairs& contacts)
 {
+  std::string unitError;
+  if (contacts.domain_unit_view || !CalculiXPhysicalModelUnits::write_basis(file, CalculiXModelSchema::path("ContactPairs"), "SI", unitError)) {
+    PRINT_ERROR("Cannot save ContactPairs canonical units: %s\n", unitError.c_str());
+    return false;
+  }
+
   try
   {
 

@@ -1,3 +1,6 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include "Core/units/CalculiXPhysicalModelUnits.hpp"
+#include <utility>
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/steps/CoreStepSettingsPersistence.hpp"
 #include "Core/steps/CoreDamping.hpp"
@@ -9,6 +12,33 @@
 
 bool CoreStepSettingsPersistence::read(HDF5Tool& file, CoreDamping& damping)
 {
+  if (!damping.domain_unit_view) {
+    CoreDamping candidate;
+    candidate.is_initialized = damping.is_initialized;
+    candidate.domain_unit_view = true;
+    if (!read(file, candidate)) {
+      return false;
+    }
+    std::string basis;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::read_basis(file, CalculiXModelSchema::path("Damping"), basis, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return false;
+    }
+    if (basis.empty() && !CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Native, error)) {
+      PRINT_ERROR("Cannot restore Damping units: %s\n", error.c_str());
+      return false;
+    }
+    auto validated = candidate;
+    if (!CalculiXDomainUnits::convert(validated, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("Cannot restore invalid physical values: %s\n", error.c_str());
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    damping = std::move(candidate);
+    return true;
+  }
+
   try
   {
 
@@ -46,6 +76,12 @@ bool CoreStepSettingsPersistence::read(HDF5Tool& file, CoreDamping& damping)
 
 bool CoreStepSettingsPersistence::write(HDF5Tool& file, const CoreDamping& damping)
 {
+  std::string unitError;
+  if (damping.domain_unit_view || !CalculiXPhysicalModelUnits::write_basis(file, CalculiXModelSchema::path("Damping"), "SI", unitError)) {
+    PRINT_ERROR("Cannot save Damping canonical units: %s\n", unitError.c_str());
+    return false;
+  }
+
   try
   {
 
@@ -80,6 +116,33 @@ bool CoreStepSettingsPersistence::write(HDF5Tool& file, const CoreDamping& dampi
 
 bool CoreStepSettingsPersistence::read(HDF5Tool& file, CorePhysicalConstants& constants)
 {
+  if (!constants.domain_unit_view) {
+    CorePhysicalConstants candidate;
+    candidate.is_initialized = constants.is_initialized;
+    candidate.domain_unit_view = true;
+    if (!read(file, candidate)) {
+      return false;
+    }
+    std::string basis;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::read_basis(file, CalculiXModelSchema::path("PhysicalConstants"), basis, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return false;
+    }
+    if (basis.empty() && !CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Native, error)) {
+      PRINT_ERROR("Cannot restore PhysicalConstants units: %s\n", error.c_str());
+      return false;
+    }
+    auto validated = candidate;
+    if (!CalculiXDomainUnits::convert(validated, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("Cannot restore invalid physical values: %s\n", error.c_str());
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    constants = std::move(candidate);
+    return true;
+  }
+
   try
   {
 
@@ -117,6 +180,12 @@ bool CoreStepSettingsPersistence::read(HDF5Tool& file, CorePhysicalConstants& co
 
 bool CoreStepSettingsPersistence::write(HDF5Tool& file, const CorePhysicalConstants& constants)
 {
+  std::string unitError;
+  if (constants.domain_unit_view || !CalculiXPhysicalModelUnits::write_basis(file, CalculiXModelSchema::path("PhysicalConstants"), "SI", unitError)) {
+    PRINT_ERROR("Cannot save PhysicalConstants canonical units: %s\n", unitError.c_str());
+    return false;
+  }
+
   try
   {
 

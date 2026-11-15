@@ -141,7 +141,13 @@ namespace Postprocessor
           {"color",QJsonArray{value.color[0],value.color[1],value.color[2]}}};
       };
       item.insert("reversed",display.coloring.reversed);
-      item.insert("bands",display.coloring.bands ? QJsonValue(static_cast<int>(*display.coloring.bands)) : QJsonValue(QJsonValue::Null));
+      item.insert("bands",[&]() -> QJsonValue {
+        if (display.coloring.bands) {
+          return QJsonValue(static_cast<int>(*display.coloring.bands));
+        } else {
+          return QJsonValue(QJsonValue::Null);
+        }
+      }());
       item.insert("undeformed",display.deformation.overlay);
       const auto source = snapshot.sources.find(output_source(display.input));
       if (source != snapshot.sources.end() && display.increment_index < source->second->increments.size())
@@ -156,7 +162,13 @@ namespace Postprocessor
       displays.append(item);
     }
     snapshot.provenance.insert("version",1);
-    snapshot.provenance.insert("target",request.target == CaptureTarget::View ? "view" : "plot");
+    snapshot.provenance.insert("target",[&]() -> const char* {
+      if (request.target == CaptureTarget::View) {
+        return "view";
+      } else {
+        return "plot";
+      }
+    }());
     snapshot.provenance.insert("id",QString::fromStdString(snapshot.target_id));
     snapshot.provenance.insert("width",request.width);
     snapshot.provenance.insert("height",request.height);

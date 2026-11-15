@@ -1,5 +1,9 @@
 #include "FrameworkContext.hpp"
 #include "ProjectStateCoordinator.hpp"
+#include "materials/CoreFrameworkMaterials.hpp"
+#include "materials/CoreFrameworkMaterialLibrary.hpp"
+#include "units/CoreFrameworkUnits.hpp"
+#include "Framework/GUI/ModelEditorManager.hpp"
 #include "FrameworkModules.hpp"
 #include "Framework/Drawing/DrawingService.hpp"
 #include "Framework/Storage/UserOptionsStore.hpp"
@@ -28,80 +32,84 @@ int componentAnchor = 0;
 
 FrameworkContext::FrameworkContext() = default;
 
-FrameworkContext::~FrameworkContext()
-{
+FrameworkContext::~FrameworkContext() {
   detach_workspace_host();
   projects.reset();
   modules.shutdown();
 }
 
-bool FrameworkContext::acquire(std::string& error)
-{
+bool FrameworkContext::acquire(std::string& error) {
   error.clear();
 
-  try
-  {
-    if (!registered)
-    {
-      if (!register_framework_modules(modules, error))
-      {
+  try {
+    if (!registered) {
+      if (!register_framework_modules(modules, error)) {
         return false;
       }
 
       registered = true;
     }
   }
-  catch (const std::exception& exception)
-  {
+  catch (const std::exception& exception) {
     error = std::string("Module registration failed: ") + exception.what();
     return false;
   }
-  catch (...)
-  {
+  catch (...) {
     error = "Module registration failed with an unknown exception.";
     return false;
   }
 
-  if (clients == 0)
-  {
-    FrameworkPaths paths;
-    if (!FrameworkPaths::resolve(&componentAnchor, paths, error))
-    {
-      return false;
-    }
-    options = std::make_unique<UserOptionsStore>(std::move(paths));
-    preferences = std::make_unique<FrameworkUserOptions>();
-    if (!preferences->initialize(*options, error))
-    {
-      preferences.reset();
-      options.reset();
-      return false;
-    }
-    reportProfiles = std::make_unique<ReportProfileStore>(options->options_filename());
-    modules.bind_report_profiles(reportProfiles.get());
-    drawings = std::make_unique<DrawingService>();
-    if (!modules.initialize(*options, *drawings, error))
-    {
-      modules.bind_report_profiles(nullptr);
-      reportProfiles.reset();
-      drawings.reset();
-      preferences.reset();
-      options.reset();
-      return false;
-    }
-    try
-    {
-      projects = std::make_unique<ProjectStateCoordinator>(modules.project_state_providers());
-    }
-    catch (const std::exception& exception)
-    {
-      error = std::string("Cannot initialize project persistence: ")+exception.what();
+  if (clients == 0) {
+    SimUnits::CoreFrameworkUnits* unitService = nullptr;
+    CoreFrameworkMaterialLibrary* materialLibrary = nullptr;
+    const auto cleanup = [this, &unitService, &materialLibrary]() noexcept {
+      projects.reset();
       modules.shutdown();
       modules.bind_report_profiles(nullptr);
       reportProfiles.reset();
       drawings.reset();
+      if (unitService != nullptr) {
+        unitService->shutdown();
+      }
+      if (materialLibrary != nullptr) {
+        materialLibrary->shutdown();
+      }
       preferences.reset();
       options.reset();
+    };
+    try {
+      FrameworkPaths paths;
+      if (!FrameworkPaths::resolve(&componentAnchor, paths, error)) {
+        cleanup();
+        return false;
+      }
+      options = std::make_unique<UserOptionsStore>(std::move(paths));
+      preferences = std::make_unique<FrameworkUserOptions>();
+      if (!preferences->initialize(*options, error)) {
+        cleanup();
+        return false;
+      }
+      unitService = &framework_units();
+      materialLibrary = &framework_materials().library();
+      if (!unitService->initialize(*options, error) || !materialLibrary->initialize(*options, error)) {
+        cleanup();
+        return false;
+      }
+      reportProfiles = std::make_unique<ReportProfileStore>(options->options_filename());
+      modules.bind_report_profiles(reportProfiles.get());
+      drawings = std::make_unique<DrawingService>();
+      if (!modules.initialize(*options, *drawings, error)) {
+        cleanup();
+        return false;
+      }
+      projects = std::make_unique<ProjectStateCoordinator>(modules.project_state_providers());
+    } catch (const std::exception& exception) {
+      error = std::string("Cannot initialize the Framework: ") + exception.what();
+      cleanup();
+      return false;
+    } catch (...) {
+      error = "Cannot initialize the Framework: unknown error.";
+      cleanup();
       return false;
     }
   }
@@ -112,21 +120,28 @@ bool FrameworkContext::acquire(std::string& error)
 
 void FrameworkContext::release() noexcept
 {
-  if (clients == 0)
-  {
+  if (clients == 0) {
     return;
   }
 
   --clients;
 
-  if (clients == 0)
-  {
+  if (clients == 0) {
     detach_workspace_host();
     projects.reset();
     modules.shutdown();
     modules.bind_report_profiles(nullptr);
     reportProfiles.reset();
     drawings.reset();
+    framework_units().shutdown();
+    framework_materials().library().shutdown();
+    try {
+      framework_materials().begin_project();
+    } catch (const std::exception& exception) {
+      PRINT_ERROR("Cannot clear Framework material state during shutdown: %s\n", exception.what());
+    } catch (...) {
+      PRINT_ERROR("Cannot clear Framework material state during shutdown.\n");
+    }
     preferences.reset();
     options.reset();
   }
@@ -137,22 +152,18 @@ ModuleManager& FrameworkContext::module_manager() noexcept
   return modules;
 }
 
-FrameworkContext& framework_context()
-{
+FrameworkContext& framework_context() {
   static FrameworkContext context;
   return context;
 }
 
-bool FrameworkContext::acquire_command_plugin(std::string& error)
-{
-  if (command_plugin_attached)
-  {
+bool FrameworkContext::acquire_command_plugin(std::string& error) {
+  if (command_plugin_attached) {
     error = "The cubit-sim command plugin is already attached.";
     return false;
   }
 
-  if (!acquire(error))
-  {
+  if (!acquire(error)) {
     return false;
   }
 
@@ -162,8 +173,7 @@ bool FrameworkContext::acquire_command_plugin(std::string& error)
 
 void FrameworkContext::release_command_plugin() noexcept
 {
-  if (command_plugin_attached)
-  {
+  if (command_plugin_attached) {
     command_plugin_attached = false;
     release();
   }
@@ -174,42 +184,36 @@ bool FrameworkContext::has_command_plugin() const noexcept
   return command_plugin_attached;
 }
 
-bool FrameworkContext::attach_workspace_host(QWidget* host, std::string& error)
-{
+bool FrameworkContext::attach_workspace_host(QWidget* host, std::string& error) {
   error.clear();
 
-  if (workspaces != nullptr)
-  {
+  if (workspaces != nullptr) {
     error = "The framework already has a workspace host.";
     return false;
   }
 
-  try
-  {
+  try {
     auto manager = std::make_unique<WorkspaceManager>(*drawings);
 
-    if (!manager->attach(host, error))
-    {
+    if (!manager->attach(host, error)) {
       return false;
     }
 
     workspaces = std::move(manager);
     auto* window = qobject_cast<QMainWindow*>(host);
-    if (window == nullptr || preferences == nullptr)
-    {
+    if (window == nullptr || preferences == nullptr) {
       error = "Resource status requires the Framework preferences and main window.";
       detach_workspace_host();
       return false;
     }
+    modelEditors = std::make_unique<ModelEditorManager>(window, options->component_directory());
     resourceStatus = new ResourceStatusWidget(window->statusBar(), modules, *preferences);
     return true;
   }
-  catch (const std::exception& exception)
-  {
+  catch (const std::exception& exception) {
     error = std::string("Cannot attach the workspace host: ") + exception.what();
   }
-  catch (...)
-  {
+  catch (...) {
     error = "Cannot attach the workspace host.";
   }
 
@@ -217,55 +221,61 @@ bool FrameworkContext::attach_workspace_host(QWidget* host, std::string& error)
   return false;
 }
 
-bool FrameworkContext::register_workspaces(std::string& error)
-{
-  try
-  {
-    if (workspaces != nullptr)
-    {
+bool FrameworkContext::register_workspaces(std::string& error) {
+  try {
+    if (workspaces != nullptr) {
       const auto providers = modules.workspace_providers();
-      if (!workspaces->register_views(providers, error))
-      {
+      if (!workspaces->register_views(providers, error)) {
         return false;
       }
+      for (auto* provider : providers) {
+        WorkspaceView view;
+        if (!provider->workspace_view(view, error)) {
+          return false;
+        }
+        if (modelEditors != nullptr && view.modelManagementToolbar != nullptr) {
+          modelEditors->bind_toolbar(view.id.toStdString(), view.modelManagementToolbar);
+        }
+      }
       optionsPages = std::make_unique<UserOptionsManager>();
-      const auto frameworkPages = resourceStatus != nullptr
-        ? std::vector<WorkspaceView>{resourceStatus->options_page()} : std::vector<WorkspaceView>{};
+      std::vector<WorkspaceView> frameworkPages;
+      if (resourceStatus != nullptr) {
+        frameworkPages.push_back(resourceStatus->options_page());
+      }
       return optionsPages->attach(providers, error, frameworkPages);
     }
 
     error = "No GUI workspace host is attached.";
   }
-  catch (const std::exception& exception)
-  {
+  catch (const std::exception& exception) {
     error = std::string("Cannot register workspaces: ") + exception.what();
   }
-  catch (...)
-  {
+  catch (...) {
     error = "Cannot register workspaces.";
   }
 
   return false;
 }
 
-bool FrameworkContext::select_workspace(const std::string& id, std::string& error)
-{
-  if (workspaces == nullptr)
-  {
+bool FrameworkContext::select_workspace(const std::string& id, std::string& error) {
+  if (workspaces == nullptr) {
     error = "Workspace switching requires the cubit-sim GUI component.";
     return false;
   }
 
-  try
-  {
-    return workspaces->activate(QString::fromStdString(id), error);
+  try {
+    if (!workspaces->activate(QString::fromStdString(id), error)) {
+      return false;
+    }
+    if (modelEditors != nullptr) {
+      modelEditors->set_workspace(id);
+    }
+    return true;
   }
-  catch (const std::exception& exception)
-  {
+  catch (const std::exception& exception) {
     error = std::string("Cannot select the workspace: ") + exception.what();
   }
-  catch (...)
-  {
+  catch (...) {
     error = "Cannot select the workspace.";
   }
 
@@ -274,11 +284,11 @@ bool FrameworkContext::select_workspace(const std::string& id, std::string& erro
 
 void FrameworkContext::detach_workspace_host() noexcept
 {
+  modelEditors.reset();
   optionsPages.reset();
   delete resourceStatus.data();
   resourceStatus = nullptr;
-  if (workspaces != nullptr)
-  {
+  if (workspaces != nullptr) {
     workspaces->shutdown();
   }
 
@@ -287,30 +297,27 @@ void FrameworkContext::detach_workspace_host() noexcept
 
 FrameworkOptions FrameworkContext::user_options() const noexcept
 {
-  return preferences != nullptr ? preferences->current() : FrameworkOptions{};
+  if (preferences != nullptr) {
+    return preferences->current();
+  }
+  return FrameworkOptions{};
 }
 
-bool FrameworkContext::apply_user_options(const UserOptionValues& changes, std::string& error)
-{
-  if (preferences == nullptr)
-  {
+bool FrameworkContext::apply_user_options(const UserOptionValues& changes, std::string& error) {
+  if (preferences == nullptr) {
     error = "Framework preferences are unavailable.";
     return false;
   }
-  if (!preferences->apply(changes, error))
-  {
+  if (!preferences->apply(changes, error)) {
     return false;
   }
   // Saving is committed. A display-refresh failure must not report a failed save.
-  try
-  {
-    if (resourceStatus != nullptr)
-    {
+  try {
+    if (resourceStatus != nullptr) {
       resourceStatus->apply_options();
     }
   }
-  catch (const std::exception& exception)
-  {
+  catch (const std::exception& exception) {
     PRINT_WARNING("Framework preferences saved, but monitoring could not restart: %s\n", exception.what());
   }
   return true;
@@ -319,25 +326,21 @@ bool FrameworkContext::apply_user_options(const UserOptionValues& changes, std::
 bool FrameworkContext::open_documentation(std::string& error) const
 {
   error.clear();
-  if (options == nullptr)
-  {
+  if (options == nullptr) {
     error = "The Framework component directory is unavailable.";
     return false;
   }
-  if (qobject_cast<QGuiApplication*>(QCoreApplication::instance()) == nullptr)
-  {
+  if (qobject_cast<QGuiApplication*>(QCoreApplication::instance()) == nullptr) {
     error = "Opening documentation requires a GUI-capable session.";
     return false;
   }
   const QDir component(QString::fromUtf8(options->component_directory().c_str()));
   const QFileInfo index(component.filePath("documentation/index.html"));
-  if (!index.isFile() || !index.isReadable())
-  {
+  if (!index.isFile() || !index.isReadable()) {
     error = "Installed documentation is missing or unreadable: " + index.absoluteFilePath().toUtf8().toStdString();
     return false;
   }
-  if (!QDesktopServices::openUrl(QUrl::fromLocalFile(index.absoluteFilePath())))
-  {
+  if (!QDesktopServices::openUrl(QUrl::fromLocalFile(index.absoluteFilePath()))) {
     error = "The desktop could not open: " + index.absoluteFilePath().toUtf8().toStdString();
     return false;
   }
@@ -351,8 +354,7 @@ std::vector<UserOption> FrameworkContext::user_option_definitions() const
 
 bool FrameworkContext::user_option_values(UserOptionValues& snapshot, std::string& error) const
 {
-  if (preferences == nullptr)
-  {
+  if (preferences == nullptr) {
     error = "Framework preferences are unavailable.";
     return false;
   }

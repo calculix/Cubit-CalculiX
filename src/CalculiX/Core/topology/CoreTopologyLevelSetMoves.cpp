@@ -101,7 +101,11 @@ bool CoreTopologyLevelSetMoves::evaluate(int source_iteration, const Field& olde
       }
     }
   }
-  applied_scale = source_feasible ? candidate.scale : 1.0;
+  if (source_feasible) {
+    applied_scale = candidate.scale;
+  } else {
+    applied_scale = 1.0;
+  }
   next = candidate;
   return true;
 }

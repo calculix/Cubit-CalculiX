@@ -1,10 +1,8 @@
 Calculix Commands Materials source files
 ========================================
 
-This is a navigation catalogue for the inspected project-owned source. Declaration
-names are source hints, not inferred behavior or evidence that a file is active
-in every build. Read the domain chapters and maintained CMake registration before
-changing a path. External utility implementations are excluded.
+Source navigation updated for the unit/material integration. These links describe
+file ownership; they do not establish compilation or runtime validation.
 
 .. list-table:: Owned files
    :header-rows: 1
@@ -12,6 +10,10 @@ changing a path. External utility implementations are excluded.
 
    * - Source/download
      - Declaration hints
+   * - :download:`src/CalculiX/Commands/materials/ccxMaterialCommand.cpp <../../../src/CalculiX/Commands/materials/ccxMaterialCommand.cpp>`
+     - ``Implementation / integration``
+   * - :download:`src/CalculiX/Commands/materials/ccxMaterialCommand.hpp <../../../src/CalculiX/Commands/materials/ccxMaterialCommand.hpp>`
+     - ``ccxMaterialCommand``
    * - :download:`src/CalculiX/Commands/materials/ccxMaterialLibraryCreateGroupCommand.cpp <../../../src/CalculiX/Commands/materials/ccxMaterialLibraryCreateGroupCommand.cpp>`
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Commands/materials/ccxMaterialLibraryCreateGroupCommand.hpp <../../../src/CalculiX/Commands/materials/ccxMaterialLibraryCreateGroupCommand.hpp>`
@@ -32,17 +34,9 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Commands/materials/ccxMaterialLibraryExportMaterialCommand.hpp <../../../src/CalculiX/Commands/materials/ccxMaterialLibraryExportMaterialCommand.hpp>`
      - ``ccxMaterialLibraryExportMaterialCommand``
-   * - :download:`src/CalculiX/Commands/materials/ccxMaterialLibraryImportMaterialCommand.cpp <../../../src/CalculiX/Commands/materials/ccxMaterialLibraryImportMaterialCommand.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/Commands/materials/ccxMaterialLibraryImportMaterialCommand.hpp <../../../src/CalculiX/Commands/materials/ccxMaterialLibraryImportMaterialCommand.hpp>`
-     - ``ccxMaterialLibraryImportMaterialCommand``
    * - :download:`src/CalculiX/Commands/materials/ccxMaterialLibraryModifyGroupCommand.cpp <../../../src/CalculiX/Commands/materials/ccxMaterialLibraryModifyGroupCommand.cpp>`
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Commands/materials/ccxMaterialLibraryModifyGroupCommand.hpp <../../../src/CalculiX/Commands/materials/ccxMaterialLibraryModifyGroupCommand.hpp>`
      - ``ccxMaterialLibraryModifyGroupCommand``
-   * - :download:`src/CalculiX/Commands/materials/ccxMaterialLibraryModifyMaterialCommand.cpp <../../../src/CalculiX/Commands/materials/ccxMaterialLibraryModifyMaterialCommand.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/Commands/materials/ccxMaterialLibraryModifyMaterialCommand.hpp <../../../src/CalculiX/Commands/materials/ccxMaterialLibraryModifyMaterialCommand.hpp>`
-     - ``ccxMaterialLibraryModifyMaterialCommand``
    * - :download:`src/CalculiX/Commands/materials/CMakeLists.txt <../../../src/CalculiX/Commands/materials/CMakeLists.txt>`
      - ``Build registration``

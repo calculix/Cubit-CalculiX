@@ -37,7 +37,11 @@ void vtkFailure(vtkObject*, unsigned long, void* client, void* message)
   auto& error = *static_cast<std::string*>(client);
   if (error.empty())
   {
-    error = message == nullptr ? "VTK capture failed." : static_cast<const char*>(message);
+    if (message == nullptr) {
+      error = "VTK capture failed.";
+    } else {
+      error = static_cast<const char*>(message);
+    }
   }
 }
 

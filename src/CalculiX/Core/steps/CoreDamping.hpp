@@ -9,6 +9,7 @@ class CoreDamping
 {
 
 public:
+  bool domain_unit_view = false;
   bool get_settings(int id, DampingSettings& settings, std::string& error) const;
   CoreDamping();
   ~CoreDamping();

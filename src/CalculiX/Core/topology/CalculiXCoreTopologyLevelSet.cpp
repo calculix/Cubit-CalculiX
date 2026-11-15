@@ -264,7 +264,13 @@ bool CalculiXCore::check_topology_level_set_convergence(int topology_id, int pre
     return false;
   }
   const double scale = (std::max)(before, value);
-  const double relative = scale > 0.0 ? std::abs(before / scale - value / scale) : 0.0;
+  const double relative = [&]() -> double {
+    if (scale > 0.0) {
+      return std::abs(before / scale - value / scale);
+    } else {
+      return 0.0;
+    }
+  }();
   converged = maximum <= settings.field_tolerance && residual <= settings.field_tolerance &&
       relative <= configuration->compliance_tolerance && fraction <= configuration->target_volume_fraction + controls.volume_tolerance;
   auto& progress = evaluation->second;
@@ -274,10 +280,40 @@ bool CalculiXCore::check_topology_level_set_convergence(int topology_id, int pre
   progress.convergence_checked = true;
   progress.converged = converged;
   PRINT_INFO("Topology %d iteration %d level-set convergence:\n", topology_id, current_iteration);
-  PRINT_INFO("  Maximum field change: %.6g / %.6g [%s]\n", maximum, settings.field_tolerance, maximum <= settings.field_tolerance ? "PASS" : "WAIT");
-  PRINT_INFO("  Ordinary field proposal residual: %.6g / %.6g [%s]\n", residual, settings.field_tolerance, residual <= settings.field_tolerance ? "PASS" : "WAIT");
-  PRINT_INFO("  Relative compliance change: %.6g / %.6g [%s]\n", relative, configuration->compliance_tolerance, relative <= configuration->compliance_tolerance ? "PASS" : "WAIT");
-  PRINT_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration->target_volume_fraction + controls.volume_tolerance, fraction <= configuration->target_volume_fraction + controls.volume_tolerance ? "PASS" : "WAIT");
-  PRINT_INFO("  Converged: %s\n", converged ? "YES" : "NO");
+  PRINT_INFO("  Maximum field change: %.6g / %.6g [%s]\n", maximum, settings.field_tolerance, [&]() -> const char* {
+    if (maximum <= settings.field_tolerance) {
+      return "PASS";
+    } else {
+      return "WAIT";
+    }
+  }());
+  PRINT_INFO("  Ordinary field proposal residual: %.6g / %.6g [%s]\n", residual, settings.field_tolerance, [&]() -> const char* {
+    if (residual <= settings.field_tolerance) {
+      return "PASS";
+    } else {
+      return "WAIT";
+    }
+  }());
+  PRINT_INFO("  Relative compliance change: %.6g / %.6g [%s]\n", relative, configuration->compliance_tolerance, [&]() -> const char* {
+    if (relative <= configuration->compliance_tolerance) {
+      return "PASS";
+    } else {
+      return "WAIT";
+    }
+  }());
+  PRINT_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration->target_volume_fraction + controls.volume_tolerance, [&]() -> const char* {
+    if (fraction <= configuration->target_volume_fraction + controls.volume_tolerance) {
+      return "PASS";
+    } else {
+      return "WAIT";
+    }
+  }());
+  PRINT_INFO("  Converged: %s\n", [&]() -> const char* {
+    if (converged) {
+      return "YES";
+    } else {
+      return "NO";
+    }
+  }());
   return true;
 }

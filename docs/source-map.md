@@ -32,7 +32,7 @@ has been executed or every declaration has a complete semantic audit.
 | Topology numerical operations | [CoreTopology.cpp](../src/CalculiX/Core/topology/CoreTopology.cpp), [record types](../src/CalculiX/Core/topology/CoreTopologyStructs.hpp) | Densities, objective derivatives, filtering, updates and convergence; [mathematics](developer/topology-algorithms.rst) |
 | Topology export and results | [Topology helpers](../src/CalculiX/Core/topology/), [step export](../src/CalculiX/Core/steps/CalculiXCoreStepExport.cpp) | [Export/helper map](developer/topology-export.rst), [preservation map](developer/topology-preservation.rst), [result-consumer map](developer/topology-results.rst) |
 | Integration and connectivity | [ElementIntegration.cpp](../src/CalculiX/Utility/ElementIntegration.cpp), [ElementNodeOrdering.hpp](../src/CalculiX/Utility/ElementNodeOrdering.hpp) | CalculiX quadrature and Cubit/Exodus-to-CalculiX local node ordering |
-| GUI trees and panels | [GUI](../src/CalculiX/GUI/) | `ModelTree.cpp`, `*Tree.cpp`, `*Panel.cpp`, material-management widgets |
+| GUI trees and panels | [GUI](../src/CalculiX/GUI/) | `ModelTree.cpp`, `*Tree.cpp`, `*Panel.cpp`; shared material-management widgets are in `src/Framework/GUI/materials` |
 | Panel registration/navigation | [cmdPanelManager.cpp](../src/CalculiX/GUI/cmdPanelManager.cpp), [MyCmdWidgetFactory.cpp](../src/CalculiX/GUI/MyCmdWidgetFactory.cpp) | Marker names, navigation nodes, widget creation |
 | GUI command submission | [GuiSendCmd.cpp](../src/CalculiX/GUI/application/GuiSendCmd.cpp) | `gui_cmd()` |
 | Host events | [CoreObserver.cpp](../src/CalculiX/Core/application/CoreObserver.cpp), [GUI Observer.cpp](../src/CalculiX/EventObservers/Observer.cpp) | Model command/reset/file notifications and the GUI update callbacks installed by `CalculiXGui` |
@@ -51,3 +51,5 @@ The root CMake file discovers shared dependencies and adds framework storage bef
 SWIG interfaces are [cubitsim_comp.i](../src/Framework/cubitsim_comp.i) and [CalculiXPythonInterface.i](../src/CalculiX/PythonInterface/CalculiXPythonInterface.i). The latter declares vector/pair templates and includes the Python API header. Treat generated `*_wrap.cxx` files and Python proxy files as outputs, and make API changes in the headers, implementations, and `.i` files first.
 
 `src/Solvers`, `src/Library`, and portions of `src/Utility` and `src/CalculiX/Utility` contain bundled tools, libraries, or third-party sources. These directories are not blanket API-extraction inputs; `docs/Doxyfile` explicitly selects the documented project utilities.
+
+Framework unit/material ownership is documented in [units](framework/units.rst) and [materials](framework/materials.rst). Shared services live in `src/Framework/Core/{units,materials}`, shared editors in `src/Framework/GUI/{units,materials}`, and solver adapters remain in their workspace feature folders.

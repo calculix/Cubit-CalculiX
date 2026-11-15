@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CoreDrawSnapshotCapture.hpp"
 #include "CalculiXDrawLabels.hpp"
 #include "CalculiXDrawingAdapter.hpp"
@@ -62,7 +63,13 @@ bool CoreDrawSnapshotCapture::buildFrame(const CalculiXJobSetupSnapshot& snapsho
         continue;
       }
       auto geometry = item.second;
-      const bool show = request.labels.enabled && (group == DrawGroup::Loads ? request.labels.loads : request.labels.boundaryConditions);
+      const bool show = request.labels.enabled && ([&]() -> std::common_type_t<decltype(request.labels.loads), decltype(request.labels.boundaryConditions)> {
+        if (group == DrawGroup::Loads) {
+          return request.labels.loads;
+        } else {
+          return request.labels.boundaryConditions;
+        }
+      }());
       for (auto& primitive : geometry.primitives)
       {
         if (primitive.kind == DrawingPrimitiveKind::Label)

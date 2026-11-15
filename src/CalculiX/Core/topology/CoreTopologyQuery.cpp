@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CoreTopologyQuery.hpp"
 #include "CoreTopology.hpp"
 #include "Core/jobs/CoreJobs.hpp"
@@ -16,7 +17,13 @@ bool CoreTopologyQuery::get_iteration_level_set_settings(const CoreTopology& top
     return false;
   }
   const auto& configuration = topology.topology_cases.at(topology_id);
-  const int resolved = iteration_id == -1 ? configuration.selected_iteration : iteration_id;
+  const int resolved = [&]() -> int {
+    if (iteration_id == -1) {
+      return configuration.selected_iteration;
+    } else {
+      return iteration_id;
+    }
+  }();
   settings = configuration.iteration_level_set_designs.at(resolved).settings;
   return true;
 }
@@ -44,7 +51,13 @@ bool CoreTopologyQuery::get_iteration_method(const CoreTopology& topology, int t
   {
     return false;
   }
-  const auto captured = density ? TopologyMethod::Density : TopologyMethod::LevelSet;
+  const auto captured = [&]() -> std::common_type_t<decltype(TopologyMethod::Density), decltype(TopologyMethod::LevelSet)> {
+    if (density) {
+      return TopologyMethod::Density;
+    } else {
+      return TopologyMethod::LevelSet;
+    }
+  }();
   const auto evaluation = configuration.iteration_evaluations.find(iteration_id);
   if (evaluation != configuration.iteration_evaluations.end() && evaluation->second.method != captured)
   {
@@ -205,16 +218,24 @@ std::vector<std::vector<std::string>> CoreTopologyQuery::get_iteration_data(cons
           density_change = format_value(evaluation->second.maximum_density_change);
         }
         objective_change = format_value(evaluation->second.relative_objective_change);
-        converged = evaluation->second.converged ? "1" : "0";
+        if (evaluation->second.converged) {
+          converged = "1";
+        } else {
+          converged = "0";
+        }
       }
     }
 
     TopologyMethod method;
     if (get_iteration_method(topology, topology_id, iteration.first, method))
     {
-      const auto& volume = method == TopologyMethod::Density
-          ? configuration.iteration_density_designs.at(iteration.first).volume
-          : configuration.iteration_level_set_designs.at(iteration.first).volume;
+      const auto& volume = [&]() -> decltype((configuration.iteration_density_designs.at(iteration.first).volume)) {
+        if (method == TopologyMethod::Density) {
+          return configuration.iteration_density_designs.at(iteration.first).volume;
+        } else {
+          return configuration.iteration_level_set_designs.at(iteration.first).volume;
+        }
+      }();
       if (volume.available)
       {
         fraction = format_value(volume.volume_fraction);
@@ -227,7 +248,13 @@ std::vector<std::vector<std::string>> CoreTopologyQuery::get_iteration_data(cons
         std::to_string(jobs.get_job_status(iteration.second)),
         objective,
         fraction,
-        configuration.selected_iteration == iteration.first ? "1" : "0",
+        [&]() -> const char* {
+          if (configuration.selected_iteration == iteration.first) {
+            return "1";
+          } else {
+            return "0";
+          }
+        }(),
         density_change,
         objective_change,
         converged,
@@ -288,9 +315,13 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
   }
 
   // Column 1 is the design solid fraction: density or regularized level-set fraction.
-  const auto& densities = method == TopologyMethod::Density
-      ? configuration.iteration_density_designs.at(iteration_id).element_densities
-      : configuration.iteration_level_set_designs.at(iteration_id).element_solid_fractions;
+  const auto& densities = [&]() -> decltype((configuration.iteration_density_designs.at(iteration_id).element_densities)) {
+    if (method == TopologyMethod::Density) {
+      return configuration.iteration_density_designs.at(iteration_id).element_densities;
+    } else {
+      return configuration.iteration_level_set_designs.at(iteration_id).element_solid_fractions;
+    }
+  }();
   const auto& preserved = configuration.element_preserved;
   const auto& assignments = collection->second.element_base_material;
 
@@ -327,7 +358,13 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
         static_cast<double>(density.first),
         density.second,
         factor->second,
-        flag->second ? 1.0 : 0.0
+        [&]() -> double {
+          if (flag->second) {
+            return 1.0;
+          } else {
+            return 0.0;
+          }
+        }()
     });
   }
 
@@ -560,7 +597,13 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_level_set_fiel
       PRINT_ERROR("Invalid historical level-set node %d.\n", node.first);
       return {};
     }
-    rows.push_back({static_cast<double>(node.first), node.second, fixed ? 1.0 : 0.0});
+    rows.push_back({static_cast<double>(node.first), node.second, [&]() -> double {
+      if (fixed) {
+        return 1.0;
+      } else {
+        return 0.0;
+      }
+    }()});
   }
   return rows;
 }

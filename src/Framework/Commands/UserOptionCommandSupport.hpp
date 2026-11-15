@@ -1,3 +1,4 @@
+#include <type_traits>
 #ifndef CUBITSIM_USEROPTIONCOMMANDSUPPORT_HPP
 #define CUBITSIM_USEROPTIONCOMMANDSUPPORT_HPP
 
@@ -33,7 +34,13 @@ inline std::string name(const std::string& key)
   }
   if (key.substr(0, slash) == "drawing")
   {
-    return "drawing " + (leaf == "overlay_visible" ? std::string("overlay") : leaf);
+    return "drawing " + ([&]() -> std::common_type_t<decltype(std::string("overlay")), decltype(leaf)> {
+      if (leaf == "overlay_visible") {
+        return std::string("overlay");
+      } else {
+        return leaf;
+      }
+    }());
   }
   if (key.substr(0, slash) == "journal" || key.substr(0, slash) == "mouse" || key.substr(0, slash) == "diagnostics")
   {
@@ -48,8 +55,13 @@ inline std::vector<std::string> syntax(const std::string& prefix, const std::vec
   for (std::size_t i = 0; i < schema.size(); ++i)
   {
     const auto kind = schema[i].kind;
-    const auto argument = kind == UserOptionKind::Integer || kind == UserOptionKind::Real ?
-      "<value:" : "<string:type='unquoted',number='1',";
+    const auto argument = [&]() -> const char* {
+      if (kind == UserOptionKind::Integer || kind == UserOptionKind::Real) {
+        return "<value:";
+      } else {
+        return "<string:type='unquoted',number='1',";
+      }
+    }();
     result.push_back(prefix + " " + name(schema[i].key) + " " + argument +
       "label='option_" + std::to_string(i) + "',help='<value>'>");
   }
@@ -103,7 +115,11 @@ inline bool read(Data& data, const std::vector<UserOption>& schema,
       {
         std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c)
         {
-          return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : static_cast<char>(c);
+          if (c >= 'A' && c <= 'Z') {
+            return static_cast<char>(c - 'A' + 'a');
+          } else {
+            return static_cast<char>(c);
+          }
         });
         if (value != "on" && value != "off")
         {
@@ -142,7 +158,13 @@ inline bool format(const std::string& prefix, const UserOption& item,
   text << prefix << ' ' << name(item.key) << ' ';
   if (const auto* flag = std::get_if<bool>(&value))
   {
-    text << (*flag ? "on" : "off");
+    text << ([&]() -> const char* {
+      if (*flag) {
+        return "on";
+      } else {
+        return "off";
+      }
+    }());
   }
   else if (const auto* integer = std::get_if<int>(&value))
   {

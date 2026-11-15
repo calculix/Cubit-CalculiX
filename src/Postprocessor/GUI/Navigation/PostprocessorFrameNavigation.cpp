@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorFrameNavigation.hpp"
 #include <QComboBox>
 #include <QHBoxLayout>
@@ -87,7 +88,13 @@ PostprocessorFrameNavigation::PostprocessorFrameNavigation(std::function<void(st
   {
     if (animationCommand)
     {
-      animationCommand(checked ? QStringLiteral("loop on") : QStringLiteral("loop off"));
+      animationCommand([&]() -> std::common_type_t<decltype(QStringLiteral("loop on")), decltype(QStringLiteral("loop off"))> {
+        if (checked) {
+          return QStringLiteral("loop on");
+        } else {
+          return QStringLiteral("loop off");
+        }
+      }());
     }
   });
   connect(frames, &QComboBox::activated, this, [this](int index)
@@ -204,13 +211,37 @@ void PostprocessorFrameNavigation::refresh(const std::shared_ptr<const SimResult
       indices.push_back(i);
       frames->addItem(tr("Frame %1 | Step %2 | Increment %3 | Time %4")
         .arg(static_cast<qulonglong>(i + 1))
-        .arg(value.step < 0 ? tr("unknown") : QString::number(value.step))
-        .arg(value.increment < 0 ? tr("unknown") : QString::number(value.increment))
-        .arg(std::isfinite(value.time) ? QString::number(value.time, 'g', 16) : tr("unknown")));
+        .arg([&]() -> std::common_type_t<decltype(tr("unknown")), decltype(QString::number(value.step))> {
+          if (value.step < 0) {
+            return tr("unknown");
+          } else {
+            return QString::number(value.step);
+          }
+        }())
+        .arg([&]() -> std::common_type_t<decltype(tr("unknown")), decltype(QString::number(value.increment))> {
+          if (value.increment < 0) {
+            return tr("unknown");
+          } else {
+            return QString::number(value.increment);
+          }
+        }())
+        .arg([&]() -> std::common_type_t<decltype(QString::number(value.time, 'g', 16)), decltype(tr("unknown"))> {
+          if (std::isfinite(value.time)) {
+            return QString::number(value.time, 'g', 16);
+          } else {
+            return tr("unknown");
+          }
+        }()));
     }
   }
   slider->setRange(0,std::max(0,static_cast<int>(indices.size())-1));
-  slider->setValue(selected < 0 ? 0 : selected);
+  slider->setValue([&]() -> std::common_type_t<decltype(0), decltype(selected)> {
+    if (selected < 0) {
+      return 0;
+    } else {
+      return selected;
+    }
+  }());
   slider->setEnabled(indices.size() > 1 && selected >= 0);
   auto effective = animation;
   if (externalFrame)
@@ -244,7 +275,13 @@ void PostprocessorFrameNavigation::update_controls(int selected)
 {
   const QSignalBlocker blocker(frames);
   frames->setCurrentIndex(selected);
-  frames->setToolTip(selected >= 0 ? frames->itemText(selected) : tr("Result frame of the active source in the active view"));
+  frames->setToolTip([&]() -> std::common_type_t<decltype(frames->itemText(selected)), decltype(tr("Result frame of the active source in the active view"))> {
+    if (selected >= 0) {
+      return frames->itemText(selected);
+    } else {
+      return tr("Result frame of the active source in the active view");
+    }
+  }());
   frames->setEnabled(!indices.empty());
   first->setEnabled(!dragging && !indices.empty() && selected != 0);
   previous->setEnabled(!dragging && selected > 0);
@@ -351,8 +388,20 @@ void PostprocessorFrameNavigation::synchronize_animation(const Postprocessor::An
   {
     animationTimer.start(static_cast<int>(std::ceil(1000.0/playback.frames_per_second)));
   }
-  play->setIcon(style()->standardIcon(running ? QStyle::SP_MediaPause : QStyle::SP_MediaPlay));
-  play->setToolTip(running ? tr("Pause result animation") : tr("Play result animation"));
+  play->setIcon(style()->standardIcon([&]() -> std::common_type_t<decltype(QStyle::SP_MediaPause), decltype(QStyle::SP_MediaPlay)> {
+    if (running) {
+      return QStyle::SP_MediaPause;
+    } else {
+      return QStyle::SP_MediaPlay;
+    }
+  }()));
+  play->setToolTip([&]() -> std::common_type_t<decltype(tr("Pause result animation")), decltype(tr("Play result animation"))> {
+    if (running) {
+      return tr("Pause result animation");
+    } else {
+      return tr("Play result animation");
+    }
+  }());
   play->setEnabled(canPlay);
   fps->setEnabled(playbackAllowed && !indices.empty() && static_cast<bool>(animationCommand));
   loop->setEnabled(playbackAllowed && !indices.empty() && static_cast<bool>(animationCommand));

@@ -29,7 +29,9 @@ sideset 2 name "top_tri"
 ccx create surfacetraction sideset 1 force_dof_1 0 force_dof_2 1 force_dof_3 0 name "top_quad"
 ccx create surfacetraction sideset 2 force_dof_1 0 force_dof_2 1 force_dof_3 0 name "top_tri" 
 
-ccx import materiallibrary name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" cubit_name "steel_S235_DNV2013"
+ccx units system "N-mm-s"
+ccx units geometry unit "mm"
+sim import materiallibrary name "steel_S235_DNV2013" groupname "Example Materials RSMITH/Steel" workspace calculix material_name "steel_S235_DNV2013"
 
 ccx create section solid block all material 1
 

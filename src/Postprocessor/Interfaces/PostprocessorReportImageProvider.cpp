@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorReportImageProvider.hpp"
 #include "PostprocessorApplicationInterface.hpp"
 #include "Framework/Reporting/ReportImageRequest.hpp"
@@ -22,7 +23,11 @@ bool PostprocessorReportImageProvider::render(const ReportImageRequest& request,
     return false;
   }
   Postprocessor::CaptureDefinition definition;
-  definition.target = request.visual->kind == ReportVisualKind::View ? Postprocessor::CaptureTarget::View : Postprocessor::CaptureTarget::Plot;
+  if (request.visual->kind == ReportVisualKind::View) {
+    definition.target = Postprocessor::CaptureTarget::View;
+  } else {
+    definition.target = Postprocessor::CaptureTarget::Plot;
+  }
   definition.name = request.visual->reference;
   if (request.width != 0 || request.height != 0)
   {
@@ -43,13 +48,43 @@ bool PostprocessorReportImageProvider::render(const ReportImageRequest& request,
         error = "Capture background must be current, white or transparent.";
         return false;
       }
-      definition.background = entry.second == "white" ? Postprocessor::CaptureBackground::White :
-        entry.second == "transparent" ? Postprocessor::CaptureBackground::Transparent : Postprocessor::CaptureBackground::Current;
+      if (entry.second == "white") {
+        definition.background = Postprocessor::CaptureBackground::White;
+      } else {
+        if (entry.second == "transparent") {
+          definition.background = Postprocessor::CaptureBackground::Transparent;
+        } else {
+          definition.background = Postprocessor::CaptureBackground::Current;
+        }
+      }
     }
     else
     {
-      auto* flag = key == "legend" ? &definition.legend : key == "labels" ? &definition.labels :
-        key == "triad" ? &definition.triad : key == "marker" ? &definition.marker : nullptr;
+      auto* flag = [&]() -> std::common_type_t<decltype(&definition.legend), std::common_type_t<decltype(&definition.labels), std::common_type_t<decltype(&definition.triad), std::common_type_t<decltype(&definition.marker), decltype(nullptr)>>>> {
+        if (key == "legend") {
+          return &definition.legend;
+        } else {
+          return [&]() -> std::common_type_t<decltype(&definition.labels), std::common_type_t<decltype(&definition.triad), std::common_type_t<decltype(&definition.marker), decltype(nullptr)>>> {
+            if (key == "labels") {
+              return &definition.labels;
+            } else {
+              return [&]() -> std::common_type_t<decltype(&definition.triad), std::common_type_t<decltype(&definition.marker), decltype(nullptr)>> {
+                if (key == "triad") {
+                  return &definition.triad;
+                } else {
+                  return [&]() -> std::common_type_t<decltype(&definition.marker), decltype(nullptr)> {
+                    if (key == "marker") {
+                      return &definition.marker;
+                    } else {
+                      return nullptr;
+                    }
+                  }();
+                }
+              }();
+            }
+          }();
+        }
+      }();
       if (!flag || (entry.second != "on" && entry.second != "off"))
       {
         error = "Invalid capture option: " + entry.first;

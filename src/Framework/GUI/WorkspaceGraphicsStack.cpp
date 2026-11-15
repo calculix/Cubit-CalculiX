@@ -74,7 +74,12 @@ bool WorkspaceGraphicsStack::activate(QWidget* page, std::string& error)
     return false;
   }
 
-  QWidget* target = page == nullptr ? native.data() : page;
+  QWidget* target;
+  if (page == nullptr) {
+    target = native.data();
+  } else {
+    target = page;
+  }
 
   if (stack->indexOf(target) < 0)
   {

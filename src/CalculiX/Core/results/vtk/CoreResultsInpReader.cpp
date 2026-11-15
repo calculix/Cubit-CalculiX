@@ -250,7 +250,11 @@ namespace
       for (std::size_t i = 1; i < fields.size(); ++i)
       {
         const auto equal = fields[i].find('=');
-        parameters[upper(trim(fields[i].substr(0, equal)))] = equal == std::string::npos ? "" : trim(fields[i].substr(equal + 1));
+        if (equal == std::string::npos) {
+          parameters[upper(trim(fields[i].substr(0, equal)))] = "";
+        } else {
+          parameters[upper(trim(fields[i].substr(0, equal)))] = trim(fields[i].substr(equal + 1));
+        }
       }
       if (key == "*INCLUDE")
       {
@@ -290,7 +294,13 @@ namespace
           error = "Unnamed or instance-qualified INP set is unsupported.";
           return false;
         }
-        auto& definitions = key == "*NSET" ? node_sets : element_sets;
+        auto& definitions = [&]() -> decltype((node_sets)) {
+          if (key == "*NSET") {
+            return node_sets;
+          } else {
+            return element_sets;
+          }
+        }();
         definitions[upper(set_name)].name = set_name;
       }
       if (key == "*ELEMENT")
@@ -435,7 +445,13 @@ namespace
         surfaces[upper(set_name)].entries.emplace_back(fields[0], side);
         return true;
       }
-      auto& definitions = section == "*NSET" ? node_sets : element_sets;
+      auto& definitions = [&]() -> decltype((node_sets)) {
+        if (section == "*NSET") {
+          return node_sets;
+        } else {
+          return element_sets;
+        }
+      }();
       auto& set = definitions[upper(set_name)];
       if (generated)
       {
@@ -540,7 +556,11 @@ namespace
           }
         }
         CoreResultsVtkGroup group;
-        group.kind = nodal ? CoreResultsVtkGroupKind::Nodeset : CoreResultsVtkGroupKind::Block;
+        if (nodal) {
+          group.kind = CoreResultsVtkGroupKind::Nodeset;
+        } else {
+          group.kind = CoreResultsVtkGroupKind::Block;
+        }
         group.name = entry.second.name;
         group.ids = entry.second.ids;
         result.groups.push_back(std::move(group));

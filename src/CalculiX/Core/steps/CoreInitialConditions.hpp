@@ -9,6 +9,7 @@ class CoreInitialConditions
 {
 
 public:
+  bool domain_unit_view = false;
   bool get_settings(int id, InitialConditionsSettings& settings, std::string& error) const;
   std::vector<int> get_initialcondition_ids() const;
   void clear_bc_references(int bc_type, int bc_id);

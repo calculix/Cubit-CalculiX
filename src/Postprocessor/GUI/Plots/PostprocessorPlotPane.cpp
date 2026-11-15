@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorPlotPane.hpp"
 #include <utility>
 #include "PostprocessorPlotChart.hpp"
@@ -64,7 +65,13 @@ PostprocessorPlotPane::PostprocessorPlotPane(std::weak_ptr<PostprocessorApplicat
     }
     std::string error;
     const auto command = Postprocessor::plot_axes_command(plot->second.name,axes);
-    const bool accepted = journal ? submitCommand(command,error) : silentCommand(command,error);
+    const bool accepted = [&]() -> bool {
+      if (journal) {
+        return submitCommand(command,error);
+      } else {
+        return silentCommand(command,error);
+      }
+    }();
     if (!accepted)
     {
       PRINT_ERROR("Cannot change plot axes: %s\n",error.c_str());
@@ -73,7 +80,11 @@ PostprocessorPlotPane::PostprocessorPlotPane(std::weak_ptr<PostprocessorApplicat
   },[this]()
   {
     const auto app = application.lock();
-    return app ? app->session().plot_revision : std::uint64_t{0};
+    if (app) {
+      return app->session().plot_revision;
+    } else {
+      return std::uint64_t{0};
+    }
   },this);
   layout->addWidget(chart,1);
   connect(selector,&QComboBox::currentIndexChanged,this,[this](int index)
@@ -121,7 +132,13 @@ void PostprocessorPlotPane::synchronize()
   QScopedValueRollback<bool> guard(synchronizing,true);
   const auto& state = app->session();
   const auto view = state.views.find(state.active_view_id);
-  const auto id = view != state.views.end() && view->second.plot_id ? *view->second.plot_id : std::string{};
+  const auto id = [&]() -> std::common_type_t<decltype(*view->second.plot_id), decltype(std::string{})> {
+    if (view != state.views.end() && view->second.plot_id) {
+      return *view->second.plot_id;
+    } else {
+      return std::string{};
+    }
+  }();
   const auto found = state.plots.find(id);
   if (found == state.plots.end())
   {
@@ -257,7 +274,13 @@ void PostprocessorPlotPane::commands_menu()
       visible->setChecked(curve.visible);
       connect(visible,&QAction::triggered,&menu,[this,scope,curve](bool checked)
       {
-        submit(QStringLiteral("post plot curve ")+(checked ? "show " : "hide ")+Postprocessor::plot_quote(curve.name)+scope);
+        submit(QStringLiteral("post plot curve ")+([&]() -> const char* {
+          if (checked) {
+            return "show ";
+          } else {
+            return "hide ";
+          }
+        }())+Postprocessor::plot_quote(curve.name)+scope);
       });
       auto* remove = entry->addAction(tr("Remove curve"));
       connect(remove,&QAction::triggered,&menu,[this,scope,curve]()
@@ -303,7 +326,13 @@ void PostprocessorPlotPane::axis_dialog()
     fields[index] = new QDoubleSpinBox(&dialog);
     fields[index]->setDecimals(12);
     fields[index]->setRange(-1e100,1e100);
-    fields[index]->setValue(index < 2 ? (*axes.x)[index] : (*axes.y)[index-2]);
+    fields[index]->setValue([&]() -> std::common_type_t<decltype((*axes.x)[index]), decltype((*axes.y)[index-2])> {
+      if (index < 2) {
+        return (*axes.x)[index];
+      } else {
+        return (*axes.y)[index-2];
+      }
+    }());
     fields[index]->setEnabled(!automatic->isChecked());
     connect(automatic,&QCheckBox::toggled,fields[index],[field = fields[index]](bool checked)
     {

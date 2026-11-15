@@ -6,6 +6,7 @@ target_sources(calculix_core PRIVATE
 )
 
 add_subdirectory(application)
+add_subdirectory(units)
 add_subdirectory(mesh)
 add_subdirectory(materials)
 add_subdirectory(sections)

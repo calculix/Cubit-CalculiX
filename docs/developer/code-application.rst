@@ -28,10 +28,11 @@ Lifecycle phases
 
 ``init()``, ``init2()``, ``update()`` and ``reset()`` have different roles. Check
 their current implementations rather than assuming every ``init`` is a pure
-idempotent read. The second-stage initialization acquires ``MeshExport`` and
-``Material`` SDK interfaces and initializes domains. Mesh export initialization
-has host-side effects and must not be invoked casually from a background worker.
-Material-library initialization can be deferred until Cubit is fully loaded.
+idempotent read. The second-stage initialization acquires the ``MeshExport``
+SDK interface and initializes domains. Materials and the shared HDF5 library
+belong to Framework; CalculiX does not acquire a native material interface.
+Mesh export initialization has host-side effects and must not be invoked
+casually from a background worker.
 
 ``update()`` synchronizes the domains that need current Cubit entities and
 maintains derived relationships. Plugin-owned loads/BCs are not wholesale mirrors

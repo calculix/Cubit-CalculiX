@@ -1,3 +1,5 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include <utility>
 #include "Core/loads/CoreLoadsTrajectoryHeatflux.hpp"
 #include <numeric>
 #include <string>
@@ -55,6 +57,24 @@ bool CoreLoadsTrajectoryHeatflux::check_initialized()
 
 bool CoreLoadsTrajectoryHeatflux::create_load(std::vector<std::string> options, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.create_load(options, options2, options3)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int load_id;
   int load_last;
   int sub_id;
@@ -226,6 +246,24 @@ bool CoreLoadsTrajectoryHeatflux::add_load(int load_id, int op_mode, int curve_i
 
 bool CoreLoadsTrajectoryHeatflux::modify_load(int load_id, std::vector<std::string> options, std::vector<int> options_marker, std::vector<int> options2, std::vector<std::vector<double>> options3)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.modify_load(load_id, options, options_marker, options2, options3)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int sub_data_id;
   std::vector<int> sub_data_ids;
   int loads_data_id = get_loads_data_id_from_load_id(load_id);
@@ -639,6 +677,16 @@ std::vector<int> CoreLoadsTrajectoryHeatflux::get_edge_ids(int load_id)
 
 std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_hit_coordinates(int load_id)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string error;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Geometry, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return {};
+    }
+    return candidate.get_hit_coordinates(load_id);
+  }
+
   CalculiXApplicationInterface ccx_application_iface;
 
   std::vector<std::vector<double>> hit_coordinates;
@@ -690,6 +738,16 @@ std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_hit_coordinate
 
 std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryHeatflux::get_face_ids(int load_id)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string error;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Geometry, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return {};
+    }
+    return candidate.get_face_ids(load_id);
+  }
+
   std::vector<std::vector<std::vector<int>>> selected_face_ids;
   //selected_face_ids[0] order by node
   //selected_face_ids[0][0] order by radius
@@ -766,6 +824,16 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryHeatflux::get_face
 
 std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryHeatflux::get_draw_face_ids(int load_id)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string error;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Geometry, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return {};
+    }
+    return candidate.get_draw_face_ids(load_id);
+  }
+
   std::vector<std::vector<std::vector<int>>> face_ids = this->get_face_ids(load_id);
   //face_ids[0] order by node
   //face_ids[0][0] order by radius
@@ -793,6 +861,16 @@ std::vector<std::vector<std::vector<int>>> CoreLoadsTrajectoryHeatflux::get_draw
 
 std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_times(int load_id)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string error;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Geometry, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return {};
+    }
+    return candidate.get_times(load_id);
+  }
+
   CalculiXApplicationInterface ccx_application_iface;
 
   std::vector<std::vector<double>> times;
@@ -833,6 +911,16 @@ std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_times(int load
 
 std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_radius(int load_id)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string error;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Geometry, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return {};
+    }
+    return candidate.get_radius(load_id);
+  }
+
   std::vector<std::vector<double>> node_radius;
   
   int load_data_id = this->get_loads_data_id_from_load_id(load_id);
@@ -859,6 +947,16 @@ std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_radius(int loa
 
 std::vector<std::vector<double>> CoreLoadsTrajectoryHeatflux::get_magnitude(int load_id)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string error;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Geometry, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return {};
+    }
+    return candidate.get_magnitude(load_id);
+  }
+
   std::vector<std::vector<double>> node_magnitude;
   
   int load_data_id = this->get_loads_data_id_from_load_id(load_id);
@@ -1131,7 +1229,11 @@ bool CoreLoadsTrajectoryHeatflux::prepare_export()
     
     // Prepare plugin-owned heat-flux loads.
     const auto heatflux_ids = ccx_loads_iface.get_loadsheatfluxes_ids();
-    last_id_heatflux = heatflux_ids.empty() ? 1 : heatflux_ids.back() + 1;
+    if (heatflux_ids.empty()) {
+      last_id_heatflux = 1;
+    } else {
+      last_id_heatflux = heatflux_ids.back() + 1;
+    }
 
     int link_id = 0;
 
@@ -1243,6 +1345,16 @@ bool CoreLoadsTrajectoryHeatflux::clean_export()
 
 std::string CoreLoadsTrajectoryHeatflux::get_load_export(int load_id)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Solver, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return {};
+    }
+    return candidate.get_load_export(load_id);
+  }
+
   
   //int load_data_id;
   //int sub_data_id;

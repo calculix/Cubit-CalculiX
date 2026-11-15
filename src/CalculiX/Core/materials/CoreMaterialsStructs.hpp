@@ -6,7 +6,7 @@
 
 struct TopologyElasticMaterial
 {
-  double youngs_modulus;
+  double youngs_modulus; // Canonical SI; converted to coherent solver stress units during export.
   double poissons_ratio;
 };
 

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorProbeProperties.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include <QLabel>
@@ -20,6 +21,18 @@ void PostprocessorProbeProperties::refresh()
 {
   const auto active = application.lock();
   std::string error;
-  const auto probe = active ? active->probe(error) : std::nullopt;
-  result->setText(probe ? QString::fromUtf8(Postprocessor::probe_text(*probe).c_str()) : tr("No result entity selected."));
+  const auto probe = [&]() -> std::common_type_t<decltype(active->probe(error)), decltype(std::nullopt)> {
+    if (active) {
+      return active->probe(error);
+    } else {
+      return std::nullopt;
+    }
+  }();
+  result->setText([&]() -> std::common_type_t<decltype(QString::fromUtf8(Postprocessor::probe_text(*probe).c_str())), decltype(tr("No result entity selected."))> {
+    if (probe) {
+      return QString::fromUtf8(Postprocessor::probe_text(*probe).c_str());
+    } else {
+      return tr("No result entity selected.");
+    }
+  }());
 }

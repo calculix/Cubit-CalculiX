@@ -1,3 +1,4 @@
+#include "Core/units/CalculiXDomainUnits.hpp"
 #include "CoreInitialConditionExport.hpp"
 #include "CoreInitialConditions.hpp"
 #include "Core/bcs/CoreBCsDisplacements.hpp"
@@ -30,6 +31,15 @@ std::string CoreInitialConditionExport::get_export(
   CoreBCsTemperatures& temperatures, CoreCustomLines& customlines,
   CoreBlocks& blocks, MeshExportInterface& mesh)
 {
+  if (!conditions.domain_unit_view) {
+    auto candidate = conditions;
+    std::string error;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Solver, error)) {
+      PRINT_ERROR("%s\n", error.c_str());
+      return {};
+    }
+    return get_export(candidate, displacements, temperatures, customlines, blocks, mesh);
+  }
   CoreMeshQuery query(mesh);
   std::vector<std::string> lines = {
     "********************************** I N I T I A L C O N D I T I O N S ****************************"

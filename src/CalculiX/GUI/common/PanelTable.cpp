@@ -203,7 +203,13 @@ QString PanelTable::snapshot() const
     for (int column = 0; column < columnCount(); ++column)
     {
       const auto* cell = item(row, column);
-      const QString value = cell == nullptr ? QString() : cell->text().trimmed();
+      const QString value = [&]() -> QString {
+        if (cell == nullptr) {
+          return QString();
+        } else {
+          return cell->text().trimmed();
+        }
+      }();
       populated = populated || !value.isEmpty();
       cells.append(value);
     }
@@ -227,10 +233,22 @@ bool PanelTable::readMatrix(std::vector<std::vector<double>>& values, QString& e
     for (int column = 0; column < columnCount(); ++column)
     {
       const auto* cell = item(row, column);
-      const QString text = cell == nullptr ? QString() : cell->text().trimmed();
+      const QString text = [&]() -> QString {
+        if (cell == nullptr) {
+          return QString();
+        } else {
+          return cell->text().trimmed();
+        }
+      }();
       populated = populated || !text.isEmpty();
       bool valid = true;
-      const double value = text.isEmpty() ? 0.0 : text.toDouble(&valid);
+      const double value = [&]() -> double {
+        if (text.isEmpty()) {
+          return 0.0;
+        } else {
+          return text.toDouble(&valid);
+        }
+      }();
       if (!valid || !std::isfinite(value))
       {
         error = QString("Invalid number at row %1, column %2.").arg(row + 1).arg(column + 1);

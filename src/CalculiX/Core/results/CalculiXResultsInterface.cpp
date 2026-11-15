@@ -23,7 +23,11 @@ bool CalculiXResultsInterface::prepare_vtk_plan(int job_id, const CoreResultsVtk
 
 SimResults::ConversionStatus CalculiXResultsInterface::get_vtk_status(int job_id) const
 {
-  return ccx_core.results ? ccx_core.results->get_vtk_status(job_id) : SimResults::ConversionStatus::NotConverted;
+  if (ccx_core.results) {
+    return ccx_core.results->get_vtk_status(job_id);
+  } else {
+    return SimResults::ConversionStatus::NotConverted;
+  }
 }
 
 bool CalculiXResultsInterface::build_vtk_result(int job_id, const CoreResultsVtkOptions& options)
@@ -48,7 +52,11 @@ bool CalculiXResultsInterface::export_vtk_result(int job_id, const std::string& 
 
 std::string CalculiXResultsInterface::get_vtk_export_path(int job_id) const
 {
-  return ccx_core.results ? ccx_core.results->get_vtk_export_path(job_id) : std::string{};
+  if (ccx_core.results) {
+    return ccx_core.results->get_vtk_export_path(job_id);
+  } else {
+    return std::string{};
+  }
 }
 
 bool CalculiXResultsInterface::is_vtk_build_active() const
@@ -58,7 +66,11 @@ bool CalculiXResultsInterface::is_vtk_build_active() const
 
 std::shared_ptr<const SimResults::VtkResultsData> CalculiXResultsInterface::get_vtk_result(int job_id) const
 {
-  return ccx_core.results ? ccx_core.results->get_vtk_result(job_id) : nullptr;
+  if (ccx_core.results) {
+    return ccx_core.results->get_vtk_result(job_id);
+  } else {
+    return nullptr;
+  }
 }
 
 

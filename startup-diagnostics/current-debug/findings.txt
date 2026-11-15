@@ -1,0 +1,8 @@
+Isolated ClaroX debug run, PID 6532, 2026-11-15.
+Framework startup completed at 18:40:25.088.
+First-chance access violation: Qt6Widgets.dll+0x22b18c.
+Later cleanup access violation: Qt6Widgets.dll+0x22acfb.
+Raw stack unwinding was unreliable; subsequent raw addresses are not evidence.
+Run used existing build binaries; restored toolbar/icon source was not built.
+Suspect: toolbar removal/reinsertion before native first show. Not proven.
+No proposed crash fix applied.

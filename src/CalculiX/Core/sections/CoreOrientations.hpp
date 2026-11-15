@@ -9,6 +9,7 @@ class CoreOrientations
 {
 
 public:
+  bool domain_unit_view = false;
   bool get_settings(int id, OrientationsSettings& settings, std::string& error) const;
   CoreOrientations();
   ~CoreOrientations();

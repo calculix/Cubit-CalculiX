@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "../application/PostprocessorCore.hpp"
 #include "../representations/ResultMesh.hpp"
 #include "CameraOperations.hpp"
@@ -57,7 +58,13 @@ namespace Postprocessor
             return false;
           }
           std::array<double, 6> current;
-          if (!mesh_bounds(transformed ? transformed.get() : part.second,current))
+          if (!mesh_bounds([&]() -> std::common_type_t<decltype(transformed.get()), decltype(part.second)> {
+            if (transformed) {
+              return transformed.get();
+            } else {
+              return part.second;
+            }
+          }(),current))
           {
             continue;
           }

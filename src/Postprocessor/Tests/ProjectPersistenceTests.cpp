@@ -212,5 +212,9 @@ int main(int argc, char** argv)
   const auto previous = savedAgain.session.sources.size();
   check(!project_from_json(bad,directory.path().toUtf8().toStdString(),savedAgain,error) &&
     savedAgain.session.sources.size() == previous,"Malformed project replaced committed definitions");
-  return failures ? 1 : 0;
+  if (failures) {
+    return 1;
+  } else {
+    return 0;
+  }
 }

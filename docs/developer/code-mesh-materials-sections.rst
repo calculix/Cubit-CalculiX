@@ -40,26 +40,27 @@ and :download:`ElementNodeOrdering.hpp <../../src/CalculiX/Utility/ElementNodeOr
 Materials and material libraries
 --------------------------------
 
-``CoreMaterials`` works with Cubit's material interface and the CalculiX property
-groups/cards. Material identity, material display name, property-group prefix
-and exported solver name are different values. ``get_properties()`` gives a
-typed view; export collects the enabled cards and their data. A stored scalar or
-table is not sufficient to infer that an inactive card will be emitted.
+The Framework owns workspace material stores, compiled material-card definitions,
+unit conversion, and the shared HDF5 material library. CalculiX ``CoreMaterials``
+is the solver export/topology adapter. Cubit material objects and startup property
+registration are no longer used. Each material has a workspace-local ID, typed
+cards, one selected model per card, and canonical SI values. Deactivation retains
+values while omitting the card from solver export; removal discards its values.
 
-The canonical Cubit material property-group name is ``SIM_CCX``. Material creation,
-library import/export and maintained examples/journal fixtures use that exact name.
-Individual property keys retain their ``CCX_`` prefixes; the group name is distinct
-from those keys and from the C++ ``SimResults`` namespace. Updating journal text
-does not migrate material groups already stored in external Cubit model files.
+The shared ``MaterialManagement`` editor and its existing card widgets now live
+under ``src/Framework/GUI/materials``. Every committed edit submits a readable
+workspace command. The CalculiX tree/property widgets remain workspace adapters.
+Library imports create independent local materials. Current values, inactive
+cards, ID allocation, and units persist with the model using ``HDF5Tool``; no
+material revision or property-history mechanism is introduced.
 
-``CoreMaterialsLibrary`` supports library initialization and management. Library
-storage is different from a model's current material assignments. The GUI
-material-management widgets are editors and selectors, not independent owners
-of the active analysis material model. Preserve the lazy initialization and
-module cleanup contracts when adding a new library operation.
+See :doc:`../framework/materials` and :doc:`../framework/units` for commands,
+physical-unit conventions, canonical SI persistence, and data-preserving
+workspace preset changes. Result source metadata records the actual exported units and
+scoped material IDs; a later workspace preference does not redefine old results.
 
-Source: :download:`CoreMaterials.hpp <../../src/CalculiX/Core/materials/CoreMaterials.hpp>`
-and :download:`CoreMaterialsStructs.hpp <../../src/CalculiX/Core/materials/CoreMaterialsStructs.hpp>`.
+Source: :download:`FrameworkMaterialsInterface.hpp <../../src/Framework/Core/materials/FrameworkMaterialsInterface.hpp>`
+and :download:`CoreMaterials.hpp <../../src/CalculiX/Core/materials/CoreMaterials.hpp>`.
 
 Topology material collections
 ------------------------------

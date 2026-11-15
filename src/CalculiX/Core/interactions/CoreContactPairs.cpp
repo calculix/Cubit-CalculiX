@@ -1,3 +1,6 @@
+#include "CubitMessage.hpp"
+#include "Core/units/CalculiXDomainUnits.hpp"
+#include <utility>
 #include "Core/application/SettingsRead.hpp"
 #include "Core/mesh/CoreMeshQuery.hpp"
 #include "Core/application/CoreIdSelection.hpp"
@@ -20,13 +23,13 @@ bool CoreContactPairs::init()
   {
     return false; // already initialized
   }else{
-    is_initialized = true;  
+    is_initialized = true;
     return true;
   }
 }
 
 bool CoreContactPairs::update()
-{ 
+{
   return true;
 }
 
@@ -34,7 +37,7 @@ bool CoreContactPairs::reset()
 {
   contactpairs_data.clear();
   adjust_contactpair_data.clear();
-  
+
   init();
   return true;
 }
@@ -46,6 +49,24 @@ bool CoreContactPairs::check_initialized()
 
 bool CoreContactPairs::create_contactpair(std::vector<std::string> options)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.create_contactpair(options)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   int contactpair_id;
   std::string contactpair_type;
   int contactpair_type_value;
@@ -56,7 +77,7 @@ bool CoreContactPairs::create_contactpair(std::vector<std::string> options)
   int master_id;
   int slave_id;
   int adjust_id;
-  
+
   contactpair_type = options[1];
 
   if (contactpair_type=="NODE TO SURFACE")
@@ -105,18 +126,36 @@ bool CoreContactPairs::create_contactpair(std::vector<std::string> options)
   master_id = std::stoi(options[2]);
   slave_id = std::stoi(options[3]);
   adjust_id = sub_id;
-  
+
   this->add_contactpair(contactpair_id, surfaceinteractions_id, contactpair_type_value, master_id, slave_id, adjust_id);
   return true;
 }
 
 bool CoreContactPairs::modify_contactpair(int contactpair_id, std::vector<std::string> options, std::vector<int> options_marker)
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    if (!candidate.modify_contactpair(contactpair_id, options, options_marker)) {
+      return false;
+    }
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return false;
+    }
+    *this = std::move(candidate);
+    return true;
+  }
+
   std::string contactpair_type;
   int contactpair_type_value;
   int sub_data_id;
   int contactpairs_data_id = get_contactpairs_data_id_from_contactpair_id(contactpair_id);
-  
+
   if (contactpairs_data_id == -1)
   {
     return false;
@@ -180,7 +219,7 @@ bool CoreContactPairs::modify_contactpair(int contactpair_id, std::vector<std::s
 bool CoreContactPairs::add_contactpair(int contactpair_id, int surfaceinteractions_id, int contactpair_type, int master_id, int slave_id, int adjust_id)
 {
   std::vector<int> v = {contactpair_id, surfaceinteractions_id, contactpair_type, master_id, slave_id, adjust_id};
-      
+
   contactpairs_data.push_back(v);
 
   return true;
@@ -189,9 +228,9 @@ bool CoreContactPairs::add_contactpair(int contactpair_id, int surfaceinteractio
 bool CoreContactPairs::add_adjust_contactpair(std::string adjust_contactpair_id, std::string adjust_value, std::string adjust_nodeset)
 {
   std::vector<std::string> v = {adjust_contactpair_id, adjust_value, adjust_nodeset};
-  
+
   adjust_contactpair_data.push_back(v);
-  
+
   return true;
 }
 
@@ -205,7 +244,7 @@ bool CoreContactPairs::delete_contactpair(int contactpair_id)
   } else {
     sub_data_id = get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs_data[contactpairs_data_id][5]);
     if (sub_data_id != -1){
-      adjust_contactpair_data.erase(adjust_contactpair_data.begin() + sub_data_id);  
+      adjust_contactpair_data.erase(adjust_contactpair_data.begin() + sub_data_id);
     }
     contactpairs_data.erase(contactpairs_data.begin() + contactpairs_data_id);
     return true;
@@ -213,27 +252,27 @@ bool CoreContactPairs::delete_contactpair(int contactpair_id)
 }
 
 int CoreContactPairs::get_contactpairs_data_id_from_contactpair_id(int contactpair_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < contactpairs_data.size(); i++)
   {
     if (contactpairs_data[i][0]==contactpair_id)
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
 
 int CoreContactPairs::get_adjust_contactpair_data_id_from_adjust_contactpair_id(int adjust_contactpair_id)
-{ 
+{
   int return_int = -1;
   for (size_t i = 0; i < adjust_contactpair_data.size(); i++)
   {
     if (adjust_contactpair_data[i][0]==std::to_string(adjust_contactpair_id))
     {
         return_int = int(i);
-    }  
+    }
   }
   return return_int;
 }
@@ -249,10 +288,20 @@ std::string CoreContactPairs::get_contactpair_export() // get a list of the Calc
   std::string str_temp;
   int sub_data_id;
   std::string nodeset_name;
-  
+
   //loop over all contactpairs
   for (size_t i = 0; i < contactpairs_data.size(); i++)
-  { 
+  {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Solver, unitError)) {
+      PRINT_ERROR("%s\n", unitError.c_str());
+      return {};
+    }
+    return candidate.get_contactpair_export();
+  }
+
     // CUSTOMLINE START
     std::vector<std::string> customline = ccx_export_iface.get_customline_data("BEFORE","CONTACTPAIR",contactpairs_data[i][0]);
     for (size_t icl = 0; icl < customline.size(); icl++)
@@ -283,8 +332,8 @@ std::string CoreContactPairs::get_contactpair_export() // get a list of the Calc
     }else if (contactpairs_data[i][2]==6)
     {
       str_temp.append("MASSLESS");
-    }    
-    
+    }
+
     sub_data_id = get_adjust_contactpair_data_id_from_adjust_contactpair_id(contactpairs_data[i][5]);
 
     if(adjust_contactpair_data[sub_data_id][1]!="")
@@ -300,8 +349,8 @@ std::string CoreContactPairs::get_contactpair_export() // get a list of the Calc
       str_temp.append(", ADJUST=");
       str_temp.append(nodeset_name);
     }
-    
-    
+
+
     contactpairs_export_list.push_back(str_temp);
 
     // second line
@@ -319,14 +368,14 @@ std::string CoreContactPairs::get_contactpair_export() // get a list of the Calc
     }
     // CUSTOMLINE END
   }
-  
+
   std::string contactpair_export;
 
   for (size_t i = 0; i < contactpairs_export_list.size(); i++)
   {
     contactpair_export.append(contactpairs_export_list[i] + "\n");
   }
-  
+
   return contactpair_export;
 }
 
@@ -348,7 +397,7 @@ std::string CoreContactPairs::print_data()
   {
     str_return.append(adjust_contactpair_data[i][0] + " " + adjust_contactpair_data[i][1] + " " + adjust_contactpair_data[i][2] + " \n");
   }
- 
+
   return str_return;
 }
 
@@ -414,6 +463,16 @@ std::vector<int> CoreContactPairs::get_contactpair_ids() const
 
 bool CoreContactPairs::get_settings(int id, ContactPairsSettings& settings, std::string& error) const
 {
+  if (!domain_unit_view) {
+    auto candidate = *this;
+    std::string unitError;
+    if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Display, unitError)) {
+      error = unitError;
+      return false;
+    }
+    return candidate.get_settings(id, settings, error);
+  }
+
   settings = {};
   error.clear();
   const auto* record = SettingsRead::row(contactpairs_data, id, 6, error);

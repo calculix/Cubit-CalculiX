@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostViewCameraCommand.hpp"
 #include "CameraCommandTiming.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -59,7 +60,13 @@ bool PostViewCameraCommand::execute(CubitCommandData& data)
     }
     if (!parsed || !updated)
     {
-      PRINT_ERROR("Cannot set Postprocessor camera: %s\n", error.empty() ? "missing application or camera values" : error.c_str());
+      PRINT_ERROR("Cannot set Postprocessor camera: %s\n", [&]() -> std::common_type_t<decltype("missing application or camera values"), decltype(error.c_str())> {
+        if (error.empty()) {
+          return "missing application or camera values";
+        } else {
+          return error.c_str();
+        }
+      }());
       return false;
     }
     return true;

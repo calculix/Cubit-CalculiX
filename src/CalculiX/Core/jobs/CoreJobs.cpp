@@ -969,7 +969,13 @@ bool CoreJobs::complete_job_results(int job_id)
     jobs_data[index][6] = "-1";
     application.trace_event("job.results.load.enter");
     readers_loaded = results.load_result(job_id);
-    application.trace_event(readers_loaded ? "job.results.load.success" : "job.results.load.failure");
+    application.trace_event([&]() -> const char* {
+      if (readers_loaded) {
+        return "job.results.load.success";
+      } else {
+        return "job.results.load.failure";
+      }
+    }());
     if (!readers_loaded)
     {
       jobs_data[index][3] = "4";
@@ -988,7 +994,13 @@ bool CoreJobs::complete_job_results(int job_id)
     pending_result_jobs.insert(job_id);
     application.trace_event("job.results.vtk.enter");
     const bool converted = results.build_vtk_result(job_id, CoreResultsVtkOptions{});
-    application.trace_event(converted ? "job.results.vtk.success" : "job.results.vtk.failure");
+    application.trace_event([&]() -> const char* {
+      if (converted) {
+        return "job.results.vtk.success";
+      } else {
+        return "job.results.vtk.failure";
+      }
+    }());
     if (!converted)
     {
       PRINT_ERROR("VTK conversion failed for job %d. Retry conversion before the next job.\n", job_id);

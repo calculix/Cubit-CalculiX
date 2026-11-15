@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Postprocessor/GUI/Viewport/PostprocessorScene.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include <vtkActor.h>
@@ -128,7 +129,13 @@ void PostprocessorScene::build_highlight(const Postprocessor::EntityReference& e
         continue;
       }
       std::string error;
-      auto* input = entity.kind == Postprocessor::EntityKind::Node && surface.node_data ? static_cast<vtkDataSet*>(surface.node_data.GetPointer()) : surface.input;
+      auto* input = [&]() -> std::common_type_t<decltype(static_cast<vtkDataSet*>(surface.node_data.GetPointer())), decltype(surface.input)> {
+        if (entity.kind == Postprocessor::EntityKind::Node && surface.node_data) {
+          return static_cast<vtkDataSet*>(surface.node_data.GetPointer());
+        } else {
+          return surface.input;
+        }
+      }();
       for (auto index : Postprocessor::entity_indices(input,entity,error))
       {
         if (entity.kind != Postprocessor::EntityKind::Element)

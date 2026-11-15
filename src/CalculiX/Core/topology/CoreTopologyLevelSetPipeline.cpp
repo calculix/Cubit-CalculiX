@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CoreTopologyLevelSetPipeline.hpp"
 #include "CoreTopologyLevelSetGeometry.hpp"
 #include "CoreTopologyLevelSet.hpp"
@@ -173,7 +174,13 @@ bool CoreTopologyLevelSetPipeline::integrate(std::vector<Element>& elements, con
       {
         candidate.push_back(std::make_unique<CoreTopologyLevelSetQuadrature>(0, &reference_rules));
       }
-      auto candidate_pool = count > 1 ? std::make_unique<boost::asio::thread_pool>(count) : nullptr;
+      auto candidate_pool = [&]() -> std::common_type_t<decltype(std::make_unique<boost::asio::thread_pool>(count)), decltype(nullptr)> {
+        if (count > 1) {
+          return std::make_unique<boost::asio::thread_pool>(count);
+        } else {
+          return nullptr;
+        }
+      }();
       quadratures.swap(candidate);
       pool = std::move(candidate_pool);
     }

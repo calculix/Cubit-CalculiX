@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostLabelsCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -31,7 +32,13 @@ bool PostLabelsCommand::execute(CubitCommandData& data)
     {
       return true;
     }
-    PRINT_ERROR("Cannot change result labels: %s\n",error.empty() ? "Annotations are unavailable." : error.c_str());
+    PRINT_ERROR("Cannot change result labels: %s\n",[&]() -> std::common_type_t<decltype("Annotations are unavailable."), decltype(error.c_str())> {
+      if (error.empty()) {
+        return "Annotations are unavailable.";
+      } else {
+        return error.c_str();
+      }
+    }());
   }
   catch (const std::exception& exception)
   {

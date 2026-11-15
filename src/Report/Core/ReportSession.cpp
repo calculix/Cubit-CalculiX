@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportSession.hpp"
 #include <utility>
 #include "Framework/Reporting/ReportJson.hpp"
@@ -64,7 +65,19 @@ bool ReportSession::from_json(const QJsonObject& input, ReportSession& output, s
     }
     const auto& source = document->source;
     const auto key = std::make_tuple(source.workspace_id, source.kind,
-      source.kind == "model" ? source.model_id : std::string(), source.kind == "job" ? source.job_id : 0);
+      [&]() -> std::common_type_t<decltype(source.model_id), decltype(std::string())> {
+        if (source.kind == "model") {
+          return source.model_id;
+        } else {
+          return std::string();
+        }
+      }(), [&]() -> std::common_type_t<decltype(source.job_id), decltype(0)> {
+        if (source.kind == "job") {
+          return source.job_id;
+        } else {
+          return 0;
+        }
+      }());
     if (!sources.insert(key).second)
     {
       error = "Saved report session contains more than one report for the same source.";

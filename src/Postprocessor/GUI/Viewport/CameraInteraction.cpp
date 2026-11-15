@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "CameraInteraction.hpp"
 #include "CameraTimings.hpp"
 #include "Postprocessor/Commands/views/CameraCommandText.hpp"
@@ -113,7 +114,13 @@ bool CameraInteraction::send(const CameraDefinition& camera, bool journal)
   {
     // A gesture preview is an owner-thread update through the same application
     // boundary as the command handler. Avoid parsing a command for every frame.
-    const auto started = timings ? timings->stamp() : CameraTimings::Stamp{};
+    const auto started = [&]() -> std::common_type_t<decltype(timings->stamp()), decltype(CameraTimings::Stamp{})> {
+      if (timings) {
+        return timings->stamp();
+      } else {
+        return CameraTimings::Stamp{};
+      }
+    }();
     accepted = active->set_camera(camera, error);
     if (timings != nullptr)
     {
@@ -123,7 +130,13 @@ bool CameraInteraction::send(const CameraDefinition& camera, bool journal)
   else
   {
     std::string command;
-    const auto formattingStarted = timings ? timings->stamp() : CameraTimings::Stamp{};
+    const auto formattingStarted = [&]() -> std::common_type_t<decltype(timings->stamp()), decltype(CameraTimings::Stamp{})> {
+      if (timings) {
+        return timings->stamp();
+      } else {
+        return CameraTimings::Stamp{};
+      }
+    }();
     const bool formatted = format_camera_command(camera, command, error);
     if (timings != nullptr)
     {
@@ -134,7 +147,13 @@ bool CameraInteraction::send(const CameraDefinition& camera, bool journal)
       report(error);
       return false;
     }
-    const auto dispatchStarted = timings ? timings->stamp() : CameraTimings::Stamp{};
+    const auto dispatchStarted = [&]() -> std::common_type_t<decltype(timings->stamp()), decltype(CameraTimings::Stamp{})> {
+      if (timings) {
+        return timings->stamp();
+      } else {
+        return CameraTimings::Stamp{};
+      }
+    }();
     CameraCommandTiming dispatchTiming(dispatchStarted.id != 0);
     accepted = submitCommand && submitCommand(QString::fromStdString(command), error);
     const auto dispatchResult = dispatchTiming.finish();
@@ -145,7 +164,13 @@ bool CameraInteraction::send(const CameraDefinition& camera, bool journal)
   }
   if (!accepted)
   {
-    report(error.empty() ? "Cannot update the Postprocessor camera." : error);
+    report([&]() -> std::common_type_t<decltype("Cannot update the Postprocessor camera."), decltype(error)> {
+      if (error.empty()) {
+        return "Cannot update the Postprocessor camera.";
+      } else {
+        return error;
+      }
+    }());
     return false;
   }
   if (active->session().active_view_id != viewId)
@@ -219,9 +244,20 @@ void CameraInteraction::preview()
   }
   else
   {
-    const double sign = reverseZoom ? -1 : 1;
-    const double exponent = mode == Mode::Wheel ? std::log(NavigationDefaults::wheel_factor) * wheelSteps :
-      -delta.y() * NavigationDefaults::drag_zoom_exponent / std::max(1, size.height());
+    const double sign = [&]() -> double {
+      if (reverseZoom) {
+        return -1;
+      } else {
+        return 1;
+      }
+    }();
+    const double exponent = [&]() -> double {
+      if (mode == Mode::Wheel) {
+        return std::log(NavigationDefaults::wheel_factor) * wheelSteps;
+      } else {
+        return -delta.y() * NavigationDefaults::drag_zoom_exponent / std::max(1, size.height());
+      }
+    }();
     valid = CameraOperations::zoom(baseline, std::exp(sign * sensitivity * exponent), candidate, error);
   }
   if (!valid)
@@ -351,7 +387,13 @@ void CameraInteraction::fit()
       return;
     }
   }
-  const auto& dispatch = active && active->user_options().journalCamera ? submitCommand : silentCommand;
+  const auto& dispatch = [&]() -> decltype((submitCommand)) {
+    if (active && active->user_options().journalCamera) {
+      return submitCommand;
+    } else {
+      return silentCommand;
+    }
+  }();
   if (!dispatch || !dispatch(QStringLiteral("post view fit"), error))
   {
     report(error);
@@ -378,10 +420,30 @@ bool CameraInteraction::handle(QEvent* event)
           return true;
         }
         const auto& settings = active->user_options();
-        const auto action = mouse->button() == Qt::LeftButton ? settings.leftDrag :
-          (mouse->button() == Qt::MiddleButton ? settings.middleDrag : settings.rightDrag);
-        const Mode next = action == MouseDragAction::Rotate ? Mode::Rotate :
-          (action == MouseDragAction::Zoom ? Mode::Zoom : Mode::Pan);
+        const auto action = [&]() -> std::common_type_t<decltype(settings.leftDrag), std::common_type_t<decltype(settings.middleDrag), decltype(settings.rightDrag)>> {
+          if (mouse->button() == Qt::LeftButton) {
+            return settings.leftDrag;
+          } else {
+            return ([&]() -> std::common_type_t<decltype(settings.middleDrag), decltype(settings.rightDrag)> {
+              if (mouse->button() == Qt::MiddleButton) {
+                return settings.middleDrag;
+              } else {
+                return settings.rightDrag;
+              }
+            }());
+          }
+        }();
+        const Mode next = [&]() -> Mode {
+          if (action == MouseDragAction::Rotate) {
+            return Mode::Rotate;
+          } else {
+            if (action == MouseDragAction::Zoom) {
+              return Mode::Zoom;
+            } else {
+              return Mode::Pan;
+            }
+          }
+        }();
         if (begin(next, mouse->position()))
         {
           button = mouse->button();
@@ -441,8 +503,11 @@ bool CameraInteraction::handle(QEvent* event)
       {
         return true;
       }
-      wheelSteps += wheel->angleDelta().y() != 0 ? wheel->angleDelta().y() / 120.0 :
-        wheel->pixelDelta().y() / NavigationDefaults::wheel_pixels_per_step;
+      if (wheel->angleDelta().y() != 0) {
+        wheelSteps += wheel->angleDelta().y() / 120.0;
+      } else {
+        wheelSteps += wheel->pixelDelta().y() / NavigationDefaults::wheel_pixels_per_step;
+      }
       if (timings != nullptr)
       {
         timings->input();
@@ -482,16 +547,32 @@ bool CameraInteraction::handle(QEvent* event)
         switch (key->key())
         {
           case Qt::Key_F9:
-            next = shift ? Standard::Back : Standard::Front;
+            if (shift) {
+              next = Standard::Back;
+            } else {
+              next = Standard::Front;
+            }
             break;
           case Qt::Key_F10:
-            next = shift ? Standard::Bottom : Standard::Top;
+            if (shift) {
+              next = Standard::Bottom;
+            } else {
+              next = Standard::Top;
+            }
             break;
           case Qt::Key_F11:
-            next = shift ? Standard::Left : Standard::Right;
+            if (shift) {
+              next = Standard::Left;
+            } else {
+              next = Standard::Right;
+            }
             break;
           case Qt::Key_F12:
-            next = shift ? Standard::Orthographic : Standard::Isometric;
+            if (shift) {
+              next = Standard::Orthographic;
+            } else {
+              next = Standard::Isometric;
+            }
             break;
         }
         CameraDefinition camera;

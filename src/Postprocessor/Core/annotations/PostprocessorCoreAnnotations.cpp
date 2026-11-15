@@ -1,3 +1,4 @@
+#include <type_traits>
 #include <vtkCell.h>
 #include "../application/PostprocessorCore.hpp"
 #include <utility>
@@ -102,8 +103,15 @@ namespace Postprocessor
     auto label = requested;
     if (state.sources.count(label.entity.source_id) == 0 || label.entity.entity_id < 0 ||
         (label.entity.kind != EntityKind::Node && label.entity.kind != EntityKind::Element && label.entity.kind != EntityKind::IntegrationPoint) ||
-        (label.entity.kind == EntityKind::IntegrationPoint ? !label.entity.integration_point ||
-          *label.entity.integration_point < 1 || *label.entity.integration_point > 2147483647 : label.entity.integration_point.has_value()))
+        ([&]() -> std::common_type_t<decltype(!label.entity.integration_point ||
+          *label.entity.integration_point < 1 || *label.entity.integration_point > 2147483647), decltype(label.entity.integration_point.has_value())> {
+          if (label.entity.kind == EntityKind::IntegrationPoint) {
+            return !label.entity.integration_point ||
+          *label.entity.integration_point < 1 || *label.entity.integration_point > 2147483647;
+          } else {
+            return label.entity.integration_point.has_value();
+          }
+        }()))
     {
       error = "The original label entity identity is invalid.";
       return false;
@@ -202,7 +210,11 @@ namespace Postprocessor
     auto& annotations = staged.views.at(view_id).annotations;
     if (extrema)
     {
-      (name == "@minimum" ? annotations.minimum_position : annotations.maximum_position) = position;
+      if (name == "@minimum") {
+        annotations.minimum_position = position;
+      } else {
+        annotations.maximum_position = position;
+      }
     }
     else if (action == "remove")
     {
@@ -242,7 +254,11 @@ namespace Postprocessor
       return false;
     }
     auto& annotations = view->second.annotations;
-    (extrema ? annotations.extrema_visible : annotations.visible) = visible;
+    if (extrema) {
+      annotations.extrema_visible = visible;
+    } else {
+      annotations.visible = visible;
+    }
     ++annotations.revision;
     return true;
   }
@@ -264,12 +280,24 @@ namespace Postprocessor
       }
       bool hiddenByFilter = false;
       EvaluatedAnnotation value{label.name,"Unavailable",std::nullopt,label.position};
-      value.text = std::string(label.entity.kind == EntityKind::Node ? "Node " : "Element ")+std::to_string(label.entity.entity_id);
+      value.text = std::string([&]() -> const char* {
+        if (label.entity.kind == EntityKind::Node) {
+          return "Node ";
+        } else {
+          return "Element ";
+        }
+      }())+std::to_string(label.entity.entity_id);
       if (label.entity.integration_point)
       {
         value.text += " / IP "+std::to_string(*label.entity.integration_point);
       }
-      value.text += "\n"+label.field.array_name+" / "+(label.field.magnitude ? "Magnitude" : label.field.component)+": Unavailable";
+      value.text += "\n"+label.field.array_name+" / "+([&]() -> std::common_type_t<decltype("Magnitude"), decltype(label.field.component)> {
+        if (label.field.magnitude) {
+          return "Magnitude";
+        } else {
+          return label.field.component;
+        }
+      }())+": Unavailable";
       const auto data = result_data(label.entity.source_id);
       // Resolve a durable dataset identity after refresh/restore, never reuse an
       // ordinal that may now refer to a different block or set.
@@ -277,7 +305,13 @@ namespace Postprocessor
       bool ambiguous = false;
       for (const auto& dataset : mesh_datasets(label.entity.source_id))
       {
-        if (dataset.kind == label.dataset_kind && (label.model_id >= 0 ? dataset.model_id == label.model_id : dataset.name == label.dataset_name))
+        if (dataset.kind == label.dataset_kind && ([&]() -> std::common_type_t<decltype(dataset.model_id == label.model_id), decltype(dataset.name == label.dataset_name)> {
+          if (label.model_id >= 0) {
+            return dataset.model_id == label.model_id;
+          } else {
+            return dataset.name == label.dataset_name;
+          }
+        }()))
         {
           if (resolved)
           {
@@ -314,7 +348,13 @@ namespace Postprocessor
             std::ostringstream text;
             text.imbue(std::locale::classic());
             text.precision(6);
-            text << (label.entity.kind == EntityKind::Node ? "Node " : "Element ") << label.entity.entity_id;
+            text << ([&]() -> const char* {
+              if (label.entity.kind == EntityKind::Node) {
+                return "Node ";
+              } else {
+                return "Element ";
+              }
+            }()) << label.entity.entity_id;
             if (label.entity.integration_point)
             {
               text << " / IP " << *label.entity.integration_point;
@@ -415,7 +455,13 @@ namespace Postprocessor
           }
           for (int index = 0; index < 2; ++index)
           {
-            if (!extrema[index] || (index == 0 ? values[i] < *extrema[index] : values[i] > *extrema[index]))
+            if (!extrema[index] || ([&]() -> std::common_type_t<decltype(values[i] < *extrema[index]), decltype(values[i] > *extrema[index])> {
+              if (index == 0) {
+                return values[i] < *extrema[index];
+              } else {
+                return values[i] > *extrema[index];
+              }
+            }()))
             {
               extrema[index] = values[i];
               positions[index] = position;
@@ -429,10 +475,34 @@ namespace Postprocessor
         {
           std::ostringstream text;
           text.imbue(std::locale::classic());
-          text << std::setprecision(6) << (index == 0 ? "Minimum: " : "Maximum: ") << *extrema[index]
-            << "\nFiltered display sample" << (display.coloring.field->association == SimResults::Association::Node ? " (interpolated)" : "");
-          output.push_back({index == 0 ? "@minimum" : "@maximum",text.str(),positions[index],
-            index == 0 ? definitions.minimum_position : definitions.maximum_position});
+          text << std::setprecision(6) << ([&]() -> const char* {
+            if (index == 0) {
+              return "Minimum: ";
+            } else {
+              return "Maximum: ";
+            }
+          }()) << *extrema[index]
+            << "\nFiltered display sample" << ([&]() -> const char* {
+              if (display.coloring.field->association == SimResults::Association::Node) {
+                return " (interpolated)";
+              } else {
+                return "";
+              }
+            }());
+          output.push_back({[&]() -> const char* {
+            if (index == 0) {
+              return "@minimum";
+            } else {
+              return "@maximum";
+            }
+          }(),text.str(),positions[index],
+            [&]() -> std::common_type_t<decltype(definitions.minimum_position), decltype(definitions.maximum_position)> {
+              if (index == 0) {
+                return definitions.minimum_position;
+              } else {
+                return definitions.maximum_position;
+              }
+            }()});
         }
       }
       return output;
@@ -465,9 +535,26 @@ namespace Postprocessor
       {
         continue;
       }
-      const auto kind = field.association == SimResults::Association::Node ? EntityKind::Node :
-        field.association == SimResults::Association::Element ? EntityKind::Element : EntityKind::IntegrationPoint;
-      const auto count = kind == EntityKind::Element ? part.second->GetNumberOfCells() : part.second->GetNumberOfPoints();
+      const auto kind = [&]() -> std::common_type_t<decltype(EntityKind::Node), std::common_type_t<decltype(EntityKind::Element), decltype(EntityKind::IntegrationPoint)>> {
+        if (field.association == SimResults::Association::Node) {
+          return EntityKind::Node;
+        } else {
+          return [&]() -> std::common_type_t<decltype(EntityKind::Element), decltype(EntityKind::IntegrationPoint)> {
+            if (field.association == SimResults::Association::Element) {
+              return EntityKind::Element;
+            } else {
+              return EntityKind::IntegrationPoint;
+            }
+          }();
+        }
+      }();
+      const auto count = [&]() -> std::common_type_t<decltype(part.second->GetNumberOfCells()), decltype(part.second->GetNumberOfPoints())> {
+        if (kind == EntityKind::Element) {
+          return part.second->GetNumberOfCells();
+        } else {
+          return part.second->GetNumberOfPoints();
+        }
+      }();
       for (vtkIdType index = 0; index < count; ++index)
       {
         std::string error;
@@ -492,21 +579,57 @@ namespace Postprocessor
     }
     for (int index = 0; index < 2; ++index)
     {
-      const auto& entity = index == 0 ? minEntity : maxEntity;
+      const auto& entity = [&]() -> decltype((minEntity)) {
+        if (index == 0) {
+          return minEntity;
+        } else {
+          return maxEntity;
+        }
+      }();
       if (entity)
       {
         const auto probe = annotation_probe(*data,display,*entity);
         std::ostringstream text;
         text.imbue(std::locale::classic());
         text.precision(6);
-        text << (index == 0 ? "Minimum: " : "Maximum: ") << (index == 0 ? *minimum : *maximum)
-          << '\n' << (entity->kind == EntityKind::Node ? "Node " : "Element ") << entity->entity_id;
+        text << ([&]() -> const char* {
+          if (index == 0) {
+            return "Minimum: ";
+          } else {
+            return "Maximum: ";
+          }
+        }()) << ([&]() -> std::common_type_t<decltype(*minimum), decltype(*maximum)> {
+          if (index == 0) {
+            return *minimum;
+          } else {
+            return *maximum;
+          }
+        }())
+          << '\n' << ([&]() -> const char* {
+            if (entity->kind == EntityKind::Node) {
+              return "Node ";
+            } else {
+              return "Element ";
+            }
+          }()) << entity->entity_id;
         if (entity->integration_point)
         {
           text << " / IP " << *entity->integration_point;
         }
-        output.push_back({index == 0 ? "@minimum" : "@maximum",text.str(),probe.displayed_position,
-          index == 0 ? definitions.minimum_position : definitions.maximum_position});
+        output.push_back({[&]() -> const char* {
+          if (index == 0) {
+            return "@minimum";
+          } else {
+            return "@maximum";
+          }
+        }(),text.str(),probe.displayed_position,
+          [&]() -> std::common_type_t<decltype(definitions.minimum_position), decltype(definitions.maximum_position)> {
+            if (index == 0) {
+              return definitions.minimum_position;
+            } else {
+              return definitions.maximum_position;
+            }
+          }()});
       }
     }
     return output;

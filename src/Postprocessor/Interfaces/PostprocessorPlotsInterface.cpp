@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorApplicationInterface.hpp"
 #include <algorithm>
 bool PostprocessorApplicationInterface::create_plot(const std::string& name,std::string& error)
@@ -18,7 +19,13 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
     return false;
   }
   const auto& state = core.session();
-  const auto source = sourceName.empty() ? state.active_source_id : core.source_id_from_name(sourceName);
+  const auto source = [&]() -> std::common_type_t<decltype(state.active_source_id), decltype(core.source_id_from_name(sourceName))> {
+    if (sourceName.empty()) {
+      return state.active_source_id;
+    } else {
+      return core.source_id_from_name(sourceName);
+    }
+  }();
   const auto data = core.result_data(source);
   if (!data || id < 0 || (kind == EntityKind::IntegrationPoint && (!ip || *ip < 1 || *ip > 2147483647)))
   {
@@ -56,9 +63,27 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
     {
       return false;
     }
-    const bool useMagnitude = component.empty() ? group.field.vector_components.has_value() : magnitude;
+    const bool useMagnitude = [&]() -> bool {
+      if (component.empty()) {
+        return group.field.vector_components.has_value();
+      } else {
+        return magnitude;
+      }
+    }();
     field = FieldSelection{dataset,group.field.array_name,group.field.association,
-      useMagnitude ? std::string{} : component.empty() && !group.field.components.empty() ? group.field.components.front() : component,
+      [&]() -> std::common_type_t<decltype(std::string{}), std::common_type_t<decltype(group.field.components.front()), decltype(component)>> {
+        if (useMagnitude) {
+          return std::string{};
+        } else {
+          return [&]() -> std::common_type_t<decltype(group.field.components.front()), decltype(component)> {
+            if (component.empty() && !group.field.components.empty()) {
+              return group.field.components.front();
+            } else {
+              return component;
+            }
+          }();
+        }
+      }(),
       useMagnitude,group.key};
   }
   if (!field)
@@ -69,7 +94,11 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
   if (!component.empty())
   {
     field->magnitude = magnitude;
-    field->component = magnitude ? std::string{} : component;
+    if (magnitude) {
+      field->component = std::string{};
+    } else {
+      field->component = component;
+    }
   }
   std::optional<PlotEntityReference> reference;
   for (const auto& part : core.mesh_datasets(source))
@@ -121,7 +150,13 @@ bool PostprocessorApplicationInterface::add_plot_table(const std::string& plotNa
   const std::string& column,const std::string& value,std::string& error,
   const Postprocessor::TableQualifiers& tableQualifiers,bool field,const Postprocessor::FieldQualifiers& fieldQualifiers)
 {
-  const auto source = sourceName.empty() ? core.session().active_source_id : core.source_id_from_name(sourceName);
+  const auto source = [&]() -> std::common_type_t<decltype(core.session().active_source_id), decltype(core.source_id_from_name(sourceName))> {
+    if (sourceName.empty()) {
+      return core.session().active_source_id;
+    } else {
+      return core.source_id_from_name(sourceName);
+    }
+  }();
   std::string key;
   if (field)
   {

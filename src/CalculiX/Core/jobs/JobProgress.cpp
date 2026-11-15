@@ -99,7 +99,13 @@ namespace
     }
     if (!valid)
     {
-      data.unparsed.push_back({status ? "STA" : "CVG", number, line});
+      data.unparsed.push_back({[&]() -> const char* {
+        if (status) {
+          return "STA";
+        } else {
+          return "CVG";
+        }
+      }(), number, line});
     }
   }
 }

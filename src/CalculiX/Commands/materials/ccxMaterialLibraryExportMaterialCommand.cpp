@@ -4,61 +4,55 @@
 #include "Core/materials/CalculiXMaterialsInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
-ccxMaterialLibraryExportMaterialCommand::ccxMaterialLibraryExportMaterialCommand()
-{}
+ccxMaterialLibraryExportMaterialCommand::ccxMaterialLibraryExportMaterialCommand() {}
 
-ccxMaterialLibraryExportMaterialCommand::~ccxMaterialLibraryExportMaterialCommand()
-{}
+ccxMaterialLibraryExportMaterialCommand::~ccxMaterialLibraryExportMaterialCommand() {}
 
-std::vector<std::string> ccxMaterialLibraryExportMaterialCommand::get_syntax()
-{
+std::vector<std::string> ccxMaterialLibraryExportMaterialCommand::get_syntax() {
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
   syntax.append("export materiallibrary ");
-  syntax.append("cubit_name <string:type='unquoted', number='1', label='cubit_name', help='<cubit_name>'> ");
+  syntax.append("material_name <string:type='unquoted', number='1', label='material_name', help='<material_name>'> ");
   syntax.append("name <string:type='unquoted', number='1', label='name', help='<name>'> ");
   syntax.append("groupname <string:type='unquoted', number='1', label='groupname', help='<groupname>'> ");
   syntax_list.push_back(syntax);
   return syntax_list;
 }
 
-std::vector<std::string> ccxMaterialLibraryExportMaterialCommand::get_syntax_help()
-{
+std::vector<std::string> ccxMaterialLibraryExportMaterialCommand::get_syntax_help() {
   std::vector<std::string> help(1);
   help[0] = "ccx ";
   help[0].append("export materiallibrary ");
-  help[0].append("cubit_name <cubit_name> ");
+  help[0].append("material_name <material_name> ");
   help[0].append("name <name> ");
   help[0].append("groupname <groupname> ");
-  
+
   return help;
 }
 
-std::vector<std::string> ccxMaterialLibraryExportMaterialCommand::get_help()
-{
+std::vector<std::string> ccxMaterialLibraryExportMaterialCommand::get_help() {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxMaterialLibraryExportMaterialCommand::execute(CubitCommandData &data)
-{
+bool ccxMaterialLibraryExportMaterialCommand::execute(CubitCommandData &data) {
   CalculiXMaterialsInterface ccx_materials_iface;
 
 
   std::string output;
   std::string name;
   std::string groupname;
-  std::string cubit_name;
-  
+  std::string material_name;
+
   data.get_string("name", name);
   data.get_string("groupname", groupname);
-  data.get_string("cubit_name", cubit_name);
-  
-  if (!ccx_materials_iface.export_materiallibrary_material(name, groupname, cubit_name))
-  {
+  data.get_string("material_name", material_name);
+
+  if (!ccx_materials_iface.export_materiallibrary_material(name, groupname, material_name)) {
     output = "Failed!\n";
-    PRINT_ERROR(output.c_str());
+    PRINT_ERROR("%s", output.c_str());
+    return false;
   }
 
   return true;

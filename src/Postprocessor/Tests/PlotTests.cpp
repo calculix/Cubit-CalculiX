@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PlotTests.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/Core/plots/PlotCodec.hpp"
@@ -153,7 +154,13 @@ int plot_cases(const std::shared_ptr<PostprocessorApplicationInterface>& app)
       actual.y = std::array<double,2>{0,100};
     }
     ++token;
-    journal ? ++journaled : ++previews;
+    [&]() -> std::common_type_t<decltype(++journaled), decltype(++previews)> {
+      if (journal) {
+        return ++journaled;
+      } else {
+        return ++previews;
+      }
+    }();
     return true;
   },[]()
   {

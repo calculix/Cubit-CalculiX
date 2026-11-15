@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Core/results/dat/CoreResultsDat.hpp"
 #include "Core/results/dat/CoreResultsDatFormat.hpp"
 #include <numeric>
@@ -945,9 +946,21 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       {
         std::string_view last;
         const auto count = ResultReadNumbers::field_count(raw, &last);
-        const std::size_t identifiers = state.association == 2 ? 2 : 1;
+        const std::size_t identifiers = [&]() -> std::size_t {
+          if (state.association == 2) {
+            return 2;
+          } else {
+            return 1;
+          }
+        }();
         const bool suffix = !last.empty() && (last.front() == '_' || last == "L");
-        const std::size_t size = count - (suffix ? 1 : 0);
+        const std::size_t size = count - ([&]() -> int {
+          if (suffix) {
+            return 1;
+          } else {
+            return 0;
+          }
+        }());
         if (size <= identifiers)
         {
           PRINT_ERROR("DAT variable record has no values at line %zu.\n", state.line_number);
@@ -960,7 +973,13 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         }
         for (std::size_t i = identifiers; i < size; ++i)
         {
-          state.components.push_back((state.result_type == "internal state variables" ? "SDV" : "D") + std::to_string(i - identifiers + 1));
+          state.components.push_back(([&]() -> const char* {
+            if (state.result_type == "internal state variables") {
+              return "SDV";
+            } else {
+              return "D";
+            }
+          }()) + std::to_string(i - identifiers + 1));
         }
         result_block_components[state.data_id] = state.components;
         state.variable_components = false;
@@ -980,11 +999,29 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         const auto count = ResultReadNumbers::field_count(raw, &last);
         const bool local = last == "L" && state.association == 1 && local_vector_type(state.result_type) && state.components.size() == 3;
         const bool suffix = !last.empty() && (last.front() == '_' || local);
-        const std::size_t offset = state.association == 1 ? 1 : 0;
-        bool valid = count == state.components.size() + offset + (suffix ? 1 : 0);
+        const std::size_t offset = [&]() -> std::size_t {
+          if (state.association == 1) {
+            return 1;
+          } else {
+            return 0;
+          }
+        }();
+        bool valid = count == state.components.size() + offset + ([&]() -> int {
+          if (suffix) {
+            return 1;
+          } else {
+            return 0;
+          }
+        }());
         std::size_t position = 0;
         std::string_view token;
-        for (std::size_t i = 0; valid && i < count - (suffix ? 1 : 0); ++i)
+        for (std::size_t i = 0; valid && i < count - ([&]() -> int {
+          if (suffix) {
+            return 1;
+          } else {
+            return 0;
+          }
+        }()); ++i)
         {
           double value = 0.0;
           valid = ResultReadNumbers::next_field(raw, position, token);
@@ -995,7 +1032,11 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
           }
           else if (valid)
           {
-            valid = state.result_type == "global coordinates" ? ResultReadNumbers::real(token, value) : ResultReadNumbers::result_value(token, value);
+            if (state.result_type == "global coordinates") {
+              valid = ResultReadNumbers::real(token, value);
+            } else {
+              valid = ResultReadNumbers::result_value(token, value);
+            }
           }
         }
         if (!valid)
@@ -1132,7 +1173,11 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         state.association = definition.association;
         state.variable_components = definition.variable;
         state.components = definition.components;
-        state.result_type = definition.table.key == "EMAS" ? "emas" : definition.table.name;
+        if (definition.table.key == "EMAS") {
+          state.result_type = "emas";
+        } else {
+          state.result_type = definition.table.name;
+        }
         state.data_id = static_cast<int>(result_block_data.size());
         total_times.push_back(definition.table.time);
         result_blocks.push_back({static_cast<int>(result_blocks.size() + 1), static_cast<int>(total_times.size() - 1),
@@ -1182,7 +1227,17 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
             table.rows.emplace_back();
           }
           auto& row = table.rows.back();
-          const std::size_t expected = row.size() == 0 || row.size() == 6 ? 6 : row.size() == 12 || row.size() == 15 ? 3 : 0;
+          const std::size_t expected = [&]() -> std::size_t {
+            if (row.size() == 0 || row.size() == 6) {
+              return 6;
+            } else {
+              if (row.size() == 12 || row.size() == 15) {
+                return 3;
+              } else {
+                return 0;
+              }
+            }
+          }();
           if (values.size() != expected || row.size() + values.size() > state.table_width)
           {
             if (input.consumed_bytes() >= state.file_size)
@@ -1300,7 +1355,17 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       ++current_read_mode;
       if (current_read_mode == 113 || current_read_mode == 115 || current_read_mode == 117 || current_read_mode == 119)
       {
-        const std::size_t count = current_read_mode == 117 ? 3 : current_read_mode == 119 ? 5 : 6;
+        const std::size_t count = [&]() -> std::size_t {
+          if (current_read_mode == 117) {
+            return 3;
+          } else {
+            if (current_read_mode == 119) {
+              return 5;
+            } else {
+              return 6;
+            }
+          }
+        }();
         std::vector<double> values;
         if (!numeric(raw, values) || values.size() != count)
         {
@@ -1313,7 +1378,21 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
           PRINT_ERROR("Invalid DAT section metadata at line %zu.\n", state.line_number);
           return false;
         }
-        const std::size_t offset = current_read_mode == 113 ? 2 : current_read_mode == 115 ? 8 : current_read_mode == 117 ? 14 : 17;
+        const std::size_t offset = [&]() -> std::size_t {
+          if (current_read_mode == 113) {
+            return 2;
+          } else {
+            if (current_read_mode == 115) {
+              return 8;
+            } else {
+              if (current_read_mode == 117) {
+                return 14;
+              } else {
+                return 17;
+              }
+            }
+          }
+        }();
         std::copy(values.begin(), values.end(), result_section_data.back().begin() + offset);
       }
       continue;
@@ -1410,9 +1489,27 @@ DatParsedBatch CoreResultsDat::parse_raw_batch(const DatRawReadBatch& batch, con
     const bool shell_suffix = !last.empty() && last.front() == '_';
     const bool local = last == "L" && batch.association == 1 &&
       CoreResultsDatFormat::local_vector_type(type) && component_count == 3;
-    const bool elemental = batch.association > 0 ? batch.association != 1 : count == component_count || shell_suffix;
-    const std::size_t offset = elemental ? 0 : 1;
-    if (count != component_count + offset + (shell_suffix || local ? 1 : 0))
+    const bool elemental = [&]() -> bool {
+      if (batch.association > 0) {
+        return batch.association != 1;
+      } else {
+        return count == component_count || shell_suffix;
+      }
+    }();
+    const std::size_t offset = [&]() -> std::size_t {
+      if (elemental) {
+        return 0;
+      } else {
+        return 1;
+      }
+    }();
+    if (count != component_count + offset + ([&]() -> int {
+      if (shell_suffix || local) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }()))
     {
       output.error = "Incomplete DAT result row at line " + std::to_string(record.source_line);
       return output;
@@ -1420,10 +1517,24 @@ DatParsedBatch CoreResultsDat::parse_raw_batch(const DatRawReadBatch& batch, con
     int identifier_type = batch.association;
     if (identifier_type == 0)
     {
-      identifier_type = elemental ? (component_count == 2 || type == "emas" ? 3 : 2) : 1;
+      if (elemental) {
+        if (component_count == 2 || type == "emas") {
+          identifier_type = 3;
+        } else {
+          identifier_type = 2;
+        }
+      } else {
+        identifier_type = 1;
+      }
     }
     std::vector<double> row(component_count);
-    row.reserve(component_count + (derived ? 6 : 0));
+    row.reserve(component_count + ([&]() -> int {
+      if (derived) {
+        return 6;
+      } else {
+        return 0;
+      }
+    }()));
     for (std::size_t component = 0; component < component_count; ++component)
     {
       // Element/IP IDs remain part of the stored elemental row. Reuse the
@@ -1435,8 +1546,17 @@ DatParsedBatch CoreResultsDat::parse_raw_batch(const DatRawReadBatch& batch, con
       }
       const bool identity = elemental && (component == 0 || (identifier_type == 2 && component == 1));
       int numeric_id = 0;
-      const bool valid = identity ? ResultReadNumbers::integer(token, numeric_id) && numeric_id > 0 :
-        (type == "globalcoordinates" ? ResultReadNumbers::real(token, row[component]) : ResultReadNumbers::result_value(token, row[component]));
+      const bool valid = [&]() -> bool {
+        if (identity) {
+          return ResultReadNumbers::integer(token, numeric_id) && numeric_id > 0;
+        } else {
+          if (type == "globalcoordinates") {
+            return ResultReadNumbers::real(token, row[component]);
+          } else {
+            return ResultReadNumbers::result_value(token, row[component]);
+          }
+        }
+      }();
       if (!valid)
       {
         output.error = "Invalid DAT value at line " + std::to_string(record.source_line);
@@ -1475,9 +1595,13 @@ DatParsedBatch CoreResultsDat::parse_raw_batch(const DatRawReadBatch& batch, con
   {
     const bool stress = type == "stresses";
     auto& components = reader.result_block_components[0];
-    const std::vector<std::string> extra = stress ?
-      std::vector<std::string>{"mises", "PS1", "PS2", "PS3", "worstPS", "maxShear"} :
-      std::vector<std::string>{"mises", "PE1", "PE2", "PE3", "worstPE", "maxShear"};
+    const std::vector<std::string> extra = [&]() -> std::vector<std::string> {
+      if (stress) {
+        return std::vector<std::string>{"mises", "PS1", "PS2", "PS3", "worstPS", "maxShear"};
+      } else {
+        return std::vector<std::string>{"mises", "PE1", "PE2", "PE3", "worstPE", "maxShear"};
+      }
+    }();
     components.insert(components.end(), extra.begin(), extra.end());
     CalculiXResultsInterface results;
     for (auto& row : values)
@@ -1496,8 +1620,20 @@ DatParsedBatch CoreResultsDat::parse_raw_batch(const DatRawReadBatch& batch, con
         row.insert(row.end(), 6, std::numeric_limits<double>::quiet_NaN());
         continue;
       }
-      row.push_back(stress ? results.compute_von_mises_stress(tensor) : results.compute_von_mises_strain(tensor));
-      const auto principal = stress ? results.compute_principal_stresses(tensor) : results.compute_principal_strains(tensor);
+      row.push_back([&]() -> std::common_type_t<decltype(results.compute_von_mises_stress(tensor)), decltype(results.compute_von_mises_strain(tensor))> {
+        if (stress) {
+          return results.compute_von_mises_stress(tensor);
+        } else {
+          return results.compute_von_mises_strain(tensor);
+        }
+      }());
+      const auto principal = [&]() -> std::common_type_t<decltype(results.compute_principal_stresses(tensor)), decltype(results.compute_principal_strains(tensor))> {
+        if (stress) {
+          return results.compute_principal_stresses(tensor);
+        } else {
+          return results.compute_principal_strains(tensor);
+        }
+      }();
       if (principal.size() < 4)
       {
         output.error = "Invalid DAT principal component result.";
@@ -1607,7 +1743,13 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
         PRINT_ERROR("DAT result block index overflow.\n");
         return false;
       }
-      const bool valid_header = current_read_mode == 11 ? header_emas(fields) : read_header(fields);
+      const bool valid_header = [&]() -> bool {
+        if (current_read_mode == 11) {
+          return header_emas(fields);
+        } else {
+          return read_header(fields);
+        }
+      }();
       if (!valid_header)
       {
         return false;
@@ -1692,7 +1834,17 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
     }
     else if (current_read_mode == 113 || current_read_mode == 115 || current_read_mode == 117 || current_read_mode == 119)
     {
-      const std::size_t expected = current_read_mode == 117 ? 3 : current_read_mode == 119 ? 5 : 6;
+      const std::size_t expected = [&]() -> std::size_t {
+        if (current_read_mode == 117) {
+          return 3;
+        } else {
+          if (current_read_mode == 119) {
+            return 5;
+          } else {
+            return 6;
+          }
+        }
+      }();
       if (result_section_data.empty() || fields.size() != expected)
       {
         PRINT_ERROR("Invalid DAT section row at line %zu.\n", state.line_number);
@@ -1763,7 +1915,13 @@ DatParsedBatch CoreResultsDat::parse_boost_batch(const DatReadBatch& batch, cons
     }
     const bool shell_suffix = line.back()[0] == '_';
     const bool elemental = line.size() == component_count || shell_suffix;
-    const auto required = component_count + (elemental ? 0 : 1);
+    const auto required = component_count + ([&]() -> int {
+      if (elemental) {
+        return 0;
+      } else {
+        return 1;
+      }
+    }());
     if (line.size() < required || (shell_suffix && line.size() < component_count + 1))
     {
       output.error = "Incomplete DAT result row.";
@@ -1824,7 +1982,15 @@ bool CoreResultsDat::append_boost_batch(DatParsedBatch& batch)
       }
       const auto type = erase_whitespace(result_block_type[(*block)[2]]);
       DatResultTable table;
-      table.key = type == "displacements" ? "U" : (type == "forces" ? "RF" : "VF");
+      if (type == "displacements") {
+        table.key = "U";
+      } else {
+        if (type == "forces") {
+          table.key = "RF";
+        } else {
+          table.key = "VF";
+        }
+      }
       table.name = result_block_type[(*block)[2]] + " (local coordinates)";
       table.coordinate_system = "Local";
       table.set_name = result_block_set[(*block)[3]];

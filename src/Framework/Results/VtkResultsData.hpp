@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 #include <cstddef>
+#include "Framework/Core/units/SourceUnitContext.hpp"
+#include "Framework/Core/units/QuantityUnit.hpp"
+#include "ResultsTableMetadata.hpp"
 
 class vtkDataObject;
 class vtkTable;
@@ -68,6 +71,8 @@ namespace SimResults
     // Provider-established physical meaning. Vector shape or array names alone
     // do not establish displacement semantics for automatic deformation.
     FieldRole role = FieldRole::Unspecified;
+    std::vector<SimUnits::QuantityUnit> component_units;
+    bool categorical = false;
   };
 
   struct Dataset
@@ -79,6 +84,9 @@ namespace SimResults
     std::size_t point_count = 0;
     std::size_t cell_count = 0;
     std::string element_type; // Empty when unknown; Mixed for heterogeneous sets.
+    std::string material_id_array;
+    std::string material_workspace;
+    std::string material_project;
   };
 
   struct Increment
@@ -87,6 +95,8 @@ namespace SimResults
     int increment = -1;
     int total_increment = -1;
     double time = 0.0;
+    SimUnits::QuantityUnit independent_variable;
+    std::string coordinate_unit;
     int analysis_type = -1;
     int mode = -1;
     int nodal_diameter = -1;
@@ -100,6 +110,7 @@ namespace SimResults
     // buffers as immutable and use separate filter outputs for deformation.
     std::shared_ptr<vtkDataObject> dataset;
     std::vector<std::shared_ptr<vtkTable>> tables;
+    std::vector<ResultsTableMetadata> table_metadata;
   };
 
   /** Complete, solver-independent result. No reader/model pointers are retained.
@@ -113,6 +124,10 @@ namespace SimResults
     int job_id = -1;
     std::string run_identity;
     std::string result_identity;
+    std::string solver_launch_id;
+    SimUnits::SourceUnitContext source_units;
+    std::string source_workspace;
+    std::string source_project;
     std::string input_path;
     std::vector<std::string> input_files;
     LinkSource link_source = LinkSource::FrdOnly;
@@ -121,6 +136,7 @@ namespace SimResults
     std::vector<Increment> increments;
     std::vector<Dataset> datasets;
     std::vector<std::shared_ptr<vtkTable>> tables;
+    std::vector<ResultsTableMetadata> table_metadata;
   };
 }
 

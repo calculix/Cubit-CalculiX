@@ -273,7 +273,12 @@ std::vector<std::vector<std::string>> CoreLoadsQuery::get_entities(CoreLoadsBody
   for (std::size_t i = 1; i < elements.size(); i++)
   {
     const int id = elements[i];
-    const std::string entity = mode == 1 ? "block" : CubitInterface::get_element_type(id);
+    std::string entity;
+    if (mode == 1) {
+      entity = "block";
+    } else {
+      entity = CubitInterface::get_element_type(id);
+    }
     entities.push_back({entity, std::to_string(id)});
   }
 

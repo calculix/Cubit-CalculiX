@@ -12,7 +12,7 @@
 #include <limits>
 #include <sstream>
 
-class MaterialInterface;
+#include "Framework/Core/materials/FrameworkMaterialsInterface.hpp"
 class CoreMaterials
 {
 
@@ -22,18 +22,8 @@ public:
   CoreMaterials();
   ~CoreMaterials();
 
-  std::vector<std::vector<std::string>> material_cards; // used to store the material cards and its property prefix, maybe comes in handy later
-  // materials_data[0][0] material_card
-  // materials_data[0][1] material card property prefix
-  std::vector<std::vector<std::string>> group_properties;
-  std::vector<std::string> group_properties_description;
-  // group_properties[0][0] property name
-  // group_properties[0][1] property name type  1=scalar, 2=vector, 3 = matrix, 4 = tabular
-  // group_properties[0][2] type column size for table property
-
   bool is_initialized = false;
 
-  bool init(); // initialize
   bool update(); // check for changes of the materials // just a placeholder right now
   bool reset(); // delete all data and initialize afterwards // just a placeholder right now
   bool check_initialized(); // check if object is initialized
@@ -52,7 +42,8 @@ public:
   std::string get_topology_material_export_legacy(int topology_id,int iteration_id);
   bool get_topology_group_material_name(int topology_id, int iteration_id, int element_id, std::string& material_name);
 
-  MaterialInterface *mat_iface = nullptr;
+  FrameworkMaterialsInterface material_api;
+  FrameworkMaterialsInterface* mat_iface = nullptr;
   std::map<int, TopologyMaterialData> topology_material_data; // Topology ID -> one material collection.
 private:
   bool build_topology_material_groups(const TopologyMaterialData& data, const std::map<int, double>& requested_factors, int material_cap, TopologyMaterialGrouping& grouping, std::map<int, double>& applied_factors, bool quantize) const;

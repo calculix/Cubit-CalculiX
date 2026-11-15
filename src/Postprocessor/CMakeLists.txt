@@ -1,4 +1,5 @@
 add_library(postprocessor_core STATIC
+  Core/application/PostprocessorCoreUnits.cpp
   Core/filters/PlaneOperations.cpp
   Core/filters/ClipFilter.cpp
   Core/filters/SectionFilter.cpp
@@ -60,12 +61,16 @@ add_library(postprocessor_core STATIC
   Core/layouts/LayoutDefinition.hpp
 )
 
-target_link_libraries(postprocessor_core PUBLIC cubitsim_results PRIVATE Qt6::Core VTK::CommonDataModel VTK::FiltersCore VTK::FiltersGeneral VTK::FiltersGeometry)
+target_link_libraries(postprocessor_core PUBLIC cubitsim_results cubitsim_results_io PRIVATE Qt6::Core VTK::CommonDataModel VTK::FiltersCore VTK::FiltersGeneral VTK::FiltersGeometry)
 target_include_directories(postprocessor_core PRIVATE "${CUBITSIM_SOURCE_ROOT}")
 target_compile_features(postprocessor_core PUBLIC cxx_std_17)
 set_target_properties(postprocessor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(postprocessor_module SHARED
+  Commands/units/PostUnitsCommand.cpp
+  Commands/units/PostUnitsCommand.hpp
+  Interfaces/PostprocessorReportResultProvider.cpp
+  Interfaces/PostprocessorReportResultProvider.hpp
   Interfaces/PostprocessorFiltersInterface.cpp
   Commands/filters/PostClipCommand.cpp
   Commands/filters/PostSectionCommand.cpp

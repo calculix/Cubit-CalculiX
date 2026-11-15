@@ -284,15 +284,39 @@ bool CoreTopologyLevelSetGeometry::query_element(int element_id, std::string& ca
   int candidate_type = -1;
   if (entity == "hex")
   {
-    candidate_type = connectivity.size() == 8 ? 42 : connectivity.size() == 20 ? 44 : -1;
+    if (connectivity.size() == 8) {
+      candidate_type = 42;
+    } else {
+      if (connectivity.size() == 20) {
+        candidate_type = 44;
+      } else {
+        candidate_type = -1;
+      }
+    }
   }
   else if (entity == "tet")
   {
-    candidate_type = connectivity.size() == 4 ? 31 : connectivity.size() == 10 ? 33 : -1;
+    if (connectivity.size() == 4) {
+      candidate_type = 31;
+    } else {
+      if (connectivity.size() == 10) {
+        candidate_type = 33;
+      } else {
+        candidate_type = -1;
+      }
+    }
   }
   else
   {
-    candidate_type = connectivity.size() == 6 ? 50 : connectivity.size() == 15 ? 52 : -1;
+    if (connectivity.size() == 6) {
+      candidate_type = 50;
+    } else {
+      if (connectivity.size() == 15) {
+        candidate_type = 52;
+      } else {
+        candidate_type = -1;
+      }
+    }
   }
   if (!ElementInterpolation::matches_cubit_type(type, candidate_type))
   {

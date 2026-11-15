@@ -1,3 +1,4 @@
+#include <type_traits>
 #ifndef RESULTSREADERPIPELINE_HPP
 #define RESULTSREADERPIPELINE_HPP
 
@@ -102,8 +103,18 @@ inline bool poll(std::ifstream& file, std::streamoff size, ProgressTool* progres
   if (size > 0)
   {
     // Do not call tellg() at EOF: it would set failbit on the input stream.
-    const auto position = file.eof() ? std::streampos(-1) : file.tellg();
-    fraction = position == std::streampos(-1) ? 0.99 : static_cast<double>(static_cast<std::streamoff>(position)) / static_cast<double>(size);
+    const auto position = [&]() -> std::common_type_t<decltype(std::streampos(-1)), decltype(file.tellg())> {
+      if (file.eof()) {
+        return std::streampos(-1);
+      } else {
+        return file.tellg();
+      }
+    }();
+    if (position == std::streampos(-1)) {
+      fraction = 0.99;
+    } else {
+      fraction = static_cast<double>(static_cast<std::streamoff>(position)) / static_cast<double>(size);
+    }
     if (fraction > 0.99)
     {
       fraction = 0.99;
@@ -123,7 +134,13 @@ inline bool poll(std::streamoff position, std::streamoff size, ProgressTool* pro
     return true;
   }
   previous = now;
-  const double fraction = size > 0 ? std::min(0.99, static_cast<double>(position) / static_cast<double>(size)) : 0.0;
+  const double fraction = [&]() -> double {
+    if (size > 0) {
+      return std::min(0.99, static_cast<double>(position) / static_cast<double>(size));
+    } else {
+      return 0.0;
+    }
+  }();
   progressbar->percent(fraction);
   progressbar->check_interrupt();
   return !CubitInterface::app_util().get()->interrupt();

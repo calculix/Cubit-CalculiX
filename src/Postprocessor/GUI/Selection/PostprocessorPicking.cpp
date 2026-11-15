@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorPicking.hpp"
 #include "Postprocessor/GUI/Viewport/PostprocessorScene.hpp"
 #include "Postprocessor/Core/selection/ResultProbe.hpp"
@@ -134,7 +135,13 @@ bool PostprocessorScene::pick(double x, double y, Postprocessor::EntityKind kind
   {
     for (const auto& surface : display.second->surfaces)
     {
-      const auto* expected = kind == Postprocessor::EntityKind::Node ? surface.nodes.GetPointer() : surface.actor.GetPointer();
+      const auto* expected = [&]() -> std::common_type_t<decltype(surface.nodes.GetPointer()), decltype(surface.actor.GetPointer())> {
+        if (kind == Postprocessor::EntityKind::Node) {
+          return surface.nodes.GetPointer();
+        } else {
+          return surface.actor.GetPointer();
+        }
+      }();
       if (expected != actor)
       {
         continue;

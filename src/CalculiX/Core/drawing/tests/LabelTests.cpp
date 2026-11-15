@@ -98,5 +98,9 @@ int main(int argc, char** argv)
   check(scene.synchronize(error) && renderer.frame.entities.empty(), "Removing an entity removes cached labels");
   failures += captureTests(argc, argv);
   std::cout << failures << " drawing label/capture failures\n";
-  return failures == 0 ? 0 : 1;
+  if (failures == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
 }

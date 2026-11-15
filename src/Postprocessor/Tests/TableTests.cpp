@@ -240,5 +240,9 @@ int main(int argc, char** argv)
         "VTT reader/display lost integer or floating-point precision");
     }
   }
-  return failures ? 1 : 0;
+  if (failures) {
+    return 1;
+  } else {
+    return 0;
+  }
 }

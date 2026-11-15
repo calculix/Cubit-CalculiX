@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostTableCommand.hpp"
 #include "TableCommandOptions.hpp"
 #include "Postprocessor/Commands/FieldCommandOptions.hpp"
@@ -39,8 +40,13 @@ bool PostTableCommand::execute(CubitCommandData& data)
     const bool field = data.find_keyword("FIELD");
     Postprocessor::TableQualifiers tableQualifiers;
     Postprocessor::FieldQualifiers fieldQualifiers;
-    if (!(field ? Postprocessor::read_field_qualifiers(data,fieldQualifiers,error) :
-          Postprocessor::read_table_qualifiers(data,tableQualifiers,error)) ||
+    if (!([&]() -> std::common_type_t<decltype(Postprocessor::read_field_qualifiers(data,fieldQualifiers,error)), decltype(Postprocessor::read_table_qualifiers(data,tableQualifiers,error))> {
+      if (field) {
+        return Postprocessor::read_field_qualifiers(data,fieldQualifiers,error);
+      } else {
+        return Postprocessor::read_table_qualifiers(data,tableQualifiers,error);
+      }
+    }()) ||
         !active->open_table(source,name,field,error,tableQualifiers,fieldQualifiers))
     {
       PRINT_ERROR("Cannot open result table: %s\n",error.c_str());

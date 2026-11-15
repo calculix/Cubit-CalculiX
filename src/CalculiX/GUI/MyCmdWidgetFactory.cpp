@@ -13,6 +13,8 @@
 #include "NavigationWidgetCache.hpp"
 #include "Claro.hpp"
 #include "CubitMessage.hpp"
+#include "GUI/application/GuiSendCmd.hpp"
+#include <QScopedValueRollback>
 
 // A list of headers for my command panels.
 #include "GUI/mesh/CCXBlocksElementTypePanel.hpp"
@@ -136,60 +138,65 @@
 
 MyCmdWidgetFactory::MyCmdWidgetFactory(QObject* parent) :
   QObject(parent),
-  widget_cache()
-{ }
+  widget_cache() { }
 
-MyCmdWidgetFactory::~MyCmdWidgetFactory()
-{
+MyCmdWidgetFactory::~MyCmdWidgetFactory() {
   clear();
 }
 
 QWidget* MyCmdWidgetFactory::getWidget(NavigationModel *model,
                                     const QModelIndex &index,
-                                    QWidget *widgetParent)
-{
-  if(!model || !index.isValid() || !widgetParent)
-      return 0;
-
+                                    QWidget *widgetParent) {
+  if(!model || !index.isValid() || !widgetParent) {
+    return 0;
+  }
   // Get the marker name for the index.
   NavigationNode *node = model->getNode(index);
   QString name = node->getMarker();
 
   // If there isn't a marker, use the path.
-  if(name.isEmpty())
+  if(name.isEmpty()) {
     name = model->getPath(node);
+  }
+  if (name == "CCXMaterials") {
+    if (openingMaterialEditor) {
+      return nullptr;
+    }
+    const QScopedValueRollback<bool> guard(openingMaterialEditor, true);
+    if (!GuiSendCmd::gui_cmd("ccx open materialmanagement")) {
+      PRINT_ERROR("Cannot open Material Management from navigation.\n");
+    }
+    return nullptr;
+  }
 
   // See if the widget already exists.
   QWidget *widget = 0;
   QMap<QWidget *, NavigationWidgetCache *>::Iterator iter =
       widget_cache.find(widgetParent);
-  if(iter != widget_cache.end())
-  {
+  if(iter != widget_cache.end()) {
     widget = (*iter)->getWidget(name);
-    if(widget)
+    if(widget) {
       return widget;
+    }
   }
 
   // Create a new widget based on the name.
   widget = createWidget(name);
-  if(widget)
-  {
-      if (name.startsWith("CCXTopology") || name == "CCXCGALWrap")
-      {
+  if(widget) {
+      if (name.startsWith("CCXTopology") || name == "CCXCGALWrap") {
         topologyPanels.append(widget);
       }
       // Add a new cache for the parent widget if needed.
       NavigationWidgetCache *cache = 0;
-      if(iter == widget_cache.end())
-      {
+      if(iter == widget_cache.end()) {
         cache = new NavigationWidgetCache(this);
         widget_cache.insert(widgetParent, cache);
         connect(widgetParent, SIGNAL(destroyed(QObject*)),
                 this, SLOT(removeCache(QObject*)));
       }
-      else
+      else {
         cache = *iter;
-
+      }
       // Add the widget to the cache.
       cache->insert(name, widget);
   }
@@ -198,26 +205,22 @@ QWidget* MyCmdWidgetFactory::getWidget(NavigationModel *model,
 }
 
 // We want to be sure to clean up all the memory we allocated.
-void MyCmdWidgetFactory::clear()
-{
+void MyCmdWidgetFactory::clear() {
   // Clean up our widget cache if the create_widget_using_cache example was used.
   QMap<QWidget*, NavigationWidgetCache*>::Iterator iter;
-  for(iter = widget_cache.begin(); iter != widget_cache.end(); iter++)
+  for(iter = widget_cache.begin(); iter != widget_cache.end(); iter++) {
     delete *iter;
-
+  }
   widget_cache.clear();
 }
 
-void MyCmdWidgetFactory::removeCache(QObject *object)
-{
+void MyCmdWidgetFactory::removeCache(QObject *object) {
   QWidget *widget = qobject_cast<QWidget *>(object);
-  if(widget)
-  {
+  if(widget) {
     // Remove the widget cache for the parent widget.
     QMap<QWidget *, NavigationWidgetCache *>::Iterator iter =
         widget_cache.find(widget);
-    if(iter != widget_cache.end())
-    {
+    if(iter != widget_cache.end()) {
       delete *iter;
       widget_cache.erase(iter);
     }
@@ -226,326 +229,390 @@ void MyCmdWidgetFactory::removeCache(QObject *object)
 
 // Create and return a widget based on the marker (used for
 // the get_widget_using_cache example).
-QWidget* MyCmdWidgetFactory::createWidget(const QString &name)
-{
+QWidget* MyCmdWidgetFactory::createWidget(const QString &name) {
   // We don't worry about setting the widget parent here because it is
   // set in the getWidget() function.
 
   //std::string output = "need widget " + name.toStdString() + "\n";
   //PRINT_INFO("%s", output.c_str());
 
-  if(name == "CCXBlocksModify")
+  if(name == "CCXBlocksModify") {
+
     return new CCXBlocksElementTypePanel();
-  if(name == "CCXSectionsCreateSolid")
+
+  }
+  if(name == "CCXSectionsCreateSolid") {
     return new SectionsCreateSolidPanel();
-  if(name == "CCXSectionsCreateShell")
+  }
+  if(name == "CCXSectionsCreateShell") {
     return new SectionsCreateShellPanel();
-  if(name == "CCXSectionsCreateBeam")
+  }
+  if(name == "CCXSectionsCreateBeam") {
     return new SectionsCreateBeamPanel();
-  if(name == "CCXSectionsCreateMembrane")
+  }
+  if(name == "CCXSectionsCreateMembrane") {
     return new SectionsCreateMembranePanel();
-  if(name == "CCXSectionsModifySolid")
+  }
+  if(name == "CCXSectionsModifySolid") {
     return new SectionsModifySolidPanel();
-  if(name == "CCXSectionsModifyShell")
+  }
+  if(name == "CCXSectionsModifyShell") {
     return new SectionsModifyShellPanel();
-  if(name == "CCXSectionsModifyBeam")
+  }
+  if(name == "CCXSectionsModifyBeam") {
     return new SectionsModifyBeamPanel();
-  if(name == "CCXSectionsModifyMembrane")
+  }
+  if(name == "CCXSectionsModifyMembrane") {
     return new SectionsModifyMembranePanel();
-  if(name == "CCXSectionsDelete")
+  }
+  if(name == "CCXSectionsDelete") {
     return new SectionsDeletePanel();
-  if(name == "CCXConstraintsCreateRigidBody")
+  }
+  if(name == "CCXConstraintsCreateRigidBody") {
     return new ConstraintsCreateRigidBodyPanel();
-  if(name == "CCXConstraintsCreateTie")
+  }
+  if(name == "CCXConstraintsCreateTie") {
     return new ConstraintsCreateTiePanel();
-  if(name == "CCXConstraintsCreateTieFromCubitContactPair")
+  }
+  if(name == "CCXConstraintsCreateTieFromCubitContactPair") {
     return new ConstraintsCreateTieFromCubitContactPairPanel();
-  if(name == "CCXConstraintsCreateEquation")
+  }
+  if(name == "CCXConstraintsCreateEquation") {
     return new ConstraintsCreateEquationPanel();
-  if(name == "CCXConstraintsCreateEquationFromGroup")
+  }
+  if(name == "CCXConstraintsCreateEquationFromGroup") {
     return new ConstraintsCreateEquationFromGroupPanel();
-  if(name == "CCXConstraintsModifyRigidBody")
+  }
+  if(name == "CCXConstraintsModifyRigidBody") {
     return new ConstraintsModifyRigidBodyPanel();
-  if(name == "CCXConstraintsModifyTie")
+  }
+  if(name == "CCXConstraintsModifyTie") {
     return new ConstraintsModifyTiePanel();
-  if(name == "CCXConstraintsModifyEquation")
+  }
+  if(name == "CCXConstraintsModifyEquation") {
     return new ConstraintsModifyEquationPanel();
-  if(name == "CCXConstraintsDelete")
+  }
+  if(name == "CCXConstraintsDelete") {
     return new ConstraintsDeletePanel();
-  if(name == "CCXSurfaceInteractionsCreate")
+  }
+  if(name == "CCXSurfaceInteractionsCreate") {
     return new SurfaceInteractionsCreatePanel();
-  if(name == "CCXSurfaceInteractionsModify")
+  }
+  if(name == "CCXSurfaceInteractionsModify") {
     return new SurfaceInteractionsModifyPanel();
-  if(name == "CCXSurfaceInteractionsDelete")
+  }
+  if(name == "CCXSurfaceInteractionsDelete") {
     return new SurfaceInteractionsDeletePanel();
-  if(name == "CCXContactPairsCreate")
+  }
+  if(name == "CCXContactPairsCreate") {
     return new ContactPairsCreatePanel();
-  if(name == "CCXContactPairsCreateFromCubitContactPair")
+  }
+  if(name == "CCXContactPairsCreateFromCubitContactPair") {
     return new ContactPairsCreateFromCubitContactPairPanel();
-  if(name == "CCXContactPairsModify")
+  }
+  if(name == "CCXContactPairsModify") {
     return new ContactPairsModifyPanel();
-  if(name == "CCXContactPairsDelete")
+  }
+  if(name == "CCXContactPairsDelete") {
     return new ContactPairsDeletePanel();
-  if(name == "CCXAmplitudesCreate")
+  }
+  if(name == "CCXAmplitudesCreate") {
     return new AmplitudesCreatePanel();
-  if(name == "CCXAmplitudesModify")
+  }
+  if(name == "CCXAmplitudesModify") {
     return new AmplitudesModifyPanel();
-  if(name == "CCXAmplitudesDelete")
+  }
+  if(name == "CCXAmplitudesDelete") {
     return new AmplitudesDeletePanel();
-  if(name == "CCXOrientationsCreate")
+  }
+  if(name == "CCXOrientationsCreate") {
     return new OrientationsCreatePanel();
-  if(name == "CCXOrientationsModify")
+  }
+  if(name == "CCXOrientationsModify") {
     return new OrientationsModifyPanel();
-  if(name == "CCXOrientationsDelete")
+  }
+  if(name == "CCXOrientationsDelete") {
     return new OrientationsDeletePanel();
-  if(name == "CCXDampingModify")
+  }
+  if(name == "CCXDampingModify") {
     return new DampingModifyPanel();
-  if(name == "CCXDampingDelete")
+  }
+  if(name == "CCXDampingDelete") {
     return new DampingDeletePanel();
-  if(name == "CCXPhysicalConstantsModify")
+  }
+  if(name == "CCXPhysicalConstantsModify") {
     return new PhysicalConstantsModifyPanel();
-  if(name == "CCXPhysicalConstantsDelete")
+  }
+  if(name == "CCXPhysicalConstantsDelete") {
     return new PhysicalConstantsDeletePanel();
-  if(name == "CCXLoadsForcesCreate")
-  {
+  }
+  if(name == "CCXLoadsForcesCreate") {
     return new LoadsForcesCreatePanel();
   }
-  if(name == "CCXLoadsForcesModify")
-  {
+  if(name == "CCXLoadsForcesModify") {
     return new LoadsForcesModifyPanel();
   }
-  if(name == "CCXLoadsForcesDelete")
-  {
+  if(name == "CCXLoadsForcesDelete") {
     return new LoadsForcesDeletePanel();
   }
-  if (name == "CCXLoadsPressuresCreate")
-  {
+  if (name == "CCXLoadsPressuresCreate") {
     return new LoadsPressuresCreatePanel();
   }
-  if (name == "CCXLoadsPressuresModify")
-  {
+  if (name == "CCXLoadsPressuresModify") {
     return new LoadsPressuresModifyPanel();
   }
-  if (name == "CCXLoadsPressuresDelete")
-  {
+  if (name == "CCXLoadsPressuresDelete") {
     return new LoadsPressuresDeletePanel();
   }
-  if (name == "CCXLoadsHeatfluxesCreate")
-  {
+  if (name == "CCXLoadsHeatfluxesCreate") {
     return new LoadsHeatfluxesCreatePanel();
   }
-  if (name == "CCXLoadsHeatfluxesModify")
-  {
+  if (name == "CCXLoadsHeatfluxesModify") {
     return new LoadsHeatfluxesModifyPanel();
   }
-  if (name == "CCXLoadsHeatfluxesDelete")
-  {
+  if (name == "CCXLoadsHeatfluxesDelete") {
     return new LoadsHeatfluxesDeletePanel();
   }
-  if(name == "CCXLoadsGravityCreate")
+  if(name == "CCXLoadsGravityCreate") {
     return new LoadsGravityCreatePanel();
-  if(name == "CCXLoadsGravityModify")
+  }
+  if(name == "CCXLoadsGravityModify") {
     return new LoadsGravityModifyPanel();
-  if(name == "CCXLoadsGravityDelete")
+  }
+  if(name == "CCXLoadsGravityDelete") {
     return new LoadsGravityDeletePanel();
-  if(name == "CCXLoadsCentrifugalCreate")
+  }
+  if(name == "CCXLoadsCentrifugalCreate") {
     return new LoadsCentrifugalCreatePanel();
-  if(name == "CCXLoadsCentrifugalModify")
+  }
+  if(name == "CCXLoadsCentrifugalModify") {
     return new LoadsCentrifugalModifyPanel();
-  if(name == "CCXLoadsCentrifugalDelete")
+  }
+  if(name == "CCXLoadsCentrifugalDelete") {
     return new LoadsCentrifugalDeletePanel();
-  if(name == "CCXLoadsTrajectoryHeatfluxCreate")
+  }
+  if(name == "CCXLoadsTrajectoryHeatfluxCreate") {
     return new LoadsTrajectoryHeatfluxCreatePanel();
-  if(name == "CCXLoadsTrajectoryHeatfluxModify")
+  }
+  if(name == "CCXLoadsTrajectoryHeatfluxModify") {
     return new LoadsTrajectoryHeatfluxModifyPanel();
-  if(name == "CCXLoadsTrajectoryBodyHeatfluxSphereCreate")
+  }
+  if(name == "CCXLoadsTrajectoryBodyHeatfluxSphereCreate") {
     return new LoadsTrajectoryBodyHeatfluxSphereCreatePanel();
-  if(name == "CCXLoadsTrajectoryBodyHeatfluxSphereModify")
+  }
+  if(name == "CCXLoadsTrajectoryBodyHeatfluxSphereModify") {
     return new LoadsTrajectoryBodyHeatfluxSphereModifyPanel();
-  if(name == "CCXLoadsTrajectoryDelete")
+  }
+  if(name == "CCXLoadsTrajectoryDelete") {
     return new LoadsTrajectoryDeletePanel();
-  if(name == "CCXLoadsFilmCreate")
+  }
+  if(name == "CCXLoadsFilmCreate") {
     return new LoadsFilmCreatePanel();
-  if(name == "CCXLoadsFilmModify")
+  }
+  if(name == "CCXLoadsFilmModify") {
     return new LoadsFilmModifyPanel();
-  if(name == "CCXLoadsFilmDelete")
+  }
+  if(name == "CCXLoadsFilmDelete") {
     return new LoadsFilmDeletePanel();
-  if(name == "CCXLoadsRadiationCreate")
+  }
+  if(name == "CCXLoadsRadiationCreate") {
     return new LoadsRadiationCreatePanel();
-  if(name == "CCXLoadsRadiationModify")
+  }
+  if(name == "CCXLoadsRadiationModify") {
     return new LoadsRadiationModifyPanel();
-  if(name == "CCXLoadsRadiationDelete")
+  }
+  if(name == "CCXLoadsRadiationDelete") {
     return new LoadsRadiationDeletePanel();
-  if(name == "CCXLoadsSurfaceTractionCreate")
+  }
+  if(name == "CCXLoadsSurfaceTractionCreate") {
     return new LoadsSurfaceTractionCreatePanel();
-  if(name == "CCXLoadsSurfaceTractionModify")
+  }
+  if(name == "CCXLoadsSurfaceTractionModify") {
     return new LoadsSurfaceTractionModifyPanel();
-  if(name == "CCXLoadsSurfaceTractionDelete")
+  }
+  if(name == "CCXLoadsSurfaceTractionDelete") {
     return new LoadsSurfaceTractionDeletePanel();
-  if(name == "CCXLoadsBodyHeatfluxCreate")
+  }
+  if(name == "CCXLoadsBodyHeatfluxCreate") {
     return new LoadsBodyHeatfluxCreatePanel();
-  if(name == "CCXLoadsBodyHeatfluxModify")
+  }
+  if(name == "CCXLoadsBodyHeatfluxModify") {
     return new LoadsBodyHeatfluxModifyPanel();
-  if(name == "CCXLoadsBodyHeatfluxDelete")
+  }
+  if(name == "CCXLoadsBodyHeatfluxDelete") {
     return new LoadsBodyHeatfluxDeletePanel();
-  if (name == "CCXBCsDisplacementsCreate")
-  {
+  }
+  if (name == "CCXBCsDisplacementsCreate") {
     return new BCsDisplacementsCreatePanel();
   }
-  if (name == "CCXBCsDisplacementsModify")
-  {
+  if (name == "CCXBCsDisplacementsModify") {
     return new BCsDisplacementsModifyPanel();
   }
-  if (name == "CCXBCsDisplacementsDelete")
-  {
+  if (name == "CCXBCsDisplacementsDelete") {
     return new BCsDisplacementsDeletePanel();
   }
-  if (name == "CCXBCsTemperaturesCreate")
-  {
+  if (name == "CCXBCsTemperaturesCreate") {
     return new BCsTemperaturesCreatePanel();
   }
-  if (name == "CCXBCsTemperaturesModify")
-  {
+  if (name == "CCXBCsTemperaturesModify") {
     return new BCsTemperaturesModifyPanel();
   }
-  if (name == "CCXBCsTemperaturesDelete")
-  {
+  if (name == "CCXBCsTemperaturesDelete") {
     return new BCsTemperaturesDeletePanel();
   }
-  if(name == "CCXHistoryOutputsCreate")
+  if(name == "CCXHistoryOutputsCreate") {
     return new HistoryOutputsCreatePanel();
-  if(name == "CCXHistoryOutputsModifyNode")
+  }
+  if(name == "CCXHistoryOutputsModifyNode") {
     return new HistoryOutputsModifyNodePanel();
-  if(name == "CCXHistoryOutputsModifyElement")
+  }
+  if(name == "CCXHistoryOutputsModifyElement") {
     return new HistoryOutputsModifyElementPanel();
-  if(name == "CCXHistoryOutputsModifyContact")
+  }
+  if(name == "CCXHistoryOutputsModifyContact") {
     return new HistoryOutputsModifyContactPanel();
-  if(name == "CCXHistoryOutputsModifySection")
+  }
+  if(name == "CCXHistoryOutputsModifySection") {
     return new HistoryOutputsModifySectionPanel();
-  if(name == "CCXHistoryOutputsDelete")
+  }
+  if(name == "CCXHistoryOutputsDelete") {
     return new HistoryOutputsDeletePanel();
-  if(name == "CCXFieldOutputsCreate")
+  }
+  if(name == "CCXFieldOutputsCreate") {
     return new FieldOutputsCreatePanel();
-  if(name == "CCXFieldOutputsModifyNode")
+  }
+  if(name == "CCXFieldOutputsModifyNode") {
     return new FieldOutputsModifyNodePanel();
-  if(name == "CCXFieldOutputsModifyElement")
+  }
+  if(name == "CCXFieldOutputsModifyElement") {
     return new FieldOutputsModifyElementPanel();
-  if(name == "CCXFieldOutputsModifyContact")
+  }
+  if(name == "CCXFieldOutputsModifyContact") {
     return new FieldOutputsModifyContactPanel();
-  if(name == "CCXFieldOutputsDelete")
+  }
+  if(name == "CCXFieldOutputsDelete") {
     return new FieldOutputsDeletePanel();
-  if(name == "CCXInitialConditionsCreate")
+  }
+  if(name == "CCXInitialConditionsCreate") {
     return new InitialConditionsCreatePanel();
-  if(name == "CCXInitialConditionsModify")
+  }
+  if(name == "CCXInitialConditionsModify") {
     return new InitialConditionsModifyPanel();
-  if(name == "CCXInitialConditionsStressAddBlock")
+  }
+  if(name == "CCXInitialConditionsStressAddBlock") {
     return new InitialConditionsStressAddBlockPanel();
-  if(name == "CCXInitialConditionsStressAddElement")
+  }
+  if(name == "CCXInitialConditionsStressAddElement") {
     return new InitialConditionsStressAddElementPanel();
-  if(name == "CCXInitialConditionsDelete")
+  }
+  if(name == "CCXInitialConditionsDelete") {
     return new InitialConditionsDeletePanel();
-  if (name == "CCXTopologyActions")
-  {
+  }
+  if (name == "CCXTopologyActions") {
     return new TopologyActionsPanel();
   }
-  if (name == "CCXTopologyDelete")
-  {
+  if (name == "CCXTopologyDelete") {
     return new TopologyDeletePanel();
   }
-  if (name == "CCXCGALWrap")
-  {
+  if (name == "CCXCGALWrap") {
     return new AlphaWrapPanel();
   }
-  if (name == "CCXTopologyPreservedSets")
-  {
+  if (name == "CCXTopologyPreservedSets") {
     return new TopologyPreservedSetsPanel();
   }
-  if (name == "CCXTopologyCreateDensity")
-  {
+  if (name == "CCXTopologyCreateDensity") {
     return new TopologyDensitySettingsPanel(false);
   }
-  if (name == "CCXTopologyCreateLevelSet")
-  {
+  if (name == "CCXTopologyCreateLevelSet") {
     return new TopologyLevelSetSettingsPanel(false);
   }
-  if (name == "CCXTopologyModifyDensity")
-  {
+  if (name == "CCXTopologyModifyDensity") {
     return new TopologyDensitySettingsPanel(true);
   }
-  if (name == "CCXTopologyModifyLevelSet")
-  {
+  if (name == "CCXTopologyModifyLevelSet") {
     return new TopologyLevelSetSettingsPanel(true);
   }
-  if(name == "CCXStepsCreate")
+  if(name == "CCXStepsCreate") {
     return new StepsCreatePanel();
-  if(name == "CCXStepsModifyParameter")
+  }
+  if(name == "CCXStepsModifyParameter") {
     return new StepsModifyParameterPanel();
-  if(name == "CCXStepsModifyStatic")
+  }
+  if(name == "CCXStepsModifyStatic") {
     return new StepsModifyStaticPanel();
-  if(name == "CCXStepsModifyFrequency")
+  }
+  if(name == "CCXStepsModifyFrequency") {
     return new StepsModifyFrequencyPanel();
-  if(name == "CCXStepsModifyBuckle")
+  }
+  if(name == "CCXStepsModifyBuckle") {
     return new StepsModifyBucklePanel();
-  if(name == "CCXStepsModifyHeatTransfer")
+  }
+  if(name == "CCXStepsModifyHeatTransfer") {
     return new StepsModifyHeatTransferPanel();
-  if(name == "CCXStepsModifyCoupledTemperatureDisplacement")
+  }
+  if(name == "CCXStepsModifyCoupledTemperatureDisplacement") {
     return new StepsModifyCoupledTemperatureDisplacementPanel();
-  if(name == "CCXStepsModifyUncoupledTemperatureDisplacement")
+  }
+  if(name == "CCXStepsModifyUncoupledTemperatureDisplacement") {
     return new StepsModifyUncoupledTemperatureDisplacementPanel();
-  if(name == "CCXStepsModifyDynamic")
+  }
+  if(name == "CCXStepsModifyDynamic") {
     return new StepsModifyDynamicPanel();
-  if(name == "CCXStepsModifyModalDynamic")
+  }
+  if(name == "CCXStepsModifyModalDynamic") {
     return new StepsModifyModalDynamicPanel();
-  if(name == "CCXStepsModifySteadyStateDynamics")
+  }
+  if(name == "CCXStepsModifySteadyStateDynamics") {
     return new StepsModifySteadyStateDynamicsPanel();
-  if(name == "CCXStepsModifyComplexFrequency")
+  }
+  if(name == "CCXStepsModifyComplexFrequency") {
     return new StepsModifyComplexFrequencyPanel();
-  if(name == "CCXStepsDelete")
+  }
+  if(name == "CCXStepsDelete") {
     return new StepsDeletePanel();
-  if(name == "CCXCustomLinesCreate")
+  }
+  if(name == "CCXCustomLinesCreate") {
     return new CustomLinesCreatePanel();
-  if(name == "CCXCustomLinesModify")
+  }
+  if(name == "CCXCustomLinesModify") {
     return new CustomLinesModifyPanel();
-  if(name == "CCXCustomLinesDelete")
+  }
+  if(name == "CCXCustomLinesDelete") {
     return new CustomLinesDeletePanel();
-  if(name == "CCXJobsCreate")
+  }
+  if(name == "CCXJobsCreate") {
     return new JobsCreatePanel();
-  if(name == "CCXJobsModify")
+  }
+  if(name == "CCXJobsModify") {
     return new JobsModifyPanel();
-  if(name == "CCXJobsDelete")
+  }
+  if(name == "CCXJobsDelete") {
     return new JobsDeletePanel();
-  if(name == "CCXJobsActions")
+  }
+  if(name == "CCXJobsActions") {
     return new JobsActionsPanel();
-  
+  }
   return NULL;
 }
 
-void MyCmdWidgetFactory::clearTopologyPanels(int topology_id)
-{
-  for (const auto& widget : topologyPanels)
-  {
-    if (auto* panel = dynamic_cast<TopologyDensitySettingsPanel*>(widget.data()))
-    {
+void MyCmdWidgetFactory::clearTopologyPanels(int topology_id) {
+  for (const auto& widget : topologyPanels) {
+    if (auto* panel = dynamic_cast<TopologyDensitySettingsPanel*>(widget.data())) {
       panel->clearTopology(topology_id);
     }
-    else if (auto* panel = dynamic_cast<TopologyLevelSetSettingsPanel*>(widget.data()))
-    {
+    else if (auto* panel = dynamic_cast<TopologyLevelSetSettingsPanel*>(widget.data())) {
       panel->clearTopology(topology_id);
     }
-    else if (auto* panel = dynamic_cast<TopologyPreservedSetsPanel*>(widget.data()))
-    {
+    else if (auto* panel = dynamic_cast<TopologyPreservedSetsPanel*>(widget.data())) {
       panel->clearTopology(topology_id);
     }
-    else if (auto* panel = dynamic_cast<TopologyActionsPanel*>(widget.data()))
-    {
+    else if (auto* panel = dynamic_cast<TopologyActionsPanel*>(widget.data())) {
       panel->clearTopology(topology_id);
     }
-    else if (auto* panel = dynamic_cast<TopologyDeletePanel*>(widget.data()))
-    {
+    else if (auto* panel = dynamic_cast<TopologyDeletePanel*>(widget.data())) {
       panel->clearTopology(topology_id);
     }
-    else if (auto* panel = dynamic_cast<AlphaWrapPanel*>(widget.data()))
-    {
+    else if (auto* panel = dynamic_cast<AlphaWrapPanel*>(widget.data())) {
       panel->clearTopology(topology_id);
     }
   }

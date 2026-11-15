@@ -163,7 +163,13 @@ bool CoreStepLoadExport::append(
       const int emissivity_index = loads.get_emissivity_data_id_from_emissivity_id(loads.loads_data[index][6]);
       const std::string& temperature = loads.temperature_data[temperature_index][1];
       const std::string& emissivity = loads.emissivity_data[emissivity_index][1];
-      const std::string suffix = loads.loads_data[index][11] == 1 ? "CR," : ",";
+      const std::string suffix = [&]() -> std::string {
+        if (loads.loads_data[index][11] == 1) {
+          return "CR,";
+        } else {
+          return ",";
+        }
+      }();
 
       output.push_back(face[1] + ",R" + face[2] + suffix + temperature + "," + emissivity);
     }

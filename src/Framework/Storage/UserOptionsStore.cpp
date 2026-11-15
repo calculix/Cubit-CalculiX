@@ -168,7 +168,13 @@ bool writeValue(HDF5Tool& file, const std::string& group,
   }
   if (definition.kind == UserOptionKind::Boolean)
   {
-    return file.write_dataset_int_rank_1("value", group, {std::get<bool>(value) ? 1 : 0});
+    return file.write_dataset_int_rank_1("value", group, {[&]() -> int {
+      if (std::get<bool>(value)) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }()});
   }
   if (definition.kind == UserOptionKind::Integer)
   {

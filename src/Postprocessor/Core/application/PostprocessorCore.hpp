@@ -25,7 +25,8 @@ namespace Postprocessor
    * Callers resolve provider prefixes through Framework, then pass a borrowed
    * provider for one operation. No provider or CalculiX reader pointer is retained.
    * All mutations reject reentry during a provider operation. Query references
-   * and iterators are valid only until the next successful mutation; returned
+   * and iterators are valid only until the next successful mutation;
+   returned
    * owning result handles can outlive refresh, closure and this Core instance.
    * This class owns display definitions but never creates actors, activates
    * workspaces or submits commands. Presentation objects remain GUI-owned.
@@ -34,6 +35,7 @@ namespace Postprocessor
   {
   public:
     PostprocessorCore() = default;
+    bool configure_units(const std::string& system, const std::string& quantity, const std::string& unit, std::string& error);
     std::string output_source(const OutputReference& input) const;
     bool display_matches_source(const Representation& display,const std::string& source,const std::string& view) const;
     bool create_filter(FilterDefinition requested,const std::string& view,std::string& error);

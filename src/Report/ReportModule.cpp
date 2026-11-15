@@ -46,7 +46,11 @@ void ReportModule::shutdown() noexcept
 
 CommandProviderInterface* ReportModule::command_provider() noexcept
 {
-  return commands ? this : nullptr;
+  if (commands) {
+    return this;
+  } else {
+    return nullptr;
+  }
 }
 
 ComponentProviderInterface* ReportModule::component_provider() noexcept
@@ -56,17 +60,29 @@ ComponentProviderInterface* ReportModule::component_provider() noexcept
 
 WorkspaceProviderInterface* ReportModule::workspace_provider() noexcept
 {
-  return gui ? this : nullptr;
+  if (gui) {
+    return this;
+  } else {
+    return nullptr;
+  }
 }
 
 std::vector<std::string> ReportModule::command_keys() const
 {
-  return commands ? commands->command_keys() : std::vector<std::string>{};
+  if (commands) {
+    return commands->command_keys();
+  } else {
+    return std::vector<std::string>{};
+  }
 }
 
 CubitCommand* ReportModule::create_command(const std::string& key)
 {
-  return commands ? commands->create_command(key) : nullptr;
+  if (commands) {
+    return commands->create_command(key);
+  } else {
+    return nullptr;
+  }
 }
 
 bool ReportModule::start_component(int withGUI, QWidget* host, std::string& error)

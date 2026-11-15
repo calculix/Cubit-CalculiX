@@ -246,5 +246,9 @@ int main(int argc, char** argv)
   session = Postprocessor::PostprocessorSession{};
   refresh();
   check(tree.topLevelItemCount() == 0, "Reset left stale tree items");
-  return failures == 0 ? 0 : 1;
+  if (failures == 0) {
+    return 0;
+  } else {
+    return 1;
+  }
 }

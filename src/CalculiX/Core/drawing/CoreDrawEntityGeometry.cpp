@@ -200,7 +200,13 @@ bool buildTrajectory(int id, double size, DrawingGeometry& output)
     {
       for (int element : samples[ring])
       {
-        if (!CoreDrawMeshGeometry::append(faces ? "face" : "element", element, false, CoreDrawEntityGeometry::color(static_cast<int>(ring)), geometry))
+        if (!CoreDrawMeshGeometry::append([&]() -> const char* {
+          if (faces) {
+            return "face";
+          } else {
+            return "element";
+          }
+        }(), element, false, CoreDrawEntityGeometry::color(static_cast<int>(ring)), geometry))
         {
           return false;
         }

@@ -119,19 +119,17 @@ for v in volume_list:
 
 
 #material
-cubit.cmd('create material "solid" property_group "SIM_CCX"')
-cubit.cmd('modify material "solid" scalar_properties "CCX_ELASTIC_ISO_USE_CARD" 1')
-cubit.cmd('modify material "solid" scalar_properties "CCX_PLASTIC_ISO_USE_CARD" 1')
-cubit.cmd('modify material "solid" scalar_properties "CCX_DENSITY_USE_CARD" 1')
-cubit.cmd('modify material "solid" matrix_property "CCX_DENSITY_DENSITY" 8 0 ')
-cubit.cmd('modify material "solid" scalar_properties "CCX_SPECIFIC_HEAT_USE_CARD" 1')
-cubit.cmd('modify material "solid" matrix_property "CCX_SPECIFIC_HEAT_SPECIFIC_HEAT" 420 0 ')
-cubit.cmd('modify material "solid" scalar_properties "CCX_EXPANSION_ISO_USE_CARD" 1')
-cubit.cmd('modify material "solid" scalar_properties "CCX_CONDUCTIVITY_USE_CARD" 1')
-cubit.cmd('modify material "solid" scalar_properties "CCX_CONDUCTIVITY_ISO_USE_CARD" 1')
-cubit.cmd('modify material "solid" matrix_property "CCX_CONDUCTIVITY_ISO_K_TEMPERATURE" 50 0 ')
-cubit.cmd('modify material "solid" scalar_properties "CCX_ELASTIC_USE_CARD" 1')
-cubit.cmd('modify material "solid" matrix_property "CCX_ELASTIC_ISO_MODULUS_VS_POISSON_VS_TEMPERATURE" 210000 0.3 0') 
+cubit.cmd('ccx units system "N-mm-s"')
+cubit.cmd('ccx units geometry unit "mm"')
+cubit.cmd('ccx create material "solid"')
+cubit.cmd('ccx modify material 1 add card density model default')
+cubit.cmd('ccx modify material 1 card density row 1 values 8000 273.15 unit "SI"')
+cubit.cmd('ccx modify material 1 add card specific_heat model default')
+cubit.cmd('ccx modify material 1 card specific_heat row 1 values 420 273.15 unit "SI"')
+cubit.cmd('ccx modify material 1 add card conductivity model iso')
+cubit.cmd('ccx modify material 1 card conductivity row 1 values 50 273.15 unit "SI"')
+cubit.cmd('ccx modify material 1 add card elastic model iso')
+cubit.cmd('ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"')
 
 
 #section

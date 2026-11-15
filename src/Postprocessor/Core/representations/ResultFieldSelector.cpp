@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ResultFieldSelector.hpp"
 #include "ResultDeformation.hpp"
 #include <algorithm>
@@ -43,7 +44,13 @@ namespace Postprocessor
     std::string describe(const ResultFieldGroup& group)
     {
       const auto& field = group.field;
-      std::string text = field.name + " (origin " + (field.source.empty() ? "unspecified" : field.source) +
+      std::string text = field.name + " (origin " + ([&]() -> std::common_type_t<decltype("unspecified"), decltype(field.source)> {
+        if (field.source.empty()) {
+          return "unspecified";
+        } else {
+          return field.source;
+        }
+      }()) +
         ", association " + field_association_name(field.association);
       if (!field.set_name.empty())
       {
@@ -76,7 +83,13 @@ namespace Postprocessor
     std::string candidates;
     for (const auto& group : groups)
     {
-      if ((exact ? group.key != selector.name : group.field.name != selector.name && group.field.array_name != selector.name) ||
+      if (([&]() -> std::common_type_t<decltype(group.key != selector.name), decltype(group.field.name != selector.name && group.field.array_name != selector.name)> {
+        if (exact) {
+          return group.key != selector.name;
+        } else {
+          return group.field.name != selector.name && group.field.array_name != selector.name;
+        }
+      }()) ||
           !compatible(group,selector,dataset,component,magnitude,vectorOnly) || !identities.insert(group.key).second)
       {
         continue;
@@ -84,7 +97,13 @@ namespace Postprocessor
       match = &group;
       if (identities.size() <= 8)
       {
-        candidates += (candidates.empty() ? "" : "; ") + describe(group);
+        candidates += ([&]() -> const char* {
+          if (candidates.empty()) {
+            return "";
+          } else {
+            return "; ";
+          }
+        }()) + describe(group);
       }
     }
     if (identities.size() > 8)
@@ -93,8 +112,11 @@ namespace Postprocessor
     }
     if (identities.size() != 1)
     {
-      error = identities.empty() ? "No spatial field matches the name, dataset, component and qualifiers." :
-        "Ambiguous result field. Specify origin, association or dataset. Candidates: " + candidates;
+      if (identities.empty()) {
+        error = "No spatial field matches the name, dataset, component and qualifiers.";
+      } else {
+        error = "Ambiguous result field. Specify origin, association or dataset. Candidates: " + candidates;
+      }
       return false;
     }
     output = *match;
@@ -104,7 +126,13 @@ namespace Postprocessor
     ResultFieldSelector& output,std::string& error)
   {
     ResultFieldGroup selected;
-    ResultFieldSelector exact{field.group_key.empty() ? field.array_name : field.group_key,{}};
+    ResultFieldSelector exact{[&]() -> std::common_type_t<decltype(field.array_name), decltype(field.group_key)> {
+      if (field.group_key.empty()) {
+        return field.array_name;
+      } else {
+        return field.group_key;
+      }
+    }(),{}};
     exact.qualifiers.association = field.association;
     if (!resolve_result_field(groups,exact,field.dataset_id,field.component,field.magnitude,false,selected,error))
     {

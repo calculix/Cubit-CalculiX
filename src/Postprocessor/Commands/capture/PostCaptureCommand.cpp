@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostCaptureCommand.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "CubitMessage.hpp"
@@ -35,7 +36,11 @@ bool PostCaptureCommand::execute(CubitCommandData& data)
   {
     const auto active = application.lock();
     Postprocessor::CaptureDefinition request;
-    request.target = data.find_keyword("PLOT") ? Postprocessor::CaptureTarget::Plot : Postprocessor::CaptureTarget::View;
+    if (data.find_keyword("PLOT")) {
+      request.target = Postprocessor::CaptureTarget::Plot;
+    } else {
+      request.target = Postprocessor::CaptureTarget::View;
+    }
     data.get_string("capture_name",request.name);
     std::string file;
     bool valid = active && data.get_string("capture_file",file);
@@ -71,8 +76,15 @@ bool PostCaptureCommand::execute(CubitCommandData& data)
     if (value("BACKGROUND","capture_background",text))
     {
       valid = valid && (text == "current" || text == "white" || text == "transparent");
-      request.background = text == "white" ? Postprocessor::CaptureBackground::White :
-        text == "transparent" ? Postprocessor::CaptureBackground::Transparent : Postprocessor::CaptureBackground::Current;
+      if (text == "white") {
+        request.background = Postprocessor::CaptureBackground::White;
+      } else {
+        if (text == "transparent") {
+          request.background = Postprocessor::CaptureBackground::Transparent;
+        } else {
+          request.background = Postprocessor::CaptureBackground::Current;
+        }
+      }
     }
     const auto flag = [&](const char* key,const char* label,std::optional<bool>& target)
     {
@@ -96,6 +108,12 @@ bool PostCaptureCommand::execute(CubitCommandData& data)
   {
     error = exception.what();
   }
-  PRINT_ERROR("Cannot capture Postprocessor image: %s\n",error.empty() ? "Invalid capture arguments." : error.c_str());
+  PRINT_ERROR("Cannot capture Postprocessor image: %s\n",[&]() -> std::common_type_t<decltype("Invalid capture arguments."), decltype(error.c_str())> {
+    if (error.empty()) {
+      return "Invalid capture arguments.";
+    } else {
+      return error.c_str();
+    }
+  }());
   return false;
 }

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportPreviewWindow.hpp"
 #include <utility>
 #include "ReportPreviewWidget.hpp"
@@ -51,7 +52,13 @@ ReportPreviewWindow::ReportPreviewWindow(QWidget* parent, std::function<bool(con
   controls->addWidget(zoom);
   for (const std::string mode : {"width", "page"})
   {
-    auto* fit = new QPushButton(mode == "width" ? tr("Fit width") : tr("Fit page"), this);
+    auto* fit = new QPushButton([&]() -> std::common_type_t<decltype(tr("Fit width")), decltype(tr("Fit page"))> {
+      if (mode == "width") {
+        return tr("Fit width");
+      } else {
+        return tr("Fit page");
+      }
+    }(), this);
     controls->addWidget(fit);
     connect(fit, &QPushButton::clicked, this, [this, mode]()
     {
@@ -145,10 +152,28 @@ void ReportPreviewWindow::set_layout(std::shared_ptr<const ReportDocumentLayout>
   page->set_layout(layout);
   contents->clear();
   QSignalBlocker guard(number), sliderGuard(pageSlider);
-  pageSlider->setRange(1, layout ? layout->page_count() : 1);
-  number->setSuffix(layout ? tr(" / %1").arg(layout->page_count()) : QString());
+  pageSlider->setRange(1, [&]() -> std::common_type_t<decltype(layout->page_count()), decltype(1)> {
+    if (layout) {
+      return layout->page_count();
+    } else {
+      return 1;
+    }
+  }());
+  number->setSuffix([&]() -> std::common_type_t<decltype(tr(" / %1").arg(layout->page_count())), decltype(QString())> {
+    if (layout) {
+      return tr(" / %1").arg(layout->page_count());
+    } else {
+      return QString();
+    }
+  }());
   pageSlider->setEnabled(layout != nullptr);
-  number->setMaximum(layout ? layout->page_count() : 1);
+  number->setMaximum([&]() -> std::common_type_t<decltype(layout->page_count()), decltype(1)> {
+    if (layout) {
+      return layout->page_count();
+    } else {
+      return 1;
+    }
+  }());
   if (layout)
   {
     std::map<std::string, std::string> titles;

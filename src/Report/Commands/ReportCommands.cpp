@@ -1,4 +1,5 @@
 #include "ReportCommands.hpp"
+#include "ReportUnitsCommand.hpp"
 #include "ReportImageCommand.hpp"
 #include <utility>
 #include "ReportGenerateCommand.hpp"
@@ -17,11 +18,14 @@ ReportCommands::~ReportCommands() = default;
 
 std::vector<std::string> ReportCommands::command_keys() const
 {
-  return {"ReportImageCommand", "ReportSourceCommand", "ReportGenerateCommand", "ReportConfigureCommand", "ReportUpdateCommand", "ReportPreviewCommand", "ReportExportCommand", "ReportProfileCommand"};
+  return {"ReportUnitsCommand", "ReportImageCommand", "ReportSourceCommand", "ReportGenerateCommand", "ReportConfigureCommand", "ReportUpdateCommand", "ReportPreviewCommand", "ReportExportCommand", "ReportProfileCommand"};
 }
 
 CubitCommand* ReportCommands::create_command(const std::string& key)
 {
+  if (key == "ReportUnitsCommand") {
+    return new ReportUnitsCommand(application);
+  }
   if (key == "ReportImageCommand")
   {
     return new ReportImageCommand(application);

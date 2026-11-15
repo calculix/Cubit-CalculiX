@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "../application/PostprocessorCore.hpp"
 #include <QUuid>
 #include <vtkDataSet.h>
@@ -19,7 +20,11 @@ namespace Postprocessor
       return input.object_id;
     }
     const auto found = state.filters.find(input.object_id);
-    return found != state.filters.end() ? found->second.input.object_id : std::string{};
+    if (found != state.filters.end()) {
+      return found->second.input.object_id;
+    } else {
+      return std::string{};
+    }
   }
   bool PostprocessorCore::display_matches_source(const Representation& display,const std::string& source,const std::string& view) const
   {
@@ -125,7 +130,11 @@ namespace Postprocessor
     }
     else if (action == "keep" && definition.kind == FilterKind::Clip && (value == "positive" || value == "negative"))
     {
-      definition.keep = value == "positive" ? ClipSide::Positive : ClipSide::Negative;
+      if (value == "positive") {
+        definition.keep = ClipSide::Positive;
+      } else {
+        definition.keep = ClipSide::Negative;
+      }
     }
     else if (action == "rename")
     {
@@ -301,7 +310,13 @@ namespace Postprocessor
       {
         continue;
       }
-      auto* mesh = entity.kind == EntityKind::Element ? part.mesh.get() : static_cast<vtkDataSet*>(part.nodes.get());
+      auto* mesh = [&]() -> std::common_type_t<decltype(part.mesh.get()), decltype(static_cast<vtkDataSet*>(part.nodes.get()))> {
+        if (entity.kind == EntityKind::Element) {
+          return part.mesh.get();
+        } else {
+          return static_cast<vtkDataSet*>(part.nodes.get());
+        }
+      }();
       const auto indices = entity_indices(mesh,entity,error);
       if (!indices.empty())
       {
@@ -359,7 +374,13 @@ namespace Postprocessor
       {
         return {};
       }
-      return filter_parent_edges(moved ? moved.get() : part.second,filter->second,frame,part.first,indices,error);
+      return filter_parent_edges([&]() -> std::common_type_t<decltype(moved.get()), decltype(part.second)> {
+        if (moved) {
+          return moved.get();
+        } else {
+          return part.second;
+        }
+      }(),filter->second,frame,part.first,indices,error);
     }
     return {};
   }

@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "ReportGenerateCommand.hpp"
 #include <utility>
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
@@ -50,7 +51,13 @@ bool ReportGenerateCommand::execute(CubitCommandData& data)
   {
     error = "Unknown Report failure.";
   }
-  PRINT_ERROR("Report: %s\n", error.empty() ? "Invalid command arguments." : error.c_str());
+  PRINT_ERROR("Report: %s\n", [&]() -> std::common_type_t<decltype("Invalid command arguments."), decltype(error.c_str())> {
+    if (error.empty()) {
+      return "Invalid command arguments.";
+    } else {
+      return error.c_str();
+    }
+  }());
   return false;
 }
 
@@ -66,8 +73,20 @@ bool ReportGenerateCommand::run(CubitCommandData& data, const std::shared_ptr<Re
   }
   ReportRequest request;
   request.provider = provider;
-  request.job_id = data.find_keyword("MODEL") ? 0 : job;
-  request.kind = data.find_keyword("MODEL") ? "model" : "job";
-  request.model_id = request.kind == "model" ? "current" : "";
+  if (data.find_keyword("MODEL")) {
+    request.job_id = 0;
+  } else {
+    request.job_id = job;
+  }
+  if (data.find_keyword("MODEL")) {
+    request.kind = "model";
+  } else {
+    request.kind = "job";
+  }
+  if (request.kind == "model") {
+    request.model_id = "current";
+  } else {
+    request.model_id = "";
+  }
   return active->generate_request(request, profile, error);
 }

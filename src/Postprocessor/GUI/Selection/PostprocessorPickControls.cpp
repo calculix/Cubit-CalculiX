@@ -19,8 +19,13 @@ PostprocessorPickControls::PostprocessorPickControls(std::weak_ptr<Postprocessor
   modes->setObjectName("Postprocessor.PickMode");
   modes->setExclusive(true);
   const auto activeApplication = application.lock();
-  const QIcon integrationPointIcon = activeApplication ?
-    PostprocessorIconLoader::load(activeApplication->active_icons_path(),"PostprocessorIntegrationPoint") : QIcon();
+  const QIcon integrationPointIcon = [&]() -> QIcon {
+    if (activeApplication) {
+      return PostprocessorIconLoader::load(activeApplication->active_icons_path(),"PostprocessorIntegrationPoint");
+    } else {
+      return QIcon();
+    }
+  }();
   const QIcon icons[] = {QIcon(":/cubitgui/node.svg"),QIcon(":/cubitgui/hex.svg"),integrationPointIcon};
   const QString labels[] = {tr("Pick nodes"),tr("Pick elements"),tr("Pick integration points")};
   const QString names[] = {"Postprocessor.PickNode","Postprocessor.PickElement","Postprocessor.PickIntegrationPoint"};
@@ -58,8 +63,17 @@ PostprocessorPickControls::PostprocessorPickControls(std::weak_ptr<Postprocessor
     if (submit)
     {
       const auto kind = static_cast<Postprocessor::EntityKind>(id);
-      const QString mode = kind == Postprocessor::EntityKind::Node ? "node" :
-        kind == Postprocessor::EntityKind::Element ? "element" : "integrationpoint";
+      const QString mode = [&]() -> QString {
+        if (kind == Postprocessor::EntityKind::Node) {
+          return "node";
+        } else {
+          if (kind == Postprocessor::EntityKind::Element) {
+            return "element";
+          } else {
+            return "integrationpoint";
+          }
+        }
+      }();
       submit("post pick mode "+mode);
     }
     refresh();

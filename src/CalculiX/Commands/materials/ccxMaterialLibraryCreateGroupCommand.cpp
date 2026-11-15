@@ -4,14 +4,11 @@
 #include "Core/materials/CalculiXMaterialsInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
-ccxMaterialLibraryCreateGroupCommand::ccxMaterialLibraryCreateGroupCommand()
-{}
+ccxMaterialLibraryCreateGroupCommand::ccxMaterialLibraryCreateGroupCommand() {}
 
-ccxMaterialLibraryCreateGroupCommand::~ccxMaterialLibraryCreateGroupCommand()
-{}
+ccxMaterialLibraryCreateGroupCommand::~ccxMaterialLibraryCreateGroupCommand() {}
 
-std::vector<std::string> ccxMaterialLibraryCreateGroupCommand::get_syntax()
-{
+std::vector<std::string> ccxMaterialLibraryCreateGroupCommand::get_syntax() {
   std::vector<std::string> syntax_list;
 
   std::string syntax = "ccx ";
@@ -21,24 +18,21 @@ std::vector<std::string> ccxMaterialLibraryCreateGroupCommand::get_syntax()
   return syntax_list;
 }
 
-std::vector<std::string> ccxMaterialLibraryCreateGroupCommand::get_syntax_help()
-{
+std::vector<std::string> ccxMaterialLibraryCreateGroupCommand::get_syntax_help() {
   std::vector<std::string> help(2);
   help[0] = "ccx ";
   help[0].append("create materiallibrary group ");
   help[0].append("name <name> ");
-  
+
   return help;
 }
 
-std::vector<std::string> ccxMaterialLibraryCreateGroupCommand::get_help()
-{
+std::vector<std::string> ccxMaterialLibraryCreateGroupCommand::get_help() {
   std::vector<std::string> help;
   return help;
 }
 
-bool ccxMaterialLibraryCreateGroupCommand::execute(CubitCommandData &data)
-{
+bool ccxMaterialLibraryCreateGroupCommand::execute(CubitCommandData &data) {
   CalculiXMaterialsInterface ccx_materials_iface;
 
 
@@ -46,12 +40,12 @@ bool ccxMaterialLibraryCreateGroupCommand::execute(CubitCommandData &data)
   std::string name;
 
   data.get_string("name", name);
-  
-  if (!ccx_materials_iface.create_materiallibrary_group(name))
-  {
+
+  if (!ccx_materials_iface.create_materiallibrary_group(name)) {
     output = "Failed!\n";
-    PRINT_ERROR(output.c_str());
+    PRINT_ERROR("%s", output.c_str());
+    return false;
   }
-    
+
   return true;
 }

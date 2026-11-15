@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PostprocessorAnnotationMenu.hpp"
 #include "Postprocessor/Commands/FieldCommandText.hpp"
 #include "Postprocessor/GUI/Plots/PostprocessorPlotControls.hpp"
@@ -11,7 +12,13 @@
 
 QString annotation_quote(const std::string& value)
 {
-  const char delimiter = value.find('"') == std::string::npos ? '"' : '\'';
+  const char delimiter = [&]() -> char {
+    if (value.find('"') == std::string::npos) {
+      return '"';
+    } else {
+      return '\'';
+    }
+  }();
   if (value.empty() || value.find(delimiter) != std::string::npos ||
       std::any_of(value.begin(),value.end(),[](unsigned char c)
       {
@@ -67,7 +74,13 @@ QString annotation_add_command(const PostprocessorApplicationInterface& applicat
         return {};
       }
       const auto fieldName = Postprocessor::field_command_text(selector);
-      const auto component = field.magnitude ? QStringLiteral("magnitude") : annotation_quote(field.component);
+      const auto component = [&]() -> std::common_type_t<decltype(QStringLiteral("magnitude")), decltype(annotation_quote(field.component))> {
+        if (field.magnitude) {
+          return QStringLiteral("magnitude");
+        } else {
+          return annotation_quote(field.component);
+        }
+      }();
       if (fieldName.isEmpty() || component.isEmpty() || annotation_quote(viewId).isEmpty())
       {
         return {};
@@ -110,14 +123,26 @@ void show_annotation_menu(QWidget* parent, const QPoint& globalPosition,
   extrema->setChecked(state.extrema_visible);
   QObject::connect(extrema,&QAction::triggered,&menu,[submit,suffix](bool checked)
   {
-    submit(QStringLiteral("post labels extrema ")+(checked ? "on" : "off")+suffix);
+    submit(QStringLiteral("post labels extrema ")+([&]() -> const char* {
+      if (checked) {
+        return "on";
+      } else {
+        return "off";
+      }
+    }())+suffix);
   });
   auto* visible = menu.addAction(QObject::tr("Show labels"));
   visible->setCheckable(true);
   visible->setChecked(state.visible);
   QObject::connect(visible,&QAction::triggered,&menu,[submit,suffix](bool checked)
   {
-    submit(QStringLiteral("post labels ")+(checked ? "show" : "hide")+suffix);
+    submit(QStringLiteral("post labels ")+([&]() -> const char* {
+      if (checked) {
+        return "show";
+      } else {
+        return "hide";
+      }
+    }())+suffix);
   });
   auto* labels = menu.addMenu(QObject::tr("Result labels"));
   labels->setEnabled(!state.labels.empty());
@@ -132,8 +157,20 @@ void show_annotation_menu(QWidget* parent, const QPoint& globalPosition,
       font.setBold(true);
       label->menuAction()->setFont(font);
     }
-    auto* show = label->addAction(entry.second.visible ? QObject::tr("Hide") : QObject::tr("Show"));
-    const auto visibility = entry.second.visible ? "hide " : "show ";
+    auto* show = label->addAction([&]() -> std::common_type_t<decltype(QObject::tr("Hide")), decltype(QObject::tr("Show"))> {
+      if (entry.second.visible) {
+        return QObject::tr("Hide");
+      } else {
+        return QObject::tr("Show");
+      }
+    }());
+    const auto visibility = [&]() -> const char* {
+      if (entry.second.visible) {
+        return "hide ";
+      } else {
+        return "show ";
+      }
+    }();
     QObject::connect(show,&QAction::triggered,&menu,[submit,quoted,suffix,visibility]()
     {
       submit(QStringLiteral("post label ")+visibility+quoted+suffix);

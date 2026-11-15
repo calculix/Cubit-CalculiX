@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "Postprocessor/Core/representations/ResultReferenceMesh.hpp"
 #include "PostprocessorScene.hpp"
 #include "Postprocessor/GUI/Filters/PostprocessorPlaneOverlay.hpp"
@@ -105,18 +106,39 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
     if (!warning.empty())
     {
       auto& message = group->warnings[part.first];
-      message += (message.empty() ? "" : "\n")+warning;
+      message += ([&]() -> const char* {
+        if (message.empty()) {
+          return "";
+        } else {
+          return "\n";
+        }
+      }())+warning;
     }
-    auto* mesh = transformed ? transformed.get() : part.second;
+    auto* mesh = [&]() -> std::common_type_t<decltype(transformed.get()), decltype(part.second)> {
+      if (transformed) {
+        return transformed.get();
+      } else {
+        return part.second;
+      }
+    }();
     if (transformed)
     {
       group->transformed.push_back(transformed);
     }
-    const auto filtered = evaluated ? std::find_if(evaluated->parts.begin(),evaluated->parts.end(),[&](const auto& value)
-    {
-      return value.dataset == part.first;
-    }) : std::vector<Postprocessor::FilteredPart>::const_iterator{};
-    const auto* derived = evaluated && filtered != evaluated->parts.end() ? &*filtered : nullptr;
+    const std::vector<Postprocessor::FilteredPart>::const_iterator filtered = [&]() -> std::vector<Postprocessor::FilteredPart>::const_iterator {
+      if (evaluated) {
+        return std::find_if(evaluated->parts.begin(), evaluated->parts.end(), [&](const auto& value) {
+          return value.dataset == part.first;
+        });
+      }
+    }();
+    const auto* derived = [&]() -> std::common_type_t<decltype(&*filtered), decltype(nullptr)> {
+      if (evaluated && filtered != evaluated->parts.end()) {
+        return &*filtered;
+      } else {
+        return nullptr;
+      }
+    }();
     if (mesh->GetNumberOfCells() == 0)
     {
       continue;
@@ -160,7 +182,13 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
     group->surfaces.push_back({part.first, mesh, actor, surface->GetOutput(), nullptr});
     // Keep original points, including higher-order midside nodes, separate from
     // the tessellated surface. Tuple order and integral solver IDs stay intact.
-    auto* nodeMesh = derived && derived->nodes ? static_cast<vtkDataSet*>(derived->nodes.get()) : mesh;
+    auto* nodeMesh = [&]() -> std::common_type_t<decltype(static_cast<vtkDataSet*>(derived->nodes.get())), decltype(mesh)> {
+      if (derived && derived->nodes) {
+        return static_cast<vtkDataSet*>(derived->nodes.get());
+      } else {
+        return mesh;
+      }
+    }();
     if (nodeMesh->GetPointData()->HasArray("OriginalNodeId") && !nodeMesh->GetPointData()->HasArray("IntegrationPointId"))
     {
       auto nodes = vtkSmartPointer<vtkPolyData>::New();
@@ -224,7 +252,13 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
         if (!referenceWarning.empty())
         {
           auto& message = group->warnings[part.first];
-          message += (message.empty() ? "" : "\n")+referenceWarning;
+          message += ([&]() -> const char* {
+            if (message.empty()) {
+              return "";
+            } else {
+              return "\n";
+            }
+          }())+referenceWarning;
         }
       }
       else if (transformed)
@@ -243,7 +277,13 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
         edges->Update();
       }
       edges->RemoveObserver(edgeTag);
-      auto* edgeGeometry = derived && derived->edges ? derived->edges.get() : edges->GetOutput();
+      auto* edgeGeometry = [&]() -> std::common_type_t<decltype(derived->edges.get()), decltype(edges->GetOutput())> {
+        if (derived && derived->edges) {
+          return derived->edges.get();
+        } else {
+          return edges->GetOutput();
+        }
+      }();
       if (failed || edgeGeometry == nullptr)
       {
         error = "VTK could not extract the original mesh edges.";
@@ -260,8 +300,13 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
         auto edgeActor = vtkSmartPointer<vtkOpenGLActor>::New();
         edgeActor->SetMapper(edgeMapper);
         auto edgeProperty = vtkSmartPointer<vtkOpenGLProperty>::New();
-        const auto& edgeColor = edgeMesh == mesh ? Postprocessor::DisplayDefaults::edge_color :
-          Postprocessor::DeformationDefaults::overlay_color;
+        const auto& edgeColor = [&]() -> decltype((Postprocessor::DisplayDefaults::edge_color)) {
+          if (edgeMesh == mesh) {
+            return Postprocessor::DisplayDefaults::edge_color;
+          } else {
+            return Postprocessor::DeformationDefaults::overlay_color;
+          }
+        }();
         edgeProperty->SetColor(edgeColor[0], edgeColor[1], edgeColor[2]);
         edgeProperty->SetLineWidth(Postprocessor::DisplayDefaults::edge_width);
         edgeProperty->LightingOff();
@@ -334,7 +379,13 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
         {
           if (application.result_data(application.output_source(display.input)))
           {
-            error += (error.empty() ? "" : "\n")+display.name+": "+evaluationError;
+            error += ([&]() -> const char* {
+              if (error.empty()) {
+                return "";
+              } else {
+                return "\n";
+              }
+            }())+display.name+": "+evaluationError;
           }
           continue;
         }
@@ -362,7 +413,13 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
             geometryDisplay.deformation.enabled = false;
             geometryDisplay.deformation.overlay = false;
           }
-          group = build(data,geometryDisplay,buildError,feature ? evaluated.get() : nullptr);
+          group = build(data,geometryDisplay,buildError,[&]() -> std::common_type_t<decltype(evaluated.get()), decltype(nullptr)> {
+            if (feature) {
+              return evaluated.get();
+            } else {
+              return nullptr;
+            }
+          }());
           if (group)
           {
             group->deformation = display.deformation;
@@ -371,7 +428,13 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
           }
           if (!group)
           {
-            error += (error.empty() ? "" : "\n") + display.name + ": " + buildError;
+            error += ([&]() -> const char* {
+              if (error.empty()) {
+                return "";
+              } else {
+                return "\n";
+              }
+            }()) + display.name + ": " + buildError;
             continue;
           }
         }
@@ -382,7 +445,13 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
           allFrames = application.all_frame_range(evaluated->source_id,*display.coloring.field,rangeError,display.hidden_datasets);
           if (!rangeError.empty())
           {
-            error += (error.empty() ? "" : "\n")+display.name+": "+rangeError;
+            error += ([&]() -> const char* {
+              if (error.empty()) {
+                return "";
+              } else {
+                return "\n";
+              }
+            }())+display.name+": "+rangeError;
           }
         }
         group->coloring->apply(display, *data, group->surfaces, legendSlot, allFrames, error);
@@ -436,7 +505,13 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
           {
             if (Postprocessor::dataset_visible(definition->second,message.first))
             {
-              displayWarning += (displayWarning.empty() ? "" : "\n")+definition->second.name+
+              displayWarning += ([&]() -> const char* {
+                if (displayWarning.empty()) {
+                  return "";
+                } else {
+                  return "\n";
+                }
+              }())+definition->second.name+
                 " / Dataset "+std::to_string(message.first)+": "+message.second;
             }
           }
@@ -450,7 +525,11 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
       }
       std::array<double, 6> bounds;
       renderer->ComputeVisiblePropBounds(bounds.data());
-      visibleBounds = valid_bounds(bounds) ? std::optional<std::array<double, 6>>(bounds) : std::nullopt;
+      if (valid_bounds(bounds)) {
+        visibleBounds = std::optional<std::array<double, 6>>(bounds);
+      } else {
+        visibleBounds = std::nullopt;
+      }
       appliedCamera.reset();
       if (error.empty())
       {
@@ -472,10 +551,28 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
     if (planeOverlay)
     {
       const auto active = state.representations.find(state.active_representation_id);
-      const auto found = active != state.representations.end() && active->second.view_id == viewId && active->second.visible &&
-        active->second.input.owner == Postprocessor::OutputOwner::Feature ? state.filters.find(active->second.input.object_id) : state.filters.end();
-      const double extent = visibleBounds ? std::hypot((*visibleBounds)[1]-(*visibleBounds)[0],(*visibleBounds)[3]-(*visibleBounds)[2],(*visibleBounds)[5]-(*visibleBounds)[4]) : 1;
-      planeOverlay->update(found == state.filters.end() ? nullptr : &found->second,extent);
+      const auto found = [&]() -> std::common_type_t<decltype(state.filters.find(active->second.input.object_id)), decltype(state.filters.end())> {
+        if (active != state.representations.end() && active->second.view_id == viewId && active->second.visible &&
+        active->second.input.owner == Postprocessor::OutputOwner::Feature) {
+          return state.filters.find(active->second.input.object_id);
+        } else {
+          return state.filters.end();
+        }
+      }();
+      const double extent = [&]() -> double {
+        if (visibleBounds) {
+          return std::hypot((*visibleBounds)[1]-(*visibleBounds)[0],(*visibleBounds)[3]-(*visibleBounds)[2],(*visibleBounds)[5]-(*visibleBounds)[4]);
+        } else {
+          return 1;
+        }
+      }();
+      planeOverlay->update([&]() -> std::common_type_t<decltype(nullptr), decltype(&found->second)> {
+        if (found == state.filters.end()) {
+          return nullptr;
+        } else {
+          return &found->second;
+        }
+      }(),extent);
     }
     return error.empty();
   }

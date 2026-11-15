@@ -37,8 +37,20 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
     return false;
   }
 
-  const std::string expected_type = key == "S" ? "stresses" : "mechanicalstrains";
-  const std::array<std::string, 6> component_names = key == "S" ? std::array<std::string, 6>{"sxx", "syy", "szz", "sxy", "sxz", "syz"} : std::array<std::string, 6>{"exx", "eyy", "ezz", "exy", "exz", "eyz"};
+  const std::string expected_type = [&]() -> std::string {
+    if (key == "S") {
+      return "stresses";
+    } else {
+      return "mechanicalstrains";
+    }
+  }();
+  const std::array<std::string, 6> component_names = [&]() -> std::array<std::string, 6> {
+    if (key == "S") {
+      return std::array<std::string, 6>{"sxx", "syy", "szz", "sxy", "sxz", "syz"};
+    } else {
+      return std::array<std::string, 6>{"exx", "eyy", "ezz", "exy", "exz", "eyz"};
+    }
+  }();
 
   std::map<int, std::map<int, std::array<double, 6>>> collected;
 

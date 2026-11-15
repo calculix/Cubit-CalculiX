@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "PickCommandText.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include <algorithm>
@@ -5,7 +6,13 @@ namespace
 {
   std::string quote(const std::string& text)
   {
-    const char delimiter = text.find('"') == std::string::npos ? '"' : '\'';
+    const char delimiter = [&]() -> char {
+      if (text.find('"') == std::string::npos) {
+        return '"';
+      } else {
+        return '\'';
+      }
+    }();
     if (text.empty() || text.find(delimiter) != std::string::npos ||
         std::any_of(text.begin(),text.end(),[](unsigned char c)
         {
@@ -25,7 +32,13 @@ namespace Postprocessor
     error.clear();
     command.clear();
     const auto source = application.session().sources.find(entity.source_id);
-    const auto name = source == application.session().sources.end() ? std::string{} : quote(source->second.name);
+    const auto name = [&]() -> std::common_type_t<decltype(std::string{}), decltype(quote(source->second.name))> {
+      if (source == application.session().sources.end()) {
+        return std::string{};
+      } else {
+        return quote(source->second.name);
+      }
+    }();
     if (name.empty())
     {
       error = "The picked source name is unavailable or cannot be quoted safely.";
@@ -61,7 +74,13 @@ namespace Postprocessor
     }
     else
     {
-      command = std::string("post pick ")+(entity.kind == EntityKind::Node ? "node " : "element ")+id;
+      command = std::string("post pick ")+([&]() -> const char* {
+        if (entity.kind == EntityKind::Node) {
+          return "node ";
+        } else {
+          return "element ";
+        }
+      }())+id;
     }
     command += " dataset "+dataset+" source "+name;
     return true;
