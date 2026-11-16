@@ -15,6 +15,14 @@ QJsonObject ReportConfiguration::to_json() const
       return QJsonValue(QJsonValue::Null);
     }
   }());
+  if (units)
+  {
+    result.insert("units", units->to_json());
+  }
+  else
+  {
+    result.insert("units", QJsonValue(QJsonValue::Null));
+  }
   return result;
 }
 
@@ -35,6 +43,16 @@ bool ReportConfiguration::from_json(const QJsonObject& input, ReportConfiguratio
       return false;
     }
     candidate.company_logo = std::move(image);
+  }
+  if (!input.value("units").isNull())
+  {
+    ReportUnitSettings settings;
+    if (!input.value("units").isObject() || !ReportUnitSettings::from_json(input.value("units").toObject(), settings, error))
+    {
+      error = "Invalid report presentation units: " + error;
+      return false;
+    }
+    candidate.units = std::move(settings);
   }
   output = std::move(candidate);
   error.clear();

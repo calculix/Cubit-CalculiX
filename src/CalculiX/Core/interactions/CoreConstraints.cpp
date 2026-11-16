@@ -1,5 +1,6 @@
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "Core/units/CalculiXDomainUnits.hpp"
+#include <charconv>
 #include <utility>
 #include "Core/application/SettingsRead.hpp"
 #include "Core/interactions/CoreConstraints.hpp"
@@ -67,6 +68,11 @@ bool CoreConstraints::create_constraint(std::string constraint_type, std::vector
       return false;
     }
     if (!candidate.create_constraint(constraint_type, options, options2)) {
+      return false;
+    }
+    if (!validate_rotation_node_change(candidate, unitError))
+    {
+      PRINT_ERROR("%s\n", unitError.c_str());
       return false;
     }
     if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
@@ -169,6 +175,11 @@ bool CoreConstraints::modify_constraint(std::string constraint_type,int constrai
       return false;
     }
     if (!candidate.modify_constraint(constraint_type, constraint_id, options, options_marker, options2)) {
+      return false;
+    }
+    if (!validate_rotation_node_change(candidate, unitError))
+    {
+      PRINT_ERROR("%s\n", unitError.c_str());
       return false;
     }
     if (!CalculiXDomainUnits::convert(candidate, CalculiXDomainUnitView::Input, unitError)) {
@@ -329,6 +340,23 @@ bool CoreConstraints::add_equation_group(double equation_constraint_id, double n
 
 bool CoreConstraints::delete_constraint(int constraint_id)
 {
+  if (!domain_unit_view)
+  {
+    auto candidate = *this;
+    candidate.domain_unit_view = true;
+    std::string error;
+    if (!candidate.delete_constraint(constraint_id) || !validate_rotation_node_change(candidate, error))
+    {
+      if (!error.empty())
+      {
+        PRINT_ERROR("%s\n", error.c_str());
+      }
+      return false;
+    }
+    candidate.domain_unit_view = false;
+    *this = std::move(candidate);
+    return true;
+  }
   const int index = get_constraints_data_id_from_constraint_id(constraint_id);
 
   if (index < 0)
@@ -521,6 +549,74 @@ int CoreConstraints::get_node_id_from_vertex_id(int vertex_id)
 {
   int node_id = CubitInterface::get_vertex_node(vertex_id);
   return node_id;
+}
+
+bool CoreConstraints::get_rotation_node_ids(std::set<int>& nodes, std::string& error) const
+{
+  error.clear();
+  std::set<int> candidate;
+  for (const auto& constraint : constraints_data)
+  {
+    if (constraint.size() < 3 || constraint[1] != 1)
+    {
+      continue;
+    }
+    const auto found = std::find_if(rigidbody_constraint_data.begin(), rigidbody_constraint_data.end(), [&](const auto& row)
+    {
+      return row.size() >= 5 && row[0] == std::to_string(constraint[2]);
+    });
+    int vertex = 0;
+    if (found == rigidbody_constraint_data.end())
+    {
+      error = "Missing rigid-body rotation vertex.";
+      return false;
+    }
+    const auto& text = (*found)[4];
+    const auto parsed = std::from_chars(text.data(), text.data() + text.size(), vertex);
+    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || vertex <= 0)
+    {
+      error = "Invalid rigid-body rotation vertex.";
+      return false;
+    }
+    const int node = CubitInterface::get_vertex_node(vertex);
+    if (node <= 0)
+    {
+      error = "A rigid-body rotation vertex must be meshed before resolving mechanical DOFs.";
+      return false;
+    }
+    candidate.insert(node);
+  }
+  nodes = std::move(candidate);
+  return true;
+}
+
+bool CoreConstraints::validate_rotation_node_change(const CoreConstraints& candidate, std::string& error) const
+{
+  error.clear();
+  if (equation_data.empty())
+  {
+    return true;
+  }
+  if (rigidbody_constraint_data == candidate.rigidbody_constraint_data)
+  {
+    return true;
+  }
+  std::set<int> before;
+  std::set<int> after;
+  if (!get_rotation_node_ids(before, error) || !candidate.get_rotation_node_ids(after, error))
+  {
+    return false;
+  }
+  for (const auto& term : equation_data)
+  {
+    if (term.size() >= 4 && term[3] != 0.0 &&
+        (before.count(static_cast<int>(term[1])) != after.count(static_cast<int>(term[1]))))
+    {
+      error = "Remove or redefine equations before changing a referenced node's translation/rotation role.";
+      return false;
+    }
+  }
+  return true;
 }
 
 std::string CoreConstraints::get_constraint_export() // get a list of the CalculiX constraint exports

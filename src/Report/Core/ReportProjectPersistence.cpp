@@ -1,5 +1,6 @@
 #include "ReportProjectPersistence.hpp"
 #include "ReportSession.hpp"
+#include "ReportUnitValidation.hpp"
 #include "Framework/Storage/HDF5Tool.hpp"
 #include "Framework/Storage/ModelFileMetadata.hpp"
 #include "Framework/Core/CubitSimVersion.hpp"
@@ -29,7 +30,7 @@ bool ReportProjectPersistence::read(HDF5Tool& file, ReportSession& output, std::
     std::vector<std::string> payload;
     std::string version;
     if (!CubitSimModelFile::read(file, version, error) ||
-        !file.read_dataset_int_rank_1("schema_version", root, schema) || schema != std::vector<int>{2} ||
+        !file.read_dataset_int_rank_1("schema_version", root, schema) || schema != std::vector<int>{3} ||
         !file.read_dataset_string_rank_1("session", root, payload) || payload.size() != 1 || payload.front().size() > 64 * 1024 * 1024)
     {
       error = "Unsupported or invalid report project data.";
@@ -42,7 +43,32 @@ bool ReportProjectPersistence::read(HDF5Tool& file, ReportSession& output, std::
       error = "Malformed saved report session.";
       return false;
     }
-    return ReportSession::from_json(json.object(), output, error);
+    ReportSession candidate;
+    if (!ReportSession::from_json(json.object(), candidate, error))
+    {
+      return false;
+    }
+    for (const auto& item : candidate.documents)
+    {
+      if (!ReportUnitValidation::document(*item.second, error))
+      {
+        return false;
+      }
+    }
+    if (!ReportUnitValidation::configuration(candidate.request.overrides, error) ||
+        !ReportUnitValidation::configuration(candidate.pending_request.overrides, error))
+    {
+      return false;
+    }
+    for (const auto& draft : candidate.drafts)
+    {
+      if (!ReportUnitValidation::configuration(draft.second.overrides, error))
+      {
+        return false;
+      }
+    }
+    output = std::move(candidate);
+    return true;
   }
   catch (const H5::Exception& exception)
   {
@@ -62,7 +88,7 @@ bool ReportProjectPersistence::write(HDF5Tool& file, const ReportSession& sessio
   {
     for (const auto& item : session.documents)
     {
-      if (!item.second->validate(error))
+      if (!ReportUnitValidation::document(*item.second, error))
       {
         return false;
       }
@@ -77,7 +103,7 @@ bool ReportProjectPersistence::write(HDF5Tool& file, const ReportSession& sessio
     const std::string previous = "cubit-sim/report-previous";
     if (!CubitSimModelFile::write(file, CubitSim::Version, error) ||
         (file.nameExists(staged) && !file.deleteGroup(staged)) ||
-        !file.ensureGroup(staged) || !file.write_dataset_int_rank_1("schema_version", staged, {2}) ||
+        !file.ensureGroup(staged) || !file.write_dataset_int_rank_1("schema_version", staged, {3}) ||
         !file.write_dataset_string_rank_1("session", staged, {data.toStdString()}))
     {
       if (error.empty())

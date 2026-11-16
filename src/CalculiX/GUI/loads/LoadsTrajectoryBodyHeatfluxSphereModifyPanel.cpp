@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "LoadsTrajectoryBodyHeatfluxSphereModifyPanel.hpp"
@@ -106,6 +107,7 @@ LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereM
   widget_11 =  new PanelTable(nullptr);
   matrix.clear();
   widget_11->update({"Ray Radius","Depth","Magnitude"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   widget_11->panel_type = "trajectory";
   widget_11->setMinimumSize(200,160);
   
@@ -168,6 +170,13 @@ LoadsTrajectoryBodyHeatfluxSphereModifyPanel::LoadsTrajectoryBodyHeatfluxSphereM
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
 
   widget_11->show();
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_7, *lineEdit_7, label_7->text(), "time");
+  unitPresentation->bind(*label_8, *lineEdit_8, label_8->text(), "time");
+  unitPresentation->bind_table(*widget_11, 0, "length");
+  unitPresentation->bind_table(*widget_11, 1, "length");
+  unitPresentation->bind_table(*widget_11, 2, "body_heat_flux");
 
   isInitialized = true;
 }
@@ -442,6 +451,7 @@ bool LoadsTrajectoryBodyHeatfluxSphereModifyPanel::setTrajectory(int id)
   comboBox_10->setCurrentIndex(qMax(0, comboBox_10Index));
 
   widget_11->update({"Radius", "Depth", "Magnitude"}, settings.samples);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   originalValues.insert("lineEdit_0", lineEdit_0->text());
   originalValues.insert("lineEdit_1", lineEdit_1->text());
   originalValues.insert("comboBox_2", comboBox_2->currentText());
@@ -455,6 +465,7 @@ bool LoadsTrajectoryBodyHeatfluxSphereModifyPanel::setTrajectory(int id)
   originalValues.insert("comboBox_10", comboBox_10->currentText());
   originalValues.insert("widget_11", widget_11->snapshot());
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

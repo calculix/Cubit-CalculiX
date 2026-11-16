@@ -44,7 +44,7 @@ namespace Postprocessor
     }
     for (auto& group : groups)
     {
-      group.available = available.find(group.key) != available.end();
+      group.available = group.unit_issue.empty() && available.find(group.key) != available.end();
     }
     return groups;
   }

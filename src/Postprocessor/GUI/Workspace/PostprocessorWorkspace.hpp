@@ -21,6 +21,8 @@ class PostprocessorProperties;
 class PostprocessorTableView;
 class QSplitter;
 class QTabWidget;
+class QStackedWidget;
+class PostprocessorDisplayProperties;
 class PostprocessorPlotPane;
 class QLabel;
 class PostprocessorOptionsPanel;
@@ -55,6 +57,19 @@ public:
   void workspace_view(WorkspaceView& view);
 
 private:
+  bool show_properties(const std::string& page,const std::string& source,std::string& error);
+  void refresh_properties(const std::shared_ptr<PostprocessorApplicationInterface>& application);
+  void camera_tool(const QString& command);
+  QStackedWidget* propertiesPages = nullptr;
+  QWidget* emptyProperties = nullptr;
+  QWidget* legendEditorPage = nullptr;
+  QWidget* clipEditorPage = nullptr;
+  QWidget* sectionEditorPage = nullptr;
+  PostprocessorDisplayProperties* legendProperties = nullptr;
+  std::string propertiesPage;
+  std::string inspectedSource;
+  QAction* scaleAction = nullptr;
+  std::function<bool(const std::string&,std::string&)> silentCommand;
   void refresh_result_panes(const std::shared_ptr<PostprocessorApplicationInterface>& application,bool dataChanged);
   void submit(const QString& command);
   void capture_dialog(bool report,bool quick);
@@ -89,16 +104,18 @@ private:
   QToolBar* deformationToolbar = nullptr;
   QDockWidget* resultsDock = nullptr;
   QDockWidget* propertiesDock = nullptr;
-  QDockWidget* filtersDock = nullptr;
+
   PostprocessorClipControls* clipControls = nullptr;
   PostprocessorSectionControls* sectionControls = nullptr;
   QToolBar* toolbar = nullptr;
+  QToolBar* viewsToolbar = nullptr;
+  QToolBar* pickingToolbar = nullptr;
+  QToolBar* unitsToolbar = nullptr;
+  QToolBar* captureToolbar = nullptr;
   PostprocessorToolbar* nativeToolbar = nullptr;
   QToolBar* sourceToolbar = nullptr;
   PostprocessorSourceControls* sourceControls = nullptr;
   QList<QAction*> menus;
-  QAction* closeSelected = nullptr;
-  QAction* closeAll = nullptr;
   std::optional<std::uint64_t> panelRevision;
   std::optional<std::uint64_t> panelSelectionRevision;
   std::string panelSource;

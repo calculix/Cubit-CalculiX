@@ -207,7 +207,16 @@ bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions&
   vtk_status[job_id] = SimResults::ConversionStatus::Planning;
   CoreResultsVtkLink linker;
   try {
-    if (!linker.prepare(job_id, frd_data[frd_id], dat_data[dat_id], job[1] + ".inp", options, plan)) {
+    std::string sourceSystem;
+    const auto sourceMetadata = source_metadata.find(job_id);
+
+    if (sourceMetadata != source_metadata.end())
+    {
+      sourceSystem = sourceMetadata->second.unitSystem;
+    }
+
+    if (!linker.prepare(job_id, frd_data[frd_id], dat_data[dat_id], job[1] + ".inp", options, plan, sourceSystem))
+    {
       vtk_status[job_id] = SimResults::ConversionStatus::Failed;
       return false;
     }
@@ -225,6 +234,7 @@ bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions&
     if (metadata != source_metadata.end()) {
       const auto* record = &metadata->second;
       plan.source_units.system = record->unitSystem;
+      plan.step_axis_quantities = record->step_axis_quantities;
       plan.solver_launch_id = record->launchId;
       plan.source_project = record->materialProjectId;
       if (!record->unitSystem.empty()) {
@@ -499,13 +509,19 @@ bool CoreResults::project_topology(int topology_id,int iteration_id, double thre
 }
 
 bool CoreResults::project_result(int job_id, int step, int totalincrement,double scale) {
+  const auto metadata = source_metadata.find(job_id);
+  if (metadata == source_metadata.end() || metadata->second.unitSystem.empty())
+  {
+    PRINT_ERROR("Cannot project displacements without recorded result units.\n");
+    return false;
+  }
   std::string log;
   int results_data_id = get_results_data_id_from_job_id(job_id);
   int frd_data_id = get_frd_data_id_from_job_id(job_id);
   int dat_data_id = get_dat_data_id_from_job_id(job_id);
-  CoreResultsProject* projector = new CoreResultsProject();
+  CoreResultsProject projector;
 
-  if (results_data_id == -1) {
+  if (results_data_id == -1 || frd_data_id < 0 || static_cast<std::size_t>(frd_data_id) >= frd_data.size()) {
     return false;
   } else {
     if (step!=-1) {
@@ -514,13 +530,11 @@ bool CoreResults::project_result(int job_id, int step, int totalincrement,double
       log = "Project results for Job ID " + std::to_string(results_data[results_data_id][1]) + " for total increment " + std::to_string(totalincrement) + " \n";
     }
     PRINT_INFO("%s", log.c_str());
-    projector->init(&frd_data[frd_data_id]);
-    if (!projector->project(step,totalincrement,scale)) {
-      delete projector;
+    if (!projector.init(&frd_data[frd_data_id]) ||
+        !projector.project(step, totalincrement, scale, metadata->second.unitSystem))
+    {
       return false;
     }
-
-    delete projector;
 
     return true;
   }

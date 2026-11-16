@@ -31,7 +31,7 @@ std::vector<std::string> PostColorCommand::get_syntax()
 }
 std::vector<std::string> PostColorCommand::get_syntax_help()
 {
-  return {"post color field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] component {magnitude|\"component\"} [dataset N] [source \"name\"]",
+  return {"post color field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] [set \"name\"] component {magnitude|\"component\"} [dataset N] [source \"name\"]",
     "post color {solid|palette NAME|reverse on/off|bands continuous/N|range auto/allframes/symmetric/MIN MAX} [source \"name\"]",
     "post color limit minimum/maximum {on|off|VALUE color R G B} [source \"name\"]"};
 }

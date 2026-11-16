@@ -14,8 +14,10 @@ add_library(report_module SHARED
   Commands/ReportProfileCommand.cpp
   Commands/ReportUpdateCommand.cpp
   Core/ReportLogo.cpp Core/ReportLogo.hpp
+  Document/ReportFigureCaption.cpp Document/ReportFigureCaption.hpp
   Document/ReportPageDecoration.cpp Document/ReportPageDecoration.hpp
   Core/ReportConfigurationResolver.cpp
+  Core/ReportUnitValidation.cpp Core/ReportUnitValidation.hpp
   Core/ReportCore.cpp
   Core/ReportProjectPersistence.cpp
   Core/ReportSession.cpp
@@ -25,6 +27,7 @@ add_library(report_module SHARED
   Document/ReportPdfExporter.cpp
   EventObservers/ReportModelObserver.cpp
   GUI/ReportCommandText.cpp
+  GUI/ReportOutlineTree.cpp GUI/ReportOutlineTree.hpp
   GUI/ReportContentTree.cpp
   GUI/ReportGui.cpp
   GUI/ReportGuiObserver.cpp
@@ -35,6 +38,7 @@ add_library(report_module SHARED
   GUI/ReportSettingsDialog.cpp
   GUI/ReportSettingsCommandText.cpp GUI/ReportSettingsCommandText.hpp
   GUI/ReportWorkspace.cpp
+  GUI/ReportNativeProgress.cpp GUI/ReportNativeProgress.hpp
   GUI/ReportToolbar.cpp GUI/ReportToolbar.hpp
   GUI/ReportExportDialog.cpp GUI/ReportExportDialog.hpp
   Icons/ExportPdf.svg Icons/ExportOdt.svg

@@ -17,7 +17,21 @@ QJsonObject ReportTable::to_json() const
     }
     data.append(cells);
   }
-  return {{"title", QString::fromStdString(title)}, {"columns", ReportJson::strings(columns)},
+  QJsonArray columnsJson, cellsJson;
+  for (const auto& quantity : column_quantities)
+  {
+    columnsJson.append(ReportJson::quantity(quantity));
+  }
+  for (const auto& row : cell_quantities)
+  {
+    QJsonArray cells;
+    for (const auto& quantity : row)
+    {
+      cells.append(ReportJson::quantity(quantity));
+    }
+    cellsJson.append(cells);
+  }
+  return {{"column_quantities", columnsJson}, {"cell_quantities", cellsJson}, {"title", QString::fromStdString(title)}, {"columns", ReportJson::strings(columns)},
     {"units", ReportJson::strings(units)}, {"rows", data}};
 }
 
@@ -28,12 +42,61 @@ bool ReportTable::validate(std::string& error) const
     error = "Report table has invalid dimensions: " + title;
     return false;
   }
-  for (const auto& row : rows)
+  if ((!column_quantities.empty() && column_quantities.size() != columns.size()) ||
+      (!cell_quantities.empty() && cell_quantities.size() != rows.size()))
   {
+    error = "Report quantity metadata does not match its table: " + title;
+    return false;
+  }
+  for (const auto& quantity : column_quantities)
+  {
+    if (quantity && !ReportJson::validate_quantity(*quantity, error))
+    {
+      return false;
+    }
+  }
+  for (std::size_t rowIndex = 0; rowIndex < rows.size(); ++rowIndex)
+  {
+    const auto& row = rows[rowIndex];
     if (row.size() != columns.size())
     {
       error = "Report table row width differs from its column count: " + title;
       return false;
+    }
+    if (!cell_quantities.empty())
+    {
+      const auto& quantities = cell_quantities[rowIndex];
+      if (quantities.size() != columns.size())
+      {
+        error = "Report cell quantity count differs from its row width: " + title;
+        return false;
+      }
+      for (const auto& quantity : quantities)
+      {
+        if (quantity && !ReportJson::validate_quantity(*quantity, error))
+        {
+          return false;
+        }
+      }
+    }
+    for (std::size_t column = 0; column < row.size(); ++column)
+    {
+      const ReportQuantity* quantity = nullptr;
+      if (!column_quantities.empty() && column_quantities[column])
+      {
+        quantity = &*column_quantities[column];
+      }
+      if (!cell_quantities.empty() && cell_quantities[rowIndex][column])
+      {
+        quantity = &*cell_quantities[rowIndex][column];
+      }
+      const bool absent = row[column].isString() && row[column].toString().isEmpty();
+      if (quantity && ((!row[column].isDouble() && !absent) ||
+          (!units.empty() && !units[column].empty() && units[column] != quantity->unit)))
+      {
+        error = "Report physical cell or unit label conflicts with its quantity: " + title;
+        return false;
+      }
     }
     for (const auto& cell : row)
     {
@@ -69,6 +132,39 @@ bool ReportTable::from_json(const QJsonObject& input, ReportTable& output, std::
       row.push_back(cell);
     }
     candidate.rows.push_back(std::move(row));
+  }
+  if (!input.value("column_quantities").isArray() || !input.value("cell_quantities").isArray())
+  {
+    error = "Missing report table quantity metadata.";
+    return false;
+  }
+  for (const auto value : input.value("column_quantities").toArray())
+  {
+    std::optional<ReportQuantity> quantity;
+    if (!ReportJson::quantity(value, quantity, error))
+    {
+      return false;
+    }
+    candidate.column_quantities.push_back(std::move(quantity));
+  }
+  for (const auto value : input.value("cell_quantities").toArray())
+  {
+    if (!value.isArray())
+    {
+      error = "Invalid report cell quantities.";
+      return false;
+    }
+    std::vector<std::optional<ReportQuantity>> quantities;
+    for (const auto cell : value.toArray())
+    {
+      std::optional<ReportQuantity> quantity;
+      if (!ReportJson::quantity(cell, quantity, error))
+      {
+        return false;
+      }
+      quantities.push_back(std::move(quantity));
+    }
+    candidate.cell_quantities.push_back(std::move(quantities));
   }
   if (!candidate.validate(error))
   {

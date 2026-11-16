@@ -8,6 +8,8 @@
  */
 
 #include "MyCmdWidgetFactory.hpp"
+#include "GUI/common/CalculiXUnitPresentation.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "NavigationModel.hpp"
 #include "NavigationNode.hpp"
 #include "NavigationWidgetCache.hpp"
@@ -176,6 +178,11 @@ QWidget* MyCmdWidgetFactory::getWidget(NavigationModel *model,
   if(iter != widget_cache.end()) {
     widget = (*iter)->getWidget(name);
     if(widget) {
+      std::string error;
+      if (!CalculiXUnitPresentation::refresh_panel(*widget, error))
+      {
+        PRINT_WARNING("Panel units: %s\n", error.c_str());
+      }
       return widget;
     }
   }
@@ -183,6 +190,7 @@ QWidget* MyCmdWidgetFactory::getWidget(NavigationModel *model,
   // Create a new widget based on the name.
   widget = createWidget(name);
   if(widget) {
+      unitPanels.append(widget);
       if (name.startsWith("CCXTopology") || name == "CCXCGALWrap") {
         topologyPanels.append(widget);
       }
@@ -206,6 +214,7 @@ QWidget* MyCmdWidgetFactory::getWidget(NavigationModel *model,
 
 // We want to be sure to clean up all the memory we allocated.
 void MyCmdWidgetFactory::clear() {
+  unitPanels.clear();
   // Clean up our widget cache if the create_widget_using_cache example was used.
   QMap<QWidget*, NavigationWidgetCache*>::Iterator iter;
   for(iter = widget_cache.begin(); iter != widget_cache.end(); iter++) {
@@ -593,6 +602,27 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name) {
     return new JobsActionsPanel();
   }
   return NULL;
+}
+
+void MyCmdWidgetFactory::refreshUnitLabels()
+{
+  const auto generation = framework_units().generation();
+  if (generation == unitGeneration)
+  {
+    return;
+  }
+  unitGeneration = generation;
+  for (const auto& panel : unitPanels)
+  {
+    if (panel != nullptr)
+    {
+      std::string error;
+      if (!CalculiXUnitPresentation::refresh_panel(*panel, error))
+      {
+        PRINT_WARNING("Panel units: %s\n", error.c_str());
+      }
+    }
+  }
 }
 
 void MyCmdWidgetFactory::clearTopologyPanels(int topology_id) {

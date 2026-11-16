@@ -63,11 +63,21 @@ void CoreJobs::prepare_run_record(int jobId, const std::string& filename, bool i
     output.launchedAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs).toStdString();
     output.workingDirectory = QDir::currentPath().toStdString();
     std::string error;
-    if (unsupportedPreparedRuns.count(jobId) != 0) {
-      output.setupUnavailableReason = "Run input/setup archiving is not enabled for topology or adjoint exports.";
-    } else if (!CoreJobSnapshotBuilder::captureInput(filename, output.input, error)) {
+    if (unsupportedPreparedRuns.count(jobId) != 0)
+    {
+      output.setupUnavailableReason = "Typed setup snapshots are not enabled for topology or adjoint exports.";
+
+      if (!output.read_input_units(filename, error))
+      {
+        PRINT_WARNING("Job %d: cannot record input metadata: %s\n", jobId, error.c_str());
+      }
+    }
+    else if (!CoreJobSnapshotBuilder::captureInput(filename, output.input, error))
+    {
       output.setupUnavailableReason = "Input archive unavailable: " + error;
-    } else {
+    }
+    else
+    {
       if (!output.read_input_units(error)) {
         PRINT_WARNING("Job %d: %s\n", jobId, error.c_str());
       }

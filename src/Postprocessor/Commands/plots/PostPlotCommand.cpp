@@ -41,9 +41,9 @@ std::vector<std::string> PostPlotCommand::get_syntax_help()
 {
   return {"post plot create \"name\"","post plot {show|remove} \"name\"","post plot close",
     "post plot rename \"name\" \"replacement\"",
-    "post plot add {node ID|element ID|integrationpoint N element ID} [dataset ID|\"name\"] [source \"name\"] [field \"name\"] [origin \"FRD\"] [association node|element|integrationpoint] [component magnitude|\"name\"] [reduction minimum|maximum] [name \"curve\"] [plot \"name\"]",
+    "post plot add {node ID|element ID|integrationpoint N element ID} [dataset ID|\"name\"] [source \"name\"] [field \"name\"] [origin \"FRD\"] [association node|element|integrationpoint] [set \"name\"] [component magnitude|\"name\"] [reduction minimum|maximum] [name \"curve\"] [plot \"name\"]",
     "post plot add table \"name\" [scope frame|global] [type \"type\"] [entry N] x \"column\" y \"column\" [where \"column\" equals \"exact value\"] [source \"name\"] [name \"curve\"] [plot \"name\"]",
-    "post plot add field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] x \"column\" y \"column\" [where \"column\" equals \"value\"] [source \"name\"] [name \"curve\"] [plot \"name\"]",
+    "post plot add field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] [set \"name\"] x \"column\" y \"column\" [where \"column\" equals \"value\"] [source \"name\"] [name \"curve\"] [plot \"name\"]",
     "post plot curve {show|hide|remove} \"curve\" [plot \"name\"]",
     "post plot axes auto [plot \"name\"]","post plot axes range x MIN MAX y MIN MAX [plot \"name\"]",
     "post plot export csv \"new-file.csv\" [plot \"name\"]"};

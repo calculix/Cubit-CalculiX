@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "LoadsBodyHeatfluxModifyPanel.hpp"
@@ -112,6 +113,10 @@ LoadsBodyHeatfluxModifyPanel::LoadsBodyHeatfluxModifyPanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_2, *lineEdit_2, label_2->text(), "body_heat_flux");
+  unitPresentation->bind(*label_7, *lineEdit_7, label_7->text(), "time");
 
   isInitialized = true;
   
@@ -299,6 +304,7 @@ bool LoadsBodyHeatfluxModifyPanel::setBodyHeatflux(int id)
   originalValues.insert("lineEdit_7", lineEdit_7->text());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

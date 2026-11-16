@@ -6,12 +6,17 @@ conditional (ternary) operators. Apply this to runtime code, headers, commands,
 GUI code and regression sources. Bundled third-party libraries retain their
 upstream source style.
 
+Place opening and closing block braces on separate lines (Allman style).
+
 Prefer a named value and ordinary branch assignments::
 
    std::string operation;
-   if (state == MaterialCardState::Active) {
+   if (state == MaterialCardState::Active)
+   {
        operation = " activate card ";
-   } else {
+   }
+   else
+   {
        operation = " deactivate card ";
    }
 

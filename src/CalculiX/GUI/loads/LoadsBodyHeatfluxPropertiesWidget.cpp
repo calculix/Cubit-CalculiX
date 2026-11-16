@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsBodyHeatfluxPropertiesWidget.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -23,7 +24,7 @@ bool LoadsBodyHeatfluxPropertiesWidget::setBodyHeatflux(int id)
   auto* general = addIdentity("Body Heatflux", settings.id);
   addEditableName(general, id, QString::fromStdString(settings.name));
   auto* components = addGroup("components", "Components", PropertySection::Data);
-  addValue(components, "Magnitude", QString::fromStdString(settings.magnitude));
+  addValue(components, CalculiXUnitPresentation::title("Magnitude", "body_heat_flux"), QString::fromStdString(settings.magnitude));
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
   addValue(assignment, "Type", QString::fromStdString(settings.entityType));
   addValue(assignment, "IDs", QString::fromStdString(settings.ids));
@@ -34,7 +35,7 @@ bool LoadsBodyHeatfluxPropertiesWidget::setBodyHeatflux(int id)
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "OP", QString::fromStdString(settings.operation));
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Amplitude", QString::fromStdString(settings.amplitude));
-  addValue(settingsGroup, "Time Delay", QString::fromStdString(settings.timeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time Delay", "time"), QString::fromStdString(settings.timeDelay));
   return true;
 }
 

@@ -58,10 +58,17 @@ int plot_cases(const std::shared_ptr<PostprocessorApplicationInterface>& app)
   check(app->add_plot_entity(name,"maximum","Model",Selector{std::size_t{0}},EntityKind::Element,120,
     std::nullopt,"stress","SXX",false,PlotReduction::Maximum,error),"Cannot create explicit element maximum");
   check(app->plot_data(id,data,error) && data.curves[1].samples[0].y == 40,"Element maximum used masked/incorrect samples");
-  check(app->add_plot_entity(name,"ip","Model",Selector{std::size_t{1}},EntityKind::IntegrationPoint,120,
+  check(!app->add_plot_entity(name,"ip","Model",Selector{std::size_t{1}},EntityKind::IntegrationPoint,120,
+    3,"ip_stress","SXX",false,PlotReduction::None,error),"Unknown raw fields were compared without a common unit basis");
+  const std::string ipPlot = "Integration point history";
+  check(app->create_plot(ipPlot,error),"Cannot create separate integration-point plot");
+  check(app->add_plot_entity(ipPlot,"ip","Model",Selector{std::size_t{1}},EntityKind::IntegrationPoint,120,
     3,"ip_stress","SXX",false,PlotReduction::None,error),"Cannot create integration-point history");
-  check(app->plot_data(id,data,error) && data.curves[2].samples[0].y == 100 && !data.curves[2].samples[1].valid,
+  const auto ipPlotId = app->session().active_plot_id;
+  check(app->plot_data(ipPlotId,data,error) && data.curves.size() == 1 &&
+    data.curves[0].samples[0].y == 100 && !data.curves[0].samples[1].valid,
     "IP history did not preserve element/IP identity across frames");
+  check(app->change_plot(name,"show","",error),"Cannot return to the nodal history plot");
   const auto json = plots_to_json(app->session().plots);
   std::map<std::string,PlotDefinition> restored;
   check(plots_from_json(json,restored) &&

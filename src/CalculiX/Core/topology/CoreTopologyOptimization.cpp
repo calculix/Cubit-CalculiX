@@ -8,6 +8,8 @@
 #include <set>
 #include <array>
 #include "Core/jobs/CalculiXJobsInterface.hpp"
+#include "Core/jobs/CalculiXJobRunRecord.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "Core/topology/CalculiXTopologyInterface.hpp"
 #include "Core/topology/CalculiXTopologyRunInterface.hpp"
 #include "CubitMessage.hpp"
@@ -662,6 +664,48 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
         return false;
       }
 
+      CalculiXJobsInterface jobs;
+      std::shared_ptr<const CalculiXJobRunRecord> physicalRun;
+      std::shared_ptr<const CalculiXJobRunRecord> adjointRun;
+      std::string unitError;
+
+      if (!jobs.get_run_record(physical_job, physicalRun, unitError) ||
+          !jobs.get_run_record(adjoint_job, adjointRun, unitError))
+      {
+        PRINT_ERROR("Cannot read topology solver units: %s\n", unitError.c_str());
+        return false;
+      }
+
+      if (!physicalRun || !adjointRun || physicalRun->unitSystem.empty() ||
+          physicalRun->unitSystem != adjointRun->unitSystem)
+      {
+        PRINT_ERROR("Physical and adjoint jobs require the same recorded solver unit system.\n");
+        return false;
+      }
+
+      double geometryLengthSI = 0.0;
+      double solverLength = 0.0;
+
+      if (!framework_units().geometry_to_si(1.0, geometryLengthSI, unitError) ||
+          !framework_units().system_from_si(geometryLengthSI, SimUnits::Length,
+            physicalRun->unitSystem, solverLength, unitError))
+      {
+        PRINT_ERROR("Cannot convert topology integration units: %s\n", unitError.c_str());
+        return false;
+      }
+
+      // Tensor results remain in their recorded solver units. Cubit-coordinate
+      // integration weights must therefore use solver length cubed. A uniform
+      // unit conversion scales every Jacobian determinant by s_L^3, including
+      // curved elements; this does not assume an affine element mapping.
+      const double integrationVolumeScale = solverLength * solverLength * solverLength;
+
+      if (!std::isfinite(integrationVolumeScale) || integrationVolumeScale <= 0.0)
+      {
+        PRINT_ERROR("Invalid topology integration volume scale.\n");
+        return false;
+      }
+
       std::map<int, std::map<int, std::array<double, 6>>> stresses;
       std::map<int, std::map<int, std::array<double, 6>>> strains;
 
@@ -734,7 +778,15 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
             contraction += multiplier * stress_value * strain_value;
           }
 
-          const double contribution = contraction * point.second;
+          const double solverWeight = point.second * integrationVolumeScale;
+
+          if (!std::isfinite(solverWeight) || solverWeight <= 0.0)
+          {
+            PRINT_ERROR("Invalid solver integration weight for element %d.\n", element_id);
+            return false;
+          }
+
+          const double contribution = contraction * solverWeight;
 
           if (!std::isfinite(contribution))
           {

@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
 #include "StepsModifyDynamicPanel.hpp"
@@ -155,6 +156,13 @@ StepsModifyDynamicPanel::StepsModifyDynamicPanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_8, *lineEdit_8, label_8->text(), "time");
+  unitPresentation->bind(*label_9, *lineEdit_9, label_9->text(), "time");
+  unitPresentation->bind(*label_10, *lineEdit_10, label_10->text(), "time");
+  unitPresentation->bind(*label_11, *lineEdit_11, label_11->text(), "time");
+  unitPresentation->bind(*label_12, *lineEdit_12, label_12->text(), "time");
 
   isInitialized = true;
 }
@@ -409,6 +417,7 @@ bool StepsModifyDynamicPanel::setStep(int id)
   originalValues.insert("lineEdit_12", lineEdit_12->text());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

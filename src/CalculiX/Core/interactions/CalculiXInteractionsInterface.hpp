@@ -6,11 +6,13 @@
 #include "ConstraintsSettings.hpp"
 
 #include <string>
+#include <set>
 #include <vector>
 
 class CalculiXInteractionsInterface
 {
 public:
+  bool get_rotation_node_ids(std::set<int>& nodes, std::string& error) const;
   bool get_surfaceinteraction_settings(int id, SurfaceInteractionsSettings& settings, std::string& error);
   bool get_contactpair_settings(int id, ContactPairsSettings& settings, std::string& error);
   bool get_constraint_settings(int id, ConstraintsSettings& settings, std::string& error);

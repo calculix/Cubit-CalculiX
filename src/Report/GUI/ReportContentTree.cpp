@@ -1,64 +1,268 @@
-#include <type_traits>
 #include "ReportContentTree.hpp"
-#include "ReportCommandText.hpp"
-#include "Framework/Reporting/ReportTemplate.hpp"
+#include "ReportSettingsCommandText.hpp"
 #include "CubitMessage.hpp"
 #include <QSignalBlocker>
+#include <QTreeWidgetItemIterator>
+#include <QScrollBar>
+#include <QTimer>
+#include <map>
+#include <set>
+#include <utility>
+#include <algorithm>
 
-ReportContentTree::ReportContentTree(QWidget* parent, std::function<bool(const std::string&, std::string&)> submit) : QTreeWidget(parent)
+namespace
 {
-  setHeaderLabel(tr("Report content"));
-  connect(this, &QTreeWidget::itemChanged, this, [submit](QTreeWidgetItem* item, int)
+constexpr int groupRole = Qt::UserRole + 1;
+constexpr int gateRole = Qt::UserRole + 2;
+
+QString identity(QTreeWidgetItem* item)
+{
+  const auto group = item->data(0, groupRole).toString();
+  if (!group.isEmpty())
   {
-    std::string key, error;
-    if (!ReportCommandText::quote(item->data(0, Qt::UserRole).toString(), key, error) ||
-        !submit("report configure " + key + ([&]() -> const char* {
-          if (item->checkState(0) == Qt::Checked) {
-            return " \"true\"";
-          } else {
-            return " \"false\"";
-          }
-        }()), error))
-    {
-      PRINT_ERROR("Cannot change report content: %s\n", error.c_str());
-    }
+    return "group:" + group;
+  }
+  return "option:" + item->data(0, Qt::UserRole).toString();
+}
+}
+
+ReportContentTree::ReportContentTree(QWidget* parent, std::function<bool(const std::string&, std::string&)> submit)
+  : QTreeWidget(parent), submit(std::move(submit))
+{
+  setObjectName("ReportContentTree");
+  setHeaderLabel(tr("Report content"));
+  connect(this, &QTreeWidget::itemChanged, this, [this](QTreeWidgetItem* item, int)
+  {
+    change(item);
   });
 }
 
 ReportContentTree::~ReportContentTree() = default;
 
-void ReportContentTree::refresh(const ReportTemplate& definition, const ReportConfiguration& configuration)
+void ReportContentTree::schedule_refresh()
 {
-  QSignalBlocker guard(this);
-  const QString selected = [&]() -> QString {
-    if (currentItem()) {
-      return currentItem()->data(0, Qt::UserRole).toString();
-    } else {
-      return QString();
+  if (refreshPending)
+  {
+    return;
+  }
+  refreshPending = true;
+  QTimer::singleShot(0, this, [this]()
+  {
+    refreshPending = false;
+    refresh(definition, configuration);
+  });
+}
+
+void ReportContentTree::collect(QTreeWidgetItem* item, bool checked, ReportConfiguration& patch) const
+{
+  std::string value = "false";
+  if (checked)
+  {
+    value = "true";
+  }
+  const auto key = item->data(0, Qt::UserRole).toString().toStdString();
+  const auto gate = item->data(0, gateRole).toString().toStdString();
+  if (!key.empty())
+  {
+    patch.values[key] = value;
+  }
+  if (!gate.empty())
+  {
+    patch.values[gate] = value;
+  }
+  for (int i = 0; i < item->childCount(); ++i)
+  {
+    collect(item->child(i), checked, patch);
+  }
+}
+
+void ReportContentTree::change(QTreeWidgetItem* item)
+{
+  ReportConfiguration patch;
+  const bool checked = item->checkState(0) != Qt::Unchecked;
+  collect(item, checked, patch);
+  if (checked)
+  {
+    for (auto* parent = item->parent(); parent; parent = parent->parent())
+    {
+      const auto gate = parent->data(0, gateRole).toString().toStdString();
+      if (!gate.empty())
+      {
+        patch.values[gate] = "true";
+      }
     }
-  }();
+  }
+  if (patch.values.empty())
+  {
+    return;
+  }
+  std::string command, error;
+  if (!ReportSettingsCommandText::build(patch, QString(), command, error, &definition))
+  {
+    PRINT_ERROR("Cannot change report content: %s\n", error.c_str());
+    schedule_refresh();
+    return;
+  }
+  const auto previous = configuration;
+  for (const auto& entry : patch.values)
+  {
+    configuration.values[entry.first] = entry.second;
+  }
+  // Dispatch may rebuild the widget through an observer: don't reuse item afterwards.
+  if (!submit(command, error))
+  {
+    configuration = previous;
+    PRINT_ERROR("Cannot change report content: %s\n", error.c_str());
+  }
+  // Don't delete the edited item inside Qt's itemChanged signal delivery.
+  schedule_refresh();
+}
+
+void ReportContentTree::refresh(const ReportTemplate& nextDefinition, const ReportConfiguration& nextConfiguration)
+{
+  const auto newDefinition = nextDefinition;
+  const auto newConfiguration = nextConfiguration;
+  QSignalBlocker guard(this);
+  std::map<QString, bool> expansion;
+  for (QTreeWidgetItemIterator it(this); *it; ++it)
+  {
+    expansion[identity(*it)] = (*it)->isExpanded();
+  }
+  QString selected;
+  if (currentItem())
+  {
+    selected = identity(currentItem());
+  }
+  const int scroll = verticalScrollBar()->value();
+  definition = newDefinition;
+  configuration = newConfiguration;
   clear();
+  std::map<std::string, QTreeWidgetItem*> groups;
+  std::set<std::string> gates;
+  for (const auto& group : definition.content_groups)
+  {
+    auto* item = new QTreeWidgetItem();
+    item->setText(0, QString::fromStdString(group.label));
+    item->setData(0, groupRole, QString::fromStdString(group.id));
+    item->setData(0, gateRole, QString::fromStdString(group.gate_option));
+    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+    groups[group.id] = item;
+    if (!group.gate_option.empty())
+    {
+      gates.insert(group.gate_option);
+    }
+  }
+  for (const auto& group : definition.content_groups)
+  {
+    auto* item = groups.at(group.id);
+    const auto parent = groups.find(group.parent_id);
+    if (parent == groups.end())
+    {
+      addTopLevelItem(item);
+    }
+    else
+    {
+      parent->second->addChild(item);
+    }
+  }
   for (const auto& option : definition.options)
   {
-    if (option.kind != "boolean")
+    if (option.kind != "boolean" || gates.count(option.key) != 0)
     {
       continue;
     }
-    auto* item = new QTreeWidgetItem(this);
+    auto* item = new QTreeWidgetItem();
+    const auto parent = groups.find(option.group_id);
+    if (parent == groups.end())
+    {
+      addTopLevelItem(item);
+    }
+    else
+    {
+      parent->second->addChild(item);
+    }
     item->setText(0, QString::fromStdString(option.label));
     item->setData(0, Qt::UserRole, QString::fromStdString(option.key));
     item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-    const auto entry = configuration.values.find(option.key);
-    item->setCheckState(0, [&]() -> std::common_type_t<decltype(Qt::Checked), decltype(Qt::Unchecked)> {
-      if (entry != configuration.values.end() && entry->second == "true") {
-        return Qt::Checked;
-      } else {
-        return Qt::Unchecked;
-      }
-    }());
-    if (item->data(0, Qt::UserRole).toString() == selected)
+    std::string value = option.default_value;
+    const auto found = configuration.values.find(option.key);
+    if (found != configuration.values.end())
     {
-      setCurrentItem(item);
+      value = found->second;
+    }
+    Qt::CheckState state = Qt::Unchecked;
+    if (value == "true")
+    {
+      state = Qt::Checked;
+    }
+    item->setCheckState(0, state);
+  }
+  std::function<void(QTreeWidgetItem*, bool)> update = [&](QTreeWidgetItem* item, bool enabled)
+  {
+    const auto gate = item->data(0, gateRole).toString().toStdString();
+    bool open = true;
+    if (!gate.empty())
+    {
+      const auto found = configuration.values.find(gate);
+      if (found != configuration.values.end())
+      {
+        open = found->second == "true";
+      }
+      else
+      {
+        const auto option = std::find_if(definition.options.begin(), definition.options.end(), [&](const ReportOption& value)
+        {
+          return value.key == gate;
+        });
+        open = option != definition.options.end() && option->default_value == "true";
+      }
+    }
+    item->setDisabled(!enabled);
+    for (int i = 0; i < item->childCount(); ++i)
+    {
+      update(item->child(i), enabled && open);
+    }
+    if (item->data(0, groupRole).toString().isEmpty())
+    {
+      return;
+    }
+    bool any = false;
+    bool all = item->childCount() > 0;
+    for (int i = 0; i < item->childCount(); ++i)
+    {
+      const auto state = item->child(i)->checkState(0);
+      any = any || state != Qt::Unchecked;
+      all = all && state == Qt::Checked;
+    }
+    Qt::CheckState state = Qt::Unchecked;
+    if (open && all)
+    {
+      state = Qt::Checked;
+    }
+    else if (open && any)
+    {
+      state = Qt::PartiallyChecked;
+    }
+    item->setCheckState(0, state);
+  };
+  for (int i = 0; i < topLevelItemCount(); ++i)
+  {
+    update(topLevelItem(i), true);
+  }
+  for (QTreeWidgetItemIterator it(this); *it; ++it)
+  {
+    const auto id = identity(*it);
+    const auto previous = expansion.find(id);
+    bool expanded = (*it)->parent() == nullptr;
+    if (previous != expansion.end())
+    {
+      expanded = previous->second;
+    }
+    (*it)->setExpanded(expanded);
+    if (id == selected)
+    {
+      setCurrentItem(*it);
     }
   }
+  verticalScrollBar()->setValue(scroll);
 }

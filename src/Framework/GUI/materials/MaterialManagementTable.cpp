@@ -59,7 +59,13 @@ std::vector<std::vector<double>> MaterialManagementTable::getMatrixPropertyGUI()
         break;
       }
       bool valid = false;
-      const double value = text.toDouble(&valid);
+      double value = text.toDouble(&valid);
+      // Formatting is for display only. Editing another cell must not round
+      // the original value loaded into this cell.
+      if (cell != nullptr && cell->data(Qt::UserRole).isValid() && text == cell->data(Qt::UserRole + 1).toString())
+      {
+        value = cell->data(Qt::UserRole).toDouble(&valid);
+      }
       if (!valid || !std::isfinite(value)) {
         const std::string error = "Material row " + std::to_string(row + 1) + " requires a finite value for " + definition->columns[static_cast<std::size_t>(column)].title + ".";
         material->setPropertyError(property, error);
@@ -79,8 +85,13 @@ void MaterialManagementTable::insertNewRow(std::vector<double> values) {
   setVerticalHeaderItem(row, new QTableWidgetItem(QString::number(row + 1)));
   for (int column = 0; column < columnCount(); ++column) {
     auto* cell = new QTableWidgetItem();
-    if (static_cast<std::size_t>(column) < values.size()) {
-      cell->setText(QString::number(values[static_cast<std::size_t>(column)], 'g', 17));
+    if (static_cast<std::size_t>(column) < values.size())
+    {
+      const double value = values[static_cast<std::size_t>(column)];
+      const QString text = QString::number(value, 'g', 15);
+      cell->setText(text);
+      cell->setData(Qt::UserRole, value);
+      cell->setData(Qt::UserRole + 1, text);
     }
     setItem(row, column, cell);
   }

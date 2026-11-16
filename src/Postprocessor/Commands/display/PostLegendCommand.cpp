@@ -9,15 +9,20 @@ PostLegendCommand::PostLegendCommand(std::weak_ptr<PostprocessorApplicationInter
 }
 std::vector<std::string> PostLegendCommand::get_syntax()
 {
-  return {"post legend {on|off} [source <string:type='quoted',number='1',label='source_name'>]"};
+  const std::string source = " [source <string:type='quoted',number='1',label='source_name'>]";
+  return {"post legend {on|off}"+source,
+    "post legend position <value:label='x'> <value:label='y'>"+source,
+    "post legend position automatic"+source};
 }
 std::vector<std::string> PostLegendCommand::get_syntax_help()
 {
-  return {"post legend {on|off} [source \"name\"]"};
+  return {"post legend {on|off} [source \"name\"]",
+    "post legend position X Y [source \"name\"]","post legend position automatic [source \"name\"]"};
 }
 std::vector<std::string> PostLegendCommand::get_help()
 {
-  return {"Show or hide this source representation's result legend in the active view."};
+  return {"Show, hide, or position this source representation's result legend in the active view.",
+    "Position uses normalized bottom-left viewport coordinates in [0,1]; automatic restores layout."};
 }
 bool PostLegendCommand::execute(CubitCommandData& data)
 {
@@ -36,7 +41,27 @@ bool PostLegendCommand::execute(CubitCommandData& data)
       PRINT_ERROR("Cannot change legend: %s\n", error.c_str());
       return false;
     }
-    c->legend_visible = data.find_keyword("ON");
+    if (data.find_keyword("POSITION"))
+    {
+      if (data.find_keyword("AUTOMATIC"))
+      {
+        c->legend_position.reset();
+      }
+      else
+      {
+        std::array<double,2> position;
+        if (!data.get_value("x",position[0]) || !data.get_value("y",position[1]))
+        {
+          PRINT_ERROR("Legend position requires X and Y coordinates.\n");
+          return false;
+        }
+        c->legend_position = position;
+      }
+    }
+    else
+    {
+      c->legend_visible = data.find_keyword("ON");
+    }
     if (!active->set_coloring(name, *c, error))
     {
       PRINT_ERROR("Cannot change legend: %s\n", error.c_str());

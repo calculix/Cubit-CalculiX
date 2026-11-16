@@ -67,3 +67,8 @@ bool PostprocessorApplicationInterface::capture_file(const Postprocessor::Captur
   QJsonObject provenance;
   return render_capture(request,png,provenance,error) && Postprocessor::write_capture_png(path,png,error);
 }
+
+const SimUnits::WorkspaceUnitContext* PostprocessorApplicationInterface::captured_units() const noexcept
+{
+  return core.captured_units();
+}

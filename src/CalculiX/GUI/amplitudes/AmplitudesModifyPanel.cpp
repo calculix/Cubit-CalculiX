@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include <type_traits>
 #include "CubitMessage.hpp"
 #include "Core/amplitudes/CalculiXAmplitudesInterface.hpp"
@@ -68,6 +69,7 @@ AmplitudesModifyPanel::AmplitudesModifyPanel(QWidget *parent) :
   widget_5 =  new PanelTable(nullptr);
   matrix.clear();
   widget_5->update({"Time","Amplitude"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   //widget_3->setColumnWidth(0,150);
   widget_5->panel_type = "amplitude";
   widget_5->setMinimumSize(200,160);
@@ -103,6 +105,25 @@ AmplitudesModifyPanel::AmplitudesModifyPanel(QWidget *parent) :
   widget_5->show();
   checkBox_4->setChecked(false);
 
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_2, *lineEdit_2, label_2->text(), "time");
+  unitPresentation->bind_table(*widget_5, 0, "time");
+
+  axisBox = new QComboBox(this);
+  axisBox->addItem("Time", "time");
+  axisBox->addItem("Frequency", "frequency");
+  axisBox->setToolTip("Select the physical quantity of the curve abscissae and horizontal shift.");
+  auto* axisLayout = new QHBoxLayout();
+  axisLayout->addWidget(new QLabel("Axis", this));
+  axisLayout->addWidget(axisBox);
+  VBoxLayout->insertLayout(0, axisLayout);
+  connect(axisBox, qOverload<int>(&QComboBox::currentIndexChanged), this, [this, unitPresentation]
+  {
+    const auto quantity = axisBox->currentData().toString().toStdString();
+    unitPresentation->set_quantity(*lineEdit_2, quantity);
+    unitPresentation->set_table_quantity(*widget_5, 0, quantity);
+  });
+
   isInitialized = true;
 }
 
@@ -122,6 +143,8 @@ void AmplitudesModifyPanel::on_pushButton_apply_clicked(bool)
       return QStringLiteral("NO");
     }
   }()));
+  const bool axisChanged = fieldChanged("axis", axisBox->currentData().toString());
+  changed = changed || axisChanged;
   changed = changed || fieldChanged("widget_5", widget_5->snapshot());
   if (loadedEntityId >= 0 && !changed && lineEdit_0->text().trimmed() == QString::number(loadedEntityId))
   {
@@ -188,7 +211,7 @@ void AmplitudesModifyPanel::on_pushButton_apply_clicked(bool)
     {
       command.append(" name \"" +lineEdit_1->text() + "\"");
     }
-    if (matrix.size()!=0 && fieldChanged("widget_5", widget_5->snapshot()))
+    if (matrix.size()!=0 && (axisChanged || fieldChanged("widget_5", widget_5->snapshot())))
     {
       command.append(" time_amplitude ");
       for (size_t i = 0; i < matrix.size(); i++)
@@ -199,9 +222,14 @@ void AmplitudesModifyPanel::on_pushButton_apply_clicked(bool)
         }
       }
     }
-    if (lineEdit_2->text()!="" && fieldChanged("lineEdit_2", lineEdit_2->text()))
+    if ((lineEdit_2->text()!="" && fieldChanged("lineEdit_2", lineEdit_2->text())) || axisChanged)
     {
-      command.append(" shiftx " +lineEdit_2->text());
+      QString shift = lineEdit_2->text();
+      if (shift.trimmed().isEmpty())
+      {
+        shift = "0";
+      }
+      command.append(" shiftx " + shift);
     }
     if (lineEdit_3->text()!="" && fieldChanged("lineEdit_3", lineEdit_3->text()))
     {
@@ -226,6 +254,11 @@ void AmplitudesModifyPanel::on_pushButton_apply_clicked(bool)
     }
   }
   
+  if (command != "" && axisChanged)
+  {
+    command.append(" axis " + axisBox->currentData().toString());
+  }
+
   if (command != "")
   {
     commands.push_back(command);
@@ -266,6 +299,8 @@ bool AmplitudesModifyPanel::setAmplitude(int id)
     return false;
   }
   lineEdit_0->setText(QString::number(settings.id));
+  axisBox->setCurrentIndex(axisBox->findData(QString::fromStdString(settings.axis)));
+  originalValues.insert("axis", axisBox->currentData().toString());
   lineEdit_1->setText(QString::fromStdString(settings.name));
   lineEdit_2->setText(QString::fromStdString(settings.shiftX));
   lineEdit_3->setText(QString::fromStdString(settings.shiftY));
@@ -276,6 +311,7 @@ bool AmplitudesModifyPanel::setAmplitude(int id)
     axisTitle = "Frequency";
   }
   widget_5->update({axisTitle, "Amplitude"}, settings.points);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   originalValues.insert("lineEdit_0", lineEdit_0->text());
   originalValues.insert("lineEdit_1", lineEdit_1->text());
   originalValues.insert("lineEdit_2", lineEdit_2->text());
@@ -289,6 +325,7 @@ bool AmplitudesModifyPanel::setAmplitude(int id)
   }()));
   originalValues.insert("widget_5", widget_5->snapshot());
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

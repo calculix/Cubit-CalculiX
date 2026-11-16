@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 class CoreSections;
 class CoreOrientations;
 class CoreConstraints;
@@ -16,6 +17,8 @@ enum class CalculiXDomainUnitView { Input, Native, Display, Solver, Geometry, Re
 
 class CalculiXDomainUnits {
 public:
+  // Quantities at original solver procedure indices; blank entries are controls or IDs.
+  static std::vector<std::string> procedure_quantities(int type, const std::vector<std::string>& row);
   static bool convert(CoreSections& model, CalculiXDomainUnitView view, std::string& error);
   static bool convert(CoreOrientations& model, CalculiXDomainUnitView view, std::string& error);
   static bool convert(CoreConstraints& model, CalculiXDomainUnitView view, std::string& error);

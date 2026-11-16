@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsPressuresPropertiesWidget.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -25,11 +26,11 @@ bool LoadsPressuresPropertiesWidget::setPressure(int id)
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
   addReference(assignment, PropertyReferenceKind::Sideset, "Sideset", QString::fromStdString(settings.sideset));
   auto* components = addGroup("components", "Components", PropertySection::Data);
-  addValue(components, "Magnitude", QString::fromStdString(settings.magnitude));
+  addValue(components, CalculiXUnitPresentation::title("Magnitude", "pressure"), QString::fromStdString(settings.magnitude));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "OP", QString::fromStdString(settings.operation));
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Amplitude", QString::fromStdString(settings.amplitude));
-  addValue(settingsGroup, "Time Delay", QString::fromStdString(settings.timeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time Delay", "time"), QString::fromStdString(settings.timeDelay));
   return true;
 }
 

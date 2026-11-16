@@ -223,3 +223,83 @@ Unbuilt/unrun regression sources cover repeated generation, title/profile change
 failed replacement, changed job snapshots, canonical provider aliases, per-source
 notes/drafts, missing sources/discovery, duplicate-session rejection and replacement
 at the report-count limit. The no-build/no-compile restriction remains active.
+
+Native operation progress
+-------------------------
+
+``ReportProgress`` is a synchronous, borrowed provider contract without GUI or
+host dependencies. Core accepts an optional sink for Generate/Update and forwards
+it only through transient request fields. The sink is not serialized, and Core
+clears the pointer before committing the resolved request into session state.
+
+``ReportNativeProgress`` adapts this contract to Cubit's ``ProgressTool`` in the
+host-facing Report application. It runs only with the GUI on its owning thread,
+throttles repeated checkpoints to 200 ms and closes the native display on every
+exit path. The native tool is started once, never restarted for stage/count
+changes, and ended only when the operation scope exits. Explicit
+``ReportProgressStage`` values drive monotonic overall workflow progress. Only
+``finish`` reaches 100%; it does not poll cancellation after publication. The
+native description is stable and detailed stage changes use command output.
+Report does not introduce a custom progress widget, a worker thread for SDK
+captures or an additional Qt event-processing loop. Mutating Report application
+operations are guarded while generation or preview preparation is running.
+
+Regression sources exercise stage notifications, cancellation before publication,
+retry after cancellation, transient request serialization and atomic input-reader
+cancellation. They are registered but have not been compiled or executed.
+
+Content groups and preview construction
+--------------------------------------
+
+``ReportContentGroup`` and ``ReportOption::group_id`` are template metadata.
+Core validates group IDs, parent cycles, option membership and boolean gates.
+The Content tree submits grouped changes through the existing readable atomic
+settings command. It never emits commands during passive refresh and defers its
+own rebuild until Qt has finished delivering the edited item's signal.
+
+``ReportOutlineTree`` reads committed sections and aggregate counts without
+serializing or copying table contents. It retains page locations for the same
+immutable document across pre-layout refreshes. The diagnostics page is a
+layout-owned anchor, explicitly recognized by both navigation widgets.
+
+``ReportDocumentLayout::prepare`` accepts a borrowed progress sink. Temporary
+construction uses disabled layout and undo history, row-major cell insertion and
+128-row allocation batches, with cell checkpoints every 256 insertions. Section
+recursion propagates cancellation without replacing the old layout. TOC markers
+are integer positions and replaced in equal-width ranges after pagination, so
+live cursors cannot drift to the end of the document during construction.
+
+Workspace refresh is guarded against reentry. The observer keeps its pending
+flag set throughout refresh, including native progress callbacks. Layout progress
+does not introduce another Qt event loop. Regression sources cover grouped
+commands, partial selection, content-group cycles, outline counts/navigation,
+preview cancellation/retry, and the synthetic diagnostics page title.
+
+Transactional preview publication
+---------------------------------
+
+``ReportDocumentPreparation`` is an optional application callback forwarded
+through Core generation/update. Core validates the candidate, invokes preparation
+and checks cancellation again before publishing session changes. The GUI
+application uses the callback to build a temporary layout with the same borrowed
+progress sink. Callback failure/exception leaves the previous report and layout
+intact. Successful Core publication is followed by publication of the matching
+layout cache, then native progress completion and command return. Headless
+generation supplies no Qt layout work.
+
+``prepared_layout`` is a read-only cache accessor, and rejects pending sources or
+documents that differ from the cache's immutable source. Workspace refresh uses
+this accessor only. Explicit application operations use ``layout`` to prepare a
+cache miss; no timer/observer refresh initiates expensive layout. Project restore
+prepares a GUI layout from its staged session before activating that session.
+
+Preview-only operations normalize progress to the content/pagination/contents
+portion of the workflow. Content counts aggregate cells and images across all
+sections; model callbacks remain coarse because their local counts cannot
+establish total model completion. Final Qt pagination is still synchronous and
+cannot report per-page progress or poll cancellation internally. This change
+fixes progress lifetime and publication ordering, not pagination execution time.
+
+Regression sources additionally cover failed preparation and post-preparation
+cancellation before publication, successful callback ordering, headless content
+generation, read-only GUI refresh, explicit cache preparation and progress ranges.

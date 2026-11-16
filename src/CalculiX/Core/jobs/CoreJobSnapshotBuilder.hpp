@@ -10,6 +10,11 @@ public:
   static bool prepare(int jobId, const std::string& filename,
     CalculiXJobRunRecord& output, std::string& error);
   static bool captureInput(const std::string& filename, CalculiXJobInputBundle& output, std::string& error);
+  // Build archived mesh in the run's recorded geometry units. No live mesh,
+  // viewport or current unit preferences are consulted. Failure preserves outputs.
+  static bool buildSetupModel(const CalculiXJobRunRecord& record,
+    const std::map<std::string, std::string>& blockColors, DrawingGeometry& model,
+    double& symbolSize, int& stepCount, std::string& error);
   static std::string inputFingerprint(const CalculiXJobInputBundle& input);
   static std::string setupFingerprint(const CalculiXJobSetupSnapshot& setup);
   static bool validate(const CalculiXJobRunRecord& record, std::string& error);

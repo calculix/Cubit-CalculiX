@@ -74,6 +74,11 @@ namespace Postprocessor
     representation.input = {OutputOwner::Feature,requested.id,0};
     representation.visible = true;
     representation.animation.playing = false;
+    const auto sourceData = result_data(requested.input.object_id);
+    if (sourceData)
+    {
+      requested.coordinate_unit = filter_coordinate_unit(*sourceData,representation.increment_index);
+    }
     EvaluatedOutput evaluated;
     if (!evaluate_filter(requested,representation,result_data(requested.input.object_id),evaluated,error))
     {

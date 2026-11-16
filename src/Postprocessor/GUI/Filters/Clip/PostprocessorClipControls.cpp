@@ -1,3 +1,4 @@
+#include <QLabel>
 #include <type_traits>
 #include <utility>
 #include "PostprocessorClipControls.hpp"
@@ -36,7 +37,17 @@ PostprocessorClipControls::PostprocessorClipControls(std::weak_ptr<Postprocessor
         return Postprocessor::FilterDefaults::normal[i-3];
       }
     }(),'g',17));
-    form->addRow(labels[i],coordinates[i]);
+    if (i < 3)
+    {
+      originLabels[i] = new QLabel(this);
+      form->addRow(originLabels[i],coordinates[i]);
+      coordinates[i]->setToolTip(tr("Plane origins use native source coordinates; presentation-unit changes do not move the plane"));
+    }
+    else
+    {
+      form->addRow(labels[i],coordinates[i]);
+      coordinates[i]->setToolTip(tr("Dimensionless direction component; the normal is normalized"));
+    }
     connect(coordinates[i],&QLineEdit::editingFinished,this,[this]()
     {
       if (!loading && !filters->currentData().toString().isEmpty())
@@ -242,6 +253,45 @@ void PostprocessorClipControls::refresh()
     }
   }());
   const auto found = app->session().filters.find(filters->currentData().toString().toStdString());
+  std::string sourceId = app->session().active_source_id;
+  if (found != app->session().filters.end())
+  {
+    sourceId = found->second.input.object_id;
+  }
+  std::string nativeUnit;
+  const auto data = app->result_data(sourceId);
+  if (data)
+  {
+    std::size_t frame = 0;
+    for (const auto& item : app->session().representations)
+    {
+      if (app->display_matches_source(item.second,sourceId,app->session().active_view_id))
+      {
+        frame = item.second.increment_index;
+        break;
+      }
+    }
+    nativeUnit = Postprocessor::filter_coordinate_unit(*data,frame);
+  }
+  std::string labelUnit = nativeUnit;
+  if (found != app->session().filters.end() && !found->second.coordinate_unit.empty())
+  {
+    labelUnit = found->second.coordinate_unit;
+  }
+  if (labelUnit.empty())
+  {
+    labelUnit = "unknown unit";
+  }
+  QString details = QString::fromStdString(labelUnit);
+  if (!nativeUnit.empty() && nativeUnit != labelUnit)
+  {
+    details += tr("; source now %1").arg(QString::fromStdString(nativeUnit));
+  }
+  const QString axes[] = {"X","Y","Z"};
+  for (int axis = 0; axis < 3; ++axis)
+  {
+    originLabels[axis]->setText(tr("Origin %1 [%2]").arg(axes[axis]).arg(details));
+  }
   visible->setEnabled(found != app->session().filters.end());
   if (found != app->session().filters.end())
   {

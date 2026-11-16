@@ -101,6 +101,13 @@ void PostprocessorScene::build_highlight(const Postprocessor::EntityReference& e
       actor->UseBoundsOff();
       renderer->AddActor(actor);
     }
+    double factor = 1;
+    bool known = false;
+    if (!application.scene_scale(active->second,factor,known,error))
+    {
+      return;
+    }
+    actor->SetScale(factor,factor,factor);
     actor->SetMapper(mapper);
     actor->GetProperty()->SetColor(color[0],color[1],color[2]);
     actor->GetProperty()->SetLineWidth(Postprocessor::SelectionDefaults::highlight_line_width);
@@ -142,6 +149,10 @@ void PostprocessorScene::build_highlight(const Postprocessor::EntityReference& e
         {
           double position[3];
           input->GetPoint(static_cast<vtkIdType>(index),position);
+          for (auto& coordinate : position)
+          {
+            coordinate *= entry.second->scene_scale;
+          }
           const auto id = points->InsertNextPoint(position);
           vertices->InsertNextCell(1,&id);
         }
@@ -157,6 +168,10 @@ void PostprocessorScene::build_highlight(const Postprocessor::EntityReference& e
           {
             double position[3];
             surface.input->GetPoint(cell->GetPointId(i),position);
+            for (auto& coordinate : position)
+            {
+              coordinate *= entry.second->scene_scale;
+            }
             local->InsertNextId(points->InsertNextPoint(position));
           }
           grid->InsertNextCell(cell->GetCellType(),local);
@@ -199,6 +214,7 @@ void PostprocessorScene::build_highlight(const Postprocessor::EntityReference& e
   property->SetPointSize(Postprocessor::SelectionDefaults::highlight_point_size);
   property->SetRenderPointsAsSpheres(true);
   property->LightingOff();
+  actor->SetScale(1,1,1);
   actor->SetProperty(property);
   actor->SetMapper(mapper);
   actor->VisibilityOn();

@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "LoadsTrajectoryHeatfluxModifyPanel.hpp"
@@ -97,6 +98,7 @@ LoadsTrajectoryHeatfluxModifyPanel::LoadsTrajectoryHeatfluxModifyPanel(QWidget *
   widget_10 =  new PanelTable(nullptr);
   matrix.clear();
   widget_10->update({"Ray Radius","Magnitude"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   widget_10->panel_type = "trajectory";
   widget_10->setMinimumSize(200,160);
   
@@ -157,6 +159,12 @@ LoadsTrajectoryHeatfluxModifyPanel::LoadsTrajectoryHeatfluxModifyPanel(QWidget *
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
 
   widget_10->show();
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_7, *lineEdit_7, label_7->text(), "time");
+  unitPresentation->bind(*label_8, *lineEdit_8, label_8->text(), "time");
+  unitPresentation->bind_table(*widget_10, 0, "length");
+  unitPresentation->bind_table(*widget_10, 1, "heat_flux");
 
   isInitialized = true;
 }
@@ -399,6 +407,7 @@ bool LoadsTrajectoryHeatfluxModifyPanel::setTrajectory(int id)
   comboBox_9->setCurrentIndex(qMax(0, comboBox_9Index));
 
   widget_10->update({"Ray Radius", "Magnitude"}, settings.samples);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   originalValues.insert("lineEdit_0", lineEdit_0->text());
   originalValues.insert("lineEdit_1", lineEdit_1->text());
   originalValues.insert("comboBox_2", comboBox_2->currentText());
@@ -411,6 +420,7 @@ bool LoadsTrajectoryHeatfluxModifyPanel::setTrajectory(int id)
   originalValues.insert("comboBox_9", comboBox_9->currentText());
   originalValues.insert("widget_10", widget_10->snapshot());
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

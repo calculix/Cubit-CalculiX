@@ -103,7 +103,7 @@ namespace Postprocessor
   }
 
   ProbeResult probe_result(const SimResults::VtkResultsData& data, const Representation& display,
-    const EntityReference& entity) {
+    const EntityReference& entity, const SimUnits::WorkspaceUnitContext* presentation) {
     ProbeResult result;
     result.entity = entity;
     result.visible = dataset_visible(display,entity.dataset_id);
@@ -174,7 +174,7 @@ namespace Postprocessor
       }
       result.field = field->name;
       double unitValue = 0.0;
-      if (!SimResults::ResultsUnits::field_value(0.0, *field, selection.component, selection.magnitude, "postprocessor", unitValue, result.value_unit, issue)) {
+      if (!SimResults::ResultsUnits::field_value(0.0, *field, selection.component, selection.magnitude, "postprocessor", unitValue, result.value_unit, issue, presentation)) {
         result.value_status = issue;
         continue;
       }
@@ -192,7 +192,7 @@ namespace Postprocessor
       }
       for (auto index : samples) {
         double value;
-        if (!color_sample(part.second,*field,selection,index,value,issue) || !std::isfinite(value)) {
+        if (!color_sample(part.second,*field,selection,index,value,issue,presentation) || !std::isfinite(value)) {
           ++result.invalid_samples;
           continue;
         }
@@ -208,16 +208,21 @@ namespace Postprocessor
     }
     result.presentation_original_position = result.original_position;
     result.presentation_displayed_position = result.displayed_position;
-    const SimUnits::QuantityUnit coordinate("length", data.source_units.coordinate_unit, SimUnits::Length);
+    std::string coordinateUnit = frame.coordinate_unit;
+    if (coordinateUnit.empty())
+    {
+      coordinateUnit = data.source_units.coordinate_unit;
+    }
+    const SimUnits::QuantityUnit coordinate("length", coordinateUnit, SimUnits::Length);
     std::string unitError;
     double displayed = 0.0;
-    SimResults::ResultsUnits::display_value(0.0, coordinate, "postprocessor", displayed, result.coordinate_unit, unitError);
+    SimResults::ResultsUnits::display_value(0.0, coordinate, "postprocessor", displayed, result.coordinate_unit, unitError, presentation);
     for (auto* position : {&result.presentation_original_position, &result.presentation_displayed_position}) {
       if (!*position) {
         continue;
       }
       for (double& value : **position) {
-        if (!SimResults::ResultsUnits::display_value(value, coordinate, "postprocessor", displayed, result.coordinate_unit, unitError)) {
+        if (!SimResults::ResultsUnits::display_value(value, coordinate, "postprocessor", displayed, result.coordinate_unit, unitError, presentation)) {
           position->reset();
           break;
         }
@@ -225,7 +230,7 @@ namespace Postprocessor
       }
     }
     const auto& time = frame.independent_variable;
-    if (SimResults::ResultsUnits::display_value(result.time, time, "postprocessor", displayed, result.time_unit, unitError)) {
+    if (SimResults::ResultsUnits::display_value(result.time, time, "postprocessor", displayed, result.time_unit, unitError, presentation)) {
       result.presentation_time = displayed;
     }
     if (entity.kind == EntityKind::Node) {

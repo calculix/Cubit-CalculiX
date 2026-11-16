@@ -1,3 +1,4 @@
+#include "PlotAxisUnits.hpp"
 #include "../application/PostprocessorCore.hpp"
 #include <utility>
 #include <algorithm>
@@ -125,11 +126,11 @@ namespace Postprocessor
     {
       if (const auto* entity = std::get_if<PlotEntityReference>(&curve.input))
       {
-        accepted = plot_entity_data(*source,*entity,values,error);
+        accepted = plot_entity_data(*source,*entity,values,error,captured_units());
       }
       else
       {
-        accepted = plot_table_data(source,std::get<PlotTableReference>(curve.input),values,error);
+        accepted = plot_table_data(source,std::get<PlotTableReference>(curve.input),values,error,captured_units());
       }
     }
     if (!accepted || !values.status.empty() || std::none_of(values.samples.begin(),values.samples.end(),[](const auto& sample)
@@ -150,6 +151,11 @@ namespace Postprocessor
     auto staged = state;
     auto& plot = staged.plots.at(id);
     plot.curves.push_back(std::move(curve));
+    PlotData combined;
+    if (!evaluate_plot(plot,combined,error))
+    {
+      return false;
+    }
     plot.data_revision = ++staged.plot_revision;
     staged.active_plot_id = id;
     staged.views.at(staged.active_view_id).plot_id = id;
@@ -246,6 +252,44 @@ namespace Postprocessor
     {
       curve->visible = action == "show";
     }
+    if (action == "show")
+    {
+      PlotData combined;
+      if (!evaluate_plot(plot,combined,error))
+      {
+        return false;
+      }
+    }
+    plot.data_revision = state.plot_revision+1;
+    std::string previousFirst;
+    std::string nextFirst;
+    for (const auto& value : found->second.curves)
+    {
+      if (value.visible)
+      {
+        previousFirst = value.name;
+        break;
+      }
+    }
+    for (const auto& value : plot.curves)
+    {
+      if (value.visible)
+      {
+        nextFirst = value.name;
+        break;
+      }
+    }
+    if (previousFirst != nextFirst)
+    {
+      if (!plot.axes.x_unit)
+      {
+        plot.axes.x.reset();
+      }
+      if (!plot.axes.y_unit)
+      {
+        plot.axes.y.reset();
+      }
+    }
     ++staged.plot_revision;
     state.swap(staged);
     return true;
@@ -260,7 +304,17 @@ namespace Postprocessor
       error = "Axis ranges must be finite and increasing, and the plot must exist.";
       return false;
     }
-    found->second.axes = axes;
+    auto bound = axes;
+    PlotData values;
+    if ((axes.x || axes.y) && !plot_data(id,values,error))
+    {
+      return false;
+    }
+    if (!bind_plot_axes(found->second,values,bound,error))
+    {
+      return false;
+    }
+    found->second.axes = std::move(bound);
     ++state.plot_revision;
     return true;
   }
@@ -273,8 +327,13 @@ namespace Postprocessor
       error = "The plot is unavailable.";
       return false;
     }
+    return evaluate_plot(found->second,output,error);
+  }
+  bool PostprocessorCore::evaluate_plot(const PlotDefinition& definition, PlotData& output, std::string& error) const
+  {
+    error.clear();
     PlotData staged;
-    for (const auto& curve : found->second.curves)
+    for (const auto& curve : definition.curves)
     {
       PlotCurveData values;
       values.name = curve.name;
@@ -290,16 +349,20 @@ namespace Postprocessor
       }
       else if (const auto* entity = std::get_if<PlotEntityReference>(&curve.input))
       {
-        if (!plot_entity_data(*source,*entity,values,error))
+        if (!plot_entity_data(*source,*entity,values,error,captured_units()))
         {
           return false;
         }
       }
-      else if (!plot_table_data(source,std::get<PlotTableReference>(curve.input),values,error))
+      else if (!plot_table_data(source,std::get<PlotTableReference>(curve.input),values,error,captured_units()))
       {
         return false;
       }
       staged.curves.push_back(std::move(values));
+    }
+    if (!normalize_plot_axes(definition,staged,error))
+    {
+      return false;
     }
     output = std::move(staged);
     return true;

@@ -123,3 +123,15 @@ uses spatial field rows rather than a native DAT/VTT table. Use an exact identit
 filter for a time history, e.g. ``where "Node ID" equals "1171"``. Native
 ``post plot add table`` uses readable names and optional scope/type/entry
 qualifiers. See :doc:`tables` for the shared selector and row-identity contracts.
+
+Shared axis unit compatibility
+------------------------------
+
+Visible curves normalize compatible physical quantities to common axis units.
+Incompatible dimensions/roles, frame-versus-physical axes and ambiguous unknown
+unit bases are rejected. Hidden curves are excluded. This validation applies to
+curve creation, curve showing and restored plot evaluation. See :doc:`units`.
+
+Changing the first visible curve resets manual axis ranges to automatic bounds,
+so numbers from the previous reference unit are not silently reinterpreted.
+Shared-axis titles retain their common unit even when curve field names differ.

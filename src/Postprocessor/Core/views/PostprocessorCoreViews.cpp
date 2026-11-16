@@ -1,6 +1,10 @@
 #include <type_traits>
 #include "../application/PostprocessorCore.hpp"
 #include "../representations/ResultMesh.hpp"
+#include "../representations/ResultReferenceMesh.hpp"
+#include <vtkDataSet.h>
+#include <vtkPointData.h>
+#include <vtkPolyData.h>
 #include "CameraOperations.hpp"
 #include <algorithm>
 #include <cmath>
@@ -70,15 +74,51 @@ namespace Postprocessor
           }
           if (display.deformation.enabled && display.deformation.overlay)
           {
-            std::array<double,6> original;
-            if (mesh_bounds(part.second,original))
+            // Include the same undeformed parent outlines rendered for IPs.
+            // All bounds remain native until the one source-to-scene conversion.
+            std::vector<vtkDataSet*> originals = {part.second};
+            std::vector<std::shared_ptr<vtkDataSet>> parents;
+            if (display.input.owner == OutputOwner::Source && part.second->GetPointData()->HasArray("IntegrationPointId"))
             {
-              for (std::size_t axis = 0; axis < 3; ++axis)
+              if (!integration_point_reference_meshes(frame,part.second,parents,warning))
               {
-                current[axis*2] = std::min(current[axis*2],original[axis*2]);
-                current[axis*2+1] = std::max(current[axis*2+1],original[axis*2+1]);
+                error = warning;
+                return false;
+              }
+              for (const auto& parent : parents)
+              {
+                originals.push_back(parent.get());
               }
             }
+            for (const auto& derived : evaluated->parts)
+            {
+              if (derived.dataset == part.first && derived.reference_edges)
+              {
+                originals.push_back(derived.reference_edges.get());
+              }
+            }
+            for (auto* originalMesh : originals)
+            {
+              std::array<double,6> original;
+              if (mesh_bounds(originalMesh,original))
+              {
+                for (std::size_t axis = 0; axis < 3; ++axis)
+                {
+                  current[axis*2] = std::min(current[axis*2],original[axis*2]);
+                  current[axis*2+1] = std::max(current[axis*2+1],original[axis*2+1]);
+                }
+              }
+            }
+          }
+          double factor = 1;
+          bool known = false;
+          if (!scene_scale(display,factor,known,error))
+          {
+            return false;
+          }
+          for (auto& coordinate : current)
+          {
+            coordinate *= factor;
           }
           if (!found)
           {

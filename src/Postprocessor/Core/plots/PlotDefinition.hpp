@@ -47,6 +47,11 @@ namespace Postprocessor
   {
     // Linear axes only. Missing bounds request automatic fitting.
     std::optional<std::array<double,2>> x, y;
+    // Numeric bounds retain the presentation basis in which they were entered.
+    // nullopt denotes a legacy unbound range. Empty units require the same scope.
+    std::optional<SimUnits::QuantityUnit> x_unit, y_unit;
+    std::string x_scope, y_scope;
+    bool x_frame_axis = false;
   };
   struct PlotDefinition
   {

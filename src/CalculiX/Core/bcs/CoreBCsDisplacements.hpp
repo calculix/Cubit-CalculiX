@@ -2,6 +2,7 @@
 #define COREBCSDISPLACEMENTS_HPP
 
 #include "BCsDisplacementsSettings.hpp"
+#include "Core/units/CalculiXDofUnits.hpp"
 
 #include <vector>
 #include <string>
@@ -9,6 +10,7 @@
 class CoreBCsDisplacements
 {
 public:
+  bool get_solver_boundaries(int id, CalculiXDofUnits::Boundaries& boundaries, std::string& error);
   std::string value_unit_system = "SI";
   bool unit_view = false;
   bool get_settings(int id, BCsDisplacementsSettings& settings, std::string& error) const;

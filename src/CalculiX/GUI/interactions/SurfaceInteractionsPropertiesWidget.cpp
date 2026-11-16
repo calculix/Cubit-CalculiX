@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "SurfaceInteractionsPropertiesWidget.hpp"
 #include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -24,24 +25,24 @@ bool SurfaceInteractionsPropertiesWidget::setSurfaceInteraction(int id)
   addEditableName(general, id, QString::fromStdString(settings.name));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "Surface  Interaction ID", QString::fromStdString(settings.behavior));
-  addValue(settingsGroup, "c0", QString::fromStdString(settings.c0));
-  addValue(settingsGroup, "p0", QString::fromStdString(settings.p0));
-  addValue(settingsGroup, "slope K", QString::fromStdString(settings.slope));
-  addValue(settingsGroup, "sigmaINF", QString::fromStdString(settings.sigma));
-  addValue(settingsGroup, "c0", QString::fromStdString(settings.linearC0));
-  addValue(settingsGroup, "slope K", QString::fromStdString(settings.tiedSlope));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("c0", "length"), QString::fromStdString(settings.c0));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("p0", "stress"), QString::fromStdString(settings.p0));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("slope K", "force_per_volume"), QString::fromStdString(settings.slope));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("sigmaINF", "stress"), QString::fromStdString(settings.sigma));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("c0", "length"), QString::fromStdString(settings.linearC0));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("slope K", "force_per_volume"), QString::fromStdString(settings.tiedSlope));
   addValue(settingsGroup, "heat conversion  factor", QString::fromStdString(settings.conversion));
   addValue(settingsGroup, "surface weighting  factor", QString::fromStdString(settings.weight));
-  addValue(settingsGroup, "differential  tangential velocity", QString::fromStdString(settings.velocity));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("differential  tangential velocity", "velocity"), QString::fromStdString(settings.velocity));
   addValue(settingsGroup, "mu", QString::fromStdString(settings.mu));
-  addValue(settingsGroup, "lambda", QString::fromStdString(settings.lambdaValue));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("lambda", "force_per_volume"), QString::fromStdString(settings.lambdaValue));
   if (!settings.pressureOverclosure.empty())
   {
-    addTable("pressure_overclosure", "Pressure / overclosure", {"Pressure", "Overclosure"}, settings.pressureOverclosure);
+    addTable("pressure_overclosure", "Pressure / overclosure", {CalculiXUnitPresentation::title("Pressure", "stress"), CalculiXUnitPresentation::title("Overclosure", "length")}, settings.pressureOverclosure);
   }
   if (!settings.conductance.empty())
   {
-    addTable("gap_conductance", "Gap conductance", {"Conductance", "Contact pressure", "Temperature"}, settings.conductance);
+    addTable("gap_conductance", "Gap conductance", {CalculiXUnitPresentation::title("Conductance", "heat_transfer"), CalculiXUnitPresentation::title("Contact pressure", "stress"), CalculiXUnitPresentation::title("Temperature", "temperature")}, settings.conductance);
   }
   return true;
 }

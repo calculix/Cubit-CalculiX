@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "ContactPairsModifyPanel.hpp"
@@ -114,6 +115,9 @@ ContactPairsModifyPanel::ContactPairsModifyPanel(QWidget *parent) :
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
   QObject::connect(radioButton_5, SIGNAL(toggled(bool)),this,  SLOT(on_radioButton_5_toggled(bool)));
   QObject::connect(radioButton_6, SIGNAL(toggled(bool)),this,  SLOT(on_radioButton_6_toggled(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_5, *lineEdit_5, label_5->text(), "length");
 
   isInitialized = true;
 }
@@ -291,6 +295,7 @@ bool ContactPairsModifyPanel::setContactPair(int id)
   originalValues.insert("lineEdit_6", lineEdit_6->text());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

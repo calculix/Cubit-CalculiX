@@ -1,5 +1,6 @@
 #include <iterator>
 #include "ReportCore.hpp"
+#include "ReportUnitValidation.hpp"
 #include "Framework/Reporting/ReportProviderRegistryInterface.hpp"
 #include "Framework/Reporting/ReportImageProviderInterface.hpp"
 #include <QByteArray>
@@ -77,7 +78,7 @@ bool ReportCore::add_image(const ReportImageRequest& requested,const std::string
     image.caption = caption;
   }
   section->images.push_back(std::move(image));
-  if (!candidate->validate(error))
+  if (!ReportUnitValidation::document(*candidate, error))
   {
     return false;
   }

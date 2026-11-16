@@ -251,6 +251,12 @@ namespace Postprocessor
         continue;
       }
       display.increment_index = *frame;
+      auto& sceneUnit = project.session.views.at(display.view_id).scene_unit;
+      if (sceneUnit.empty())
+      {
+        sceneUnit = filter_coordinate_unit(*loaded.data,display.increment_index);
+      }
+
       display.hidden_datasets.clear();
       bool valid = true;
       for (const auto& reference : binding.hidden)

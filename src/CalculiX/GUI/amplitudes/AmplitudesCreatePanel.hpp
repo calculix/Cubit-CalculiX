@@ -34,6 +34,7 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  QComboBox* axisBox = nullptr;
   std::string log;
   std::vector<std::vector<double>> matrix;
 

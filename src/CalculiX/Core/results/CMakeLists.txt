@@ -49,3 +49,9 @@ target_link_libraries(calculix_core VTK::CommonCore VTK::CommonDataModel)
 
 add_subdirectory(frd)
 add_subdirectory(dat)
+
+option(CUBITSIM_INP_SURFACE_HELPER_TESTS "Build INP surface helper classification regression tests" OFF)
+if (CUBITSIM_INP_SURFACE_HELPER_TESTS)
+  enable_testing()
+  add_subdirectory(vtk/tests "${CMAKE_CURRENT_BINARY_DIR}/inp-surface-helper-tests")
+endif()

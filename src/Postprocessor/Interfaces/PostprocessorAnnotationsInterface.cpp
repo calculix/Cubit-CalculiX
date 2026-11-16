@@ -10,9 +10,9 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
   const Postprocessor::FieldQualifiers& qualifiers)
 {
   error.clear();
-  if (fieldName.empty() && (qualifiers.origin || qualifiers.association))
+  if (fieldName.empty() && (qualifiers.origin || qualifiers.association || qualifiers.set_name))
   {
-    error = "Origin/association requires an explicit field name.";
+    error = "Origin/association/set requires an explicit field name.";
     return false;
   }
   const auto& state = core.session();

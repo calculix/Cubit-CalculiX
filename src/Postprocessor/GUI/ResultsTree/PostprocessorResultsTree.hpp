@@ -33,6 +33,8 @@ public:
   std::function<bool(std::vector<SimResults::ResultJobEntry>&,std::string&)> available_jobs;
   std::function<void(const SimResults::ResultJobEntry&)> add_job;
   std::function<void()> import_files;
+  std::function<void(const QString&)> inspect_source;
+  std::function<void()> selection_cleared;
   std::function<void(const QString&,SourceAction)> source_action;
   using Availability = std::function<std::string(const std::string&)>;
   using Tables = std::function<std::vector<Postprocessor::ResultTableDescriptor>(const std::string&)>;
@@ -48,6 +50,8 @@ public:
   std::function<void(const QString&,Postprocessor::DatasetCategory,bool)> category_action;
   void refresh(const Postprocessor::PostprocessorSession& session, const Load& load, const HasMesh& has_mesh,
     const Groups& catalogue = {}, const Datasets& datasets = {}, const Tables& tables = {}, const Availability& availability = {});
+protected:
+  void mousePressEvent(QMouseEvent* event) override;
 private:
   std::string activeView;
   std::string activeSource;

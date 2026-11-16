@@ -1,4 +1,7 @@
 #include "Core/results/CoreResultsProject.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include "Core/interactions/CalculiXInteractionsInterface.hpp"
+#include <array>
 #include <string>
 #include <vector>
 #include "Core/application/CalculiXApplicationInterface.hpp"
@@ -24,10 +27,17 @@ CoreResultsProject::CoreResultsProject()
 {}
 
 CoreResultsProject::~CoreResultsProject()
-{}
+{
+  clear();
+}
 
 bool CoreResultsProject::init(CoreResultsFrd* frd)
 {
+  if (frd == nullptr)
+  {
+    PRINT_ERROR("Cannot initialize projection without FRD results.\n");
+    return false;
+  }
   if (is_initialized)
   {
     return false; // already initialized
@@ -38,7 +48,11 @@ bool CoreResultsProject::init(CoreResultsFrd* frd)
     progressbar = CubitInterface::app_util().get()->progress_tool();;
     // otherwise cubitinterface gets false element count!
     me_iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
-    me_iface->initialize_export();
+    if (me_iface == nullptr || !me_iface->initialize_export())
+    {
+      PRINT_ERROR("Unable to initialize the projection mesh interface.\n");
+      return false;
+    }
 
     is_initialized = true;  
     return true;
@@ -46,15 +60,21 @@ bool CoreResultsProject::init(CoreResultsFrd* frd)
 }
 bool CoreResultsProject::reset()
 {
-  clear();
-  init(nullptr);
-  return true;
+  return clear();
 }
 bool CoreResultsProject::clear()
 {
+  if (me_iface != nullptr)
+  {
+    CubitInterface::release_interface(me_iface);
+    me_iface = nullptr;
+  }
+  frd = nullptr;
+  progressbar = nullptr;
+  is_initialized = false;
   return true;
 }
-bool CoreResultsProject::project(int step, int totalincrement,double scale)
+bool CoreResultsProject::project(int step, int totalincrement, double scale, const std::string& source_system)
 {
   CalculiXApplicationInterface ccx_application_iface;
 
@@ -79,6 +99,71 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
     return false;
   }
   
+  double solverLengthSI = 0.0;
+  double geometryScale = 0.0;
+  std::string error;
+  if (!std::isfinite(scale))
+  {
+    PRINT_ERROR("Invalid displacement projection scale.\n");
+    return false;
+  }
+  if (source_system.empty() ||
+      !framework_units().system_to_si(1.0, SimUnits::Length, source_system, solverLengthSI, error) ||
+      !framework_units().from_si(solverLengthSI, framework_units().geometry_unit(),
+        SimUnits::Length, SimUnits::UnitRole::Linear, geometryScale, error))
+  {
+    PRINT_ERROR("Cannot convert projected displacements: %s\n", error.c_str());
+    return false;
+  }
+  const double projectionScale = scale * geometryScale;
+  if (!std::isfinite(projectionScale))
+  {
+    PRINT_ERROR("Invalid displacement projection scale.\n");
+    return false;
+  }
+  // Validate every move before changing the mesh. Values remain in the recorded
+  // solver basis; the user's scale is dimensionless.
+  std::vector<std::string> moves;
+  std::set<int> rotationNodes;
+  if (!CalculiXInteractionsInterface().get_rotation_node_ids(rotationNodes, error))
+  {
+    PRINT_ERROR("Cannot resolve displacement projection targets: %s\n", error.c_str());
+    return false;
+  }
+  for (const auto& record : frd->result_block_node_data[data_id])
+  {
+    if (record.size() < 2 || record[0] <= 0 || record[1] < 0 ||
+        static_cast<std::size_t>(record[1]) >= frd->result_block_data[data_id].size())
+    {
+      PRINT_ERROR("Invalid displacement projection record.\n");
+      return false;
+    }
+    // The dummy ROT NODE's first three values are angles, not coordinates.
+    if (rotationNodes.count(record[0]) != 0)
+    {
+      continue;
+    }
+    const auto& values = frd->result_block_data[data_id][record[1]];
+    if (values.size() < 3)
+    {
+      PRINT_ERROR("Incomplete displacement projection vector.\n");
+      return false;
+    }
+    std::array<double, 3> move{};
+    for (std::size_t axis = 0; axis < move.size(); ++axis)
+    {
+      move[axis] = projectionScale * values[axis];
+      if (!std::isfinite(move[axis]))
+      {
+        PRINT_ERROR("Non-finite projected displacement.\n");
+        return false;
+      }
+    }
+    moves.push_back("node " + std::to_string(record[0]) + " move x " +
+      ccx_application_iface.to_string_scientific(move[0]) + " y " +
+      ccx_application_iface.to_string_scientific(move[1]) + " z " +
+      ccx_application_iface.to_string_scientific(move[2]));
+  }
   progressbar->start(0,100,"Projecting Displacements");
   auto t_start = std::chrono::high_resolution_clock::now();
 
@@ -95,17 +180,14 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
   ccx_application_iface.set_block_core_update(true);
   ccx_application_iface.set_block_gui_update(true);
     
-  for (size_t i = 0; i < frd->result_block_node_data[data_id].size(); i++)
+  bool success = true;
+  for (size_t i = 0; i < moves.size(); i++)
   {
-    //node 1 move x 0.1 y 0.2 z 0.3
-    cmd = "node " + std::to_string(frd->result_block_node_data[data_id][i][0])
-    + " move"
-    + " x " + ccx_application_iface.to_string_scientific(scale*frd->result_block_data[data_id][frd->result_block_node_data[data_id][i][1]][0])
-    + " y " + ccx_application_iface.to_string_scientific(scale*frd->result_block_data[data_id][frd->result_block_node_data[data_id][i][1]][1])
-    + " z " + ccx_application_iface.to_string_scientific(scale*frd->result_block_data[data_id][frd->result_block_node_data[data_id][i][1]][2])
-    ;
-    
-    ccx_application_iface.silent_cmd(cmd.c_str());
+    if (!ccx_application_iface.silent_cmd(moves[i]))
+    {
+      success = false;
+      break;
+    }
 
     //update progress bar
     const auto t_end = std::chrono::high_resolution_clock::now();
@@ -128,7 +210,7 @@ bool CoreResultsProject::project(int step, int totalincrement,double scale)
   
   if (!ccx_application_iface.silent_cmd("set developer off")){return false;}
 
-  return true;
+  return success;
 }
 
 bool CoreResultsProject::project_topology(int topology_id,int iteration_id,double threshold,bool preview)

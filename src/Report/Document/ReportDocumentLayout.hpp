@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 
+class ReportProgress;
 class QPainter;
 class QTextDocument;
 
@@ -13,7 +14,7 @@ class ReportDocumentLayout
 public:
   ReportDocumentLayout();
   ~ReportDocumentLayout();
-  bool prepare(const ReportDocument& document, std::string& error);
+  bool prepare(const ReportDocument& document, std::string& error, ReportProgress* progress = nullptr);
   int page_count() const noexcept;
   QSizeF page_size() const noexcept;
   bool paint_page(QPainter& painter, int page, std::string& error) const;

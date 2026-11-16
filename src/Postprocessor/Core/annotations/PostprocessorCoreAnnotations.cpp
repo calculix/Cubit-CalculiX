@@ -1,6 +1,7 @@
 #include <type_traits>
 #include <vtkCell.h>
 #include "../application/PostprocessorCore.hpp"
+#include "Framework/Results/ResultsUnits.hpp"
 #include <utility>
 #include "../representations/ResultMesh.hpp"
 #include <vtkDataSet.h>
@@ -32,9 +33,9 @@ namespace Postprocessor
       });
   }
   ProbeResult annotation_probe(const SimResults::VtkResultsData& data, const Representation& display,
-    const EntityReference& entity)
+    const EntityReference& entity, const SimUnits::WorkspaceUnitContext* presentation)
   {
-    auto result = probe_result(data,display,entity);
+    auto result = probe_result(data,display,entity,presentation);
     if (result.displayed_position && !std::all_of(result.displayed_position->begin(),result.displayed_position->end(),[](double value)
       {
         return std::isfinite(value);
@@ -143,7 +144,7 @@ namespace Postprocessor
       if (display_matches_source(display,label.entity.source_id,view_id) && data)
       {
         display.coloring.field = label.field;
-        const auto value = annotation_probe(*data,display,label.entity);
+        const auto value = annotation_probe(*data,display,label.entity,captured_units());
         available = value.available && value.values.has_value() && value.displayed_position.has_value();
         break;
       }
@@ -264,6 +265,67 @@ namespace Postprocessor
   }
   std::vector<EvaluatedAnnotation> PostprocessorCore::annotations(const std::string& view_id) const
   {
+    auto values = native_annotations(view_id);
+    const auto view = state.views.find(view_id);
+    if (view == state.views.end())
+    {
+      return values;
+    }
+    for (auto& value : values)
+    {
+      if (!value.anchor)
+      {
+        continue;
+      }
+      std::string source;
+      const auto label = view->second.annotations.labels.find(value.name);
+      if (label != view->second.annotations.labels.end())
+      {
+        source = label->second.entity.source_id;
+      }
+      else
+      {
+        auto active = state.representations.find(state.active_representation_id);
+        if (active == state.representations.end() || active->second.view_id != view_id)
+        {
+          active = std::find_if(state.representations.begin(),state.representations.end(),[&](const auto& item)
+          {
+            return item.second.view_id == view_id && item.second.input.owner == OutputOwner::Source &&
+              item.second.visible && item.second.coloring.field.has_value();
+          });
+        }
+        if (active != state.representations.end())
+        {
+          source = output_source(active->second.input);
+        }
+      }
+      for (const auto& entry : state.representations)
+      {
+        if (entry.second.view_id != view_id || output_source(entry.second.input) != source)
+        {
+          continue;
+        }
+        double factor = 1;
+        bool known = false;
+        std::string error;
+        if (scene_scale(entry.second,factor,known,error))
+        {
+          for (auto& coordinate : *value.anchor)
+          {
+            coordinate *= factor;
+          }
+        }
+        else
+        {
+          value.anchor.reset();
+        }
+        break;
+      }
+    }
+    return values;
+  }
+  std::vector<EvaluatedAnnotation> PostprocessorCore::native_annotations(const std::string& view_id) const
+  {
     std::vector<EvaluatedAnnotation> output;
     const auto view = state.views.find(view_id);
     if (view == state.views.end() || !view->second.annotations.visible)
@@ -334,7 +396,7 @@ namespace Postprocessor
           if (display_matches_source(display,label.entity.source_id,view_id) && dataset_visible(display,label.entity.dataset_id))
           {
             display.coloring.field = label.field;
-            auto result = annotation_probe(*data,display,label.entity);
+            auto result = annotation_probe(*data,display,label.entity,captured_units());
             if (display.input.owner == OutputOwner::Feature)
             {
               result.displayed_position = filtered_entity_position(display,label.entity);
@@ -366,6 +428,10 @@ namespace Postprocessor
               if (result.range_value)
               {
                 text << " .. " << (*result.values)[1];
+              }
+              if (!result.value_unit.empty())
+              {
+                text << " [" << result.value_unit << "]";
               }
             }
             else
@@ -414,6 +480,7 @@ namespace Postprocessor
       }
       const auto& frame = evaluated->data->increments[display.increment_index];
       std::optional<double> extrema[2];
+      std::string extremaUnit;
       std::array<double,3> positions[2];
       for (const auto& part : result_mesh_parts(frame.dataset.get()))
       {
@@ -425,7 +492,7 @@ namespace Postprocessor
         selected.dataset_id = part.first;
         const auto* metadata = find_field(frame,selected);
         std::vector<double> values;
-        if (!metadata || !color_values(part.second,*metadata,selected,values,error))
+        if (!metadata || !color_values(part.second,*metadata,selected,values,error,captured_units()))
         {
           continue;
         }
@@ -473,6 +540,15 @@ namespace Postprocessor
       {
         if (extrema[index])
         {
+          const auto* metadata = find_field(frame,*display.coloring.field);
+          double ignored = 0.0;
+          std::string issue;
+          if (!metadata || !SimResults::ResultsUnits::field_value(0.0,*metadata,
+                display.coloring.field->component,display.coloring.field->magnitude,
+                "postprocessor",ignored,extremaUnit,issue,captured_units()))
+          {
+            continue;
+          }
           std::ostringstream text;
           text.imbue(std::locale::classic());
           text << std::setprecision(6) << ([&]() -> const char* {
@@ -481,7 +557,7 @@ namespace Postprocessor
             } else {
               return "Maximum: ";
             }
-          }()) << *extrema[index]
+          }()) << *extrema[index] << " [" << extremaUnit << "]"
             << "\nFiltered display sample" << ([&]() -> const char* {
               if (display.coloring.field->association == SimResults::Association::Node) {
                 return " (interpolated)";
@@ -560,7 +636,7 @@ namespace Postprocessor
         std::string error;
         double sample = 0;
         EntityReference entity;
-        if (!color_sample(part.second,*metadata,field,static_cast<std::size_t>(index),sample,error) || !std::isfinite(sample) ||
+        if (!color_sample(part.second,*metadata,field,static_cast<std::size_t>(index),sample,error,captured_units()) || !std::isfinite(sample) ||
             !entity_from_index(part.second,static_cast<std::size_t>(index),kind,display.input.object_id,part.first,entity,error))
         {
           continue;
@@ -588,7 +664,7 @@ namespace Postprocessor
       }();
       if (entity)
       {
-        const auto probe = annotation_probe(*data,display,*entity);
+        const auto probe = annotation_probe(*data,display,*entity,captured_units());
         std::ostringstream text;
         text.imbue(std::locale::classic());
         text.precision(6);
@@ -604,7 +680,7 @@ namespace Postprocessor
           } else {
             return *maximum;
           }
-        }())
+        }()) << " [" << probe.value_unit << "]"
           << '\n' << ([&]() -> const char* {
             if (entity->kind == EntityKind::Node) {
               return "Node ";

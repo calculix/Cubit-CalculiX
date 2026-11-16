@@ -37,7 +37,9 @@ public:
   int preview_page() const noexcept;
   int preview_zoom() const noexcept;
   std::uint64_t preview_revision() const noexcept;
+  // Explicit command/service preparation. GUI refresh uses prepared_layout only.
   bool layout(std::shared_ptr<const ReportDocumentLayout>& output, std::string& error);
+  std::shared_ptr<const ReportDocumentLayout> prepared_layout() const noexcept;
   bool export_document(const std::string& format, const std::string& filename, std::string& error, bool overwrite = false);
   bool prepare_project_read(const std::string& filename, std::string& error);
   bool commit_project_read(std::string& error);
@@ -46,8 +48,13 @@ public:
   bool write_project(const std::string& filename, std::string& error) const;
   void reset();
   void set_gui_available(bool available) noexcept;
+  bool busy() const noexcept;
 
 private:
+  bool prepare_layout(const ReportDocument& document, ReportProgress& progress,
+    std::shared_ptr<ReportDocumentLayout>& output, std::string& error) const;
+  void publish_layout(std::shared_ptr<ReportDocumentLayout> layout);
+  bool prepare_selected_layout(std::string& error);
   ReportCore core;
   std::unique_ptr<ReportSession> preparedProject;
   std::shared_ptr<const ReportDocument> layout_source;
@@ -60,4 +67,5 @@ private:
   std::uint64_t previewPageRevision = 0;
   std::uint64_t previewFitRevision = 0;
   bool guiAvailable = false;
+  bool generating = false;
 };

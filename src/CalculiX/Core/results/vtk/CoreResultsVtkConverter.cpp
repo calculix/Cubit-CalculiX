@@ -1640,7 +1640,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
     if (!observe(1.0)) {
       return false;
     }
-    if (!CoreResultsUnits::annotate(*result, error)) {
+    if (!CoreResultsUnits::annotate(*result, error, plan.step_axis_quantities)) {
       return false;
     }
     output = std::move(result);

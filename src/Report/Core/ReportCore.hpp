@@ -5,7 +5,11 @@
 #include "Framework/Reporting/ReportTemplate.hpp"
 #include "Framework/Reporting/ReportProfile.hpp"
 
+#include <functional>
+
 class ReportProviderRegistryInterface;
+// Optional application-layer preparation, completed before Core publication.
+using ReportDocumentPreparation = std::function<bool(const ReportDocument&, std::string&)>;
 
 class ReportCore
 {
@@ -18,11 +22,11 @@ public:
   const ReportRequest& configuration_request() const noexcept;
   bool available_sources(std::vector<ReportSourceEntry>& output, std::string& error) const;
   bool choose_source(const ReportRequest& source, std::string& error);
-  bool generate_request(const ReportRequest& source, const std::string& profile, std::string& error);
+  bool generate_request(const ReportRequest& source, const std::string& profile, std::string& error, ReportProgress* progress = nullptr, const ReportDocumentPreparation& prepare = {});
   bool validate_configuration_patch(const ReportConfiguration& patch, std::string& error) const;
   bool configure_patch(const ReportConfiguration& patch, std::string& error);
-  bool generate(const std::string& provider, int job, const std::string& profile, std::string& error);
-  bool update(std::string& error);
+  bool generate(const std::string& provider, int job, const std::string& profile, std::string& error, ReportProgress* progress = nullptr, const ReportDocumentPreparation& prepare = {});
+  bool update(std::string& error, ReportProgress* progress = nullptr, const ReportDocumentPreparation& prepare = {});
   bool configure(const std::string& key, const std::string& value, std::string& error);
   bool profile(const std::string& action, const std::string& name, std::vector<ReportProfile>& output, std::string& error);
   bool add_image(const ReportImageRequest& request,const std::string& caption,std::string& error);
@@ -33,8 +37,9 @@ public:
 
 private:
   std::shared_ptr<const ReportDocument> find_document(const ReportRequest& source, const std::string& workspace = "") const;
+  bool apply_units(const ReportConfiguration& configuration, std::string& error);
   bool activate_document(const std::string& id, std::string& error);
-  bool build(const ReportRequest& request, const ReportProfile* profile, bool updating, std::string& error);
+  bool build(const ReportRequest& request, const ReportProfile* profile, bool updating, std::string& error, ReportProgress* progress, const ReportDocumentPreparation& prepare);
   ReportProviderRegistryInterface& registry;
   ReportSession state;
 };

@@ -7,6 +7,7 @@ class vtkDataSet;
 class vtkPolyData;
 namespace Postprocessor
 {
+  std::string filter_coordinate_unit(const SimResults::VtkResultsData& source, std::size_t frame);
   struct FilteredPart
   {
     std::size_t dataset = 0;

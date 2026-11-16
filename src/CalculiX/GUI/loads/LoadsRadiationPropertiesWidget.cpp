@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsRadiationPropertiesWidget.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -25,13 +26,13 @@ bool LoadsRadiationPropertiesWidget::setRadiation(int id)
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
   addReference(assignment, PropertyReferenceKind::Sideset, "Sideset", QString::fromStdString(settings.sideset));
   auto* components = addGroup("components", "Components", PropertySection::Data);
-  addValue(components, "Temperature", QString::fromStdString(settings.temperature));
+  addValue(components, CalculiXUnitPresentation::title("Temperature", "temperature"), QString::fromStdString(settings.temperature));
   addValue(components, "Emissivity", QString::fromStdString(settings.coefficient));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Amplitude", QString::fromStdString(settings.amplitude));
-  addValue(settingsGroup, "Time Delay", QString::fromStdString(settings.timeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time Delay", "time"), QString::fromStdString(settings.timeDelay));
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Radiation amplitude", QString::fromStdString(settings.secondaryAmplitude));
-  addValue(settingsGroup, "Radiation Time Delay", QString::fromStdString(settings.secondaryTimeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Radiation Time Delay", "time"), QString::fromStdString(settings.secondaryTimeDelay));
   addValue(settingsGroup, "OP", QString::fromStdString(settings.operation));
   addValue(settingsGroup, "Cavity", QString::fromStdString(settings.cavity));
   addValue(settingsGroup, "Cavity Radiation", QString::fromStdString(settings.cavityRadiation));

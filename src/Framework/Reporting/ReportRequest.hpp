@@ -1,5 +1,6 @@
 #pragma once
 #include <QJsonObject>
+#include "ReportProgress.hpp"
 #include <map>
 #include <string>
 #include <vector>
@@ -8,6 +9,8 @@
 class ReportRequest
 {
 public:
+  // Transient, borrowed during synchronous provider collection; never persisted.
+  ReportProgress* progress = nullptr;
   ReportRequest();
   std::string provider;
   std::string kind = "job";

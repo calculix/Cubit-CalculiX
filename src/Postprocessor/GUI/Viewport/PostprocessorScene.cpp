@@ -1,6 +1,7 @@
 #include <type_traits>
 #include "Postprocessor/Core/representations/ResultReferenceMesh.hpp"
 #include "PostprocessorScene.hpp"
+#include "PostprocessorScaleOverlay.hpp"
 #include "Postprocessor/GUI/Filters/PostprocessorPlaneOverlay.hpp"
 #include "Postprocessor/GUI/Selection/PostprocessorPicking.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -28,6 +29,19 @@
 #include <cmath>
 #include <exception>
 
+std::optional<PostprocessorScene::LegendHit> PostprocessorScene::legend_at(double x,double y) const
+{
+  // Reverse drawing order selects the topmost legend when two frames overlap.
+  for (auto entry = displays.rbegin(); entry != displays.rend(); ++entry)
+  {
+    if (entry->second->coloring->legend_contains(x,y))
+    {
+      return LegendHit{entry->first,entry->second->source_id,entry->second->coloring->legend_frame()};
+    }
+  }
+  return std::nullopt;
+}
+
 namespace
 {
   bool valid_bounds(const std::array<double, 6>& bounds)
@@ -42,6 +56,7 @@ namespace
 PostprocessorScene::PostprocessorScene(vtkRenderer* renderer, const std::string& view_id,bool showPlane)
   : renderer(renderer), viewId(view_id)
 {
+  scaleOverlay = std::make_unique<PostprocessorScaleOverlay>(renderer);
   if (showPlane)
   {
     planeOverlay = std::make_unique<PostprocessorPlaneOverlay>(renderer);
@@ -219,15 +234,12 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
       auto nodeMapper = vtkSmartPointer<vtkOpenGLPolyDataMapper>::New();
       nodeMapper->SetInputData(nodes);
       nodeMapper->ScalarVisibilityOff();
-      nodeMapper->SetRelativeCoincidentTopologyPointOffsetParameter(-1);
+      // CPU picking uses original solver nodes, including midside nodes.
+      // Keep this actor out of the renderer; only hover/selection draws a marker.
       auto nodeActor = vtkSmartPointer<vtkOpenGLActor>::New();
       nodeActor->SetMapper(nodeMapper);
-      auto nodeProperty = vtkSmartPointer<vtkOpenGLProperty>::New();
-      nodeProperty->SetColor(color[0],color[1],color[2]);
-      nodeProperty->SetPointSize(Postprocessor::DisplayDefaults::point_size_pixels);
-      nodeProperty->SetRenderPointsAsSpheres(Postprocessor::DisplayDefaults::rounded_points);
-      nodeActor->SetProperty(nodeProperty);
-      group->actors.push_back({part.first,nodeActor});
+      nodeActor->PickableOn();
+      nodeActor->UseBoundsOff();
       group->surfaces.back().nodes = nodeActor;
       group->surfaces.back().node_data = nodes;
     }
@@ -438,8 +450,44 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
             continue;
           }
         }
+        double factor = 1;
+        bool known = false;
+        std::string unitError;
+        if (!application.scene_scale(display,factor,known,unitError))
+        {
+          error += unitError;
+          continue;
+        }
+        group->scene_scale = factor;
+        for (auto& item : group->actors)
+        {
+          item.actor->SetScale(factor,factor,factor);
+        }
+        // Picking proxies are not rendered, but must use the same scene units.
+        for (auto& surface : group->surfaces)
+        {
+          if (surface.nodes)
+          {
+            surface.nodes->SetScale(factor,factor,factor);
+          }
+        }
+        auto colorDisplay = display;
+        if (display.coloring.field)
+        {
+          for (const auto& fieldGroup : application.field_groups(evaluated->source_id,std::nullopt))
+          {
+            const auto& selected = *display.coloring.field;
+            if (!fieldGroup.unit_issue.empty() && (fieldGroup.key == selected.group_key ||
+                (selected.group_key.empty() && fieldGroup.field.array_name == selected.array_name && fieldGroup.field.association == selected.association)))
+            {
+              colorDisplay.coloring.field.reset();
+              group->warnings[fieldGroup.field.dataset_id] = fieldGroup.unit_issue;
+              break;
+            }
+          }
+        }
         std::optional<std::array<double,2>> allFrames;
-        if (display.visible && display.coloring.field && display.coloring.range_mode == Postprocessor::ColorRangeMode::AllFrames)
+        if (colorDisplay.visible && colorDisplay.coloring.field && colorDisplay.coloring.range_mode == Postprocessor::ColorRangeMode::AllFrames)
         {
           std::string rangeError;
           allFrames = application.all_frame_range(evaluated->source_id,*display.coloring.field,rangeError,display.hidden_datasets);
@@ -454,8 +502,8 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
             }())+display.name+": "+rangeError;
           }
         }
-        group->coloring->apply(display, *data, group->surfaces, legendSlot, allFrames, error);
-        if (display.visible && display.coloring.field && display.coloring.legend_visible &&
+        group->coloring->apply(colorDisplay, *data, group->surfaces, legendSlot, allFrames, error, application.captured_units());
+        if (colorDisplay.visible && colorDisplay.coloring.field && colorDisplay.coloring.legend_visible &&
             std::any_of(group->surfaces.begin(),group->surfaces.end(),[&](const PostprocessorColorSurface& surface)
             {
               return Postprocessor::dataset_visible(display,surface.dataset) &&
@@ -547,6 +595,28 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
       initial.view_up = Postprocessor::DisplayDefaults::initial_view_up;
       apply_camera(initial);
     }
+    bool calibrated = visibleBounds.has_value() && !displays.empty();
+    for (const auto& entry : displays)
+    {
+      const auto definition = state.representations.find(entry.first);
+      if (definition != state.representations.end() && (!definition->second.visible ||
+          std::none_of(entry.second->actors.begin(),entry.second->actors.end(),[](const auto& item)
+          {
+            return item.actor->GetVisibility() != 0;
+          })))
+      {
+        continue;
+      }
+      double factor = 1;
+      bool known = false;
+      std::string unitError;
+      if (definition == state.representations.end() ||
+          !application.scene_scale(definition->second,factor,known,unitError) || !known)
+      {
+        calibrated = false;
+      }
+    }
+    scaleOverlay->configure(view->second.scale_visible && calibrated,view->second.scene_unit,application.captured_units());
     update_selection(application);
     if (planeOverlay)
     {
@@ -566,13 +636,24 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
           return 1;
         }
       }();
-      planeOverlay->update([&]() -> std::common_type_t<decltype(nullptr), decltype(&found->second)> {
-        if (found == state.filters.end()) {
-          return nullptr;
-        } else {
-          return &found->second;
+      Postprocessor::FilterDefinition transformedPlane;
+      const Postprocessor::FilterDefinition* shownPlane = nullptr;
+      if (found != state.filters.end())
+      {
+        transformedPlane = found->second;
+        double factor = 1;
+        bool known = false;
+        std::string ignored;
+        if (application.scene_scale(active->second,factor,known,ignored))
+        {
+          for (auto& coordinate : transformedPlane.plane.origin)
+          {
+            coordinate *= factor;
+          }
+          shownPlane = &transformedPlane;
         }
-      }(),extent);
+      }
+      planeOverlay->update(shownPlane,extent);
     }
     return error.empty();
   }
@@ -594,6 +675,7 @@ void PostprocessorScene::apply_camera(const Postprocessor::CameraDefinition& def
 {
   if (appliedCamera && Postprocessor::CameraOperations::equal(*appliedCamera, definition))
   {
+    scaleOverlay->update();
     return;
   }
   clear_hover();
@@ -609,6 +691,7 @@ void PostprocessorScene::apply_camera(const Postprocessor::CameraDefinition& def
     renderer->ResetCameraClippingRange(visibleBounds->data());
   }
   appliedCamera = definition;
+  scaleOverlay->update();
 }
 
 bool PostprocessorScene::prepare_camera_fit(const std::array<double, 6>& bounds,
@@ -648,6 +731,7 @@ void PostprocessorScene::apply_appearance(const std::array<double, 3>& top, cons
   renderer->SetBackground(bottom[0], bottom[1], bottom[2]);
   renderer->SetBackground2(top[0], top[1], top[2]);
   renderer->SetGradientBackground(top != bottom);
+  scaleOverlay->update();
   for (const auto& display : displays)
   {
     display.second->coloring->update_appearance();
@@ -656,6 +740,7 @@ void PostprocessorScene::apply_appearance(const std::array<double, 3>& top, cons
 
 void PostprocessorScene::scale_capture(double scale)
 {
+  scaleOverlay->set_capture_scale(scale);
   for (const auto& display : displays)
   {
     display.second->coloring->set_capture_scale(scale);

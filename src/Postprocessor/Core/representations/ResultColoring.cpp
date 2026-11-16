@@ -1,3 +1,4 @@
+#include "ResultColoringUnits.hpp"
 #include "ResultColoring.hpp"
 #include "Framework/Results/ResultsUnits.hpp"
 #include <vtkDataSet.h>
@@ -19,7 +20,7 @@ namespace
     double unit_offset = 0.0;
   };
   bool selected_array(vtkDataSet* mesh,const SimResults::Field& field,
-    const Postprocessor::FieldSelection& selection,ColorArray& input,std::string& error) {
+    const Postprocessor::FieldSelection& selection,ColorArray& input,std::string& error,const SimUnits::WorkspaceUnitContext* presentation) {
     error.clear();
     if (!mesh || field.association == SimResults::Association::Table) {
       error = "The field is not a mesh field.";
@@ -55,7 +56,7 @@ namespace
     }
     double one = 1.0;
     std::string label;
-    if (!SimResults::ResultsUnits::field_value(0.0, field, selection.component, selection.magnitude, "postprocessor", input.unit_offset, label, error) || !SimResults::ResultsUnits::field_value(1.0, field, selection.component, selection.magnitude, "postprocessor", one, label, error)) {
+    if (!SimResults::ResultsUnits::field_value(0.0, field, selection.component, selection.magnitude, "postprocessor", input.unit_offset, label, error, presentation) || !SimResults::ResultsUnits::field_value(1.0, field, selection.component, selection.magnitude, "postprocessor", one, label, error, presentation)) {
       return false;
     }
     input.unit_scale = one - input.unit_offset;
@@ -147,6 +148,25 @@ namespace Postprocessor
           found = catalogue.emplace(key,ResultFieldGroup{field,key,{},false}).first;
         }
         auto& group = found->second;
+        const auto& basis = group.field.component_units;
+        if (basis.size() != field.component_units.size())
+        {
+          group.unit_issue = "Result unit metadata changes across datasets or frames.";
+        }
+        else
+        {
+          for (std::size_t i = 0; i < basis.size(); ++i)
+          {
+            const auto& candidate = field.component_units[i];
+            if (basis[i].quantity != candidate.quantity || basis[i].dimension != candidate.dimension ||
+                basis[i].role != candidate.role || basis[i].unit.empty() != candidate.unit.empty() ||
+                (basis[i].quantity.empty() && basis[i].unit != candidate.unit))
+            {
+              group.unit_issue = "Result physical quantity changes across datasets or frames.";
+            }
+          }
+        }
+
         if (std::find(group.datasets.begin(),group.datasets.end(),field.dataset_id) == group.datasets.end()) {
           group.datasets.push_back(field.dataset_id);
         }
@@ -155,6 +175,10 @@ namespace Postprocessor
     }
     std::vector<ResultFieldGroup> groups;
     for (auto& entry : catalogue) {
+      if (!entry.second.unit_issue.empty())
+      {
+        entry.second.available = false;
+      }
       groups.push_back(std::move(entry.second));
     }
     std::sort(groups.begin(),groups.end(),[](const ResultFieldGroup& a,const ResultFieldGroup& b) {
@@ -171,13 +195,25 @@ namespace Postprocessor
       a->component == b->component && a->magnitude == b->magnitude && a->group_key == b->group_key));
   }
   bool same_coloring(const ResultColoring& a, const ResultColoring& b) {
-    return same_field(a.field, b.field) && a.palette == b.palette && a.range_mode == b.range_mode &&
+    return same_coloring_units(a.bounds_unit, b.bounds_unit) && same_field(a.field, b.field) && a.palette == b.palette && a.range_mode == b.range_mode &&
       a.fixed_range == b.fixed_range && a.reversed == b.reversed && a.legend_visible == b.legend_visible &&
-      a.bands == b.bands && a.minimum.enabled == b.minimum.enabled && a.minimum.value == b.minimum.value &&
+      a.bands == b.bands && a.legend_position == b.legend_position && a.minimum.enabled == b.minimum.enabled && a.minimum.value == b.minimum.value &&
       a.minimum.color == b.minimum.color && a.maximum.enabled == b.maximum.enabled &&
       a.maximum.value == b.maximum.value && a.maximum.color == b.maximum.color;
   }
   bool valid_coloring(const ResultColoring& c, std::string& error) {
+    if (!valid_coloring_units(c.bounds_unit, error))
+    {
+      return false;
+    }
+    if (c.legend_position && !std::all_of(c.legend_position->begin(),c.legend_position->end(),[](double value)
+      {
+        return std::isfinite(value) && value >= 0 && value <= 1;
+      }))
+    {
+      error = "Legend position requires finite normalized coordinates in [0,1].";
+      return false;
+    }
     auto limit = [](const ColorLimit& v) {
       return std::isfinite(v.value) && std::all_of(v.color.begin(), v.color.end(), [](double x) {
         return std::isfinite(x) && x >= 0 && x <= 1;
@@ -206,9 +242,9 @@ namespace Postprocessor
     return nullptr;
   }
   bool color_sample(vtkDataSet* mesh, const SimResults::Field& field, const FieldSelection& selection,
-    std::size_t index, double& value, std::string& error) {
+    std::size_t index, double& value, std::string& error, const SimUnits::WorkspaceUnitContext* presentation) {
     ColorArray input;
-    if (!selected_array(mesh,field,selection,input,error) || index >= static_cast<std::size_t>(input.values->GetNumberOfTuples())) {
+    if (!selected_array(mesh,field,selection,input,error,presentation) || index >= static_cast<std::size_t>(input.values->GetNumberOfTuples())) {
       if (error.empty()) {
         error = "The requested result sample is unavailable.";
       }
@@ -219,9 +255,9 @@ namespace Postprocessor
   }
 
   bool color_values(vtkDataSet* mesh,const SimResults::Field& field,const FieldSelection& selection,
-    std::vector<double>& values,std::string& error) {
+    std::vector<double>& values,std::string& error, const SimUnits::WorkspaceUnitContext* presentation) {
     ColorArray input;
-    if (!selected_array(mesh,field,selection,input,error)) {
+    if (!selected_array(mesh,field,selection,input,error,presentation)) {
       return false;
     }
     values.resize(static_cast<std::size_t>(input.values->GetNumberOfTuples()));
@@ -231,9 +267,9 @@ namespace Postprocessor
     return true;
   }
   bool accumulate_color_range(vtkDataSet* mesh,const SimResults::Field& field,const FieldSelection& selection,
-    std::optional<std::array<double,2>>& range,std::string& error) {
+    std::optional<std::array<double,2>>& range,std::string& error, const SimUnits::WorkspaceUnitContext* presentation) {
     ColorArray input;
-    if (!selected_array(mesh,field,selection,input,error)) {
+    if (!selected_array(mesh,field,selection,input,error,presentation)) {
       return false;
     }
     for (vtkIdType i = 0; i < input.values->GetNumberOfTuples(); ++i) {

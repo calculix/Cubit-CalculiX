@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QSet>
 #include <functional>
+#include <cstdint>
 class PostprocessorTableModel;
 class QLabel;
 class QTableView;
@@ -27,6 +28,7 @@ private:
   Postprocessor::ResultTableData shown;
   std::optional<Postprocessor::TableReference> plotReference;
   QSet<int> manualColumns;
+  std::optional<std::uint64_t> shownUnitGeneration;
   bool resizingColumns = false;
   bool fitQueued = false;
 };

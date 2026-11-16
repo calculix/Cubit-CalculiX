@@ -5,11 +5,18 @@
 #include <limits>
 CoreResultsSourceMetadata::CoreResultsSourceMetadata() = default;
 CoreResultsSourceMetadata::CoreResultsSourceMetadata(const CalculiXJobRunRecord& record) : unitSystem(record.unitSystem), launchId(record.launchId), materialProjectId(record.materialProjectId), materialIds(record.materialIds) {
+  step_axis_quantities = record.step_axis_quantities;
 }
 QJsonObject CoreResultsSourceMetadata::to_json() const {
   QJsonObject value;
   value.insert("version", 1);
   value.insert("system", QString::fromUtf8(unitSystem.c_str()));
+  QJsonObject axes;
+  for (const auto& axis : step_axis_quantities)
+  {
+    axes.insert(QString::number(axis.first), QString::fromStdString(axis.second));
+  }
+  value.insert("step_axes", axes);
   value.insert("launch", QString::fromUtf8(launchId.c_str()));
   value.insert("project", QString::fromUtf8(materialProjectId.c_str()));
   QJsonObject materials;
@@ -26,6 +33,25 @@ bool CoreResultsSourceMetadata::from_json(const QJsonObject& value, CoreResultsS
   }
   CoreResultsSourceMetadata candidate;
   candidate.unitSystem = value.value("system").toString().toUtf8().toStdString();
+  if (value.contains("step_axes") && !value.value("step_axes").isObject())
+  {
+    error = "Invalid saved result-axis object.";
+    return false;
+  }
+  const auto axes = value.value("step_axes").toObject();
+  for (auto axis = axes.begin(); axis != axes.end(); ++axis)
+  {
+    bool valid = false;
+    const int step = axis.key().toInt(&valid);
+    const std::string quantity = axis.value().toString().toStdString();
+    if (!valid || step <= 0 || !axis.value().isString() ||
+        (quantity != "time" && quantity != "frequency") ||
+        !candidate.step_axis_quantities.emplace(step, quantity).second)
+    {
+      error = "Invalid saved result-axis provenance.";
+      return false;
+    }
+  }
   candidate.launchId = value.value("launch").toString().toUtf8().toStdString();
   candidate.materialProjectId = value.value("project").toString().toUtf8().toStdString();
   SimUnits::SourceUnitContext context;

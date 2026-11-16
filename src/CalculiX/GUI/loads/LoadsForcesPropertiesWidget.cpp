@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsForcesPropertiesWidget.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -25,16 +26,16 @@ bool LoadsForcesPropertiesWidget::setForce(int id)
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
   addReference(assignment, PropertyReferenceKind::Nodeset, "Nodeset", QString::fromStdString(settings.nodeset));
   auto* components = addGroup("components", "Components", PropertySection::Data);
-  addValue(components, "Force X", QString::fromStdString(settings.component1));
-  addValue(components, "Force Y", QString::fromStdString(settings.component2));
-  addValue(components, "Force Z", QString::fromStdString(settings.component3));
-  addValue(components, "Moment X", QString::fromStdString(settings.component4));
-  addValue(components, "Moment Y", QString::fromStdString(settings.component5));
-  addValue(components, "Moment Z", QString::fromStdString(settings.component6));
+  addValue(components, CalculiXUnitPresentation::title("Force X", "force"), QString::fromStdString(settings.component1));
+  addValue(components, CalculiXUnitPresentation::title("Force Y", "force"), QString::fromStdString(settings.component2));
+  addValue(components, CalculiXUnitPresentation::title("Force Z", "force"), QString::fromStdString(settings.component3));
+  addValue(components, CalculiXUnitPresentation::title("Moment X", "moment"), QString::fromStdString(settings.component4));
+  addValue(components, CalculiXUnitPresentation::title("Moment Y", "moment"), QString::fromStdString(settings.component5));
+  addValue(components, CalculiXUnitPresentation::title("Moment Z", "moment"), QString::fromStdString(settings.component6));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "OP", QString::fromStdString(settings.operation));
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Amplitude", QString::fromStdString(settings.amplitude));
-  addValue(settingsGroup, "Time Delay", QString::fromStdString(settings.timeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time Delay", "time"), QString::fromStdString(settings.timeDelay));
   return true;
 }
 

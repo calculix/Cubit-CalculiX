@@ -15,6 +15,7 @@ class vtkActor;
 class vtkRenderer;
 class PostprocessorApplicationInterface;
 class PostprocessorPlaneOverlay;
+class PostprocessorScaleOverlay;
 
 class PostprocessorScene
 {
@@ -25,6 +26,14 @@ public:
   void apply_camera(const Postprocessor::CameraDefinition& camera);
   bool prepare_camera_fit(const std::array<double, 6>& bounds, Postprocessor::CameraDefinition& camera, std::string& error);
   void scale_capture(double scale);
+  struct LegendHit
+  {
+    std::string representation_id;
+    std::string source_id;
+    std::array<double,4> frame;
+  };
+  // x/y are normalized bottom-left viewport coordinates.
+  std::optional<LegendHit> legend_at(double x,double y) const;
   void clear();
   bool pick(double x, double y, Postprocessor::EntityKind kind,
     std::optional<Postprocessor::EntityReference>& entity, std::string& error);
@@ -40,6 +49,7 @@ private:
     std::string source_id;
     std::shared_ptr<const Postprocessor::EvaluatedOutput> evaluated;
     std::size_t increment = 0;
+    double scene_scale = 1;
     Postprocessor::ResultDeformation deformation;
     std::vector<std::shared_ptr<vtkDataSet>> transformed;
     std::map<std::size_t,std::string> warnings;
@@ -56,6 +66,7 @@ private:
     const Postprocessor::Representation& display, std::string& error,const Postprocessor::EvaluatedOutput* evaluated = nullptr);
   vtkSmartPointer<vtkRenderer> renderer;
   std::unique_ptr<PostprocessorPlaneOverlay> planeOverlay;
+  std::unique_ptr<PostprocessorScaleOverlay> scaleOverlay;
   std::string viewId;
   std::optional<std::uint64_t> geometryRevision;
   std::optional<std::array<double, 6>> visibleBounds;

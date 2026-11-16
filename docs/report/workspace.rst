@@ -258,3 +258,52 @@ accompanies model sections. Curve ordinates and normalized offsets remain
 dimensionless. Historical jobs and VTK fields retain source-unit metadata;
 changing a model's units does not alter their interpretation. Custom solver text
 is shown literally and is not dimensionally converted.
+
+Generation progress
+-------------------
+
+Generate and Update use one Cubit native progress scope for the entire operation,
+including preview content, pagination and contents. The description remains
+"Generating report and preparing preview"; detailed stages appear in the command
+output. The bar advances through workflow stages rather than estimating elapsed
+or remaining time. Known counts advance within a phase; local model file/table
+counts are not treated as an aggregate model total. Progress remains below 100%
+until both the replacement report and its prepared preview have been published.
+
+Cancellation is checked between parsing batches, model tables and images, and
+before publishing the report. Cancelling Generate/Update during preview work
+preserves the previous report and prepared layout. A single native rendering,
+Postprocessor collection or Qt pagination call can still run until it returns to
+a checkpoint. Cancelling a separate preview request leaves the saved report
+intact so its preview can be retried. A completed command now includes preview
+preparation when the Report GUI is available; headless generation stays possible.
+
+Content and Outline
+-------------------
+
+The left dock has two tabs. Content groups the template's existing checkboxes
+under Document, Model, Analysis steps, Model and setup images, and Postprocessor.
+Header/footer options, requested outputs and per-step images have nested groups.
+Group checkboxes apply one atomic settings command; partial selections are shown
+explicitly. Expansion, selection and scroll position survive refresh. A disabled
+section gate preserves its child choices until re-enabled or changed as a group.
+
+Outline describes the actual generated document, including nested sections,
+tables, row counts and images. Counts do not require pagination; the new outline
+is displayed with the committed report after preparation. Pre-pagination totals
+are printed in the command output. Page locations and total pages are displayed. Activate a
+section to navigate to it. Table/image entries navigate to the containing section;
+individual table/image page anchors are not recorded. Selecting content does not
+automatically discard rows or change the template defaults.
+
+Preview construction disables undo history and incremental layout, appends table
+rows in batches and checks cancellation between cell batches. The command output
+records table, row, cell and image counts, construction time and pagination time.
+The final Qt pagination call is synchronous. Busy/nested refreshes keep the last
+preview intact rather than displaying a transient busy error as an empty page.
+
+GUI refresh only reads the prepared cache. Generate/Update prepare it inside the
+command before completion. Source selection, explicit preview/export, note/image
+commands and project activation prepare a missing matching layout in application
+operations. A cache miss in a passive refresh never starts pagination; it displays
+"Report generated. Use Open preview / Export to prepare its preview."

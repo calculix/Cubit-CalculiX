@@ -798,3 +798,39 @@ Plane filter acceptance (not yet executed)
 
 No native build, SDK adapter preparation or native test execution was performed
 for this patch. Windows and Linux runtime verification remain required.
+
+Coloring unit settings and table refresh (not executed)
+------------------------------------------------------
+
+* Save a stress limit of 200 MPa, make its external source unavailable, reopen,
+  and select Pa presentation units. The retained limit must become 200000000 Pa.
+  Reconnect the source and confirm highlighting retains its physical threshold.
+* Reopen a legacy project without bounds-unit metadata. If its selected field
+  exists only in another frame, conversion must still work. If no field can be
+  resolved, changing units must fail without publishing partial state.
+* Keep a result table open while changing units. Values, headers and automatic
+  column sizing must refresh without resetting selection or scrolling; manual
+  column widths must remain unchanged.
+* When builds are authorized, run ``postprocessor_coloring_units`` and
+  ``postprocessor_units_metadata`` in Release as well as the supported native
+  environment. Neither test has been compiled or executed for this patch.
+
+Presentation contexts and axis compatibility (not executed)
+----------------------------------------------------------
+
+* Change time display from s to ms while animation runs. Navigation must show
+  converted values and units without changing the current frame or playback rate.
+* Check named, minimum and maximum labels on original and filtered meshes.
+  Values and units must agree with the legend and exported PNG.
+* Check Clip and Section origin unit labels. Presentation changes must not move
+  planes. Refreshing into a different native coordinate scale must reject the
+  derived output until the plane is recreated in the current native basis.
+* Compare Pa/MPa and s/ms curves; compatible axes must normalize. Reject force
+  versus stress, frame indices versus physical axes, and unrelated unknown-unit
+  raw fields. Hiding incompatible curves must permit the remaining plot.
+* Freeze a capture, change live units, then evaluate ranges, probes, annotations
+  and plots through the private capture application. Their values/labels and
+  manifest context must retain the captured units; live settings must remain live.
+* When native execution is authorized, run ``postprocessor_presentation_units``
+  and the extended navigation, selection/plot and capture cases. None were built
+  or run during this patch.

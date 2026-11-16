@@ -1,3 +1,5 @@
+#include "Framework/Results/ResultsUnits.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include <type_traits>
 #include "PostprocessorFrameNavigation.hpp"
 #include <QComboBox>
@@ -171,6 +173,12 @@ void PostprocessorFrameNavigation::refresh(const std::shared_ptr<const SimResult
   std::optional<std::size_t> current, const std::function<bool(std::size_t)>& has_mesh, const std::string& key,
   const Postprocessor::AnimationDefinition& animation, bool allow_animation)
 {
+  const auto unitGeneration = framework_units().generation();
+  if (!labelUnitGeneration || *labelUnitGeneration != unitGeneration)
+  {
+    refresh_frame_labels();
+    labelUnitGeneration = unitGeneration;
+  }
   playbackAllowed = allow_animation;
   const bool owned = snapshot == data && context == key && current == expected;
   const bool externalFrame = running && snapshot == data && context == key && current != expected;
@@ -209,7 +217,7 @@ void PostprocessorFrameNavigation::refresh(const std::shared_ptr<const SimResult
         selected = static_cast<int>(indices.size());
       }
       indices.push_back(i);
-      frames->addItem(tr("Frame %1 | Step %2 | Increment %3 | Time %4")
+      frames->addItem(tr("Frame %1 | Step %2 | Increment %3 | %4")
         .arg(static_cast<qulonglong>(i + 1))
         .arg([&]() -> std::common_type_t<decltype(tr("unknown")), decltype(QString::number(value.step))> {
           if (value.step < 0) {
@@ -225,13 +233,7 @@ void PostprocessorFrameNavigation::refresh(const std::shared_ptr<const SimResult
             return QString::number(value.increment);
           }
         }())
-        .arg([&]() -> std::common_type_t<decltype(QString::number(value.time, 'g', 16)), decltype(tr("unknown"))> {
-          if (std::isfinite(value.time)) {
-            return QString::number(value.time, 'g', 16);
-          } else {
-            return tr("unknown");
-          }
-        }()));
+        .arg(parameter_text(value)));
     }
   }
   slider->setRange(0,std::max(0,static_cast<int>(indices.size())-1));
@@ -478,4 +480,54 @@ void PostprocessorFrameNavigation::advance_animation()
   // Schedule after completing work. Avoid queued catch-up frames when rendering
   // takes longer than the target interval.
   animationTimer.start(static_cast<int>(std::ceil(1000.0/playback.frames_per_second)));
+}
+
+QString PostprocessorFrameNavigation::parameter_text(const SimResults::Increment& frame) const
+{
+  double displayed = 0.0;
+  std::string unit;
+  std::string error;
+  if (!SimResults::ResultsUnits::display_value(frame.time,frame.independent_variable,
+        "postprocessor",displayed,unit,error) || !std::isfinite(displayed))
+  {
+    return tr("Parameter unavailable");
+  }
+  QString name = tr("Analysis parameter");
+  if (frame.independent_variable.quantity == "time")
+  {
+    name = tr("Time");
+  }
+  else if (frame.independent_variable.quantity == "frequency")
+  {
+    name = tr("Frequency");
+  }
+  return tr("%1 %2 [%3]").arg(name).arg(QString::number(displayed,'g',16)).arg(QString::fromStdString(unit));
+}
+void PostprocessorFrameNavigation::refresh_frame_labels()
+{
+  if (!snapshot)
+  {
+    return;
+  }
+  const QSignalBlocker blocker(frames);
+  for (std::size_t row = 0; row < indices.size(); ++row)
+  {
+    if (indices[row] >= snapshot->increments.size())
+    {
+      continue;
+    }
+    const auto& frame = snapshot->increments[indices[row]];
+    QString step = tr("unknown");
+    QString increment = tr("unknown");
+    if (frame.step >= 0)
+    {
+      step = QString::number(frame.step);
+    }
+    if (frame.increment >= 0)
+    {
+      increment = QString::number(frame.increment);
+    }
+    frames->setItemText(static_cast<int>(row),tr("Frame %1 | Step %2 | Increment %3 | %4")
+      .arg(static_cast<qulonglong>(indices[row]+1)).arg(step).arg(increment).arg(parameter_text(frame)));
+  }
 }

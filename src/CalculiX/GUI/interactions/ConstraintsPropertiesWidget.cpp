@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "ConstraintsPropertiesWidget.hpp"
 #include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -39,7 +40,7 @@ bool ConstraintsPropertiesWidget::setConstraint(int id)
       addReference(assignment, PropertyReferenceKind::Block, "Block", QString::fromStdString(settings.block));
       addReference(assignment, PropertyReferenceKind::Nodeset, "Nodeset", QString::fromStdString(settings.nodeset));
       addReference(assignment, PropertyReferenceKind::Vertex, "Reference vertex", QString::fromStdString(settings.reference));
-      addReference(assignment, PropertyReferenceKind::Vertex, "Rotation vertex", QString::fromStdString(settings.rotation));
+      addReference(assignment, PropertyReferenceKind::Vertex, CalculiXUnitPresentation::title("Rotation vertex", "angle"), QString::fromStdString(settings.rotation));
       break;
     }
     case 2:
@@ -49,7 +50,7 @@ bool ConstraintsPropertiesWidget::setConstraint(int id)
       addReference(assignment, PropertyReferenceKind::Sideset, "Master sideset", QString::fromStdString(settings.master));
       addReference(assignment, PropertyReferenceKind::Sideset, "Slave sideset", QString::fromStdString(settings.slave));
       auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
-      addValue(settingsGroup, "Position Tolerance", QString::fromStdString(settings.tolerance));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Position Tolerance", "length"), QString::fromStdString(settings.tolerance));
       break;
     }
     case 3:

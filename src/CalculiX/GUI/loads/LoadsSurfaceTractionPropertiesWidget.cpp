@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsSurfaceTractionPropertiesWidget.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -25,13 +26,13 @@ bool LoadsSurfaceTractionPropertiesWidget::setSurfaceTraction(int id)
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
   addReference(assignment, PropertyReferenceKind::Sideset, "Sideset", QString::fromStdString(settings.sideset));
   auto* components = addGroup("components", "Components", PropertySection::Data);
-  addValue(components, "Force X", QString::fromStdString(settings.component1));
-  addValue(components, "Force Y", QString::fromStdString(settings.component2));
-  addValue(components, "Force Z", QString::fromStdString(settings.component3));
+  addValue(components, CalculiXUnitPresentation::title("Force X", "force"), QString::fromStdString(settings.component1));
+  addValue(components, CalculiXUnitPresentation::title("Force Y", "force"), QString::fromStdString(settings.component2));
+  addValue(components, CalculiXUnitPresentation::title("Force Z", "force"), QString::fromStdString(settings.component3));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "OP", QString::fromStdString(settings.operation));
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Amplitude", QString::fromStdString(settings.amplitude));
-  addValue(settingsGroup, "Time Delay", QString::fromStdString(settings.timeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time Delay", "time"), QString::fromStdString(settings.timeDelay));
   return true;
 }
 

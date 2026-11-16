@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsTrajectoryPropertiesWidget.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -24,8 +25,8 @@ bool LoadsTrajectoryPropertiesWidget::setTrajectory(int id)
   addEditableName(general, id, QString::fromStdString(settings.name));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "Load Type", QString::fromStdString(settings.loadType));
-  addValue(settingsGroup, "Time Begin", QString::fromStdString(settings.timeBegin));
-  addValue(settingsGroup, "Time End", QString::fromStdString(settings.timeEnd));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time Begin", "time"), QString::fromStdString(settings.timeBegin));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time End", "time"), QString::fromStdString(settings.timeEnd));
   addValue(settingsGroup, "OP", QString::fromStdString(settings.operation));
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
   addReference(assignment, PropertyReferenceKind::Curve, "Curve", QString::fromStdString(settings.curve));
@@ -36,11 +37,11 @@ bool LoadsTrajectoryPropertiesWidget::setTrajectory(int id)
   addValue(components, "Direction", QString::fromStdString(settings.direction));
   if (settings.type == 1)
   {
-    addTable("trajectory_samples", "Trajectory samples", {"Radius", "Magnitude"}, settings.samples);
+    addTable("trajectory_samples", "Trajectory samples", {CalculiXUnitPresentation::title("Radius", "length"), CalculiXUnitPresentation::title("Magnitude", "heat_flux")}, settings.samples);
   }
   else
   {
-    addTable("trajectory_samples", "Trajectory samples", {"Radius", "Depth", "Magnitude"}, settings.samples);
+    addTable("trajectory_samples", "Trajectory samples", {CalculiXUnitPresentation::title("Radius", "length"), CalculiXUnitPresentation::title("Depth", "length"), CalculiXUnitPresentation::title("Magnitude", "body_heat_flux")}, settings.samples);
   }
   return true;
 }

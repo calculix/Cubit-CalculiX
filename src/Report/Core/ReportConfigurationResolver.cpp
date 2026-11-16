@@ -1,4 +1,5 @@
 #include "ReportConfigurationResolver.hpp"
+#include "ReportUnitValidation.hpp"
 #include <utility>
 #include "ReportUserOptions.hpp"
 #include "ReportLogo.hpp"
@@ -7,11 +8,15 @@
 #include <QStringList>
 #include <algorithm>
 #include <set>
+#include <map>
 
 ReportConfigurationResolver::ReportConfigurationResolver() = default;
 
 void ReportConfigurationResolver::add_common_options(ReportTemplate& definition)
 {
+  definition.content_groups.insert(definition.content_groups.begin(), {
+    {"report.content.document", "Document"},
+    {"report.content.decoration", "Header and footer", "report.content.document"}});
   for (const auto& option : ReportUserOptions::definitions())
   {
     definition.options.push_back(option);
@@ -22,8 +27,72 @@ void ReportConfigurationResolver::add_common_options(ReportTemplate& definition)
 bool ReportConfigurationResolver::resolve(const ReportTemplate& definition, const ReportConfiguration& overrides,
   ReportConfiguration& output, std::string& error)
 {
+  std::map<std::string, const ReportContentGroup*> groups;
+  std::set<std::string> gates;
+  for (const auto& group : definition.content_groups)
+  {
+    if (group.id.empty() || group.label.empty() || !groups.emplace(group.id, &group).second)
+    {
+      error = "Report content groups require unique IDs and labels.";
+      return false;
+    }
+  }
+  for (const auto& group : definition.content_groups)
+  {
+    std::set<std::string> ancestors;
+    const ReportContentGroup* current = &group;
+    while (current != nullptr)
+    {
+      if (!ancestors.insert(current->id).second)
+      {
+        error = "Report content groups contain a cycle.";
+        return false;
+      }
+      if (current->parent_id.empty())
+      {
+        break;
+      }
+      const auto parent = groups.find(current->parent_id);
+      if (parent == groups.end())
+      {
+        error = "Report content group parent is unavailable.";
+        return false;
+      }
+      current = parent->second;
+    }
+    if (!group.gate_option.empty())
+    {
+      if (!gates.insert(group.gate_option).second)
+      {
+        error = "Report content groups must not share a section gate.";
+        return false;
+      }
+      const auto gate = std::find_if(definition.options.begin(), definition.options.end(), [&](const ReportOption& option)
+      {
+        return option.key == group.gate_option && option.kind == "boolean";
+      });
+      if (gate == definition.options.end())
+      {
+        error = "Report content group gate must reference a boolean option.";
+        return false;
+      }
+    }
+  }
+  for (const auto& option : definition.options)
+  {
+    if (!option.group_id.empty() && groups.count(option.group_id) == 0)
+    {
+      error = "Report option refers to an unavailable content group: " + option.key;
+      return false;
+    }
+  }
   auto candidate = definition.defaults;
   candidate.company_logo = overrides.company_logo;
+  candidate.units = overrides.units;
+  if (!ReportUnitValidation::configuration(candidate, error))
+  {
+    return false;
+  }
   std::set<std::string> keys;
   for (const auto& option : definition.options)
   {

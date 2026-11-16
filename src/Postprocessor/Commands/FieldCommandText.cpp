@@ -42,6 +42,15 @@ namespace Postprocessor
     {
       result += " association " + QString::fromLatin1(field_association_name(*selector.qualifiers.association));
     }
+    if (selector.qualifiers.set_name)
+    {
+      const auto name = quote(*selector.qualifiers.set_name);
+      if (name.isEmpty())
+      {
+        return {};
+      }
+      result += " set " + name;
+    }
     return result;
   }
 }

@@ -109,3 +109,19 @@ building or executing them while compilation remained prohibited.
 After building is permitted, additionally verify model reports with several steps
 and nonconsecutive IDs, profile save/load, step-specific image content, missing
 mesh/graphics diagnostics and generation while another workspace is active.
+
+Default block colors
+--------------------
+
+Cubit represents an unset block color with alpha zero. Capture must not discard
+that sentinel and encode it as opaque black. Assigned RGB values, including
+explicit black, are preserved. For an unset color, the Framework queries the
+active Showviz simulation interface. If the interface cannot resolve a color,
+the setup capture reports an explicit diagnostic rather than guessing a color.
+This query does not draw or modify the native viewport.
+
+Already archived RGB snapshots remain immutable. A stored ``#000000`` does not
+record whether it originally came from an unset color or intentional black; it
+cannot be safely recolored automatically. A new setup snapshot is needed to
+capture a newly resolved color. Native default-color resolution still requires
+verification in Cubit after building is permitted.

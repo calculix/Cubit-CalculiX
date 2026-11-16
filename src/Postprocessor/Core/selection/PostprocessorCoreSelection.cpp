@@ -113,7 +113,7 @@ namespace Postprocessor
           error = "The entity is not retained by the active filter.";
           return false;
         }
-        const auto result = probe_result(*data,display,entity);
+        const auto result = probe_result(*data,display,entity,captured_units());
         if (!result.available)
         {
           error = "The requested original entity ID is unavailable in this dataset/frame.";
@@ -197,7 +197,7 @@ namespace Postprocessor
         const auto& display = entry.second;
         if (display_matches_source(display,entity.source_id,view_id) && data)
         {
-          auto result = probe_result(*data,display,entity);
+          auto result = probe_result(*data,display,entity,captured_units());
           if (display.input.owner == OutputOwner::Feature)
           {
             result.displayed_position = filtered_entity_position(display,entity);

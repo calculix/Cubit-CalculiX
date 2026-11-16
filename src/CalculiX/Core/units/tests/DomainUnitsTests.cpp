@@ -1,6 +1,18 @@
 #include "Core/steps/CoreStepsStructs.hpp"
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/units/CalculiXDomainUnits.hpp"
+#include "Core/units/CalculiXUnitsInterface.hpp"
+#include "Core/steps/CoreStepLoadExport.hpp"
+#include "Core/loads/CoreLoadsFilm.hpp"
+#include "Core/export/CoreCustomLines.hpp"
+#include "Core/mesh/CoreSidesetFaces.hpp"
+#include "Core/mesh/CalculiXMeshInterface.hpp"
+#include "Core/reporting/CalculiXReportDomainSettings.hpp"
+#include "Core/reporting/CalculiXReportMaterials.hpp"
+#include "Framework/Core/materials/FrameworkMaterialsInterface.hpp"
+#include "Framework/Reporting/ReportSection.hpp"
+#include "Core/loadCalculiXCore.hpp"
+#include "ElementType.h"
 #include "Core/sections/CoreSections.hpp"
 #include "Core/sections/CoreOrientations.hpp"
 #include "Core/interactions/CoreConstraints.hpp"
@@ -27,6 +39,8 @@
 #include "CubitMessage.hpp"
 #include <QCoreApplication>
 #include <QTemporaryDir>
+#include <QScopedValueRollback>
+#include <QStringList>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -59,7 +73,10 @@ void conversions(const Model& source, Value value, const std::string& quantity, 
     if (inverse) {
       expected = original / scale;
     }
-    near(value(solver), expected);
+    // Solver strings are rounded to six decimals in scientific notation.
+    // Canonical, display, and report values retain the stricter checks below.
+    const double solverValue = value(solver);
+    require(std::isfinite(solverValue) && std::abs(solverValue - expected) <= std::max(1e-13, std::abs(expected) * 5e-7), "Solver value exceeds export precision tolerance");
     auto display = source;
     require(CalculiXDomainUnits::convert(display, CalculiXDomainUnitView::Display, error), error);
     require(CalculiXDomainUnits::convert(display, CalculiXDomainUnitView::Input, error), error);
@@ -79,21 +96,115 @@ void conversions(const Model& source, Value value, const std::string& quantity, 
   }
 }
 template<class Persistence, class Model, class Data>
-void persistence(const Model& source, Data data, const std::string& filename) {
+void persistence(const Model& source, Data data, const std::string& filename)
+{
+  // Writers create datasets; each independent round trip needs a fresh file,
+  // including checks of different records belonging to the same Core area.
+  QTemporaryDir fixtureDirectory(QString::fromStdString(filename) + ".XXXXXX");
+  require(fixtureDirectory.isValid(), "Create isolated persistence fixture directory");
+  const auto fixtureFilename = fixtureDirectory.filePath("roundtrip.hdf5").toStdString();
   {
-    HDF5Tool file(filename);
+    HDF5Tool file(fixtureFilename);
     require(Persistence::write(file, source), "Save domain fixture");
     require(file.close(), file.last_error());
   }
   Model restored;
   {
-    HDF5Tool file(filename, false);
+    HDF5Tool file(fixtureFilename, false);
     require(Persistence::read(file, restored), "Restore domain fixture");
     require(file.close(), file.last_error());
   }
   require(data(restored) == data(source), "Persistence changed canonical records");
   require(!restored.domain_unit_view, "Restored data must be canonical");
 }
+void film_export()
+{
+  std::string error;
+  CoreSteps steps;
+  steps.loads_data = {{1, 7, 1}};
+  CoreLoadsFilm film;
+  film.loads_data = {{1, 0, -1, 1, 2, 1, 1, -1, 1, 1}};
+  film.time_delay_data = {{"1", ""}};
+  film.film_time_delay_data = {{"1", ""}};
+  film.temperature_data = {{"1", "293.15"}};
+  film.coefficient_data = {{"1", "10"}};
+  CoreCustomLines custom;
+  CoreSidesetFaces faces;
+  faces.add_sideset_face("2", "Surface", "1", std::to_string(HEX8));
+  for (const std::string system : {"SI", "N-mm-s"})
+  {
+    require(framework_units().set_workspace_system("calculix", system, error), error);
+    std::vector<std::string> lines;
+    require(CoreStepLoadExport::append(steps, film, custom, faces, {0}, lines) && lines.size() == 2,
+      "Export complete film header and data row");
+    const auto row = QString::fromStdString(lines.back()).split(',');
+    require(row.size() == 4, "Film data row has four columns");
+    near(row[2].toDouble(), 293.15);
+    double expected = 10.0;
+    if (system == "N-mm-s")
+    {
+      expected = 0.01;
+    }
+    near(row[3].toDouble(), expected);
+    require(film.coefficient_data.front()[1] == "10" && !film.unit_view,
+      "Film export preserves the original canonical values");
+  }
+  film.coefficient_data.front()[1] = "invalid";
+  std::vector<std::string> unchanged = {"previous"};
+  require(!CoreStepLoadExport::append(steps, film, custom, faces, {0}, unchanged) &&
+      unchanged == std::vector<std::string>{"previous"}, "Invalid film units fail before emitting rows");
+}
+
+void pressure_targets()
+{
+  std::string error;
+  {
+    QScopedValueRollback<MeshExportInterface*> unavailable(ccx_core.me_iface, nullptr);
+    std::vector<std::pair<int, int>> retained = {{HEX8, 1}};
+    const auto previous = retained;
+    require(!CalculiXMeshInterface().get_sideset_element_sides(1, retained, error) && retained == previous,
+      "An unavailable live sideset query preserves its output instead of using the export cache");
+  }
+  require(CalculiXUnitsInterface::validate_pressure_targets({{HEX8, 1}, {TETRA10, 4}}, error),
+    "Solid pressure targets remain supported");
+  for (int type : {BAR, BAR2, BAR3, BEAM, BEAM2, BEAM3, TRUSS, TRUSS2, TRUSS3, SPRING})
+  {
+    require(!CalculiXUnitsInterface::validate_pressure_targets({{type, 1}}, error), "Reject line loads as pressure");
+  }
+  for (int type : {TRISHELL, TRISHELL3, TRISHELL4, TRISHELL6, TRISHELL7, SHEL, SHELL4, SHELL8, SHELL9})
+  {
+    require(CalculiXUnitsInterface::validate_pressure_targets({{type, 1}, {type, 2}}, error),
+      "Accept pressure on native shell faces");
+    require(!CalculiXUnitsInterface::validate_pressure_targets({{type, 3}}, error),
+      "Reject shell edges including the high-order SDK types");
+  }
+  require(!CalculiXUnitsInterface::validate_pressure_targets({}, error), "An empty query cannot bypass validation");
+  require(!CalculiXUnitsInterface::validate_pressure_targets({{INVALID_ELEMENT_TYPE, 1}}, error), "Reject invalid SDK element types");
+}
+
+void report_views()
+{
+  std::string error;
+  CoreSections sections;
+  sections.sections_data = {{7, 2, 13}};
+  sections.shell_section_data = {{"13", "42", "9", "-1", "0.002", "0.3"}};
+  QScopedValueRollback<CoreSections*> binding(ccx_core.sections, &sections);
+  require(framework_units().set_workspace_system("report", "SI", error), error);
+  CalculiXReportDomainSettings view;
+  SectionsSettings settings;
+  require(view.get(7, settings, error), error);
+  near(std::stod(settings.thickness), 0.002);
+  // A collection's converted domain is immutable after first access.
+  sections.shell_section_data.front()[4] = "0.004";
+  require(view.get(7, settings, error), error);
+  near(std::stod(settings.thickness), 0.002);
+  require(framework_units().set_workspace_system("report", "N-mm-s", error), error);
+  CalculiXReportDomainSettings nextCollection;
+  require(nextCollection.get(7, settings, error), error);
+  near(std::stod(settings.thickness), 4.0);
+  require(sections.shell_section_data.front()[4] == "0.004", "Report views do not modify Core data");
+}
+
 void domains(const std::string& filename) {
   std::string error;
   framework_units().reset_project();
@@ -116,15 +227,17 @@ void domains(const std::string& filename) {
     require(file.close(), file.last_error());
   }
   // A corrupt unit marker must not replace a populated model.
+  const auto corruptFilename = filename + ".invalid-units.hdf5";
   {
-    HDF5Tool file(filename);
+    HDF5Tool file(corruptFilename);
     require(CoreSectionsPersistence::write(file, sections), "Save section fixture");
+    require(file.deleteDataset("value_units", CalculiXModelSchema::path("Sections")), "Remove valid source units before writing the corrupt marker");
     require(file.write_dataset_string_rank_1("value_units", CalculiXModelSchema::path("Sections"), {"invalid"}), "Write invalid source units");
     require(file.close(), file.last_error());
   }
   {
     auto retained = sections;
-    HDF5Tool file(filename, false);
+    HDF5Tool file(corruptFilename, false);
     require(!CoreSectionsPersistence::read(file, retained), "Reject invalid source units");
     require(retained.sections_data == sections.sections_data && retained.shell_section_data == sections.shell_section_data, "Failed read replaced live records");
     require(file.close(), file.last_error());
@@ -254,12 +367,89 @@ void domains(const std::string& filename) {
   delete restored.bodyheatfluxsphere;
 }
 }
+void report_material_units()
+{
+  std::string error;
+  SimUnits::WorkspaceUnitContext original;
+  require(framework_units().workspace_context("report", original, error), error);
+  require(framework_units().set_display_unit("report", "stress", "MPa", error), error);
+  require(framework_units().set_display_unit("report", "time", "ms", error), error);
+  MaterialData data;
+  data.name = "Report unit regression material";
+  MaterialCard elastic;
+  elastic.state = MaterialCardState::Active;
+  elastic.model = "iso";
+  elastic.values.rows = {{{210e9, 0.3}}};
+  data.cards.emplace("elastic", elastic);
+  MaterialCard creep;
+  creep.state = MaterialCardState::Active;
+  creep.model = "default";
+  creep.values.rows = {{{1e-20, 2.0, 0.0}}};
+  data.cards.emplace("creep", creep);
+  auto& store = framework_materials().workspace("calculix");
+  const auto reportCount = framework_materials().workspace("report").all().size();
+  MaterialRef reference;
+  require(store.create(data, 0, reference, error), error);
+  ReportSection section;
+  require(CalculiXReportMaterials::collect(section, error), error);
+  bool foundElastic = false;
+  bool foundCreep = false;
+  for (const auto& table : section.tables)
+  {
+    if (table.title.find(data.name) == std::string::npos || table.rows.empty())
+    {
+      continue;
+    }
+    require(table.validate(error), error);
+    if (table.title.find("Elasticity") != std::string::npos)
+    {
+      near(table.rows.front().front().toDouble(), 210000.0);
+      foundElastic = table.units.front() == "MPa";
+    }
+    if (table.title.find("Creep") != std::string::npos)
+    {
+      const double value = table.rows.front().front().toDouble();
+      require(std::abs(value / 1e-11 - 1.0) < 1e-10, "Creep A converts with row exponents and Report stress/time units");
+      foundCreep = table.columns.front().find("MPa") != std::string::npos &&
+        table.columns.front().find("ms") != std::string::npos && table.cell_quantities.front().front().has_value();
+    }
+  }
+  require(foundElastic && foundCreep, "Report reads CalculiX materials even when the Report material store is empty");
+  require(store.find(reference)->data.cards.at("creep").values.rows.front().values.front() == 1e-20,
+    "Report material conversion leaves canonical source values unchanged");
+  require(framework_materials().workspace("report").all().size() == reportCount,
+    "Report conversion does not import materials into another workspace");
+  require(store.erase(reference, error), error);
+  require(framework_units().set_workspace_context(original, error), error);
+}
+
+void report_procedure_units()
+{
+  std::vector<std::string> thermal(17);
+  const auto heat = CalculiXDomainUnits::procedure_quantities(5, thermal);
+  require(heat[7] == "temperature_difference" && heat[10] == "time" && heat[15] == "frequency",
+    "Report thermal procedure retains distinct temperature-difference, time and frequency quantities");
+  std::vector<std::string> modal(9);
+  auto quantities = CalculiXDomainUnits::procedure_quantities(9, modal);
+  require(quantities[3] == "modal_force" && quantities[6] == "time", "Modal time delay is physical");
+  modal[4] = "amplitude";
+  quantities = CalculiXDomainUnits::procedure_quantities(9, modal);
+  require(quantities[6].empty(), "Modal amplitude control is not mislabeled as time");
+  require(CalculiXDomainUnits::procedure_quantities(4, std::vector<std::string>(6)) == std::vector<std::string>(6),
+    "Buckling controls are not converted to physical times");
+}
+
 int main(int argc, char** argv) {
   QCoreApplication application(argc, argv);
   try {
     QTemporaryDir directory;
     require(directory.isValid(), "Create test directory");
     domains(directory.filePath("domains.hdf5").toStdString());
+    film_export();
+    pressure_targets();
+    report_views();
+    report_procedure_units();
+    report_material_units();
     return 0;
   } catch (const std::exception& exception) {
     PRINT_ERROR("Domain unit regression: %s\n", exception.what());

@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
 #include "StepsModifyUncoupledTemperatureDisplacementPanel.hpp"
@@ -177,6 +178,14 @@ StepsModifyUncoupledTemperatureDisplacementPanel::StepsModifyUncoupledTemperatur
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_7, *lineEdit_7, label_7->text(), "temperature_difference");
+  unitPresentation->bind(*label_10, *lineEdit_10, label_10->text(), "time");
+  unitPresentation->bind(*label_11, *lineEdit_11, label_11->text(), "time");
+  unitPresentation->bind(*label_12, *lineEdit_12, label_12->text(), "time");
+  unitPresentation->bind(*label_13, *lineEdit_13, label_13->text(), "time");
+  unitPresentation->bind(*label_14, *lineEdit_14, label_14->text(), "time");
 
   isInitialized = true;
 }
@@ -462,6 +471,7 @@ bool StepsModifyUncoupledTemperatureDisplacementPanel::setStep(int id)
   originalValues.insert("lineEdit_14", lineEdit_14->text());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

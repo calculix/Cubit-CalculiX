@@ -1,5 +1,5 @@
 #include "PostprocessorProperties.hpp"
-#include "PostprocessorDisplayProperties.hpp"
+#include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/GUI/Selection/PostprocessorProbeProperties.hpp"
 
 #include <QFormLayout>
@@ -11,7 +11,7 @@
 #include <variant>
 
 PostprocessorProperties::PostprocessorProperties(std::weak_ptr<PostprocessorApplicationInterface> application,
-  std::function<bool(const std::string&,std::string&)> submit, QWidget* parent) : QWidget(parent)
+  QWidget* parent) : QWidget(parent), application(application)
 {
   setObjectName("Postprocessor.Properties");
   auto* layout = new QVBoxLayout(this);
@@ -37,8 +37,7 @@ PostprocessorProperties::PostprocessorProperties(std::weak_ptr<PostprocessorAppl
   contents->addLayout(information);
   probe = new PostprocessorProbeProperties(application,content);
   contents->addWidget(probe);
-  display = new PostprocessorDisplayProperties(std::move(application),std::move(submit),content);
-  contents->addWidget(display);
+
   contents->addStretch();
   scroll->setWidget(content);
   layout->addWidget(scroll);
@@ -48,8 +47,19 @@ void PostprocessorProperties::show_source(const Postprocessor::DataSource* sourc
 {
   name->clear();
   origin->clear();
-  display->refresh();
-  probe->refresh();
+
+  bool showProbe = false;
+  if (const auto app = application.lock())
+  {
+    const auto view = app->session().views.find(app->session().active_view_id);
+    showProbe = source && view != app->session().views.end() && view->second.selection.entity &&
+      view->second.selection.entity->source_id == source->id;
+  }
+  probe->setVisible(showProbe);
+  if (showProbe)
+  {
+    probe->refresh();
+  }
 
   if (source == nullptr)
   {

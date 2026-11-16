@@ -1,5 +1,6 @@
 #include <type_traits>
 #include "ReportOdtExporter.hpp"
+#include "ReportFigureCaption.hpp"
 #include "ReportDocumentLayout.hpp"
 #include "ReportPageDecoration.hpp"
 #include <QXmlStreamWriter>
@@ -286,7 +287,7 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
       xml.writeEndElement();
       xml.writeEndElement();
       xml.writeEndElement();
-      paragraph(xml, QString::fromStdString(image.caption));
+      paragraph(xml, ReportFigureCaption::text(image, report.configuration));
     }
     const auto note = report.notes.find(item.id);
     if (note != report.notes.end())

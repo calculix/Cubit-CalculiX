@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "ConstraintsCreateEquationPanel.hpp"
 #include <QString>
 #include "GUI/common/PanelTable.hpp"
@@ -62,6 +63,9 @@ ConstraintsCreateEquationPanel::ConstraintsCreateEquationPanel(QWidget *parent) 
 
   widget_2->show();
   
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind_equations(*widget_2, 0, 1, 2);
+
   isInitialized = true;
 }
 

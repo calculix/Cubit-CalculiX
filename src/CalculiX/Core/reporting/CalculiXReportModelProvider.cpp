@@ -57,11 +57,19 @@ std::string category(const QString& keyword)
   return "ccx.other";
 }
 
-ReportTable recordTable(const QJsonObject& record)
+ReportTable recordTable(const QJsonObject& record, const ReportSource& source)
 {
   ReportTable table;
   table.title = record.value("header").toString().toStdString();
   table.columns = {"Record", "Input values"};
+  if (source.source_units)
+  {
+    table.columns[1] += " (source: " + source.source_units->system + ")";
+  }
+  else
+  {
+    table.columns[1] += " (source units unknown)";
+  }
   int i = 0;
   for (const auto value : record.value("data").toArray())
   {
@@ -116,11 +124,11 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
       error = "The requested archived solver launch is no longer the job's latest launch.";
       return false;
     }
-    inputReady = reader.read_archive(source, record->input, error);
+    inputReady = reader.read_archive(source, record->input, error, request.progress);
   }
   else
   {
-    inputReady = reader.read(source, error);
+    inputReady = reader.read(source, error, request.progress);
   }
   if (!inputReady)
   {
@@ -157,8 +165,14 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
   int currentStep = 0;
   std::set<int> availableSteps;
   std::map<QString, QString> activeBoundaries;
+  std::size_t processedRecords = 0;
   for (const auto entry : reader.records())
   {
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting input definitions and analysis steps",
+        ++processedRecords, static_cast<std::size_t>(reader.records().size()), error))
+    {
+      return false;
+    }
     const auto record = entry.toObject();
     const auto keyword = record.value("keyword").toString();
     const auto header = record.value("header").toString();
@@ -247,7 +261,7 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
       }
       if (enabled(request, "ccx.steps." + setting))
       {
-        steps[currentStep].tables.push_back(recordTable(record));
+        steps[currentStep].tables.push_back(recordTable(record, candidate.source));
       }
       continue;
     }
@@ -298,11 +312,11 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
     }();
     if (sections.count(target) != 0)
     {
-      sections[target].tables.push_back(recordTable(record));
+      sections[target].tables.push_back(recordTable(record, candidate.source));
     }
     if (keyword == "AMPLITUDE" && enabled(request, "ccx.steps.amplitudes") && sections.count("ccx.steps") != 0)
     {
-      sections["ccx.steps"].tables.push_back(recordTable(record));
+      sections["ccx.steps"].tables.push_back(recordTable(record, candidate.source));
     }
   }
   for (int wanted : requestedSteps)
@@ -330,7 +344,18 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
   if (sections.count("ccx.model.overview") != 0)
   {
     sections["ccx.model.overview"].tables.push_back(summary);
-    sections["ccx.model.overview"].paragraphs.push_back("This report reads the existing job input deck. It does not regenerate the deck or assert that it matches a historical solver run. Units are not inferred.");
+    sections["ccx.model.overview"].paragraphs.push_back("This report reads the existing job input deck without regenerating or converting its literal input definitions.");
+    if (candidate.source.source_units)
+    {
+      const auto& units = *candidate.source.source_units;
+      sections["ccx.model.overview"].paragraphs.push_back("Input definitions retain their recorded " + units.system +
+        " solver units (coordinates: " + units.coordinate_unit + "; time: " + units.time_unit +
+        "). Report presentation units apply to generated physical result tables.");
+    }
+    else
+    {
+      sections["ccx.model.overview"].paragraphs.push_back("Input definition units are unknown; no units were inferred from the current workspace.");
+    }
   }
   if (sections.count("ccx.model.mesh") != 0)
   {

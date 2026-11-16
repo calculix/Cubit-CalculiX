@@ -6,6 +6,7 @@
 class PostprocessorApplicationInterface;
 class QComboBox;
 class QLineEdit;
+class QLabel;
 class QCheckBox;
 class PostprocessorSectionControls : public QWidget
 {
@@ -21,6 +22,7 @@ private:
   QComboBox* side;
   QLineEdit* name;
   QLineEdit* coordinates[6];
+  std::array<QLabel*,3> originLabels;
   QCheckBox* visible;
   std::string lastActive;
   bool loading = false;

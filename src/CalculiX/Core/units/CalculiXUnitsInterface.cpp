@@ -23,6 +23,7 @@
 #include "Core/loads/CoreLoadsTrajectory.hpp"
 #include "Core/loads/CoreLoadsPressures.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
+#include "ElementType.h"
 #include <algorithm>
 #include <cmath>
 #include <exception>
@@ -157,17 +158,11 @@ bool CalculiXUnitsInterface::validate_export(std::string& error) const {
           error = "Invalid pressure load target.";
           return false;
         }
-        for (const auto& face : mesh.get_sideset_face(load[4])) {
-          if (face.size() < 4) {
-            error = "Invalid pressure load face.";
-            return false;
-          }
-          const int side = std::stoi(face[2]);
-          const int type = std::stoi(face[3]);
-          if ((type >= 5 && type <= 10) || (type >= 15 && type <= 22 && side > 2)) {
-            error = "Beam and shell-edge distributed loads require force-per-length input; the current pressure command accepts force-per-area only.";
-            return false;
-          }
+        std::vector<std::pair<int, int>> targets;
+        if (!mesh.get_sideset_element_sides(load[4], targets, error) ||
+            !validate_pressure_targets(targets, error))
+        {
+          return false;
         }
       }
     }
@@ -194,6 +189,61 @@ bool CalculiXUnitsInterface::validate_export(std::string& error) const {
     error = "Cannot validate unit-aware export: unknown error.";
   }
   return false;
+}
+
+bool CalculiXUnitsInterface::validate_pressure_targets(
+  const std::vector<std::pair<int, int>>& targets, std::string& error)
+{
+  error.clear();
+  if (targets.empty())
+  {
+    error = "A pressure sideset must contain element sides.";
+    return false;
+  }
+  for (const auto& target : targets)
+  {
+    if (target.first <= SPHERE_EXO || target.first >= INVALID_ELEMENT_TYPE || target.second < 1)
+    {
+      error = "Invalid pressure element type or side.";
+      return false;
+    }
+    bool lineLoad = false;
+    switch (static_cast<ElementType>(target.first))
+    {
+      case BAR:
+      case BAR2:
+      case BAR3:
+      case BEAM:
+      case BEAM2:
+      case BEAM3:
+      case TRUSS:
+      case TRUSS2:
+      case TRUSS3:
+      case SPRING:
+        lineLoad = true;
+        break;
+      case TRISHELL:
+      case TRISHELL3:
+      case TRISHELL4:
+      case TRISHELL6:
+      case TRISHELL7:
+      case SHEL:
+      case SHELL4:
+      case SHELL8:
+      case SHELL9:
+        // Native shell sides 1 and 2 are faces; remaining sides are edges.
+        lineLoad = target.second > 2;
+        break;
+      default:
+        break;
+    }
+    if (lineLoad)
+    {
+      error = "Beam and shell-edge distributed loads require force-per-length input; the pressure command accepts force-per-area only.";
+      return false;
+    }
+  }
+  return true;
 }
 
 bool CalculiXUnitsInterface::input_value(double value, const std::string& quantity, const std::string& unit, double& canonical, std::string& error) const {

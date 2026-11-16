@@ -4,15 +4,20 @@
 #include "MeshProperties.hpp"
 #include <string>
 #include <vector>
+#include <utility>
 
 class CalculiXMeshInterface
 {
 public:
-  // Exact native block RGB, encoded as #RRGGBB for immutable capture scenes.
+  // Assigned RGB or the native graphics interface's resolved default color.
+  // Unresolved defaults fail rather than becoming opaque black.
   bool get_block_capture_color(int id, std::string& color, std::string& error);
   bool get_block_properties(int id, MeshProperties& properties, std::string& error);
   bool get_nodeset_properties(int id, MeshProperties& properties, std::string& error);
   bool get_sideset_properties(int id, MeshProperties& properties, std::string& error);
+  // Distinct SDK ElementType/one-based native side pairs from live mesh data.
+  // Does not read or populate the export cache; failure preserves output.
+  bool get_sideset_element_sides(int id, std::vector<std::pair<int, int>>& output, std::string& error);
   std::vector<std::string> get_valid_block_element_types(int blockId);
   std::vector<std::string> get_compatible_ccx_element_types(int blockId);
   std::vector<std::string> get_ccx_element_types(); // returns all supported ccx element types

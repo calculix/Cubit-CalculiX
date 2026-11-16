@@ -1,6 +1,7 @@
 #include "Framework/Reporting/ReportSource.hpp"
 #include <QFileInfo>
 #include "CalculiXJobsInterface.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "Core/topology/CoreTopologyQuery.hpp"
 #include "CubitMessage.hpp"
 #include <string>
@@ -154,6 +155,20 @@ bool CalculiXJobsInterface::get_report_source(int id, ReportSource& output, std:
     source.workspace_id = "calculix";
     source.job_id = id;
     source.solver_launch_id = archived->launchId;
+    if (!archived->unitSystem.empty())
+    {
+      ReportSourceUnits units;
+      SimUnits::QuantityUnit length, time;
+      units.system = archived->unitSystem;
+      if (!framework_units().system_unit(units.system, "length", length, error) ||
+          !framework_units().system_unit(units.system, "time", time, error))
+      {
+        return false;
+      }
+      units.coordinate_unit = length.unit;
+      units.time_unit = time.unit;
+      source.source_units = std::move(units);
+    }
     if (archived->setup) {
       source.setup_snapshot_id = archived->setup->id;
     } else {

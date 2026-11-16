@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
 #include "DampingModifyPanel.hpp"
@@ -54,6 +55,10 @@ DampingModifyPanel::DampingModifyPanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_0, *lineEdit_0, label_0->text(), "inverse_time");
+  unitPresentation->bind(*label_1, *lineEdit_1, label_1->text(), "time");
 
   isInitialized = true;
 }
@@ -126,6 +131,7 @@ bool DampingModifyPanel::setDamping(int id)
   lineEdit_1->setText(QString::fromStdString(settings.beta));
   originalValues.insert("lineEdit_1", lineEdit_1->text());
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

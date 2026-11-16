@@ -68,6 +68,9 @@ namespace
     std::string name;
     std::vector<int> ids;
     std::vector<std::string> references;
+    // An ordinary declaration wins if the same name also has a helper marker.
+    bool surface_helper = false;
+    bool ordinary_definition = false;
   };
 
   struct SurfaceDefinition
@@ -108,10 +111,17 @@ namespace
       std::string header;
       std::size_t line_number = 0;
       bool success = true;
+      // The marker applies only to the next keyword in this file, never an include.
+      bool surfaceHelperPending = false;
       while (std::getline(stream, line))
       {
         ++line_number;
         line = trim(line);
+        if (line == "** CUBIT_SIM_SURFACE_HELPER_ELSET" && header.empty())
+        {
+          surfaceHelperPending = true;
+          continue;
+        }
         if (line.empty() || line.rfind("**", 0) == 0)
         {
           continue;
@@ -130,11 +140,14 @@ namespace
           {
             continue;
           }
-          success = keyword(header, path.parent_path());
+          const bool surfaceHelper = surfaceHelperPending;
+          surfaceHelperPending = false;
+          success = keyword(header, path.parent_path(), surfaceHelper);
           header.clear();
         }
         else
         {
+          surfaceHelperPending = false;
           success = record(line);
         }
         if (!success)
@@ -237,7 +250,7 @@ namespace
     CoreResultsVtkElement pending;
     std::size_t expected_nodes = 0;
 
-    bool keyword(const std::string& line, const std::filesystem::path& directory)
+    bool keyword(const std::string& line, const std::filesystem::path& directory, bool surfaceHelper)
     {
       std::vector<std::string> fields;
       if (!csv(line, fields))
@@ -301,7 +314,19 @@ namespace
             return element_sets;
           }
         }();
-        definitions[upper(set_name)].name = set_name;
+        auto& definition = definitions[upper(set_name)];
+        definition.name = set_name;
+        if (key == "*ELSET")
+        {
+          if (surfaceHelper)
+          {
+            definition.surface_helper = true;
+          }
+          else
+          {
+            definition.ordinary_definition = true;
+          }
+        }
       }
       if (key == "*ELEMENT")
       {
@@ -312,6 +337,12 @@ namespace
           return false;
         }
         expected_nodes = description.node_count;
+        if (!set_name.empty())
+        {
+          auto& definition = element_sets[upper(set_name)];
+          definition.name = set_name;
+          definition.ordinary_definition = true;
+        }
       }
       if (key == "*SURFACE")
       {
@@ -554,6 +585,13 @@ namespace
             error = "INP set '" + entry.second.name + "' references a missing entity.";
             return false;
           }
+        }
+        // Resolve and validate helper contents above, but do not publish them as
+        // blocks. Keep definitions for surface expansion and genuine set aliases.
+        const auto& definition = entry.second;
+        if (!nodal && definition.surface_helper && !definition.ordinary_definition)
+        {
+          continue;
         }
         CoreResultsVtkGroup group;
         if (nodal) {

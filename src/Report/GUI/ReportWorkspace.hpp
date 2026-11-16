@@ -9,6 +9,8 @@
 #include <cstdint>
 class ReportApplicationInterface;
 class ReportContentTree;
+class ReportOutlineTree;
+class QTabWidget;
 class ReportPreviewWidget;
 class ReportPreviewWindow;
 class QComboBox;
@@ -44,6 +46,9 @@ private:
   QPointer<ReportToolbar> toolbar;
   QPointer<QDockWidget> treeDock;
   ReportContentTree* tree;
+  ReportOutlineTree* outline;
+  QTabWidget* contentTabs;
+  bool refreshing = false;
   ReportPreviewWidget* page;
   ReportPreviewWindow* preview;
   QComboBox* sources;

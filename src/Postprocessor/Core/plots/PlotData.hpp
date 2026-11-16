@@ -18,6 +18,9 @@ namespace Postprocessor
     std::string name, source_name, x_title, y_title, status;
     std::string x_unit, y_unit, time_unit;
     bool time_axis = false, frame_axis = false;
+    SimUnits::QuantityUnit x_quantity, y_quantity;
+    // Unknown units can share an axis only with this exact raw-data basis.
+    std::string x_scope, y_scope;
     std::vector<PlotSample> samples;
   };
   struct PlotData
@@ -25,9 +28,9 @@ namespace Postprocessor
     std::vector<PlotCurveData> curves;
   };
   bool plot_entity_data(const SimResults::VtkResultsData& data, const PlotEntityReference& reference,
-    PlotCurveData& output, std::string& error);
+    PlotCurveData& output, std::string& error, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
   bool plot_table_data(std::shared_ptr<const SimResults::VtkResultsData> data, const PlotTableReference& reference,
-    PlotCurveData& output, std::string& error);
+    PlotCurveData& output, std::string& error, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
   bool export_plot_csv(const PlotDefinition& definition, const PlotData& data,
     const std::string& path, std::string& error);
 }

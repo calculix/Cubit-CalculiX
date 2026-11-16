@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "ConstraintsCreateTieFromCubitContactPairPanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -53,6 +54,9 @@ ConstraintsCreateTieFromCubitContactPairPanel::ConstraintsCreateTieFromCubitCont
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_2, *lineEdit_2, label_2->text(), "length");
 
   isInitialized = true;
 }

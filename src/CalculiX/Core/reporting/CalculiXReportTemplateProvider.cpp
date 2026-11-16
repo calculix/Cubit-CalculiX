@@ -17,6 +17,13 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
   candidate.id = "calculix.standard";
   candidate.workspace_id = "calculix";
   candidate.revision = 3;
+  candidate.content_groups = {
+    {"ccx.content.model", "Model"},
+    {"ccx.content.steps", "Analysis steps", "", "ccx.steps"},
+    {"ccx.content.outputs", "Requested outputs", "ccx.content.steps"},
+    {"ccx.content.images", "Model and setup images"},
+    {"ccx.content.step_images", "Per-step images", "ccx.content.images"},
+    {"ccx.content.post", "Postprocessor"}};
   const std::vector<std::pair<std::string, std::string>> categories =
   {
     {"ccx.model.overview", "Model overview"}, {"ccx.model.materials", "Materials"},
@@ -63,6 +70,33 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
   candidate.options.push_back(steps);
   candidate.defaults.values[steps.key] = steps.default_value;
   CalculiXReportImageSettings::add_options(candidate);
+  for (auto& option : candidate.options)
+  {
+    if (option.key.rfind("ccx.model.", 0) == 0 || option.key == "ccx.other")
+    {
+      option.group_id = "ccx.content.model";
+    }
+    else if (option.key.rfind("ccx.steps.", 0) == 0)
+    {
+      option.group_id = "ccx.content.steps";
+      if (option.key == "ccx.steps.field_output" || option.key == "ccx.steps.history_output")
+      {
+        option.group_id = "ccx.content.outputs";
+      }
+    }
+    else if (option.key.rfind("ccx.images.", 0) == 0)
+    {
+      option.group_id = "ccx.content.images";
+      if (option.key == "ccx.images.setup" || option.key == "ccx.images.loads" || option.key == "ccx.images.bcs")
+      {
+        option.group_id = "ccx.content.step_images";
+      }
+    }
+    else if (option.key.rfind("post.", 0) == 0)
+    {
+      option.group_id = "ccx.content.post";
+    }
+  }
   output = std::move(candidate);
   error.clear();
   return true;

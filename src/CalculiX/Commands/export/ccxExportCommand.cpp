@@ -800,6 +800,8 @@ bool ccxExportCommand::write_sidesets(std::ofstream& output_file, MeshExportInte
             if ((s==ccx_side_ids_all[j])&&(sideset_element_types[i_types]==element_type_all[j])) {
               if (bool_first) {
                 bool_first=false;
+                // Mark generated face-support sets so conversion keeps them internal.
+                output_file << "** CUBIT_SIM_SURFACE_HELPER_ELSET\n";
                 // add elset to storage, for later use by cards like dload
                 if (bool_one_element_type) {
                   output_file << "*ELSET, ELSET=" << sideset_name << ("_S" + std::to_string(s)) << " \n";

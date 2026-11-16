@@ -18,6 +18,9 @@ struct PostprocessorColorSurface
   vtkSmartPointer<vtkPolyData> base;
   vtkSmartPointer<vtkPolyData> scalars;
   std::optional<std::array<double,2>> range;
+  // Original-node geometry for CPU picking and highlight lookup.
+  // The actor stays pickable but is never registered with the renderer.
+  // Picking eligibility follows the owning surface actor's visibility.
   vtkSmartPointer<vtkActor> nodes;
   vtkSmartPointer<vtkPolyData> node_data;
 };
@@ -28,9 +31,12 @@ public:
   ~PostprocessorColorMap();
   void update_appearance();
   void set_capture_scale(double scale);
+  // Normalized viewport frame and hit bounds, including the title.
+  std::array<double,4> legend_frame() const;
+  bool legend_contains(double x,double y) const;
   void apply(const Postprocessor::Representation& display, const SimResults::VtkResultsData& data,
     std::vector<PostprocessorColorSurface>& surfaces, unsigned int slot,
-    const std::optional<std::array<double,2>>& rangeAcrossFrames, std::string& error);
+    const std::optional<std::array<double,2>>& rangeAcrossFrames, std::string& error, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
 private:
   double captureScale = 1;
   vtkRenderer* renderer;

@@ -1,9 +1,13 @@
 #include "CubitMessage.hpp"
 #include "Core/units/CalculiXPhysicalModelUnits.hpp"
+#include "Core/units/CalculiXDofUnits.hpp"
+#include "Core/interactions/CalculiXInteractionsInterface.hpp"
+#include "CubitInterface.hpp"
 #include "Core/application/SettingsRead.hpp"
 #include "Core/loads/CoreLoadsForces.hpp"
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "Core/amplitudes/CalculiXAmplitudesInterface.hpp"
 #include "Core/application/CalculiXApplicationInterface.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
@@ -307,6 +311,40 @@ std::string CoreLoadsForces::get_load_export(int load_id) {
   std::string str_temp = "*CLOAD";
   str_temp.append(get_load_parameter_export(load_id));
   str_temp.append("\n");
+  std::set<int> rotationNodes;
+  std::string error;
+  if (!CalculiXInteractionsInterface().get_rotation_node_ids(rotationNodes, error))
+  {
+    PRINT_ERROR("Cannot export force %d: %s\n", load_id, error.c_str());
+    return {};
+  }
+  const auto nodes = CubitInterface::get_nodeset_nodes_inclusive(nodeset_id);
+  const bool hasRotation = std::any_of(nodes.begin(), nodes.end(), [&](int node)
+  {
+    return rotationNodes.count(node) != 0;
+  });
+  if (hasRotation)
+  {
+    for (int node : nodes)
+    {
+      for (int component = 1; component <= 6; ++component)
+      {
+        const double value = force_data[force_data_id][component];
+        if (value == 0.0)
+        {
+          continue;
+        }
+        int dof = 0;
+        if (!CalculiXDofUnits::solver_dof(component, rotationNodes.count(node) != 0, value, dof, error))
+        {
+          PRINT_ERROR("Cannot export force %d: %s\n", load_id, error.c_str());
+          return {};
+        }
+        str_temp += std::to_string(node) + "," + std::to_string(dof) + "," + ccx_application_iface.to_string_scientific(value) + "\n";
+      }
+    }
+    return str_temp;
+  }
   for (size_t i = 1; i <= 6; i++) {
     if (force_data[force_data_id][i] != 0.0) {
       str_temp.append(nodeset_name + "," + std::to_string(i) + "," + ccx_application_iface.to_string_scientific(force_data[force_data_id][i]) + "\n");

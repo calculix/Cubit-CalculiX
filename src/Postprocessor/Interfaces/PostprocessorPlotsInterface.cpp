@@ -42,9 +42,9 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
     }
   }
   std::optional<FieldSelection> field;
-  if (fieldName.empty() && (qualifiers.origin || qualifiers.association))
+  if (fieldName.empty() && (qualifiers.origin || qualifiers.association || qualifiers.set_name))
   {
-    error = "Origin/association requires an explicit field name.";
+    error = "Origin/association/set requires an explicit field name.";
     return false;
   }
   if (fieldName.empty())

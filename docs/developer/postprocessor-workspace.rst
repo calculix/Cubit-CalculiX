@@ -189,3 +189,25 @@ provided by Cubit. Resources are referenced in-process, not copied into this rep
 Postprocessor uses the last pair for listing/closing sources, with standard Qt
 fallback icons if the resources are unavailable. Native visual/theme switching
 and toolbar placement remain part of GUI verification.
+
+Context tools and coordinate scaling
+------------------------------------
+
+``PostViewToolsCommand`` routes readable properties/view/scale actions through
+``PostprocessorApplicationInterface``. Core camera and scale defaults live in
+``Core/views``; the GUI properties callback only switches the right dock page.
+Legend, Clip and Section retain independent editor classes inside scroll areas.
+The Framework bottom-dock migration revision is 3; it vertically splits result
+navigation and Command Line without fixing the viewport or Command Line height.
+
+``PostprocessorCoreSceneUnits`` establishes native-to-scene length factors.
+``PostprocessorScaleOverlay`` owns non-pickable screen-space VTK ruler actors;
+``PlotRangeUnits`` projects saved axis ranges into current presentation units.
+The ruler is excluded from bounds and selection. Scene units and scale visibility
+are optional backward-compatible view properties in project JSON. Plot range
+basis descriptors are optional ``x_basis`` / ``y_basis`` objects in plot JSON.
+
+Regression cases in ``PresentationUnitsTests.cpp`` cover metre/millimetre scene
+alignment and fit bounds, projection span, ruler intervals, range conversion and
+serialization, view-unit persistence and incompatible result groups. These cases
+were authored without running a configure, build, compiler or native test runner.

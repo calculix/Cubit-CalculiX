@@ -109,6 +109,7 @@ int main(int argc, char** argv)
   check(core.capture_project(archive,error),"Cannot capture project definitions");
   auto& representation = archive.session.representations.begin()->second;
   representation.coloring.maximum = {true,250,{1,0,1}};
+  representation.coloring.legend_position = std::array<double,2>{0.8,0.06};
   representation.deformation.scale = 10;
   representation.animation.playing = true;
   QTemporaryDir directory;
@@ -118,6 +119,22 @@ int main(int argc, char** argv)
   check(decoded.session.views.at("view1").camera && CameraOperations::equal(*decoded.session.views.at("view1").camera,camera),"Codec changed camera pose");
   check(!decoded.session.representations.begin()->second.animation.playing &&
     decoded.session.representations.begin()->second.coloring.maximum.enabled,"Playback/limit persistence is incorrect");
+  check(decoded.session.representations.begin()->second.coloring.legend_position == representation.coloring.legend_position,
+    "Legend position did not survive project round-trip");
+  auto legacy = json;
+  auto legacyDisplays = legacy.value("representations").toArray();
+  auto legacyDisplay = legacyDisplays[0].toObject();
+  auto legacyColor = legacyDisplay.value("coloring").toObject();
+  legacyColor.remove("legend_position");
+  legacyColor.insert("bands",QJsonValue(QJsonValue::Null));
+  legacyDisplay.insert("coloring",legacyColor);
+  legacyDisplays[0] = legacyDisplay;
+  legacy.insert("representations",legacyDisplays);
+  PostprocessorProjectState legacyDecoded;
+  check(project_from_json(legacy,directory.path().toUtf8().toStdString(),legacyDecoded,error) &&
+    !legacyDecoded.session.representations.begin()->second.coloring.bands &&
+    !legacyDecoded.session.representations.begin()->second.coloring.legend_position,
+    "Legacy continuous coloring or automatic legend position changed on load");
   PreparedPostprocessorProject prepared;
   prepared.definitions = decoded;
   prepared.runtime.emplace(source,SourceRuntime{provider.data,1,0});

@@ -18,6 +18,16 @@ QJsonObject ReportSource::to_json() const
   result.insert("run_identity", QString::fromStdString(run_identity));
   result.insert("solver_launch_id", QString::fromStdString(solver_launch_id));
   result.insert("setup_snapshot_id", QString::fromStdString(setup_snapshot_id));
+  if (source_units)
+  {
+    result.insert("source_units", QJsonObject{{"system", QString::fromStdString(source_units->system)},
+      {"coordinate_unit", QString::fromStdString(source_units->coordinate_unit)},
+      {"time_unit", QString::fromStdString(source_units->time_unit)}});
+  }
+  else
+  {
+    result.insert("source_units", QJsonValue(QJsonValue::Null));
+  }
   return result;
 }
 
@@ -63,6 +73,18 @@ bool ReportSource::from_json(const QJsonObject& input, ReportSource& output, std
   if (!ReportJson::text(input, "snapshot_fingerprint", candidate.snapshot_fingerprint, error))
   {
     return false;
+  }
+  if (!input.value("source_units").isNull())
+  {
+    ReportSourceUnits units;
+    const auto object = input.value("source_units").toObject();
+    if (!input.value("source_units").isObject() || !ReportJson::text(object, "system", units.system, error) ||
+        !ReportJson::text(object, "coordinate_unit", units.coordinate_unit, error) ||
+        !ReportJson::text(object, "time_unit", units.time_unit, error) || units.system.empty())
+    {
+      return false;
+    }
+    candidate.source_units = std::move(units);
   }
   output = std::move(candidate);
   error.clear();

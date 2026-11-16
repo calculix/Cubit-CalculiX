@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "ConstraintsModifyEquationPanel.hpp"
@@ -73,6 +74,9 @@ ConstraintsModifyEquationPanel::ConstraintsModifyEquationPanel(QWidget *parent) 
 
   widget_2->show();
   
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind_equations(*widget_2, 0, 1, 2);
+
   isInitialized = true;
 }
 
@@ -201,6 +205,7 @@ bool ConstraintsModifyEquationPanel::setConstraint(int id)
   originalValues.insert("lineEdit_1", lineEdit_1->text());
   originalValues.insert("widget_2", widget_2->snapshot());
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

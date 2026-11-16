@@ -1,3 +1,4 @@
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "FilterDefinition.hpp"
 #include <algorithm>
 #include <cmath>
@@ -43,6 +44,14 @@ namespace Postprocessor
   }
   bool valid_filter(const FilterDefinition& filter,std::string& error)
   {
+    if (!filter.coordinate_unit.empty())
+    {
+      double ignored = 0.0;
+      if (!framework_units().to_si(0.0,filter.coordinate_unit,SimUnits::Length,SimUnits::UnitRole::Linear,ignored,error))
+      {
+        return false;
+      }
+    }
     auto plane = filter.plane;
     if (filter.name.empty() || filter.name.size() > 256 || filter.id.empty() || filter.input.owner != OutputOwner::Source ||
         (filter.name.find('\"') != std::string::npos && filter.name.find("'") != std::string::npos) ||

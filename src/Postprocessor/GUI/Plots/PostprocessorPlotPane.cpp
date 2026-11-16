@@ -1,3 +1,4 @@
+#include "Postprocessor/Core/plots/PlotAxisUnits.hpp"
 #include <type_traits>
 #include "PostprocessorPlotPane.hpp"
 #include <utility>
@@ -215,7 +216,7 @@ void PostprocessorPlotPane::synchronize()
   }
   else if (!shown || shown->axes.x != definition.axes.x || shown->axes.y != definition.axes.y)
   {
-    chart->apply_axes(definition.axes);
+    chart->apply_axes(Postprocessor::presented_plot_axes(definition,values));
   }
   const auto marker = plot_frame_marker(state,definition,values);
   chart->set_marker(marker);

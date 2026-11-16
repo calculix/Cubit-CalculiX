@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "LoadsCentrifugalModifyPanel.hpp"
@@ -121,6 +122,11 @@ LoadsCentrifugalModifyPanel::LoadsCentrifugalModifyPanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_1, *lineEdit_1, label_1->text(), "frequency_squared");
+  unitPresentation->bind(*label_3, *lineEdit_3, label_3->text(), "length");
+  unitPresentation->bind(*label_7, *lineEdit_7, label_7->text(), "time");
 
   isInitialized = true;
 }
@@ -314,6 +320,7 @@ bool LoadsCentrifugalModifyPanel::setCentrifugal(int id)
   originalValues.insert("lineEdit_8", lineEdit_8->text());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

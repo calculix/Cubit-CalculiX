@@ -23,7 +23,7 @@ std::vector<std::string> PostDeformCommand::get_syntax_help()
 {
   return {"post deform {on|off|scale VALUE|overlay on/off} [source \"name\"]",
     "post deform field auto [source \"name\"]",
-    "post deform field \"name\" [origin \"FRD\"] [association node|integrationpoint] [dataset N] [source \"name\"]"};
+    "post deform field \"name\" [origin \"FRD\"] [association node|integrationpoint] [set \"name\"] [dataset N] [source \"name\"]"};
 }
 std::vector<std::string> PostDeformCommand::get_help()
 {

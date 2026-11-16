@@ -1,3 +1,4 @@
+#include "PlotAxisUnits.hpp"
 #include "PlotData.hpp"
 #include "Framework/Results/ResultsUnits.hpp"
 #include <utility>
@@ -7,8 +8,17 @@
 namespace Postprocessor
 {
   bool plot_entity_data(const SimResults::VtkResultsData& data, const PlotEntityReference& reference,
-    PlotCurveData& output, std::string& error) {
+    PlotCurveData& output, std::string& error, const SimUnits::WorkspaceUnitContext* presentation) {
     error.clear();
+    output.x_quantity = SimUnits::QuantityUnit();
+    output.y_quantity = SimUnits::QuantityUnit();
+    output.x_unit.clear();
+    output.y_unit.clear();
+    output.time_unit.clear();
+    output.x_scope = reference.entity.source_id+"/analysis-parameter";
+    output.y_scope = reference.entity.source_id+"/"+reference.dataset_kind+"/"+reference.dataset_name+"/"+field_selection_key(reference.field);
+    bool xInitialized = false;
+    bool yInitialized = false;
     output.samples.clear();
     output.status.clear();
     output.x_title.clear();
@@ -69,7 +79,7 @@ namespace Postprocessor
       PlotSample sample;
       sample.x = frame.time;
       sample.time = frame.time;
-      if (!SimResults::ResultsUnits::display_value(frame.time, frame.independent_variable, "postprocessor", sample.x, output.x_unit, error)) {
+      if (!SimResults::ResultsUnits::display_value(frame.time, frame.independent_variable, "postprocessor", sample.x, output.x_unit, error, presentation)) {
         return false;
       }
       sample.time = sample.x;
@@ -77,9 +87,29 @@ namespace Postprocessor
       sample.frame = index;
       sample.step = frame.step;
       sample.increment = frame.increment;
-      const auto result = probe_result(data,display,entity);
-      output.y_unit = result.value_unit;
+      const auto result = probe_result(data,display,entity,presentation);
       if (result.values) {
+        auto xQuantity = frame.independent_variable;
+        if (!xQuantity.unit.empty())
+        {
+          xQuantity.unit = output.x_unit;
+        }
+        SimUnits::QuantityUnit yQuantity;
+        const auto* field = find_field(frame,*display.coloring.field);
+        if (!field || !SimResults::ResultsUnits::field_quantity(*field,reference.field.component,reference.field.magnitude,yQuantity,error))
+        {
+          return false;
+        }
+        output.y_unit = result.value_unit;
+        if (!yQuantity.unit.empty())
+        {
+          yQuantity.unit = output.y_unit;
+        }
+        if (!record_plot_quantity(output.x_quantity,xInitialized,xQuantity,error) ||
+            !record_plot_quantity(output.y_quantity,yInitialized,yQuantity,error))
+        {
+          return false;
+        }
         if (result.range_value && reference.reduction == PlotReduction::None) {
           error = "An element with nodal results requires reduction minimum or maximum.";
           return false;

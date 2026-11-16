@@ -1,3 +1,4 @@
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "CaptureDefinition.hpp"
 #include "../filters/FilterCodec.hpp"
 #include "../application/PostprocessorCore.hpp"
@@ -7,6 +8,14 @@
 #include <algorithm>
 namespace Postprocessor
 {
+  const SimUnits::WorkspaceUnitContext* PostprocessorCore::captured_units() const noexcept
+  {
+    if (captureUnits)
+    {
+      return &*captureUnits;
+    }
+    return nullptr;
+  }
   bool valid_capture(const CaptureDefinition& value,std::string& error)
   {
     error.clear();
@@ -40,6 +49,14 @@ namespace Postprocessor
       return false;
     }
     CaptureSnapshot snapshot;
+    if (captureUnits)
+    {
+      snapshot.presentation_units = *captureUnits;
+    }
+    else if (!framework_units().workspace_context("postprocessor",snapshot.presentation_units,error))
+    {
+      return false;
+    }
     snapshot.request = request;
     snapshot.session = state;
     if (request.target == CaptureTarget::Plot)
@@ -148,6 +165,11 @@ namespace Postprocessor
           return QJsonValue(QJsonValue::Null);
         }
       }());
+      if (display.coloring.legend_position)
+      {
+        const auto& position = *display.coloring.legend_position;
+        item.insert("legend_position",QJsonArray{position[0],position[1]});
+      }
       item.insert("undeformed",display.deformation.overlay);
       const auto source = snapshot.sources.find(output_source(display.input));
       if (source != snapshot.sources.end() && display.increment_index < source->second->increments.size())
@@ -157,11 +179,38 @@ namespace Postprocessor
         item.insert("increment",frame.increment);
         item.insert("time",frame.time);
       }
+      if (display.coloring.bounds_unit)
+      {
+        const auto& unit = *display.coloring.bounds_unit;
+        QJsonArray dimension;
+        for (double exponent : unit.dimension)
+        {
+          dimension.append(exponent);
+        }
+        item.insert("bounds_unit",QJsonObject{{"quantity",QString::fromStdString(unit.quantity)},
+          {"unit",QString::fromStdString(unit.unit)},{"dimension",dimension},{"role",static_cast<int>(unit.role)}});
+      }
       item.insert("minimum_limit",limit(display.coloring.minimum));
       item.insert("maximum_limit",limit(display.coloring.maximum));
       displays.append(item);
     }
-    snapshot.provenance.insert("version",1);
+    QJsonObject preferences;
+    for (const auto& preference : snapshot.presentation_units.display_units)
+    {
+      preferences.insert(QString::fromStdString(preference.first),QString::fromStdString(preference.second));
+    }
+    snapshot.provenance.insert("presentation_units",QJsonObject{
+      {"workspace",QString::fromStdString(snapshot.presentation_units.workspace)},
+      {"system",QString::fromStdString(snapshot.presentation_units.system)},
+      {"display_units",preferences}});
+    QJsonArray views;
+    for (const auto& entry : snapshot.session.views)
+    {
+      views.append(QJsonObject{{"id",QString::fromStdString(entry.first)},
+        {"scene_unit",QString::fromStdString(entry.second.scene_unit)},{"scale_visible",entry.second.scale_visible}});
+    }
+    snapshot.provenance.insert("views",views);
+    snapshot.provenance.insert("version",2);
     snapshot.provenance.insert("target",[&]() -> const char* {
       if (request.target == CaptureTarget::View) {
         return "view";
@@ -182,6 +231,7 @@ namespace Postprocessor
   }
   void PostprocessorCore::install_capture_snapshot(const CaptureSnapshot& snapshot)
   {
+    captureUnits = snapshot.presentation_units;
     state = snapshot.session;
     runtime.clear();
     for (const auto& source : snapshot.sources)

@@ -105,3 +105,12 @@ The Windows Cubit VTK adapter feature marker includes plane-filters so that an
 older prepared adapter is regenerated on the next authorized build. Presence of
 host VTK libraries alone does not validate binary compatibility. This patch has
 not been compiled or exercised in Cubit.
+
+Native coordinate-unit basis
+----------------------------
+
+Origin controls show native source units, while normals are dimensionless.
+Plane definitions retain the known native length basis. Refreshing into a
+different coordinate scale invalidates the derived output; recreate that plane
+in the new source basis. Changing workspace presentation units does not alter
+plane coordinates. See :doc:`units` for legacy/unknown-unit handling.

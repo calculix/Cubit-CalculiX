@@ -475,6 +475,7 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
   }
 
   const QScopedValueRollback<bool> guard(changing, true);
+  const int savedCommandHeight = commandDock->height();
   if (!graphics->activate(view.graphicsPage, error))
   {
     return false;
@@ -535,7 +536,12 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
     commandDock->setFloating(false);
     commandDock->setAllowedAreas(Qt::BottomDockWidgetArea);
     commandDock->setFeatures(QDockWidget::NoDockWidgetFeatures);
-    gui->addDockWidget(Qt::BottomDockWidgetArea, commandDock);
+
+    if (view.graphicsBottomDock == nullptr &&
+        gui->dockWidgetArea(commandDock) != Qt::BottomDockWidgetArea)
+    {
+      gui->addDockWidget(Qt::BottomDockWidgetArea, commandDock);
+    }
   }
   commandDock->show();
   navigationDock->setVisible(useNativeNavigation && (view.id != "cubit" || nativeNavigationDockVisible));
@@ -603,13 +609,49 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
     }
   }
 
-  if ((firstVisit || view.initializeGraphicsBottomDock) && view.graphicsBottomDock != nullptr && independentGraphics)
+  if (independentGraphics && view.graphicsBottomDock != nullptr)
   {
-    view.graphicsBottomDock->setFloating(false);
-    gui->addDockWidget(Qt::BottomDockWidgetArea,view.graphicsBottomDock);
-    gui->splitDockWidget(view.graphicsBottomDock,commandDock,Qt::Vertical);
-    view.graphicsBottomDock->show();
-    gui->resizeDocks({view.graphicsBottomDock},{view.graphicsBottomDock->sizeHint().height()},Qt::Vertical);
+    auto* resultNavigation = view.graphicsBottomDock;
+    bool navigationVisible = !resultNavigation->isHidden();
+
+    if (firstVisit)
+    {
+      navigationVisible = true;
+    }
+
+    const int navigationHeight =
+      qMax(1, resultNavigation->sizeHint().height());
+    const int commandHeight =
+      qMax(savedCommandHeight, commandDock->minimumSizeHint().height());
+
+    // Discard the restored relationship between these two docks.
+    // Recreate a vertical split without fixing either dock's height.
+    gui->removeDockWidget(resultNavigation);
+    gui->removeDockWidget(commandDock);
+
+    resultNavigation->setFloating(false);
+    commandDock->setFloating(false);
+
+    gui->addDockWidget(Qt::BottomDockWidgetArea, resultNavigation);
+    gui->splitDockWidget(resultNavigation, commandDock, Qt::Vertical);
+
+    resultNavigation->setVisible(navigationVisible);
+    commandDock->show();
+
+    if (navigationVisible)
+    {
+      gui->resizeDocks(
+        {resultNavigation, commandDock.data()},
+        {navigationHeight, commandHeight},
+        Qt::Vertical);
+    }
+    else
+    {
+      gui->resizeDocks(
+        {commandDock.data()},
+        {commandHeight},
+        Qt::Vertical);
+    }
   }
 
   for (const auto& item : nativeMenus)

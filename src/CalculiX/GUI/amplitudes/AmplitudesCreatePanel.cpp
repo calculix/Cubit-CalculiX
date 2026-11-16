@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "AmplitudesCreatePanel.hpp"
 #include <QString>
 #include "GUI/common/PanelTable.hpp"
@@ -60,6 +61,7 @@ AmplitudesCreatePanel::AmplitudesCreatePanel(QWidget *parent) :
   widget_5 =  new PanelTable(nullptr);
   matrix.clear();
   widget_5->update({"Time","Amplitude"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   widget_5->panel_type = "amplitude";
   //widget_3->setColumnWidth(0,150);
   widget_5->setMinimumSize(200,160);
@@ -92,6 +94,25 @@ AmplitudesCreatePanel::AmplitudesCreatePanel(QWidget *parent) :
   widget_5->show();
   checkBox_4->setChecked(false);
 
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_2, *lineEdit_2, label_2->text(), "time");
+  unitPresentation->bind_table(*widget_5, 0, "time");
+
+  axisBox = new QComboBox(this);
+  axisBox->addItem("Time", "time");
+  axisBox->addItem("Frequency", "frequency");
+  axisBox->setToolTip("Select the physical quantity of the curve abscissae and horizontal shift.");
+  auto* axisLayout = new QHBoxLayout();
+  axisLayout->addWidget(new QLabel("Axis", this));
+  axisLayout->addWidget(axisBox);
+  VBoxLayout->insertLayout(0, axisLayout);
+  connect(axisBox, qOverload<int>(&QComboBox::currentIndexChanged), this, [this, unitPresentation]
+  {
+    const auto quantity = axisBox->currentData().toString().toStdString();
+    unitPresentation->set_quantity(*lineEdit_2, quantity);
+    unitPresentation->set_table_quantity(*widget_5, 0, quantity);
+  });
+
   isInitialized = true;
 }
 
@@ -108,6 +129,7 @@ void AmplitudesCreatePanel::on_pushButton_apply_clicked(bool)
   {
     command.append("ccx create amplitude name \"" +lineEdit_1->text() + "\"");
     
+    command.append(" axis " + axisBox->currentData().toString());
     command.append(" time_amplitude ");
     for (size_t i = 0; i < matrix.size(); i++)
     {
@@ -140,6 +162,7 @@ void AmplitudesCreatePanel::on_pushButton_apply_clicked(bool)
     checkBox_4->setChecked(false);
     matrix.clear();
     widget_5->update({"Time","Amplitude"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   }
   
   for (size_t i = 0; i < commands.size(); i++)

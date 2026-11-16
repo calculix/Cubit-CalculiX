@@ -62,6 +62,10 @@ QByteArray contents(const QString& filename)
 }
 }
 
+int reportUnitsTests(const QString& directory);
+int reportProgressTests(const QString& directory);
+int reportTreeTests();
+
 int reportImageTests(const QString& directory, ReportProfileStoreInterface& profiles);
 
 int main(int argc, char** argv)
@@ -291,6 +295,8 @@ int main(int argc, char** argv)
       "Project reset leaves source selection explicit without dispatch");
     workspaceApplication->set_gui_available(true);
     check(workspaceApplication->generate_request(modelSource, "", error), "Generate a report for slider tests");
+    check(workspaceApplication->prepared_layout() != nullptr,
+      "GUI Generate returns only after its preview cache is ready");
     workspace.refresh();
     QApplication::processEvents();
     auto* slider = workspace.findChild<QSlider*>("ReportWorkspacePageSlider");
@@ -621,6 +627,9 @@ int main(int argc, char** argv)
     fullCore.session().documents.size() == 1000 && fullCore.document()->id == sourceId,
     "The report-count limit allows replacement of an existing source");
   failures += reportImageTests(directory.path(), profiles);
+  failures += reportUnitsTests(directory.path());
+  failures += reportProgressTests(directory.path());
+  failures += reportTreeTests();
   std::cout << failures << " report test failures\n";
   if (failures == 0) {
     return 0;

@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "OrientationsPropertiesWidget.hpp"
 #include "Core/sections/CalculiXSectionsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -24,10 +25,10 @@ bool OrientationsPropertiesWidget::setOrientation(int id)
   addEditableName(general, id, QString::fromStdString(settings.name));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "System Type", QString::fromStdString(settings.system));
-  addValue(settingsGroup, "a coord", QString::fromStdString(settings.a));
-  addValue(settingsGroup, "b coord", QString::fromStdString(settings.b));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("a coord", "length"), QString::fromStdString(settings.a));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("b coord", "length"), QString::fromStdString(settings.b));
   addValue(settingsGroup, "local axis", QString::fromStdString(settings.axis));
-  addValue(settingsGroup, "angle", QString::fromStdString(settings.angle));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("angle", "angle"), QString::fromStdString(settings.angle));
   return true;
 }
 

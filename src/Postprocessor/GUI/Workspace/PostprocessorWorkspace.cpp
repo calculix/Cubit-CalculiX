@@ -1,3 +1,7 @@
+#include <QScrollArea>
+#include <QStackedWidget>
+#include <cctype>
+#include "Postprocessor/GUI/Properties/PostprocessorDisplayProperties.hpp"
 #include "PostprocessorWorkspace.hpp"
 #include "Postprocessor/GUI/Filters/Clip/PostprocessorClipControls.hpp"
 #include "Postprocessor/GUI/Filters/Section/PostprocessorSectionControls.hpp"
@@ -46,6 +50,7 @@
 #include <QSizePolicy>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <utility>
 #include <exception>
 #include <algorithm>
@@ -54,7 +59,8 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   std::weak_ptr<PostprocessorApplicationInterface> application,
   std::function<bool(const std::string&, std::string&)> submit,
   std::function<bool(const std::string&, std::string&)> silent)
-  : QWidget(host), application(std::move(application)), submitCommand(std::move(submit)) {
+  : QWidget(host), application(std::move(application)), submitCommand(std::move(submit)), silentCommand(silent)
+{
   setObjectName("Postprocessor.Workspace");
   hide();
   auto* layout = new QVBoxLayout(this);
@@ -212,13 +218,14 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   navigationDock->setAllowedAreas(Qt::BottomDockWidgetArea);
   navigationDock->setFeatures(QDockWidget::DockWidgetClosable);
   navigationDock->setTitleBarWidget(new QWidget(navigationDock));
-  navigationDock->setWidget(navigationToolbar);
   navigationDock->hide();
   deformationToolbar = new QToolBar(tr("Deformation"),host);
-  deformationToolbar->setObjectName("Postprocessor.DeformationToolbar");
-  deformationToolbar->setAllowedAreas(Qt::TopToolBarArea);
-  deformationToolbar->setMovable(true);
-  deformationToolbar->setFloatable(true);
+  // A new name prevents old main-window toolbar state from restoring this
+  // embedded toolbar into the top area.
+  deformationToolbar->setObjectName("Postprocessor.NavigationDeformationToolbar");
+  deformationToolbar->setAllowedAreas(Qt::NoToolBarArea);
+  deformationToolbar->setMovable(false);
+  deformationToolbar->setFloatable(false);
   deformationControls = new PostprocessorDeformationControls(this->application,
     [this](const std::string& command,std::string& error) {
       viewport->cancel_interaction();
@@ -243,8 +250,18 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       });
       return accepted;
     },deformationToolbar);
+  deformationToolbar->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
   deformationToolbar->addWidget(deformationControls);
-  deformationToolbar->hide();
+  auto* navigationRow = new QWidget(navigationDock);
+  navigationRow->setObjectName("Postprocessor.NavigationRow");
+  navigationRow->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
+  auto* navigationLayout = new QHBoxLayout(navigationRow);
+  navigationLayout->setContentsMargins(0,0,0,0);
+  navigationLayout->setSpacing(4);
+  navigationLayout->addWidget(navigationToolbar,1);
+  navigationLayout->addWidget(deformationToolbar,0);
+  navigationDock->setWidget(navigationRow);
+  deformationToolbar->show();
   navigationToolbar->show();
   optionsPanel = new PostprocessorOptionsPanel(this->application, submitCommand, this);
   optionsPanel->hide();
@@ -271,6 +288,21 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       refresh();
     });
   }, resultsDock);
+  tree->inspect_source = [this](const QString& name)
+  {
+    const auto quoted = Postprocessor::plot_quote(name.toUtf8().toStdString());
+    if (!quoted.isEmpty())
+    {
+      this->submit("post properties source "+quoted);
+    }
+  };
+  tree->selection_cleared = [this]()
+  {
+    if (propertiesPage == "source")
+    {
+      this->submit("post properties close");
+    }
+  };
   tree->open_table = [this](const QString& source,const QString& key,bool field) {
     const auto active = this->application.lock();
     if (!active) {
@@ -332,16 +364,19 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
 
   propertiesDock = new QDockWidget(tr("Properties"), host);
   propertiesDock->setObjectName("Postprocessor.PropertiesDock");
-  properties = new PostprocessorProperties(this->application,[this](const std::string& command,std::string& error) {
-    viewport->cancel_interaction();
-    const bool accepted = submitCommand && submitCommand(command,error);
-    QTimer::singleShot(0,this,[this]() {
-      panelRevision.reset();
-      refresh();
-    });
-    return accepted;
-  },propertiesDock);
-  propertiesDock->setWidget(properties);
+  propertiesPages = new QStackedWidget(propertiesDock);
+  emptyProperties = new QWidget(propertiesPages);
+  propertiesPages->addWidget(emptyProperties);
+  properties = new PostprocessorProperties(this->application,propertiesPages);
+  propertiesPages->addWidget(properties);
+  legendProperties = new PostprocessorDisplayProperties(this->application,submitCommand,propertiesPages);
+  auto* legendScroll = new QScrollArea(propertiesPages);
+  legendScroll->setWidgetResizable(true);
+  legendScroll->setFrameShape(QFrame::NoFrame);
+  legendScroll->setWidget(legendProperties);
+  legendEditorPage = legendScroll;
+  propertiesPages->addWidget(legendEditorPage);
+  propertiesDock->setWidget(propertiesPages);
   propertiesDock->hide();
 
   nativeToolbar = new PostprocessorToolbar(host);
@@ -400,39 +435,37 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   toolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
   toolbar->hide();
 
-  QIcon listIcon(":/clarogui/cmdwindow_cl.svg");
-  if (listIcon.isNull()) {
-    listIcon = style()->standardIcon(QStyle::SP_FileDialogDetailedView);
-  }
-  auto* list = new QAction(listIcon, tr("List sources"), this);
-  list->setToolTip(tr("List opened Postprocessor sources in the command window"));
-  connect(list, &QAction::triggered, this, [this]() {
-    this->submit("post list");
-  });
+  viewsToolbar = new QToolBar(tr("Views"),host);
+  viewsToolbar->setObjectName("Postprocessor.ViewsToolbar");
+  viewsToolbar->setAllowedAreas(Qt::TopToolBarArea);
+  viewsToolbar->setMovable(true);
+  viewsToolbar->setFloatable(true);
+  viewsToolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
+  viewsToolbar->hide();
 
-  QIcon closeIcon(":/clarogui/dcancel.svg");
-  if (closeIcon.isNull()) {
-    closeIcon = style()->standardIcon(QStyle::SP_DialogCloseButton);
-  }
-  closeSelected = new QAction(closeIcon, tr("Close selected source"), this);
-  closeSelected->setToolTip(tr("Close the selected source without deleting its job or files"));
-  connect(closeSelected, &QAction::triggered, this, [this]() {
-    const auto active = this->application.lock();
+  pickingToolbar = new QToolBar(tr("Picking"),host);
+  pickingToolbar->setObjectName("Postprocessor.PickingToolbar");
+  pickingToolbar->setAllowedAreas(Qt::TopToolBarArea);
+  pickingToolbar->setMovable(true);
+  pickingToolbar->setFloatable(true);
+  pickingToolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
+  pickingToolbar->hide();
 
-    if (active) {
-      const auto& state = active->session();
-      const auto source = state.sources.find(state.active_source_id);
+  unitsToolbar = new QToolBar(tr("Units"),host);
+  unitsToolbar->setObjectName("Postprocessor.UnitsToolbar");
+  unitsToolbar->setAllowedAreas(Qt::TopToolBarArea);
+  unitsToolbar->setMovable(true);
+  unitsToolbar->setFloatable(true);
+  unitsToolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
+  unitsToolbar->hide();
 
-      if (source != state.sources.end()) {
-        source_command("close", QString::fromUtf8(source->second.name.c_str()));
-      }
-    }
-  });
-
-  closeAll = new QAction(tr("Close all sources"), this);
-  connect(closeAll, &QAction::triggered, this, [this]() {
-    this->submit("post close all");
-  });
+  captureToolbar = new QToolBar(tr("Capture"),host);
+  captureToolbar->setObjectName("Postprocessor.CaptureToolbar");
+  captureToolbar->setAllowedAreas(Qt::TopToolBarArea);
+  captureToolbar->setMovable(true);
+  captureToolbar->setFloatable(true);
+  captureToolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
+  captureToolbar->hide();
 
   QIcon fitIcon(":/cubitgui/zoomreset.svg");
   if (fitIcon.isNull()) {
@@ -443,18 +476,21 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   connect(fit, &QAction::triggered, this, [this]() {
     viewport->fit_view();
   });
-  toolbar->addAction(fit);
+  viewsToolbar->addAction(fit);
   const char* captureIcons[] = {"PostprocessorCaptureViewport","PostprocessorRenderImage","PostprocessorAddToReport"};
   const QString captureTips[] = {tr("Save viewport screenshot"),tr("Render PNG image"),tr("Add image to Report")};
-  for (int index = 0; index < 3; ++index) {
+  for (int index = 0; index < 3; ++index)
+  {
     const auto app = this->application.lock();
     QIcon icon;
-    if (app != nullptr) {
+    if (app != nullptr)
+    {
       icon = PostprocessorIconLoader::load(app->active_icons_path(), captureIcons[index]);
     }
-    auto* action = toolbar->addAction(icon, captureTips[index]);
+    auto* action = captureToolbar->addAction(icon, captureTips[index]);
     action->setToolTip(captureTips[index]);
-    connect(action,&QAction::triggered,this,[this,index]() {
+    connect(action,&QAction::triggered,this,[this,index]()
+    {
       capture_dialog(index == 2,index == 0);
     });
   }
@@ -464,9 +500,19 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       panelSelectionRevision.reset();
       refresh();
     });
-  },toolbar);
-  toolbar->addWidget(pickControls);
-  toolbar->addSeparator();
+  },pickingToolbar);
+  pickingToolbar->addWidget(pickControls);
+  QIcon legendIcon;
+  if (const auto app = this->application.lock())
+  {
+    legendIcon = PostprocessorIconLoader::load(app->active_icons_path(),"PostprocessorLegend");
+  }
+  auto* openLegend = toolbar->addAction(legendIcon,tr("Legend"));
+  openLegend->setToolTip(tr("Open Legend properties in the right dock"));
+  connect(openLegend,&QAction::triggered,this,[this]()
+  {
+    this->submit("post properties legend");
+  });
   annotationControls = new PostprocessorAnnotationControls(this->application,[this](const QString& command) {
     this->submit(command);
     viewport->request_redraw();
@@ -493,7 +539,7 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     if (!active) {
       return;
     }
-    auto* create = plotsMenu->addAction(tr("New plotÃ¢â‚¬Â¦"));
+    auto* create = plotsMenu->addAction(tr("New plot..."));
     connect(create,&QAction::triggered,this,[this]() {
       bool ok = false;
       const auto name = QInputDialog::getText(this,tr("New plot"),tr("Name"),QLineEdit::Normal,{},&ok);
@@ -553,63 +599,106 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   fieldToolbar->addWidget(colorControls);
   fieldToolbar->hide();
 
-  auto* file = new QMenu(tr("File"), this);
-  file->addAction(closeSelected);
-  file->addAction(closeAll);
-  auto* importResults = file->addAction(tr("Import result filesÃ¢â‚¬Â¦"));
-  connect(importResults,&QAction::triggered,this,[this]() {
-    import_results();
-  });
-  auto* results = new QMenu(tr("Results"), this);
-  results->addAction(list);
-  auto* units = results->addAction(tr("UnitsÃ¢â‚¬Â¦"));
-  connect(units, &QAction::triggered, this, [this]() {
-    this->submit("post units open");
-  });
-  auto* probe = results->addAction(tr("Probe selection"));
-  connect(probe,&QAction::triggered,this,[this]() {
-    this->submit("post probe");
-  });
   auto* view = new QMenu(tr("View"), this);
-  view->addAction(fit);
-  auto* meshView = view->addAction(tr("3D view"));
-  connect(meshView,&QAction::triggered,this,[this]() {
-    this->submit("post view type 3d");
-    QTimer::singleShot(0,this,[this]() {
-      panelRevision.reset();
-      refresh();
-    });
-  });
+  view->addAction(viewsToolbar->toggleViewAction());
+  view->addAction(pickingToolbar->toggleViewAction());
+  view->addAction(unitsToolbar->toggleViewAction());
+  view->addAction(captureToolbar->toggleViewAction());
   view->addAction(sourceToolbar->toggleViewAction());
   view->addAction(fieldToolbar->toggleViewAction());
   view->addAction(deformationToolbar->toggleViewAction());
   view->addAction(navigationDock->toggleViewAction());
 
-  filtersDock = new QDockWidget(tr("Filters"),host);
-  filtersDock->setObjectName("Postprocessor.FiltersDock");
-  auto* filters = new QTabWidget(filtersDock);
-  auto dispatchFilter = [this](const QString& command) {
+  auto dispatchFilter = [this](const QString& command)
+  {
     this->submit(command);
-    QTimer::singleShot(0,this,[this]() {
+    QTimer::singleShot(0,this,[this]()
+    {
       panelRevision.reset();
       refresh();
       viewport->request_redraw();
     });
   };
-  clipControls = new PostprocessorClipControls(this->application,dispatchFilter,filters);
-  sectionControls = new PostprocessorSectionControls(this->application,dispatchFilter,filters);
-  filters->addTab(clipControls,tr("Clip"));
-  filters->addTab(sectionControls,tr("Section"));
-  filtersDock->setWidget(filters);
-  host->addDockWidget(Qt::RightDockWidgetArea,filtersDock);
-  filtersDock->hide();
-  view->addAction(filtersDock->toggleViewAction());
-  // Framework supplies the shared Help menu and keeps it last.
-  for (auto* menu : {file, view, results}) {
-    host->menuBar()->addAction(menu->menuAction());
-    menu->menuAction()->setVisible(false);
-    menus.append(menu->menuAction());
+  clipControls = new PostprocessorClipControls(this->application,dispatchFilter,propertiesPages);
+  sectionControls = new PostprocessorSectionControls(this->application,dispatchFilter,propertiesPages);
+  auto* clipScroll = new QScrollArea(propertiesPages);
+  clipScroll->setWidgetResizable(true);
+  clipScroll->setFrameShape(QFrame::NoFrame);
+  clipScroll->setWidget(clipControls);
+  clipEditorPage = clipScroll;
+  propertiesPages->addWidget(clipEditorPage);
+  auto* sectionScroll = new QScrollArea(propertiesPages);
+  sectionScroll->setWidgetResizable(true);
+  sectionScroll->setFrameShape(QFrame::NoFrame);
+  sectionScroll->setWidget(sectionControls);
+  sectionEditorPage = sectionScroll;
+  propertiesPages->addWidget(sectionEditorPage);
+  if (const auto app = this->application.lock())
+  {
+    app->set_properties_handler([this](const std::string& page,const std::string& source,std::string& error)
+    {
+      return show_properties(page,source,error);
+    });
   }
+  for (const auto* tool : {"Clip","Section"})
+  {
+    QIcon icon;
+    if (const auto app = this->application.lock())
+    {
+      icon = PostprocessorIconLoader::load(app->active_icons_path(),std::string("Postprocessor")+tool);
+    }
+    auto* action = toolbar->addAction(icon,QString::fromLatin1(tool));
+    action->setToolTip(tr("Open %1 properties in the right dock").arg(QString::fromLatin1(tool)));
+    std::string page(tool);
+    std::transform(page.begin(),page.end(),page.begin(),[](unsigned char c)
+    {
+      return static_cast<char>(std::tolower(c));
+    });
+    connect(action,&QAction::triggered,this,[this,page]()
+    {
+      this->submit(QString::fromStdString("post properties "+page));
+    });
+  }
+  const char* viewNames[] = {"Front","Back","Top","Bottom","Left","Right","Iso","Ortho","Perspective"};
+  const char* viewCommands[] = {"front","back","top","bottom","left","right","iso","projection parallel","projection perspective"};
+  for (int i = 0; i < 9; ++i)
+  {
+    QIcon icon;
+    if (const auto app = this->application.lock())
+    {
+      icon = PostprocessorIconLoader::load(app->active_icons_path(),std::string("PostprocessorView")+viewNames[i]);
+    }
+    auto* action = viewsToolbar->addAction(icon,QString::fromLatin1(viewNames[i]));
+    action->setToolTip(tr("Postprocessor view: %1").arg(QString::fromLatin1(viewNames[i])));
+    const QString command = QStringLiteral("post view ")+QString::fromLatin1(viewCommands[i]);
+    connect(action,&QAction::triggered,this,[this,command]()
+    {
+      camera_tool(command);
+    });
+  }
+  QIcon scaleIcon;
+  if (const auto app = this->application.lock())
+  {
+    scaleIcon = PostprocessorIconLoader::load(app->active_icons_path(),"PostprocessorScale");
+  }
+  scaleAction = viewsToolbar->addAction(scaleIcon,tr("Unit-aware scale"));
+  scaleAction->setCheckable(true);
+  scaleAction->setToolTip(tr("Show the viewport distance scale in presentation length units"));
+  connect(scaleAction,&QAction::triggered,this,[this](bool checked)
+  {
+    if (checked)
+    {
+      this->submit("post scale on");
+    }
+    else
+    {
+      this->submit("post scale off");
+    }
+  });
+  // Framework supplies the shared Help menu and keeps it last.
+  host->menuBar()->addAction(view->menuAction());
+  view->menuAction()->setVisible(false);
+  menus.append(view->menuAction());
   refresh();
 }
 
@@ -617,12 +706,18 @@ PostprocessorWorkspace::~PostprocessorWorkspace() {
   delete nativeToolbar;
   delete sourceToolbar;
   delete toolbar;
+  delete viewsToolbar;
+  delete pickingToolbar;
+  delete unitsToolbar;
+  delete captureToolbar;
   delete resultsDock;
   delete navigationDock;
   delete fieldToolbar;
-  delete deformationToolbar;
   delete propertiesDock;
-  delete filtersDock;
+  if (const auto app = application.lock())
+  {
+    app->set_properties_handler({});
+  }
   // The options dialog may have reparented this page into its panel stack.
   delete optionsPanel.data();
   delete mouseOptionsPanel.data();
@@ -809,14 +904,17 @@ void PostprocessorWorkspace::refresh() {
       });
       const bool table = currentView != state.views.end() && currentView->second.table.has_value() && !currentView->second.plot_active;
       viewTitle->setText(tr("3D View 1"));
-      const auto source = state.sources.find(state.active_source_id);
-      if (source == state.sources.end()) {
-        properties->show_source(nullptr);
-      } else {
-        properties->show_source(&source->second);
+      refresh_properties(active);
+      if (scaleAction)
+      {
+        const QSignalBlocker blocker(scaleAction);
+        bool visible = false;
+        if (currentView != state.views.end())
+        {
+          visible = currentView->second.scale_visible;
+        }
+        scaleAction->setChecked(visible);
       }
-      closeSelected->setEnabled(source != state.sources.end());
-      closeAll->setEnabled(!state.sources.empty());
       colorControls->refresh();
       deformationControls->refresh();
       pickControls->refresh();
@@ -899,12 +997,12 @@ void PostprocessorWorkspace::workspace_view(WorkspaceView& view) {
   view.graphicsPage = this;
   view.useNativeNavigation = false;
   view.dockLayout = WorkspaceDockLayout::LeftRight;
-  view.docks = {resultsDock,propertiesDock,filtersDock,navigationDock};
+  view.docks = {resultsDock,propertiesDock,navigationDock};
   view.graphicsBottomDock = navigationDock;
-  view.graphicsBottomDockRevision = 2;
+  view.graphicsBottomDockRevision = 4;
   view.menuActions = menus;
-  view.toolbars = {nativeToolbar,toolbar,sourceToolbar,fieldToolbar,deformationToolbar};
-  view.modelManagementToolbar = toolbar;
+  view.toolbars = {nativeToolbar,toolbar,pickingToolbar,viewsToolbar,unitsToolbar,captureToolbar,sourceToolbar,fieldToolbar};
+  view.modelManagementToolbar = unitsToolbar;
   view.toolbarRowBreaks = {sourceToolbar};
   view.activationChanged = [page = QPointer<PostprocessorWorkspace>(this)](bool active) {
     if (active && page != nullptr) {
@@ -1040,5 +1138,104 @@ void PostprocessorWorkspace::capture_dialog(bool report,bool quick) {
   }
   if (!command.isEmpty()) {
     submit(command);
+  }
+}
+
+bool PostprocessorWorkspace::show_properties(const std::string& page,const std::string& source,std::string& error)
+{
+  error.clear();
+  const auto app = application.lock();
+  if (!app)
+  {
+    error = "The Postprocessor workspace is unavailable.";
+    return false;
+  }
+  QWidget* selected = emptyProperties;
+  QString title = tr("Properties");
+  if (page == "source")
+  {
+    const auto found = app->session().sources.find(source);
+    if (found == app->session().sources.end())
+    {
+      error = "The inspected source is unavailable.";
+      return false;
+    }
+    inspectedSource = source;
+    properties->show_source(&found->second);
+    selected = properties;
+    title = tr("Source properties");
+  }
+  else if (page == "legend")
+  {
+    selected = legendEditorPage;
+    legendProperties->refresh();
+    title = tr("Legend properties");
+  }
+  else if (page == "clip")
+  {
+    selected = clipEditorPage;
+    clipControls->refresh();
+    title = tr("Clip properties");
+  }
+  else if (page == "section")
+  {
+    selected = sectionEditorPage;
+    sectionControls->refresh();
+    title = tr("Section properties");
+  }
+  propertiesPage = page;
+  if (page != "source")
+  {
+    inspectedSource.clear();
+  }
+  propertiesPages->setCurrentWidget(selected);
+  propertiesDock->setWindowTitle(title);
+  if (page != "close")
+  {
+    propertiesDock->show();
+    propertiesDock->raise();
+  }
+  return true;
+}
+void PostprocessorWorkspace::refresh_properties(const std::shared_ptr<PostprocessorApplicationInterface>& app)
+{
+  if (propertiesPage == "source")
+  {
+    const auto source = app->session().sources.find(inspectedSource);
+    if (source == app->session().sources.end())
+    {
+      propertiesPage.clear();
+      inspectedSource.clear();
+      propertiesPages->setCurrentWidget(emptyProperties);
+    }
+    else
+    {
+      properties->show_source(&source->second);
+    }
+  }
+  else if (propertiesPage == "legend")
+  {
+    legendProperties->refresh();
+  }
+}
+void PostprocessorWorkspace::camera_tool(const QString& command)
+{
+  const auto app = application.lock();
+  if (!app)
+  {
+    return;
+  }
+  if (app->user_options().journalCamera)
+  {
+    this->submit(command);
+  }
+  else if (silentCommand)
+  {
+    std::string error;
+    if (!silentCommand(command.toUtf8().toStdString(),error))
+    {
+      PRINT_ERROR("Cannot change standard view: %s\n",error.c_str());
+    }
+    viewport->request_redraw();
   }
 }

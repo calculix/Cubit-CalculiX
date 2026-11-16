@@ -96,6 +96,63 @@ bool CoreSteps::check_initialized()
   return is_initialized;
 }
 
+bool CoreSteps::get_step_axis_quantity(int id, std::string& quantity, std::string& error) const
+{
+  quantity.clear();
+  error.clear();
+  const auto step = std::find_if(steps_data.begin(), steps_data.end(), [&](const auto& row)
+  {
+    return row.size() >= 5 && row[0] == id;
+  });
+  if (step == steps_data.end())
+  {
+    error = "Cannot establish the result axis of a missing step.";
+    return false;
+  }
+  const int type = (*step)[3];
+  if (type == 10 || type == 5)
+  {
+    const std::vector<std::vector<std::string>>* rows = &steady_state_dynamics_data;
+    std::size_t field = 2;
+    if (type == 5)
+    {
+      rows = &heattransfer_data;
+      field = 4;
+    }
+    const auto procedure = std::find_if(rows->begin(), rows->end(), [&](const auto& row)
+    {
+      return row.size() > field && row[0] == std::to_string((*step)[4]);
+    });
+    if (procedure == rows->end())
+    {
+      error = "Missing procedure while resolving a result axis.";
+      return false;
+    }
+    if (type == 5)
+    {
+      if ((*procedure)[field].empty())
+      {
+        quantity = "time";
+      }
+    }
+    else if ((*procedure)[field] == "NO")
+    {
+      quantity = "time";
+    }
+    else
+    {
+      quantity = "frequency";
+    }
+  }
+  else if (type == 2 || type == 6 || type == 7 || type == 8 || type == 9)
+  {
+    quantity = "time";
+  }
+  // Eigenvalue/buckling parameters remain unknown rather than being labelled
+  // as time from an ambiguous FRD mode or analysis code.
+  return true;
+}
+
 bool CoreSteps::create_step(std::vector<std::string> options)
 {
   if (!domain_unit_view) {

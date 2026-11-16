@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include "Framework/Core/units/WorkspaceUnitContext.hpp"
 class vtkDataSet;
 namespace Postprocessor
 {
@@ -24,6 +25,10 @@ namespace Postprocessor
     inline constexpr std::array<double, 3> maximum = {1.0, 0.0, 1.0};
     inline constexpr unsigned int maximum_bands = 256;
     inline constexpr unsigned int default_bands = 12;
+    inline constexpr double legend_width_pixels = 140;
+    inline constexpr double legend_height_pixels = 220;
+    inline constexpr double legend_bar_pixels = 24;
+    inline constexpr int legend_font_pixels = 10;
   }
   struct FieldSelection
   {
@@ -47,9 +52,14 @@ namespace Postprocessor
     ColorPalette palette = ColoringDefaults::palette;
     ColorRangeMode range_mode = ColorRangeMode::AllFrames;
     std::array<double, 2> fixed_range = {0.0, 1.0};
+    // Stored bounds use this presentation unit, independent of resident arrays.
+    // nullopt is legacy/unbound; an empty unit explicitly denotes unknown units.
+    std::optional<SimUnits::QuantityUnit> bounds_unit;
     bool reversed = false;
     bool legend_visible = true;
-    std::optional<unsigned int> bands;
+    std::optional<unsigned int> bands = ColoringDefaults::default_bands;
+    // Bottom-left anchor in normalized viewport coordinates. nullopt uses layout.
+    std::optional<std::array<double,2>> legend_position;
     ColorLimit minimum;
     ColorLimit maximum = {false, 0.0, ColoringDefaults::maximum};
   };
@@ -59,9 +69,12 @@ namespace Postprocessor
     std::string key;
     std::vector<std::size_t> datasets;
     bool available = false;
+    std::string unit_issue;
   };
   std::string field_selection_key(const FieldSelection& selection);
   std::string field_group_key(const SimResults::Field& field);
+  // Group keys remain stable. Incompatible physical quantities invalidate the
+  // group across frames; compatible known units use workspace presentation units.
   std::vector<ResultFieldGroup> result_field_groups(const SimResults::VtkResultsData& data,
     std::optional<std::size_t> current);
   bool same_field(const std::optional<FieldSelection>& a, const std::optional<FieldSelection>& b);
@@ -71,13 +84,13 @@ namespace Postprocessor
   // Values at original samples. Invalid masks and nonfinite required components
   // produce NaN. Magnitude uses only explicitly declared spatial vector columns.
   bool color_values(vtkDataSet* mesh, const SimResults::Field& field, const FieldSelection& selection,
-    std::vector<double>& values, std::string& error);
+    std::vector<double>& values, std::string& error, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
   // A single original sample; invalid masks/nonfinite values produce NaN.
   bool color_sample(vtkDataSet* mesh, const SimResults::Field& field, const FieldSelection& selection,
-    std::size_t index, double& value, std::string& error);
+    std::size_t index, double& value, std::string& error, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
   // Accumulate only finite valid original samples, without allocating a scalar copy.
   bool accumulate_color_range(vtkDataSet* mesh, const SimResults::Field& field, const FieldSelection& selection,
-    std::optional<std::array<double,2>>& range, std::string& error);
+    std::optional<std::array<double,2>>& range, std::string& error, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
   // Stable preference names; independent of translated GUI labels.
   const char* color_palette_name(ColorPalette palette);
   bool parse_color_palette(const std::string& name, ColorPalette& palette);

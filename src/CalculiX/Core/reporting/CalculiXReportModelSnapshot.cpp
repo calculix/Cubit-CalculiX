@@ -1,5 +1,11 @@
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "CalculiXReportDomainSettings.hpp"
+#include "CalculiX/Core/units/CalculiXDomainUnits.hpp"
+#include <QLocale>
+#include <QRegularExpression>
+#include "CalculiX/Core/units/CalculiXDofUnits.hpp"
+#include <limits>
+#include <cmath>
 #include "CalculiXReportModelSnapshot.hpp"
 #include "CalculiXReportMaterials.hpp"
 #include "CalculiXReportImageSettings.hpp"
@@ -48,12 +54,123 @@ QJsonValue jsonValue(const std::vector<T>& values) {
 }
 
 template<class T>
-void field(ReportTable& table, const char* label, const T& value) {
+void field(ReportTable& table, const char* label, const T& value)
+{
   auto json = jsonValue(value);
-  if (json.isArray()) {
-    json = QString::fromUtf8(QJsonDocument(json.toArray()).toJson(QJsonDocument::Compact));
+  if (json.isArray())
+  {
+    const auto values = json.toArray();
+    for (int i = 0; i < values.size(); ++i)
+    {
+      const auto name = std::string(label) + " / " + std::to_string(i + 1);
+      auto value = values[i];
+      if (value.isArray())
+      {
+        const auto entries = value.toArray();
+        for (int entry = 0; entry < entries.size(); ++entry)
+        {
+          const auto detail = name + " / " + std::to_string(entry + 1);
+          table.rows.push_back({QString::fromStdString(detail), entries[entry], ""});
+          table.cell_quantities.push_back({std::nullopt, std::nullopt, std::nullopt});
+        }
+        continue;
+      }
+      table.rows.push_back({QString::fromStdString(name), value, ""});
+      table.cell_quantities.push_back({std::nullopt, std::nullopt, std::nullopt});
+    }
+    return;
   }
-  table.rows.push_back({label, json});
+  table.rows.push_back({label, json, ""});
+  table.cell_quantities.push_back({std::nullopt, std::nullopt, std::nullopt});
+}
+
+// Domain settings already use Report units. Parse and annotate, never reconvert.
+bool physicalField(ReportTable& table, const std::string& label, const QJsonValue& input,
+  const std::string& quantityId, std::string& error)
+{
+  if (input.isArray())
+  {
+    const auto values = input.toArray();
+    for (int i = 0; i < values.size(); ++i)
+    {
+      if (!physicalField(table, label + " / " + std::to_string(i + 1), values[i], quantityId, error))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+  SimUnits::QuantityUnit quantity;
+  if (!framework_units().quantity(quantityId, quantity, error) ||
+      !framework_units().display_unit("report", quantityId, quantity.unit, error))
+  {
+    return false;
+  }
+  bool numeric = input.isDouble();
+  double number = input.toDouble();
+  const auto text = input.toString().trimmed();
+  const auto components = text.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+  if (input.isString() && components.size() > 1)
+  {
+    for (int index = 0; index < components.size(); ++index)
+    {
+      if (!physicalField(table, label + " / " + std::to_string(index + 1), components[index], quantityId, error))
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+  if (input.isString() && !text.isEmpty() && text.toLower() != "free" && text.toLower() != "fixed")
+  {
+    number = QLocale::c().toDouble(text, &numeric);
+    if (!numeric)
+    {
+      error = "Invalid numeric report property: " + label + " / " + text.toStdString();
+      return false;
+    }
+  }
+  if (numeric)
+  {
+    if (!std::isfinite(number))
+    {
+      error = "Non-finite report property: " + label;
+      return false;
+    }
+    table.rows.push_back({QString::fromStdString(label), number, QString::fromStdString(quantity.unit)});
+    table.cell_quantities.push_back({std::nullopt, quantity, std::nullopt});
+  }
+  else
+  {
+    table.rows.push_back({QString::fromStdString(label), input, QString::fromStdString(quantity.unit)});
+    table.cell_quantities.push_back({std::nullopt, std::nullopt, std::nullopt});
+  }
+  return true;
+}
+
+template<class T>
+bool physicalRows(ReportTable& table, const char* label, const std::vector<std::vector<T>>& rows,
+  const std::vector<std::string>& quantities, std::string& error)
+{
+  for (std::size_t row = 0; row < rows.size(); ++row)
+  {
+    for (std::size_t column = 0; column < rows[row].size(); ++column)
+    {
+      const auto name = std::string(label) + " " + std::to_string(row + 1) + " / " + std::to_string(column + 1);
+      if (column < quantities.size() && !quantities[column].empty())
+      {
+        if (!physicalField(table, name, jsonValue(rows[row][column]), quantities[column], error))
+        {
+          return false;
+        }
+      }
+      else
+      {
+        field(table, name.c_str(), rows[row][column]);
+      }
+    }
+  }
+  return true;
 }
 
 int rowId(const std::vector<std::string>& row) {
@@ -88,6 +205,8 @@ CalculiXReportModelSnapshot::CalculiXReportModelSnapshot() = default;
 bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const ReportSource& source,
   ReportDocument& output, std::string& error) const
 {
+  std::size_t processedTables = 0;
+  CalculiXReportDomainSettings domainSettings;
   CalculiXMeshInterface mesh;
   CalculiXSectionsInterface sections;
   CalculiXInteractionsInterface interactions;
@@ -108,7 +227,14 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
   ReportTable meshTable;
   meshTable.title = "Current mesh blocks";
   meshTable.columns = {"Block", "Name", "Cubit type", "CalculiX type", "Nodes", "Elements"};
-  for (int id : mesh.get_blocks()) {
+  const auto blocks = mesh.get_blocks();
+  std::size_t completedBlocks = 0;
+  for (int id : blocks)
+  {
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting mesh block " + std::to_string(id), completedBlocks++, blocks.size(), error))
+    {
+      return false;
+    }
     MeshProperties properties;
     if (!mesh.get_block_properties(id, properties, error)) {
       return false;
@@ -118,68 +244,177 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
   }
   meshSection.tables.push_back(meshTable);
   groups["ccx.model.blocks"].tables.push_back(std::move(meshTable));
-  if (!CalculiXReportMaterials::collect(groups["ccx.model.materials"], error)) {
+  if (!CalculiXReportMaterials::collect(groups["ccx.model.materials"], error, request.progress)) {
     return false;
   }
 
   for (const auto& row : sections.get_sections_tree_data()) {
     SectionsSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Sections / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Block", settings.block);
     field(table, "Material", settings.material);
     field(table, "Orientation", settings.orientation);
-    field(table, "Thickness", settings.thickness);
-    field(table, "Offset", settings.offset);
+    if (!physicalField(table, "Thickness", jsonValue(settings.thickness), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Offset", jsonValue(settings.offset), "dimensionless", error))
+    {
+      return false;
+    }
     field(table, "Beam type", settings.beamType);
-    field(table, "Parameter 1", settings.parameter1);
-    field(table, "Parameter 2", settings.parameter2);
-    field(table, "Parameter 3", settings.parameter3);
-    field(table, "Parameter 4", settings.parameter4);
-    field(table, "Parameter 5", settings.parameter5);
-    field(table, "Parameter 6", settings.parameter6);
-    field(table, "X", settings.x);
-    field(table, "Y", settings.y);
-    field(table, "Z", settings.z);
-    field(table, "Offset 1", settings.offset1);
-    field(table, "Offset 2", settings.offset2);
+    if (!physicalField(table, "Parameter 1", jsonValue(settings.parameter1), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Parameter 2", jsonValue(settings.parameter2), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Parameter 3", jsonValue(settings.parameter3), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Parameter 4", jsonValue(settings.parameter4), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Parameter 5", jsonValue(settings.parameter5), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Parameter 6", jsonValue(settings.parameter6), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "X", jsonValue(settings.x), "dimensionless", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Y", jsonValue(settings.y), "dimensionless", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Z", jsonValue(settings.z), "dimensionless", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Offset 1", jsonValue(settings.offset1), "dimensionless", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Offset 2", jsonValue(settings.offset2), "dimensionless", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.model.sections"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : sections.get_orientations_tree_data()) {
     OrientationsSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Orientations / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "System", settings.system);
-    field(table, "A", settings.a);
-    field(table, "B", settings.b);
+    if (!physicalField(table, "A", jsonValue(settings.a), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "B", jsonValue(settings.b), "length", error))
+    {
+      return false;
+    }
     field(table, "Axis", settings.axis);
-    field(table, "Angle", settings.angle);
+    if (!physicalField(table, "Angle", jsonValue(settings.angle), "angle", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.model.sections"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : interactions.get_constraints_tree_data()) {
     ConstraintsSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Constraints / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
-    field(table, "Terms", settings.terms);
+    table.columns = {"Property", "Value", "Unit"};
+    std::set<int> rotationNodes;
+    if (!settings.terms.empty() && !interactions.get_rotation_node_ids(rotationNodes, error))
+    {
+      return false;
+    }
+    for (std::size_t index = 0; index < settings.terms.size(); ++index)
+    {
+      const auto& term = settings.terms[index];
+      if (term.size() != 3 || !std::isfinite(term[0]) || term[0] <= 0.0 ||
+          term[0] > static_cast<double>((std::numeric_limits<int>::max)()) || std::floor(term[0]) != term[0] ||
+          !std::isfinite(term[1]) || term[1] < 1.0 || term[1] > 11.0 || std::floor(term[1]) != term[1])
+      {
+        error = "Invalid report constraint equation term.";
+        return false;
+      }
+      const auto prefix = "Equation term " + std::to_string(index + 1);
+      field(table, (prefix + " / node").c_str(), term[0]);
+      field(table, (prefix + " / DOF").c_str(), term[1]);
+      std::string quantityId, unit;
+      if (!CalculiXDofUnits::equation_quantity(static_cast<int>(term[1]),
+          rotationNodes.count(static_cast<int>(term[0])) != 0, quantityId, error) ||
+          !framework_units().display_unit("report", quantityId, unit, error))
+      {
+        return false;
+      }
+      // Compound units require a difference symbol instead of an affine temperature.
+      if (quantityId == "temperature_difference")
+      {
+        if (unit == "degC")
+        {
+          unit = "delta_degC";
+        }
+        else if (unit == "degF")
+        {
+          unit = "delta_degF";
+        }
+        else if (unit == "K")
+        {
+          unit = "delta_K";
+        }
+      }
+      ReportQuantity coefficient;
+      coefficient.quantity = "constraint_coefficient";
+      coefficient.unit = "1/(" + unit + ")";
+      SimUnits::UnitDefinition definition;
+      if (!framework_units().unit(coefficient.unit, definition, error))
+      {
+        return false;
+      }
+      coefficient.dimension = definition.dimension;
+      coefficient.role = definition.role;
+      table.rows.push_back({QString::fromStdString(prefix + " / coefficient"), term[2], QString::fromStdString(coefficient.unit)});
+      table.cell_quantities.push_back({std::nullopt, coefficient, std::nullopt});
+    }
     field(table, "Equation pairs", settings.equationPairs);
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
@@ -190,134 +425,237 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     field(table, "Rotation", settings.rotation);
     field(table, "Master", settings.master);
     field(table, "Slave", settings.slave);
-    field(table, "Tolerance", settings.tolerance);
+    if (!physicalField(table, "Tolerance", jsonValue(settings.tolerance), "length", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.model.interactions"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : interactions.get_surfaceinteractions_tree_data()) {
     SurfaceInteractionsSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Surface Interactions / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
-    field(table, "Pressure overclosure", settings.pressureOverclosure);
-    field(table, "Conductance", settings.conductance);
+    table.columns = {"Property", "Value", "Unit"};
+    if (!physicalRows(table, "Pressure overclosure", settings.pressureOverclosure, {"stress", "length"}, error))
+    {
+      return false;
+    }
+    if (!physicalRows(table, "Conductance", settings.conductance, {"heat_transfer", "stress", "temperature"}, error))
+    {
+      return false;
+    }
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Behavior", settings.behavior);
-    field(table, "C 0", settings.c0);
-    field(table, "P 0", settings.p0);
-    field(table, "Slope", settings.slope);
-    field(table, "Sigma", settings.sigma);
-    field(table, "Linear c 0", settings.linearC0);
-    field(table, "Tied slope", settings.tiedSlope);
+    if (!physicalField(table, "C 0", jsonValue(settings.c0), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "P 0", jsonValue(settings.p0), "stress", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Slope", jsonValue(settings.slope), "force_per_volume", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Sigma", jsonValue(settings.sigma), "stress", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Linear c 0", jsonValue(settings.linearC0), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Tied slope", jsonValue(settings.tiedSlope), "force_per_volume", error))
+    {
+      return false;
+    }
     field(table, "Conversion", settings.conversion);
     field(table, "Weight", settings.weight);
-    field(table, "Velocity", settings.velocity);
+    if (!physicalField(table, "Velocity", jsonValue(settings.velocity), "velocity", error))
+    {
+      return false;
+    }
     field(table, "Mu", settings.mu);
-    field(table, "Lambda value", settings.lambdaValue);
+    if (!physicalField(table, "Lambda value", jsonValue(settings.lambdaValue), "force_per_volume", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.model.interactions"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : interactions.get_contactpairs_tree_data()) {
     ContactPairsSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Contact Pairs / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Surface interaction", settings.surfaceInteraction);
     field(table, "Contact type", settings.contactType);
     field(table, "Master", settings.master);
     field(table, "Slave", settings.slave);
-    field(table, "Adjust", settings.adjust);
+    if (!physicalField(table, "Adjust", jsonValue(settings.adjust), "length", error))
+    {
+      return false;
+    }
     field(table, "Adjust nodeset", settings.adjustNodeset);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.model.interactions"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : amplitudes.get_amplitudes_tree_data()) {
     AmplitudesSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Amplitudes / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
-    field(table, "Points", settings.points);
+    table.columns = {"Property", "Value", "Unit"};
+    if (!physicalRows(table, "Points", settings.points, {settings.axis, "dimensionless"}, error))
+    {
+      return false;
+    }
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Axis", settings.axis);
-    field(table, "Shift x", settings.shiftX);
+    if (!physicalField(table, "Shift x", jsonValue(settings.shiftX), settings.axis, error))
+    {
+      return false;
+    }
     field(table, "Shift y", settings.shiftY);
     field(table, "Total time", settings.totalTime);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : bcs.get_bcsdisplacements_tree_data()) {
     BCsDisplacementsSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "B Cs Displacements / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Nodeset", settings.nodeset);
-    field(table, "Component 1", settings.component1);
-    field(table, "Component 2", settings.component2);
-    field(table, "Component 3", settings.component3);
-    field(table, "Component 4", settings.component4);
-    field(table, "Component 5", settings.component5);
-    field(table, "Component 6", settings.component6);
+    if (!physicalField(table, "Translation X", jsonValue(settings.component1), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Translation Y", jsonValue(settings.component2), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Translation Z", jsonValue(settings.component3), "length", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Rotation X", jsonValue(settings.component4), "angle", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Rotation Y", jsonValue(settings.component5), "angle", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Rotation Z", jsonValue(settings.component6), "angle", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : bcs.get_bcstemperatures_tree_data()) {
     BCsTemperaturesSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "B Cs Temperatures / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Nodeset", settings.nodeset);
-    field(table, "Magnitude", settings.magnitude);
+    if (!physicalField(table, "Magnitude", jsonValue(settings.magnitude), "temperature", error))
+    {
+      return false;
+    }
     field(table, "Keyword", settings.keyword);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : steps.get_initialconditions_tree_data()) {
     InitialConditionsSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Initial Conditions / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
-    field(table, "Block stress", settings.blockStress);
-    field(table, "Element stress", settings.elementStress);
+    table.columns = {"Property", "Value", "Unit"};
+    if (!physicalRows(table, "Block stress", settings.blockStress, {"", "stress", "stress", "stress", "stress", "stress", "stress"}, error))
+    {
+      return false;
+    }
+    if (!physicalRows(table, "Element stress", settings.elementStress, {"", "", "stress", "stress", "stress", "stress", "stress", "stress"}, error))
+    {
+      return false;
+    }
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Bc id", settings.bcId);
     field(table, "Condition type", settings.conditionType);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.model.initial_conditions"].tables.push_back(std::move(table));
   }
 
@@ -328,12 +666,16 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     }
     ReportTable table;
     table.title = "Field Outputs / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Parameters", settings.parameters);
     field(table, "Enabled keys", settings.enabledKeys);
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.steps"].tables.push_back(std::move(table));
   }
 
@@ -344,127 +686,207 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     }
     ReportTable table;
     table.title = "History Outputs / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Parameters", settings.parameters);
     field(table, "Enabled keys", settings.enabledKeys);
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.steps"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : loads.get_loadsforces_tree_data()) {
     LoadsForcesSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Loads Forces / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Nodeset", settings.nodeset);
-    field(table, "Component 1", settings.component1);
-    field(table, "Component 2", settings.component2);
-    field(table, "Component 3", settings.component3);
-    field(table, "Component 4", settings.component4);
-    field(table, "Component 5", settings.component5);
-    field(table, "Component 6", settings.component6);
+    if (!physicalField(table, "Force X", jsonValue(settings.component1), "force", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Force Y", jsonValue(settings.component2), "force", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Force Z", jsonValue(settings.component3), "force", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Moment X", jsonValue(settings.component4), "moment", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Moment Y", jsonValue(settings.component5), "moment", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Moment Z", jsonValue(settings.component6), "moment", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : loads.get_loadspressures_tree_data()) {
     LoadsPressuresSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Loads Pressures / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Sideset", settings.sideset);
-    field(table, "Magnitude", settings.magnitude);
+    if (!physicalField(table, "Magnitude", jsonValue(settings.magnitude), "pressure", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : loads.get_loadsheatfluxes_tree_data()) {
     LoadsHeatfluxesSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Loads Heatfluxes / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Sideset", settings.sideset);
-    field(table, "Magnitude", settings.magnitude);
+    if (!physicalField(table, "Magnitude", jsonValue(settings.magnitude), "heat_flux", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : loads.get_loadsgravity_tree_data()) {
     LoadsGravitySettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Loads Gravity / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Block", settings.block);
-    field(table, "Magnitude", settings.magnitude);
+    if (!physicalField(table, "Magnitude", jsonValue(settings.magnitude), "acceleration", error))
+    {
+      return false;
+    }
     field(table, "Direction", settings.direction);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : loads.get_loadscentrifugal_tree_data()) {
     LoadsCentrifugalSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Loads Centrifugal / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Block", settings.block);
-    field(table, "Magnitude", settings.magnitude);
-    field(table, "Coordinate", settings.coordinate);
+    if (!physicalField(table, "Magnitude", jsonValue(settings.magnitude), "frequency_squared", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Coordinate", jsonValue(settings.coordinate), "length", error))
+    {
+      return false;
+    }
     field(table, "Direction", settings.direction);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : loads.get_loadstrajectory_tree_data()) {
     LoadsTrajectorySettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Loads Trajectory / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
-    field(table, "Samples", settings.samples);
+    table.columns = {"Property", "Value", "Unit"};
+    std::vector<std::string> sampleQuantities = {"length", "heat_flux"};
+    if (settings.type == 2)
+    {
+      sampleQuantities = {"length", "length", "body_heat_flux"};
+    }
+    if (!physicalRows(table, "Samples", settings.samples, sampleQuantities, error))
+    {
+      return false;
+    }
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
@@ -473,128 +895,216 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     field(table, "Vertex", settings.vertex);
     field(table, "Surfaces", settings.surfaces);
     field(table, "Direction", settings.direction);
-    field(table, "Time begin", settings.timeBegin);
-    field(table, "Time end", settings.timeEnd);
+    if (!physicalField(table, "Time begin", jsonValue(settings.timeBegin), "time", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Time end", jsonValue(settings.timeEnd), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Model change", settings.modelChange);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : loads.get_loadsfilm_tree_data()) {
     LoadsFilmSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Loads Film / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Sideset", settings.sideset);
-    field(table, "Temperature", settings.temperature);
-    field(table, "Coefficient", settings.coefficient);
+    if (!physicalField(table, "Temperature", jsonValue(settings.temperature), "temperature", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Coefficient", jsonValue(settings.coefficient), "heat_transfer", error))
+    {
+      return false;
+    }
     field(table, "Secondary amplitude", settings.secondaryAmplitude);
-    field(table, "Secondary time delay", settings.secondaryTimeDelay);
+    if (!physicalField(table, "Secondary time delay", jsonValue(settings.secondaryTimeDelay), "time", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : loads.get_loadsradiation_tree_data()) {
     LoadsRadiationSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Loads Radiation / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Sideset", settings.sideset);
-    field(table, "Temperature", settings.temperature);
+    if (!physicalField(table, "Temperature", jsonValue(settings.temperature), "temperature", error))
+    {
+      return false;
+    }
     field(table, "Coefficient", settings.coefficient);
     field(table, "Secondary amplitude", settings.secondaryAmplitude);
-    field(table, "Secondary time delay", settings.secondaryTimeDelay);
+    if (!physicalField(table, "Secondary time delay", jsonValue(settings.secondaryTimeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Cavity", settings.cavity);
     field(table, "Cavity radiation", settings.cavityRadiation);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : loads.get_loadssurfacetraction_tree_data()) {
     LoadsSurfaceTractionSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Loads Surface Traction / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
     field(table, "Sideset", settings.sideset);
-    field(table, "Component 1", settings.component1);
-    field(table, "Component 2", settings.component2);
-    field(table, "Component 3", settings.component3);
+    if (!physicalField(table, "Force X", jsonValue(settings.component1), "force", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Force Y", jsonValue(settings.component2), "force", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Force Z", jsonValue(settings.component3), "force", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : loads.get_loadsbodyheatflux_tree_data()) {
     LoadsBodyHeatfluxSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Loads Body Heatflux / " + std::to_string(rowId(row));
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
     field(table, "Amplitude", settings.amplitude);
-    field(table, "Time delay", settings.timeDelay);
+    if (!physicalField(table, "Time delay", jsonValue(settings.timeDelay), "time", error))
+    {
+      return false;
+    }
     field(table, "Operation", settings.operation);
-    field(table, "Magnitude", settings.magnitude);
+    if (!physicalField(table, "Magnitude", jsonValue(settings.magnitude), "body_heat_flux", error))
+    {
+      return false;
+    }
     field(table, "Entity type", settings.entityType);
     field(table, "Ids", settings.ids);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : steps.get_physicalconstants_tree_data()) {
     PhysicalConstantsSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Physical constants";
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
-    field(table, "Absolute zero", settings.absoluteZero);
-    field(table, "Stefan boltzmann", settings.stefanBoltzmann);
-    field(table, "Newton gravity", settings.newtonGravity);
+    if (!physicalField(table, "Absolute zero", jsonValue(settings.absoluteZero), "temperature", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Stefan boltzmann", jsonValue(settings.stefanBoltzmann), "stefan_boltzmann", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Newton gravity", jsonValue(settings.newtonGravity), "newton_gravity", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
   for (const auto& row : steps.get_damping_tree_data()) {
     DampingSettings settings;
-    if (!CalculiXReportDomainSettings::get(rowId(row), settings, error)) {
+    if (!domainSettings.get(rowId(row), settings, error)) {
       return false;
     }
     ReportTable table;
     table.title = "Damping";
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
-    field(table, "Alpha", settings.alpha);
-    field(table, "Beta", settings.beta);
+    if (!physicalField(table, "Alpha", jsonValue(settings.alpha), "inverse_time", error))
+    {
+      return false;
+    }
+    if (!physicalField(table, "Beta", jsonValue(settings.beta), "time", error))
+    {
+      return false;
+    }
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
@@ -605,7 +1115,7 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     }
     ReportTable table;
     table.title = "Custom input lines";
-    table.columns = {"Property", "Value"};
+    table.columns = {"Property", "Value", "Unit"};
     field(table, "Id", settings.id);
     field(table, "Type", settings.type);
     field(table, "Name", settings.name);
@@ -613,6 +1123,10 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     field(table, "Keyword", settings.keyword);
     field(table, "Keyword id", settings.keywordId);
     field(table, "Text", settings.text);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
@@ -622,7 +1136,7 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
   for (int id : steps.get_steps_ids()) {
     ++stepOrdinal;
     StepsSettings settings;
-    if (!CalculiXReportDomainSettings::get(id, settings, error)) {
+    if (!domainSettings.get(id, settings, error)) {
       return false;
     }
     ReportSection step;
@@ -630,10 +1144,29 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     step.title = "Analysis step " + std::to_string(stepOrdinal) + " (ID " + std::to_string(id) + "): " + settings.name;
     ReportTable parameters;
     parameters.title = "Procedure and parameters";
-    parameters.columns = {"Property", "Value"};
+    parameters.columns = {"Property", "Value", "Unit"};
     field(parameters, "type", settings.type);
-    field(parameters, "procedure", settings.procedure);
+    const auto quantities = CalculiXDomainUnits::procedure_quantities(settings.type, settings.procedure);
+    for (std::size_t index = 0; index < settings.procedure.size(); ++index)
+    {
+      const auto label = "Procedure parameter " + std::to_string(index);
+      if (!quantities[index].empty())
+      {
+        if (!physicalField(parameters, label + " (" + quantities[index] + ")", jsonValue(settings.procedure[index]), quantities[index], error))
+        {
+          return false;
+        }
+      }
+      else
+      {
+        field(parameters, label.c_str(), settings.procedure[index]);
+      }
+    }
     field(parameters, "parameters", settings.parameters);
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", ++processedTables, 0, error))
+    {
+      return false;
+    }
     step.tables.push_back(std::move(parameters));
     {
       ReportSection assigned;

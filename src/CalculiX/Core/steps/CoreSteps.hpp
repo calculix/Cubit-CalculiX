@@ -15,6 +15,8 @@ class CoreSteps
 public:
   bool domain_unit_view = false;
   bool get_settings(int id, StepsSettings& settings, std::string& error) const;
+  // Quantity of the emitted result abscissa; empty means not established.
+  bool get_step_axis_quantity(int id, std::string& quantity, std::string& error) const;
   void remove_bc_references(int bc_type, int bc_id);
   void remove_load_references(int load_type, int load_id);
   bool check_step_exists(int step_id);

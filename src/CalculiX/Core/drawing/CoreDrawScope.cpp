@@ -22,6 +22,7 @@
 #include "Core/loads/CoreLoadsSurfaceTraction.hpp"
 #include "Core/loads/CoreLoadsGravity.hpp"
 #include "Core/loads/CoreLoadsCentrifugal.hpp"
+#include "Core/units/CalculiXUnitsInterface.hpp"
 #include "Core/loads/CoreLoadsFilm.hpp"
 #include "Core/loads/CoreLoadsRadiation.hpp"
 #include "Core/loads/CoreLoadsBodyHeatflux.hpp"
@@ -681,7 +682,28 @@ bool CoreDrawScope::resolveStep(CalculiXCore& core, int stepId, double size, Res
           continue;
         }
         LoadsCentrifugalSettings data;
-        if (!core.loadscentrifugal->get_settings(id, data, error) || !body(core, conditions, DrawFeature::Centrifugal, data.id, mesh.get_block_element_ids(std::stoi(data.block)), data.operation == "new", std::stod(data.magnitude), numbers(data.direction), numbers(data.coordinate), ordinal, error))
+        if (!core.loadscentrifugal->get_settings(id, data, error))
+        {
+          return false;
+        }
+        auto origin = numbers(data.coordinate);
+        if (origin.size() != 3)
+        {
+          error = "Invalid centrifugal origin.";
+          return false;
+        }
+        CalculiXUnitsInterface units;
+        for (double& coordinate : origin)
+        {
+          double canonical = 0.0;
+          if (!units.input_value(coordinate, "length", "", canonical, error) ||
+              !framework_units().from_si(canonical, framework_units().geometry_unit(),
+                SimUnits::Length, SimUnits::UnitRole::Linear, coordinate, error))
+          {
+            return false;
+          }
+        }
+        if (!body(core, conditions, DrawFeature::Centrifugal, data.id, mesh.get_block_element_ids(std::stoi(data.block)), data.operation == "new", std::stod(data.magnitude), numbers(data.direction), origin, ordinal, error))
         {
           return false;
         }

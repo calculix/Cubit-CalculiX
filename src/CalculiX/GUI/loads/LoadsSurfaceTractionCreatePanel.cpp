@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsSurfaceTractionCreatePanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -107,6 +108,12 @@ LoadsSurfaceTractionCreatePanel::LoadsSurfaceTractionCreatePanel(QWidget *parent
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_3, *lineEdit_3, label_3->text(), "force");
+  unitPresentation->bind(*label_4, *lineEdit_4, label_4->text(), "force");
+  unitPresentation->bind(*label_5, *lineEdit_5, label_5->text(), "force");
+  unitPresentation->bind(*label_8, *lineEdit_8, label_8->text(), "time");
 
   isInitialized = true;
   

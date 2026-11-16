@@ -342,3 +342,29 @@ changed subsets/IP keys, cache eviction, cached versus low-budget fallbacks,
 point/cell invalidity, direct/parallel execution, worker failures and cancellation.
 These native tests require the user's build and were not compiled or run as part
 of this change.
+
+
+Surface helper element sets
+---------------------------
+
+The CalculiX exporter writes ``** CUBIT_SIM_SURFACE_HELPER_ELSET`` immediately
+before each generated face-support ``*ELSET``. The INP reader consumes this
+comment for the next keyword in the same file. Blank lines and ordinary comments
+are allowed before that keyword; an intervening data record clears the marker.
+The marker does not propagate into or out of an ``*INCLUDE``.
+
+Marked helper sets are resolved and validated normally, and remain available for
+surface expansion and references from other element sets. They are omitted only
+when publishing standalone block groups. Any ordinary ``*ELSET`` declaration or
+implicit ``*ELEMENT, ELSET=...`` declaration of the same case-insensitive name
+preserves the standalone group, regardless of declaration order. No element set
+is classified from its name or merely because a surface references it.
+
+Existing unmarked INPs retain their original groups. To remove previously
+published helper blocks, export a new INP with markers and reconvert the result
+source. Already converted VTK datasets are not rewritten automatically.
+
+``CUBITSIM_INP_SURFACE_HELPER_TESTS`` enables native reader regression cases for
+classification, aliases, forward references, includes, continued headers, mixed
+declarations, and validation of helpers that are omitted from published groups.
+The option defaults to OFF.

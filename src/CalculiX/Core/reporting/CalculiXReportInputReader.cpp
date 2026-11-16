@@ -1,4 +1,5 @@
 #include "CalculiXReportInputReader.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "CalculiX/Core/jobs/CalculiXJobInputBundle.hpp"
 #include <utility>
 #include <QCryptographicHash>
@@ -12,22 +13,22 @@
 
 CalculiXReportInputReader::CalculiXReportInputReader() = default;
 
-bool CalculiXReportInputReader::read(const ReportSource& source, std::string& error)
+bool CalculiXReportInputReader::read(const ReportSource& source, std::string& error, ReportProgress* progress)
 {
-  return read_input(source, nullptr, error);
+  return read_input(source, nullptr, error, progress);
 }
 
-bool CalculiXReportInputReader::read_archive(const ReportSource& source, const CalculiXJobInputBundle& archive, std::string& error)
+bool CalculiXReportInputReader::read_archive(const ReportSource& source, const CalculiXJobInputBundle& archive, std::string& error, ReportProgress* progress)
 {
   if (source.input_files.empty() || source.input_files.front() != archive.rootFile)
   {
     error = "Report source does not match the archived root input.";
     return false;
   }
-  return read_input(source, &archive, error);
+  return read_input(source, &archive, error, progress);
 }
 
-bool CalculiXReportInputReader::read_input(const ReportSource& source, const CalculiXJobInputBundle* archive, std::string& error)
+bool CalculiXReportInputReader::read_input(const ReportSource& source, const CalculiXJobInputBundle* archive, std::string& error, ReportProgress* progress)
 {
   if (source.input_files.empty())
   {
@@ -52,6 +53,10 @@ bool CalculiXReportInputReader::read_input(const ReportSource& source, const Cal
     if (path.isEmpty() || depth > 32 || stack.count(path) != 0)
     {
       error = "Cannot read report input or cyclic INCLUDE: " + path.toStdString();
+      return false;
+    }
+    if (!ReportProgress::advance(progress, ReportProgressStage::Model, "Reading report input bytes: " + QFileInfo(path).fileName().toStdString(), 0, 0, error))
+    {
       return false;
     }
     QByteArray bytes;
@@ -107,9 +112,20 @@ bool CalculiXReportInputReader::read_input(const ReportSource& source, const Cal
       data = QJsonArray();
     };
     int lineNumber = 0;
-    for (QString line : QString::fromUtf8(bytes).split('\n'))
+    const auto lines = QString::fromUtf8(bytes).split('\n');
+    const auto stage = "Reading report input: " + QFileInfo(path).fileName().toStdString();
+    if (!ReportProgress::advance(progress, ReportProgressStage::Model, stage, 0, static_cast<std::size_t>(lines.size()), error))
+    {
+      return false;
+    }
+    for (QString line : lines)
     {
       ++lineNumber;
+      if (lineNumber % 4096 == 0 && !ReportProgress::advance(progress, ReportProgressStage::Model, stage,
+          static_cast<std::size_t>(lineNumber), static_cast<std::size_t>(lines.size()), error))
+      {
+        return false;
+      }
       line = line.trimmed();
       if (line.startsWith("**** STEP", Qt::CaseInsensitive))
       {
@@ -118,6 +134,28 @@ bool CalculiXReportInputReader::read_input(const ReportSource& source, const Cal
         {
           stepName = line.mid(index + 5).trimmed();
         }
+      }
+      const QString unitPrefix = "** CUBIT_SIM_UNIT_SYSTEM=";
+      if (line.startsWith(unitPrefix))
+      {
+        const auto system = line.mid(unitPrefix.size()).trimmed().toStdString();
+        SimUnits::QuantityUnit length, time;
+        if (system.empty() || !framework_units().system_unit(system, "length", length, error) ||
+            !framework_units().system_unit(system, "time", time, error))
+        {
+          error = "Invalid unit declaration in report input: " + error;
+          return false;
+        }
+        if (resolved.source_units && resolved.source_units->system != system)
+        {
+          error = "Conflicting unit declarations in report input or its archived provenance.";
+          return false;
+        }
+        ReportSourceUnits units;
+        units.system = system;
+        units.coordinate_unit = length.unit;
+        units.time_unit = time.unit;
+        resolved.source_units = std::move(units);
       }
       if (line.isEmpty() || line.startsWith("**"))
       {
@@ -186,6 +224,11 @@ bool CalculiXReportInputReader::read_input(const ReportSource& source, const Cal
       }
     }
     flush();
+    if (!ReportProgress::advance(progress, ReportProgressStage::Model, stage, static_cast<std::size_t>(lines.size()),
+        static_cast<std::size_t>(lines.size()), error))
+    {
+      return false;
+    }
     stack.erase(path);
     return true;
   };

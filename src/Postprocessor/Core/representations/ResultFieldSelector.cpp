@@ -37,6 +37,7 @@ namespace Postprocessor
       return field.association != SimResults::Association::Table &&
         (!selector.qualifiers.origin || *selector.qualifiers.origin == field.source) &&
         (!selector.qualifiers.association || *selector.qualifiers.association == field.association) &&
+        (!selector.qualifiers.set_name || *selector.qualifiers.set_name == field.set_name) &&
         (!dataset || std::find(group.datasets.begin(),group.datasets.end(),*dataset) != group.datasets.end()) &&
         (!magnitude || field.vector_components.has_value()) && (!vectorOnly || deformation_vector(field)) &&
         (magnitude || component.empty() || std::find(field.components.begin(),field.components.end(),component) != field.components.end());
@@ -71,7 +72,7 @@ namespace Postprocessor
     error.clear();
     if (selector.name.empty())
     {
-      error = "Provide a result field name before origin/association qualifiers.";
+      error = "Provide a result field name before origin/association/set qualifiers.";
       return false;
     }
     const bool exact = std::any_of(groups.begin(),groups.end(),[&](const auto& group)
@@ -115,7 +116,7 @@ namespace Postprocessor
       if (identities.empty()) {
         error = "No spatial field matches the name, dataset, component and qualifiers.";
       } else {
-        error = "Ambiguous result field. Specify origin, association or dataset. Candidates: " + candidates;
+        error = "Ambiguous result field. Specify origin, association, set or dataset. Candidates: " + candidates;
       }
       return false;
     }
@@ -144,7 +145,7 @@ namespace Postprocessor
       error = "This field has no readable name for a journal command.";
       return false;
     }
-    for (int qualifiers = 0; qualifiers < 4; ++qualifiers)
+    for (int qualifiers = 0; qualifiers < 8; ++qualifiers)
     {
       candidate.qualifiers = {};
       if ((qualifiers & 1) && !selected.field.source.empty())
@@ -154,6 +155,10 @@ namespace Postprocessor
       if (qualifiers & 2)
       {
         candidate.qualifiers.association = selected.field.association;
+      }
+      if ((qualifiers & 4) && !selected.field.set_name.empty())
+      {
+        candidate.qualifiers.set_name = selected.field.set_name;
       }
       ResultFieldGroup resolved;
       std::string ignored;
@@ -165,7 +170,7 @@ namespace Postprocessor
         return true;
       }
     }
-    error = "The field cannot be uniquely journaled by name, origin and association; specify a dataset. " + describe(selected);
+    error = "The field cannot be uniquely journaled by name, origin, association and set; specify a dataset. " + describe(selected);
     return false;
   }
 }

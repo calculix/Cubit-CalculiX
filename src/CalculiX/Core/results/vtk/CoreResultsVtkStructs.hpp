@@ -6,6 +6,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <map>
 
 struct CoreResultsVtkOptions
 {
@@ -149,6 +150,7 @@ struct CoreResultsVtkPlan
   std::string result_identity;
   std::string solver_launch_id;
   SimUnits::SourceUnitContext source_units;
+  std::map<int, std::string> step_axis_quantities;
   std::string source_workspace;
   std::string source_project;
   CoreResultsVtkOptions options;

@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsTrajectoryHeatfluxCreatePanel.hpp"
 #include <string>
 #include <vector>
@@ -89,6 +90,7 @@ LoadsTrajectoryHeatfluxCreatePanel::LoadsTrajectoryHeatfluxCreatePanel(QWidget *
   widget_10 =  new PanelTable(nullptr);
   matrix.clear();
   widget_10->update({"Ray Radius","Magnitude"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   widget_10->panel_type = "trajectory";
   widget_10->setMinimumSize(200,160);
   
@@ -142,6 +144,12 @@ LoadsTrajectoryHeatfluxCreatePanel::LoadsTrajectoryHeatfluxCreatePanel(QWidget *
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
 
   widget_10->show();
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_7, *lineEdit_7, label_7->text(), "time");
+  unitPresentation->bind(*label_8, *lineEdit_8, label_8->text(), "time");
+  unitPresentation->bind_table(*widget_10, 0, "length");
+  unitPresentation->bind_table(*widget_10, 1, "heat_flux");
 
   isInitialized = true;
 }
@@ -209,6 +217,7 @@ void LoadsTrajectoryHeatfluxCreatePanel::on_pushButton_apply_clicked(bool)
     comboBox_9->setCurrentIndex(0);
     matrix.clear();
     widget_10->update({"Ray Radius","Magnitude"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   }
   
   for (size_t i = 0; i < commands.size(); i++)

@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
 #include "PhysicalConstantsModifyPanel.hpp"
@@ -62,6 +63,11 @@ PhysicalConstantsModifyPanel::PhysicalConstantsModifyPanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_0, *lineEdit_0, label_0->text(), "temperature");
+  unitPresentation->bind(*label_1, *lineEdit_1, label_1->text(), "stefan_boltzmann");
+  unitPresentation->bind(*label_2, *lineEdit_2, label_2->text(), "newton_gravity");
 
   isInitialized = true;
 }
@@ -152,6 +158,7 @@ bool PhysicalConstantsModifyPanel::setPhysicalConstants(int id)
   lineEdit_2->setText(QString::fromStdString(settings.newtonGravity));
   originalValues.insert("lineEdit_2", lineEdit_2->text());
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

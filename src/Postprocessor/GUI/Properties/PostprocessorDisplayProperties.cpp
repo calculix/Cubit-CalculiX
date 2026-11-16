@@ -1,3 +1,4 @@
+#include "Framework/Results/ResultsUnits.hpp"
 #include <type_traits>
 #include "PostprocessorDisplayProperties.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -75,8 +76,9 @@ PostprocessorDisplayProperties::PostprocessorDisplayProperties(
   view = new QLabel(information);
   field = new QLabel(information);
   component = new QLabel(information);
+  unitLabel = new QLabel(information);
   field->setObjectName("Postprocessor.Display.Field");
-  for (auto* label : {view,field,component})
+  for (auto* label : {view,field,component,unitLabel})
   {
     label->setTextFormat(Qt::PlainText);
     label->setWordWrap(true);
@@ -85,6 +87,7 @@ PostprocessorDisplayProperties::PostprocessorDisplayProperties(
   informationForm->addRow(tr("View"),view);
   informationForm->addRow(tr("Field"),field);
   informationForm->addRow(tr("Component"),component);
+  informationForm->addRow(tr("Unit"),unitLabel);
   layout->addWidget(information);
 
   auto* colors = new QGroupBox(tr("Colors"),this);
@@ -145,6 +148,8 @@ PostprocessorDisplayProperties::PostprocessorDisplayProperties(
   rangeForm->addRow(tr("Fixed minimum"),rangeMinimum);
   rangeForm->addRow(tr("Fixed maximum"),rangeMaximum);
   layout->addWidget(rangeGroup);
+  layout->removeWidget(colors);
+  layout->addWidget(colors);
 
   auto* limitGroup = new QGroupBox(tr("Limits"),this);
   auto* limitForm = new QFormLayout(limitGroup);
@@ -266,6 +271,7 @@ void PostprocessorDisplayProperties::refresh()
     view->clear();
     field->clear();
     component->clear();
+    unitLabel->clear();
     errorMessage->clear();
     setEnabled(false);
     return;
@@ -282,6 +288,7 @@ void PostprocessorDisplayProperties::refresh()
   view->setText(QString::fromUtf8(current.view_name.c_str()));
   field->setText(tr("Solid color"));
   component->clear();
+  unitLabel->clear();
   if (current.coloring.field)
   {
     const auto& selection = *current.coloring.field;
@@ -292,6 +299,23 @@ void PostprocessorDisplayProperties::refresh()
         return nullptr;
       }
     }();
+    std::string units = "unknown unit";
+    if (metadata)
+    {
+      double ignored = 0;
+      std::string issue;
+      SimResults::ResultsUnits::field_value(0,*metadata,selection.component,selection.magnitude,
+        "postprocessor",ignored,units,issue);
+    }
+    else if (current.coloring.bounds_unit && !current.coloring.bounds_unit->unit.empty())
+    {
+      units = current.coloring.bounds_unit->unit;
+    }
+    unitLabel->setText(QString::fromStdString(units));
+    for (auto* input : {rangeMinimum,rangeMaximum,minimumValue,maximumValue})
+    {
+      input->setToolTip(tr("Value in %1").arg(QString::fromStdString(units)));
+    }
     std::string label;
     if (metadata) {
       label = metadata->name;

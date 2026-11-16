@@ -1,3 +1,4 @@
+#include "PlotAxisUnits.hpp"
 #include "PlotData.hpp"
 #include "Framework/Results/ResultsUnits.hpp"
 #include <utility>
@@ -19,14 +20,21 @@ namespace
 namespace Postprocessor
 {
   bool plot_table_data(std::shared_ptr<const SimResults::VtkResultsData> data, const PlotTableReference& reference,
-    PlotCurveData& output, std::string& error) {
+    PlotCurveData& output, std::string& error, const SimUnits::WorkspaceUnitContext* presentation) {
     error.clear();
+    output.x_quantity = SimUnits::QuantityUnit();
+    output.y_quantity = SimUnits::QuantityUnit();
+    output.x_unit.clear();
+    output.y_unit.clear();
+    output.time_unit.clear();
+    output.x_scope = reference.source_id+"/"+reference.key+"/"+reference.x;
+    output.y_scope = reference.source_id+"/"+reference.key+"/"+reference.y;
     output.samples.clear();
     output.status.clear();
     output.x_title.clear();
     output.y_title.clear();
     output.time_axis = output.frame_axis = false;
-    const auto table = result_table_data(data,TableReference{reference.source_id,reference.key,reference.field,0});
+    const auto table = result_table_data(data,TableReference{reference.source_id,reference.key,reference.field,0},presentation);
     if (!table.status.empty()) {
       output.status = table.status;
       return true;
@@ -67,6 +75,22 @@ namespace Postprocessor
     output.y_title = reference.y;
     output.x_unit = result_table_column_unit(table, *x);
     output.y_unit = result_table_column_unit(table, *y);
+    if (*x < table.column_units.size())
+    {
+      output.x_quantity = table.column_units[*x];
+      if (!output.x_quantity.unit.empty())
+      {
+        output.x_quantity.unit = output.x_unit;
+      }
+    }
+    if (*y < table.column_units.size())
+    {
+      output.y_quantity = table.column_units[*y];
+      if (!output.y_quantity.unit.empty())
+      {
+        output.y_quantity.unit = output.y_unit;
+      }
+    }
     output.x_title += " [" + output.x_unit + "]";
     output.y_title += " [" + output.y_unit + "]";
     output.time_axis = reference.x == "Time";
@@ -108,7 +132,7 @@ namespace Postprocessor
       if (sample.frame && *sample.frame < data->increments.size()) {
         const auto& frame = data->increments[*sample.frame];
         sample.time = frame.time;
-        if (!SimResults::ResultsUnits::display_value(frame.time, frame.independent_variable, "postprocessor", sample.time, output.time_unit, error)) {
+        if (!SimResults::ResultsUnits::display_value(frame.time, frame.independent_variable, "postprocessor", sample.time, output.time_unit, error, presentation)) {
           return false;
         }
         sample.step = frame.step;

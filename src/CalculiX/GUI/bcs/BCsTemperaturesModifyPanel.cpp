@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/bcs/CalculiXBCsInterface.hpp"
 #include "BCsTemperaturesModifyPanel.hpp"
@@ -123,6 +124,10 @@ BCsTemperaturesModifyPanel::BCsTemperaturesModifyPanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this, SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_3, *lineEdit_3, label_3->text(), "temperature");
+  unitPresentation->bind(*label_6, *lineEdit_6, label_6->text(), "time");
 
   isInitialized = true;
 }
@@ -304,6 +309,7 @@ bool BCsTemperaturesModifyPanel::setTemperature(int id)
   originalValues.insert("comboBox_7", comboBox_7->currentText());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

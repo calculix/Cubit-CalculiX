@@ -262,6 +262,12 @@ bool writeRecord(HDF5Tool& file, const std::string& path, const CalculiXJobRunRe
   metadata["material_project"] = QString::fromStdString(record.materialProjectId);
   metadata["material_ids"] = materialIds;
   metadata["unit_system"] = QString::fromStdString(record.unitSystem);
+  QJsonObject axes;
+  for (const auto& axis : record.step_axis_quantities)
+  {
+    axes.insert(QString::number(axis.first), QString::fromStdString(axis.second));
+  }
+  metadata["step_axes"] = axes;
   metadata["geometry_length_unit"] = QString::fromStdString(record.geometryLengthUnit);
   if (record.setup) {
     const auto& setup = *record.setup;
@@ -300,6 +306,26 @@ bool readRecord(HDF5Tool& file, const std::string& path, CalculiXJobRunRecord& r
     record.materialIds.emplace(material.key().toStdString(), id);
   }
   record.unitSystem = metadata.value("unit_system").toString().toStdString();
+  record.step_axis_quantities.clear();
+  if (metadata.contains("step_axes") && !metadata.value("step_axes").isObject())
+  {
+    error = "Invalid saved solver-step axis object.";
+    return false;
+  }
+  const auto axes = metadata.value("step_axes").toObject();
+  for (auto axis = axes.begin(); axis != axes.end(); ++axis)
+  {
+    bool valid = false;
+    const int step = axis.key().toInt(&valid);
+    const std::string quantity = axis.value().toString().toStdString();
+    if (!valid || step <= 0 || !axis.value().isString() ||
+        (quantity != "time" && quantity != "frequency") ||
+        !record.step_axis_quantities.emplace(step, quantity).second)
+    {
+      error = "Invalid saved solver-step axis provenance.";
+      return false;
+    }
+  }
   record.geometryLengthUnit = metadata.value("geometry_length_unit").toString().toStdString();
   const auto files = metadata.value("files").toArray();
   if (files.size() > 4096) {
@@ -371,7 +397,7 @@ bool CoreJobRunPersistence::read(HDF5Tool& file, std::map<int, std::shared_ptr<c
     }
     QJsonObject metadata;
     int version = 0;
-    if (!readJson(file, Root, metadata) || !ReportJson::integer(metadata, "version", version, error) || version != 2 || !metadata.value("jobs").isArray()) {
+    if (!readJson(file, Root, metadata) || !ReportJson::integer(metadata, "version", version, error) || version != 3 || !metadata.value("jobs").isArray()) {
       error = "Invalid job run archive schema.";
       return false;
     }
@@ -432,7 +458,7 @@ bool CoreJobRunPersistence::write(HDF5Tool& file, const std::map<int, std::share
         return false;
       }
     }
-    if (!writeJson(file, pending, {{"version", 2}, {"jobs", jobs}})) {
+    if (!writeJson(file, pending, {{"version", 3}, {"jobs", jobs}})) {
       error = "Cannot write run archive manifest.";
       return false;
     }

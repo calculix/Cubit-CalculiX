@@ -1,4 +1,5 @@
 #include "PlotCodec.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include <utility>
 #include <QJsonObject>
 #include <charconv>
@@ -41,6 +42,68 @@ namespace
     const auto text = value.toString().toStdString();
     const auto parsed = std::from_chars(text.data(),text.data()+text.size(),output);
     return parsed.ec == std::errc{} && parsed.ptr == text.data()+text.size() && output >= 0;
+  }
+  QJsonValue unit_json(const std::optional<SimUnits::QuantityUnit>& unit,const std::string& scope,bool frame)
+  {
+    if (!unit)
+    {
+      return QJsonValue(QJsonValue::Null);
+    }
+    QJsonArray dimension;
+    for (const auto value : unit->dimension)
+    {
+      dimension.append(value);
+    }
+    return QJsonObject{{"quantity",q(unit->quantity)},{"unit",q(unit->unit)},{"dimension",dimension},
+      {"role",static_cast<int>(unit->role)},{"scope",q(scope)},{"frame",frame}};
+  }
+  bool unit_read(const QJsonValue& value,std::optional<SimUnits::QuantityUnit>& unit,std::string& scope,bool& frame)
+  {
+    if (value.isUndefined() || value.isNull())
+    {
+      return true;
+    }
+    if (!value.isObject())
+    {
+      return false;
+    }
+    const auto object = value.toObject();
+    SimUnits::QuantityUnit descriptor;
+    int role = 0;
+    const auto dimension = object.value("dimension").toArray();
+    if (!text(object,"quantity",descriptor.quantity) || !text(object,"unit",descriptor.unit) ||
+        !text(object,"scope",scope) || !object.value("frame").isBool() || !integer(object,"role",0,3,role) ||
+        !object.value("dimension").isArray() || dimension.size() != 7 || scope.size() > 65536 ||
+        descriptor.quantity.size() > 256 || descriptor.unit.size() > 256)
+    {
+      return false;
+    }
+    descriptor.role = static_cast<SimUnits::UnitRole>(role);
+    frame = object.value("frame").toBool();
+    for (int i = 0; i < 7; ++i)
+    {
+      if (!dimension[i].isDouble() || !std::isfinite(dimension[i].toDouble()))
+      {
+        return false;
+      }
+      descriptor.dimension[i] = dimension[i].toDouble();
+    }
+    std::string error;
+    double ignored = 0;
+    if (!descriptor.unit.empty() && !framework_units().to_si(0,descriptor.unit,descriptor.dimension,descriptor.role,ignored,error))
+    {
+      return false;
+    }
+    if (!descriptor.quantity.empty())
+    {
+      SimUnits::QuantityUnit expected;
+      if (!framework_units().quantity(descriptor.quantity,expected,error) || expected.dimension != descriptor.dimension || expected.role != descriptor.role)
+      {
+        return false;
+      }
+    }
+    unit = std::move(descriptor);
+    return true;
   }
   QJsonValue range_json(const std::optional<std::array<double,2>>& range)
   {
@@ -104,7 +167,8 @@ namespace Postprocessor
         curves.append(item);
       }
       output.append(QJsonObject{{"id",q(plot.id)},{"name",q(plot.name)},{"x",range_json(plot.axes.x)},
-        {"y",range_json(plot.axes.y)},{"curves",curves}});
+        {"y",range_json(plot.axes.y)},{"x_basis",unit_json(plot.axes.x_unit,plot.axes.x_scope,plot.axes.x_frame_axis)},
+        {"y_basis",unit_json(plot.axes.y_unit,plot.axes.y_scope,false)},{"curves",curves}});
     }
     return output;
   }
@@ -133,6 +197,12 @@ namespace Postprocessor
           !valid_plot_name(plot.name) || !names.insert(plot.name).second ||
           !range_read(object.value("x"),plot.axes.x) || !range_read(object.value("y"),plot.axes.y) || !valid_plot_axes(plot.axes) ||
           !object.value("curves").isArray() || object.value("curves").toArray().size() > PlotDefaults::maximum_curves)
+      {
+        return false;
+      }
+      bool yFrame = false;
+      if (!unit_read(object.value("x_basis"),plot.axes.x_unit,plot.axes.x_scope,plot.axes.x_frame_axis) ||
+          !unit_read(object.value("y_basis"),plot.axes.y_unit,plot.axes.y_scope,yFrame) || yFrame)
       {
         return false;
       }

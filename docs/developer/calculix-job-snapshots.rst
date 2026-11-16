@@ -18,7 +18,12 @@ submits a graphics frame or dispatches another command.
 ``CoreJobSnapshotBuilder`` reads the emitted node/connectivity records and freezes
 prepared step scenes. Unexported live mesh is not used as the job mesh. High-order
 faces use corner polygons, matching normal captures. Symbol size is 10% of the
-largest exported mesh extent in world coordinates. Emitted step count must match
+largest exported mesh extent in recorded Cubit geometry units. The node parser
+converts from the run's recorded solver system into its recorded geometry length
+unit. Mesh, condition geometry, label anchors, symbol size and camera therefore
+share a coordinate basis even when geometry and solver units differ. Scaling is
+performed while reading coordinates and retains no additional mesh copy.
+Emitted step count must match
 the frozen model/export order.
 
 Before launch, Jobs archives the final root input and supported INCLUDE closure
@@ -54,7 +59,7 @@ have a model overview but no verified combined setup image.
 Persistence
 ------------
 
-Archive schema 2 is stored at
+Archive schema 3 is stored at
 ``CalculiXModelSchema::path("Jobs/RunSnapshots")`` in project HDF5 data. Each job
 has launch metadata, exact input-byte datasets, a dependency manifest, one model
 mesh and per-step geometry and label metadata. The mesh palette contains native

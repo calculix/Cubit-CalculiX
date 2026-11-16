@@ -6,6 +6,7 @@ namespace Postprocessor
   {
     std::optional<std::string> origin;
     std::optional<SimResults::Association> association;
+    std::optional<std::string> set_name;
   };
   struct ResultFieldSelector
   {

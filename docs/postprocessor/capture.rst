@@ -75,3 +75,16 @@ labels/triad/legend/marker placement, unavailable graphics backends and Report
 PDF/ODT image export on both Windows and Linux. No build was run for this patch.
 SVG and PDF chart export remain deferred; PNG figures can be embedded in Report
 PDF/ODT exports.
+
+Presentation unit provenance
+----------------------------
+
+Snapshot evaluation uses a captured presentation-unit context rather than live
+workspace preferences. Manifest version 2 includes this context and each saved
+representation's bounds-unit metadata. See :doc:`units`. Saved PNG assets remain
+unchanged when workspace units are later edited.
+
+Viewport captures include the enabled distance ruler using the snapshot's scene
+unit and presentation context. View IDs, scene units and ruler visibility are
+recorded in capture provenance. Perspective scale is explicitly local to the
+camera focal plane.

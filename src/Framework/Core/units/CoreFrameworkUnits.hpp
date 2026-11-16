@@ -30,6 +30,7 @@ public:
   bool quantity(const std::string& id, QuantityUnit& output, std::string& error) const;
   bool system_unit(const std::string& system, const std::string& quantity, QuantityUnit& output, std::string& error) const;
   bool workspace_context(const std::string& workspace, WorkspaceUnitContext& output, std::string& error) const;
+  bool validate_workspace_context(const WorkspaceUnitContext& context, std::string& error) const;
   bool set_workspace_context(const WorkspaceUnitContext& context, std::string& error);
   bool set_workspace_system(const std::string& workspace, const std::string& system, std::string& error);
   bool display_unit(const std::string& workspace, const std::string& quantity, std::string& output, std::string& error) const;

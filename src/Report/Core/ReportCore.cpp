@@ -1,8 +1,7 @@
 #include "ReportCore.hpp"
+#include "ReportUnitValidation.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 
-void ReportCore::units_changed() {
-  state.configuration_changed = true;
-}
 #include <utility>
 #include "ReportConfigurationResolver.hpp"
 #include "Framework/Reporting/ReportProviderRegistryInterface.hpp"
@@ -17,6 +16,48 @@ void ReportCore::units_changed() {
 #include <QUuid>
 #include <functional>
 #include <set>
+
+void ReportCore::units_changed()
+{
+  for (const auto& entry : state.documents)
+  {
+    state.units_pending_update.insert(entry.first);
+  }
+  state.configuration_changed = true;
+  if (state.pending_source)
+  {
+    SimUnits::WorkspaceUnitContext context;
+    std::string error;
+    if (framework_units().workspace_context("report", context, error))
+    {
+      state.pending_request.overrides.units = ReportUnitSettings::capture(context);
+    }
+  }
+}
+
+bool ReportCore::apply_units(const ReportConfiguration& configuration, std::string& error)
+{
+  if (!configuration.units)
+  {
+    return true;
+  }
+  SimUnits::WorkspaceUnitContext context;
+  if (!framework_units().workspace_context("report", context, error))
+  {
+    return false;
+  }
+  if (ReportUnitSettings::capture(context).to_json() == configuration.units->to_json())
+  {
+    return true;
+  }
+  configuration.units->apply_to(context);
+  if (!framework_units().set_workspace_context(context, error))
+  {
+    return false;
+  }
+  units_changed();
+  return true;
+}
 
 ReportCore::ReportCore(ReportProviderRegistryInterface& providers) : registry(providers) {
   state.request.provider = "ccx";
@@ -54,18 +95,27 @@ bool ReportCore::describe(ReportTemplate& output, std::string& error) const
     return false;
   }
   ReportConfigurationResolver::add_common_options(candidate);
+  ReportConfiguration validated;
+  if (!ReportConfigurationResolver::resolve(candidate, candidate.defaults, validated, error))
+  {
+    return false;
+  }
   output = std::move(candidate);
   return true;
 }
 
-bool ReportCore::generate(const std::string& provider, int job, const std::string& name, std::string& error) {
+bool ReportCore::generate(const std::string& provider, int job, const std::string& name, std::string& error, ReportProgress* progress, const ReportDocumentPreparation& prepare) {
   ReportRequest request;
   request.provider = provider;
   request.job_id = job;
-  return generate_request(request, name, error);
+  return generate_request(request, name, error, progress, prepare);
 }
 
-bool ReportCore::generate_request(const ReportRequest& source, const std::string& name, std::string& error) {
+bool ReportCore::generate_request(const ReportRequest& source, const std::string& name, std::string& error, ReportProgress* progress, const ReportDocumentPreparation& prepare) {
+  if (!ReportProgress::advance(progress, ReportProgressStage::Source, "Preparing report request", 0, 1, error))
+  {
+    return false;
+  }
   ReportRequest request = source;
   ReportTemplateProviderInterface* templates = nullptr;
   ReportModelProviderInterface* models = nullptr;
@@ -85,7 +135,7 @@ bool ReportCore::generate_request(const ReportRequest& source, const std::string
     request.overrides = current.overrides;
     request.profile_id = current.profile_id;
     request.profile_revision = current.profile_revision;
-    return build(request, nullptr, false, error);
+    return build(request, nullptr, false, error, progress, prepare);
   }
   if (name.empty()) {
     if (const auto saved = find_document(source, definition.workspace_id)) {
@@ -98,7 +148,7 @@ bool ReportCore::generate_request(const ReportRequest& source, const std::string
         request.profile_revision = saved->profile_revision;
       }
       request.provider = source.provider;
-      return build(request, nullptr, false, error);
+      return build(request, nullptr, false, error, progress, prepare);
     }
   }
   ReportProfile selected;
@@ -125,11 +175,16 @@ bool ReportCore::generate_request(const ReportRequest& source, const std::string
   if (found) {
     profile = &selected;
   }
-  return build(request, profile, false, error);
+  return build(request, profile, false, error, progress, prepare);
 }
 
-bool ReportCore::build(const ReportRequest& request, const ReportProfile* profile, bool updating, std::string& error) {
+bool ReportCore::build(const ReportRequest& request, const ReportProfile* profile, bool updating, std::string& error, ReportProgress* progress, const ReportDocumentPreparation& prepare) {
   error.clear();
+  if (!ReportProgress::advance(progress, ReportProgressStage::Source, "Resolving report source and settings", 0, 1, error))
+  {
+    return false;
+  }
+
   ReportTemplateProviderInterface* templates = nullptr;
   ReportModelProviderInterface* models = nullptr;
   ReportTemplate definition;
@@ -171,10 +226,26 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
     return false;
   }
   ReportRequest resolved = request;
+  resolved.progress = progress;
   resolved.provider = templates->command_prefix();
   if (!ReportConfigurationResolver::resolve(definition, request.overrides, resolved.overrides, error)) {
     return false;
   }
+  // Explicit/default profiles choose presentation units before providers collect.
+  // Unit selection remains active if generation fails; the previous document is immutable.
+  SimUnits::WorkspaceUnitContext context;
+  if (!framework_units().workspace_context("report", context, error))
+  {
+    return false;
+  }
+  if (profile != nullptr || (state.pending_source && !previous))
+  {
+    if (!apply_units(resolved.overrides, error) || !framework_units().workspace_context("report", context, error))
+    {
+      return false;
+    }
+  }
+  resolved.overrides.units = ReportUnitSettings::capture(context);
   ReportSource source;
   if (!models->resolve_source(resolved, source, error)) {
     return false;
@@ -193,6 +264,10 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
   candidate->profile_revision = request.profile_revision;
   candidate->configuration = resolved.overrides;
   candidate->generated_at = QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toStdString();
+  if (!ReportProgress::advance(progress, ReportProgressStage::Model, "Collecting model tables and analysis steps", 0, 0, error))
+  {
+    return false;
+  }
   if (!models->collect(resolved, source, *candidate, error)) {
     return false;
   }
@@ -233,6 +308,10 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
       resultRequest.provider = resolved.provider;
       resultRequest.source = candidate->source;
       resultRequest.settings = resolved.overrides;
+      if (!ReportProgress::advance(progress, ReportProgressStage::Results, "Collecting result tables and extrema", 0, 1, error))
+      {
+        return false;
+      }
       if (!results->collect(resultRequest, *candidate, error)) {
         return false;
       }
@@ -246,7 +325,12 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
   }
   const auto imageSelection = resolved.overrides.values.find("post.images");
   if (auto* images = registry.report_images(resolved.provider)) {
+    if (!ReportProgress::advance(progress, ReportProgressStage::Images, "Preparing model and setup images", 0, 0, error))
+    {
+      return false;
+    }
     ReportImageRequest imageRequest;
+    imageRequest.progress = progress;
     imageRequest.provider = resolved.provider;
     imageRequest.source = candidate->source;
     imageRequest.settings = resolved.overrides;
@@ -261,13 +345,32 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
     issue.message = "Result images require the Postprocessor image provider; CalculiX setup images are collected separately.";
     candidate->diagnostics.push_back(std::move(issue));
   }
-  if (!candidate->validate(error)) {
+  if (!ReportProgress::advance(progress, ReportProgressStage::Validation, "Validating generated report", 0, 1, error))
+  {
     return false;
   }
+  if (!ReportUnitValidation::document(*candidate, error)) {
+    return false;
+  }
+  if (!ReportProgress::advance(progress, ReportProgressStage::Validation, "Report content complete", 1, 1, error))
+  {
+    return false;
+  }
+  if (prepare && !prepare(*candidate, error))
+  {
+    return false;
+  }
+  if (!ReportProgress::advance(progress, ReportProgressStage::Contents, "Publishing report", 0, 1, error))
+  {
+    return false;
+  }
+  // The request published in session state must never retain a borrowed sink.
+  resolved.progress = nullptr;
   if (state.configuration_changed && !state.active_id.empty()) {
     state.drafts[state.active_id] = state.request;
   }
   state.drafts.erase(candidate->id);
+  state.units_pending_update.erase(candidate->id);
   state.documents[candidate->id] = candidate;
   state.active_id = candidate->id;
   state.request = std::move(resolved);
@@ -276,12 +379,12 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
   return true;
 }
 
-bool ReportCore::update(std::string& error) {
+bool ReportCore::update(std::string& error, ReportProgress* progress, const ReportDocumentPreparation& prepare) {
   if (!document() || state.pending_source) {
     error = "Choose a source with a generated report before updating.";
     return false;
   }
-  return build(state.request, nullptr, true, error);
+  return build(state.request, nullptr, true, error, progress, prepare);
 }
 
 bool ReportCore::configure(const std::string& key, const std::string& value, std::string& error) {
@@ -346,6 +449,10 @@ bool ReportCore::profile(const std::string& action, const std::string& name, std
       selectedRequest = &state.pending_request;
     }
     auto& target = *selectedRequest;
+    if (!apply_units(values, error))
+    {
+      return false;
+    }
     target.overrides = std::move(values);
     target.profile_id.clear();
     target.profile_revision = 0;
@@ -380,6 +487,12 @@ bool ReportCore::profile(const std::string& action, const std::string& name, std
     if (!ReportConfigurationResolver::resolve(definition, configuration_request().overrides, profile.configuration, error)) {
       return false;
     }
+    SimUnits::WorkspaceUnitContext context;
+    if (!framework_units().workspace_context("report", context, error))
+    {
+      return false;
+    }
+    profile.configuration.units = ReportUnitSettings::capture(context);
     if (!store->save(profile, error)) {
       return false;
     }
@@ -402,6 +515,10 @@ bool ReportCore::profile(const std::string& action, const std::string& name, std
       selectedRequest = &state.pending_request;
     }
     auto& target = *selectedRequest;
+    if (!apply_units(resolved, error))
+    {
+      return false;
+    }
     target.overrides = std::move(resolved);
     target.profile_id = profile.id;
     target.profile_revision = profile.revision;
@@ -433,8 +550,9 @@ bool ReportCore::activate_document(const std::string& id, std::string& error) {
   state.request.profile_revision = found->second->profile_revision;
   state.request.overrides = found->second->configuration;
   const auto draft = state.drafts.find(id);
-  state.configuration_changed = draft != state.drafts.end();
-  if (state.configuration_changed) {
+  state.configuration_changed = draft != state.drafts.end() || state.units_pending_update.count(id) != 0;
+  if (draft != state.drafts.end())
+  {
     state.request = draft->second;
   }
   error.clear();

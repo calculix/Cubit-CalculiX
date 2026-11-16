@@ -11,7 +11,7 @@ namespace Postprocessor
     {
       const auto& value = item.second;
       result.append(QJsonObject{{"id",QString::fromStdString(value.id)},{"name",QString::fromStdString(value.name)},
-        {"source",QString::fromStdString(value.input.object_id)},{"kind",[&]() -> const char* {
+        {"source",QString::fromStdString(value.input.object_id)},{"coordinate_unit",QString::fromStdString(value.coordinate_unit)},{"kind",[&]() -> const char* {
           if (value.kind == FilterKind::Clip) {
             return "clip";
           } else {
@@ -56,6 +56,15 @@ namespace Postprocessor
           error = "Invalid saved filter text.";
           return false;
         }
+      }
+      if (object.contains("coordinate_unit"))
+      {
+        if (!object.value("coordinate_unit").isString())
+        {
+          error = "Invalid saved plane coordinate unit.";
+          return false;
+        }
+        filter.coordinate_unit = object.value("coordinate_unit").toString().toStdString();
       }
       filter.id = object.value("id").toString().toStdString();
       filter.name = object.value("name").toString().toStdString();

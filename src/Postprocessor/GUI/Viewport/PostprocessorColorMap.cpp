@@ -16,6 +16,8 @@
 #include <vtkScalarBarActor.h>
 #include <vtkTextActor.h>
 #include <vtkTextProperty.h>
+#include <vtkTextRenderer.h>
+#include <vtkRenderWindow.h>
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
@@ -27,13 +29,16 @@ namespace
 }
 PostprocessorColorMap::PostprocessorColorMap(vtkRenderer* target) : renderer(target) {
   legend = vtkSmartPointer<vtkScalarBarActor>::New();
-  legend->SetWidth(0.12);
-  legend->SetHeight(0.65);
+  legend->SetBarRatio(Postprocessor::ColoringDefaults::legend_bar_pixels/Postprocessor::ColoringDefaults::legend_width_pixels);
   legend->SetNumberOfLabels(5);
   legend->SetLabelFormat("%.6g");
   legend->UnconstrainedFontSizeOn();
-  legend->GetTitleTextProperty()->SetFontSize(12);
-  legend->GetLabelTextProperty()->SetFontSize(12);
+  legend->GetTitleTextProperty()->SetFontSize(Postprocessor::ColoringDefaults::legend_font_pixels);
+  legend->GetLabelTextProperty()->SetFontSize(Postprocessor::ColoringDefaults::legend_font_pixels);
+  legend->GetTitleTextProperty()->BoldOff();
+  legend->GetTitleTextProperty()->ItalicOff();
+  legend->GetLabelTextProperty()->BoldOff();
+  legend->GetLabelTextProperty()->ItalicOff();
   legend->GetTitleTextProperty()->SetOpacity(1.0);
   legend->GetLabelTextProperty()->SetOpacity(1.0);
   legend->SetVisibility(false);
@@ -54,7 +59,7 @@ PostprocessorColorMap::~PostprocessorColorMap() {
 }
 void PostprocessorColorMap::apply(const Postprocessor::Representation& display, const SimResults::VtkResultsData& data,
   std::vector<PostprocessorColorSurface>& surfaces, unsigned int slot,
-  const std::optional<std::array<double,2>>& rangeAcrossFrames, std::string& error) {
+  const std::optional<std::array<double,2>>& rangeAcrossFrames, std::string& error, const SimUnits::WorkspaceUnitContext* presentation) {
   using namespace Postprocessor;
   const auto& c = display.coloring;
   const bool inputChanged = unitGeneration != framework_units().generation() || appliedData != &data || appliedFrame != display.increment_index ||
@@ -91,7 +96,7 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
         }
         std::vector<double> values;
         std::string valueError;
-        if (!color_values(surface.input, *partField, selected, values, valueError)) {
+        if (!color_values(surface.input, *partField, selected, values, valueError, presentation)) {
           if (!error.empty()) {
             error += "\n";
           }
@@ -126,7 +131,7 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
           if (surface.node_data) {
             std::vector<double> nodeValues;
             std::string nodeError;
-            if (color_values(surface.node_data,*partField,selected,nodeValues,nodeError)) {
+            if (color_values(surface.node_data,*partField,selected,nodeValues,nodeError,presentation)) {
               auto nodeScalar = vtkSmartPointer<vtkDoubleArray>::New();
               nodeScalar->SetName(scalarName);
               for (double value : nodeValues) {
@@ -151,7 +156,7 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
         title += "\n" + field->name + " / " + component;
         double value = 0.0;
         std::string unit;
-        if (SimResults::ResultsUnits::field_value(0.0, *field, c.field->component, c.field->magnitude, "postprocessor", value, unit, error)) {
+        if (SimResults::ResultsUnits::field_value(0.0, *field, c.field->component, c.field->magnitude, "postprocessor", value, unit, error, presentation)) {
           title += " [" + unit + "]";
         }
       }
@@ -337,14 +342,53 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
   maximumLabel->SetVisibility(visible && valuesAvailable && c.maximum.enabled);
 }
 
-void PostprocessorColorMap::update_appearance() {
+std::array<double,4> PostprocessorColorMap::legend_frame() const
+{
+  const auto* position = legend->GetPosition();
+  return {position[0],position[1],legend->GetWidth(),legend->GetHeight()};
+}
+bool PostprocessorColorMap::legend_contains(double x,double y) const
+{
+  if (!legend->GetVisibility())
+  {
+    return false;
+  }
+  const auto frame = legend_frame();
+  double left = frame[0], right = frame[0]+frame[2];
+  // Unconstrained titles can extend horizontally beyond the scalar-bar frame.
+  int bounds[4];
+  auto* text = vtkTextRenderer::GetInstance();
+  auto* window = renderer->GetRenderWindow();
+  if (text && window && legend->GetTitle() &&
+      text->GetBoundingBox(legend->GetTitleTextProperty(),legend->GetTitle(),bounds,window->GetDPI()))
+  {
+    const double halfWidth = 0.5*(bounds[1]-bounds[0]+1)/std::max(1,renderer->GetSize()[0]);
+    const double center = frame[0]+0.5*frame[2];
+    left = std::min(left,center-halfWidth);
+    right = std::max(right,center+halfWidth);
+  }
+  return x >= left && x <= right && y >= frame[1] && y <= frame[1]+frame[3];
+}
+void PostprocessorColorMap::update_appearance()
+{
   const int viewportWidth = std::max(1,renderer->GetSize()[0]);
-  const double legendWidth = std::clamp(150.0*captureScale/viewportWidth,0.12,0.45);
-  const double x = std::max(0.02,0.98-legendWidth-(legendWidth+0.02)*appliedSlot);
+  const int viewportHeight = std::max(1,renderer->GetSize()[1]);
+  const double legendWidth = std::min(0.8,Postprocessor::ColoringDefaults::legend_width_pixels*captureScale/viewportWidth);
+  const double legendHeight = std::min(0.7,Postprocessor::ColoringDefaults::legend_height_pixels*captureScale/viewportHeight);
+  double x = std::max(0.02,0.98-legendWidth-(legendWidth+0.02)*appliedSlot);
+  double y = 0.06;
+  if (applied && applied->legend_position)
+  {
+    x = (*applied->legend_position)[0];
+    y = (*applied->legend_position)[1];
+  }
+  x = std::clamp(x,0.0,1.0-legendWidth);
+  y = std::clamp(y,0.0,1.0-legendHeight);
   legend->SetWidth(legendWidth);
-  legend->SetPosition(x, 0.22);
-  minimumLabel->SetPosition(x, 0.04);
-  maximumLabel->SetPosition(x, 0.10);
+  legend->SetHeight(legendHeight);
+  legend->SetPosition(x,y);
+  minimumLabel->SetPosition(x,std::max(0.0,y-0.05));
+  maximumLabel->SetPosition(x,std::max(0.0,y-0.025));
   // Scene appearance is applied after CPU-side source synchronization. Refresh
   // text independently of coloring caches so initial white backgrounds cannot
   // retain text colors chosen against VTK's default black background.

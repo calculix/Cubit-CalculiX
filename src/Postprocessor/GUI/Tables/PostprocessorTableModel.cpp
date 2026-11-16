@@ -109,3 +109,19 @@ void PostprocessorTableModel::set_active_frame(std::optional<std::size_t> frame)
       {Qt::BackgroundRole,Qt::ForegroundRole,Qt::FontRole,ActiveFrameRole});
   }
 }
+
+void PostprocessorTableModel::refresh_units()
+{
+  const int columns = columnCount();
+  const int rows = rowCount();
+  if (columns == 0)
+  {
+    return;
+  }
+  emit headerDataChanged(Qt::Horizontal, 0, columns - 1);
+  if (rows > 0)
+  {
+    emit dataChanged(index(0, 0), index(rows - 1, columns - 1),
+      {Qt::DisplayRole, Qt::ToolTipRole, Qt::UserRole});
+  }
+}

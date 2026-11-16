@@ -1,5 +1,6 @@
 add_library(postprocessor_core STATIC
   Core/application/PostprocessorCoreUnits.cpp
+  Core/representations/ResultColoringUnits.cpp
   Core/filters/PlaneOperations.cpp
   Core/filters/ClipFilter.cpp
   Core/filters/SectionFilter.cpp
@@ -11,6 +12,8 @@ add_library(postprocessor_core STATIC
   Core/capture/CaptureSnapshot.cpp
   Core/capture/CaptureFileWriter.cpp
   Core/plots/PlotData.cpp
+  Core/plots/PlotAxisUnits.cpp
+  Core/plots/PlotRangeUnits.cpp
   Core/plots/PlotHistory.cpp
   Core/plots/PlotTableData.cpp
   Core/plots/PostprocessorCorePlots.cpp
@@ -41,6 +44,7 @@ add_library(postprocessor_core STATIC
   Core/representations/PostprocessorCoreDatasetVisibility.cpp
   Core/representations/PostprocessorCoreCategories.cpp
   Core/views/PostprocessorCoreViews.cpp
+  Core/views/PostprocessorCoreSceneUnits.cpp
   Core/views/PostprocessorCoreCamera.cpp
   Core/views/CameraOperations.cpp
   Core/views/CameraOperations.hpp
@@ -150,6 +154,9 @@ add_library(postprocessor_module SHARED
   Commands/display/DatasetCommandSupport.hpp
   Commands/display/PostHideCommand.cpp
   Commands/display/PostHideCommand.hpp
+  Commands/views/PostViewToolsCommand.cpp
+  Interfaces/PostprocessorViewToolsInterface.cpp
+  GUI/Viewport/PostprocessorScaleOverlay.cpp
   Commands/views/PostViewFitCommand.cpp
   Commands/views/PostViewFitCommand.hpp
   Commands/views/CameraCommandText.cpp
@@ -199,6 +206,8 @@ add_library(postprocessor_module SHARED
   GUI/Viewport/CameraInteraction.hpp
   GUI/Viewport/CameraTimings.cpp
   GUI/Viewport/CameraTimings.hpp
+  GUI/Viewport/PostprocessorLegendInteraction.cpp
+  GUI/Viewport/PostprocessorLegendInteraction.hpp
   GUI/Viewport/PostprocessorColorMap.cpp
   GUI/Viewport/PostprocessorColorMap.hpp
   GUI/Viewport/PostprocessorScene.cpp
@@ -263,6 +272,45 @@ add_custom_target(postprocessor_icons ALL
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorAddToReport.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorAddToReport.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorLegend.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorLegend.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorClip.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorClip.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorSection.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorSection.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorScale.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorScale.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorViewFront.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorViewFront.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorViewBack.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorViewBack.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorViewTop.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorViewTop.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorViewBottom.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorViewBottom.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorViewLeft.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorViewLeft.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorViewRight.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorViewRight.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorViewIso.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorViewIso.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorViewOrtho.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorViewOrtho.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorViewPerspective.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorViewPerspective.svg"
   VERBATIM
 )
 add_dependencies(postprocessor_module postprocessor_icons)

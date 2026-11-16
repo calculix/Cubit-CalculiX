@@ -1,6 +1,7 @@
 #include "ReportGuiObserver.hpp"
 #include <utility>
 #include <QTimer>
+#include <QScopedValueRollback>
 
 ReportGuiObserver::ReportGuiObserver(std::function<void()> callback) : refresh(std::move(callback))
 {
@@ -20,6 +21,7 @@ void ReportGuiObserver::notify_command_complete()
     QTimer::singleShot(0, this, [this]()
     {
       pending = false;
+      QScopedValueRollback<bool> operation(pending, true);
       refresh();
     });
   }

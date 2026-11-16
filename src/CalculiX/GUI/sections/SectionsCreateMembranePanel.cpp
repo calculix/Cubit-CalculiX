@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "SectionsCreateMembranePanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -80,6 +81,9 @@ SectionsCreateMembranePanel::SectionsCreateMembranePanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_4, *lineEdit_4, label_4->text(), "length");
 
   isInitialized = true;
 }

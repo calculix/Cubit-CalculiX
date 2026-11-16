@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "ContactPairsPropertiesWidget.hpp"
 #include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -25,7 +26,7 @@ bool ContactPairsPropertiesWidget::setContactPair(int id)
   addReference(assignment, PropertyReferenceKind::Sideset, "Slave sideset", QString::fromStdString(settings.slave));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "Type", QString::fromStdString(settings.contactType));
-  addValue(settingsGroup, "Adjust", QString::fromStdString(settings.adjust));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Adjust", "length"), QString::fromStdString(settings.adjust));
   addReference(settingsGroup, PropertyReferenceKind::Nodeset, "Adjust nodeset", QString::fromStdString(settings.adjustNodeset));
   return true;
 }

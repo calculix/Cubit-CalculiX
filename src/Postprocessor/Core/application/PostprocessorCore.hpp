@@ -35,6 +35,13 @@ namespace Postprocessor
   {
   public:
     PostprocessorCore() = default;
+    // Null for a live workspace; private capture applications carry an immutable
+    // presentation override. Source units and geometry remain untouched.
+    const SimUnits::WorkspaceUnitContext* captured_units() const noexcept;
+
+    bool scene_scale(const Representation& display, double& factor, bool& known, std::string& error) const;
+    bool standard_view(const std::string& name, std::string& error);
+    bool set_scale_visible(bool visible, std::string& error);
     bool configure_units(const std::string& system, const std::string& quantity, const std::string& unit, std::string& error);
     std::string output_source(const OutputReference& input) const;
     bool display_matches_source(const Representation& display,const std::string& source,const std::string& view) const;
@@ -156,6 +163,9 @@ namespace Postprocessor
     bool close_all_sources(std::string& error);
 
   private:
+    std::vector<EvaluatedAnnotation> native_annotations(const std::string& view_id) const;
+    bool evaluate_plot(const PlotDefinition& definition, PlotData& output, std::string& error) const;
+    std::optional<SimUnits::WorkspaceUnitContext> captureUnits;
     bool ensure_source_representation(PostprocessorSession& staged, const std::string& source_id,
       const std::string& view_id, std::size_t increment, bool visible, std::string& error) const;
     bool prepare_initial_display(PostprocessorSession& staged, const std::string& source_id,

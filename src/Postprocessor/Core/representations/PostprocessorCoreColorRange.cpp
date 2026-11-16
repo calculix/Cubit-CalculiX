@@ -14,6 +14,15 @@ namespace Postprocessor
       error = "The result source is unavailable.";
       return std::nullopt;
     }
+    for (const auto& group : loaded->second.groups)
+    {
+      if (!group.unit_issue.empty() && (group.key == selection.group_key ||
+          (selection.group_key.empty() && group.field.array_name == selection.array_name && group.field.association == selection.association)))
+      {
+        error = group.unit_issue;
+        return std::nullopt;
+      }
+    }
     try {
       if (loaded->second.unit_generation != framework_units().generation()) {
         loaded->second.all_frame_ranges.clear();
@@ -36,7 +45,7 @@ namespace Postprocessor
               continue;
             }
             for (const auto& part : result_mesh_parts(increment.dataset.get())) {
-              if (part.first == dataset.id && !accumulate_color_range(part.second,*field,selected,partRange,error)) {
+              if (part.first == dataset.id && !accumulate_color_range(part.second,*field,selected,partRange,error,captured_units())) {
                 return std::nullopt;
               }
             }

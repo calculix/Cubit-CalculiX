@@ -34,7 +34,7 @@ namespace Postprocessor
   // vector columns follow coloring semantics. Conflicting duplicate IDs report
   // ranges/multiple positions instead of silently selecting the first tuple.
   ProbeResult probe_result(const SimResults::VtkResultsData& data, const Representation& display,
-    const EntityReference& entity);
+    const EntityReference& entity, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
   std::string probe_text(const ProbeResult& result);
 }
 #endif

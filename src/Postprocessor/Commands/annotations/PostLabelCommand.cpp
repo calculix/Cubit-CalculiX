@@ -29,7 +29,7 @@ std::vector<std::string> PostLabelCommand::get_syntax()
 }
 std::vector<std::string> PostLabelCommand::get_syntax_help()
 {
-  return {"post label add [\"name\"] {node ID|element ID|integrationpoint N element ID} [dataset ID|\"name\"] [source \"name\"] [field \"name\"] [origin \"FRD\"] [association node|element|integrationpoint] [component magnitude|\"name\"] [view \"id\"]",
+  return {"post label add [\"name\"] {node ID|element ID|integrationpoint N element ID} [dataset ID|\"name\"] [source \"name\"] [field \"name\"] [origin \"FRD\"] [association node|element|integrationpoint] [set \"name\"] [component magnitude|\"name\"] [view \"id\"]",
     "post label rename \"name\" \"replacement\"", "post label position \"name\" X Y",
     "post label {show|hide|remove} \"name\""};
 }

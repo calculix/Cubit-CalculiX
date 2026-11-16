@@ -7,6 +7,7 @@ ReportOption::ReportOption() = default;
 QJsonObject ReportOption::to_json() const
 {
   QJsonObject result;
+  result.insert("group_id", QString::fromStdString(group_id));
   result.insert("key", QString::fromStdString(key));
   result.insert("label", QString::fromStdString(label));
   result.insert("kind", QString::fromStdString(kind));
@@ -20,6 +21,10 @@ QJsonObject ReportOption::to_json() const
 bool ReportOption::from_json(const QJsonObject& input, ReportOption& output, std::string& error)
 {
   ReportOption candidate;
+  if (!ReportJson::text(input, "group_id", candidate.group_id, error))
+  {
+    return false;
+  }
   if (!ReportJson::strings(input.value("choices"), candidate.choices, error) ||
       !ReportJson::integer(input, "minimum", candidate.minimum, error) ||
       !ReportJson::integer(input, "maximum", candidate.maximum, error))

@@ -18,11 +18,13 @@
 #include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkXMLTableReader.h>
 #include <vtkXMLTableWriter.h>
-#include <cassert>
+#include <cstdlib>
+#include <iostream>
 #include <cmath>
 #include <string>
 
-int main() {
+int main()
+{
   std::string error;
   auto grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
   auto points = vtkSmartPointer<vtkPoints>::New();
@@ -65,16 +67,28 @@ int main() {
   field.source = "FRD";
   field.components = {"XX"};
   SimUnits::QuantityUnit quantity;
-  assert(framework_units().system_unit("N-mm-s", "stress", quantity, error));
+  if (!(framework_units().system_unit("N-mm-s", "stress", quantity, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   field.component_units.push_back(quantity);
   frame.fields.push_back(field);
   source.increments.push_back(frame);
-  assert(SimResults::VtkResultsMetadataCodec::write(source, error));
+  if (!(SimResults::VtkResultsMetadataCodec::write(source, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   auto writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
   writer->SetInputData(grid);
   writer->SetWriteToOutputString(true);
   writer->SetDataModeToAscii();
-  assert(writer->Write() == 1);
+  if (!(writer->Write() == 1))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   auto reader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
   reader->SetReadFromInputString(true);
   reader->SetInputString(writer->GetOutputString());
@@ -87,29 +101,89 @@ int main() {
     value->Delete();
   });
   restored.increments.push_back(restoredFrame);
-  assert(SimResults::VtkResultsMetadataCodec::read(restored, error));
-  assert(restored.source_units.system == "N-mm-s");
-  assert(restored.solver_launch_id == "fixture-launch");
-  assert(restored.datasets.front().material_project == "fixture-project");
-  assert(restored.increments.front().fields.front().component_units.front().unit == "N/mm^2");
-  assert(framework_units().set_display_unit("postprocessor", "stress", "Pa", error));
+  if (!(SimResults::VtkResultsMetadataCodec::read(restored, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(restored.source_units.system == "N-mm-s"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(restored.solver_launch_id == "fixture-launch"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(restored.datasets.front().material_project == "fixture-project"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(restored.increments.front().fields.front().component_units.front().unit == "N/mm^2"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(framework_units().set_display_unit("postprocessor", "stress", "Pa", error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   Postprocessor::FieldSelection selection;
   selection.component = "XX";
   std::vector<double> values;
-  assert(Postprocessor::color_values(reader->GetOutput(), restored.increments.front().fields.front(), selection, values, error));
-  assert(std::abs(values.front() - 123000000.0) < 1e-5);
-  assert(stress->GetValue(0) == 123.0);
-  assert(reader->GetOutput()->GetPointData()->GetArray("stress")->GetComponent(0, 0) == 123.0);
+  if (!(Postprocessor::color_values(reader->GetOutput(), restored.increments.front().fields.front(), selection, values, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(std::abs(values.front() - 123000000.0) < 1e-5))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(stress->GetValue(0) == 123.0))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(reader->GetOutput()->GetPointData()->GetArray("stress")->GetComponent(0, 0) == 123.0))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   auto categorical = field;
   categorical.categorical = true;
   double converted = 0.0;
   std::string unit;
-  assert(!SimResults::ResultsUnits::field_value(7.0, categorical, "XX", false, "postprocessor", converted, unit, error));
+  if (!(!SimResults::ResultsUnits::field_value(7.0, categorical, "XX", false, "postprocessor", converted, unit, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   SimUnits::QuantityUnit unknown;
-  assert(SimResults::ResultsUnits::display_value(42.0, unknown, "postprocessor", converted, unit, error));
-  assert(converted == 42.0 && unit == "unknown unit");
-  assert(SimResults::ResultsUnits::display_value(123.0, quantity, "report", converted, unit, error));
-  assert(converted == 123.0 && unit == "N/mm^2");
+  if (!(SimResults::ResultsUnits::display_value(42.0, unknown, "postprocessor", converted, unit, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(converted == 42.0 && unit == "unknown unit"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(SimResults::ResultsUnits::display_value(123.0, quantity, "report", converted, unit, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(converted == 123.0 && unit == "N/mm^2"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   auto table = vtkSmartPointer<vtkTable>::New();
   table->AddColumn(stress);
   table->Register(nullptr);
@@ -120,11 +194,19 @@ int main() {
   tableMetadata.name = "Stress history";
   tableMetadata.columns = {quantity};
   source.table_metadata.push_back(tableMetadata);
-  assert(SimResults::VtkResultsMetadataCodec::write(source, error));
+  if (!(SimResults::VtkResultsMetadataCodec::write(source, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   auto tableWriter = vtkSmartPointer<vtkXMLTableWriter>::New();
   tableWriter->SetInputData(table);
   tableWriter->SetWriteToOutputString(true);
-  assert(tableWriter->Write() == 1);
+  if (!(tableWriter->Write() == 1))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   auto tableReader = vtkSmartPointer<vtkXMLTableReader>::New();
   tableReader->SetReadFromInputString(true);
   tableReader->SetInputString(tableWriter->GetOutputString());
@@ -134,14 +216,34 @@ int main() {
   restoredTable.tables.emplace_back(tableReader->GetOutput(), [](vtkTable* value) {
     value->Delete();
   });
-  assert(SimResults::VtkResultsMetadataCodec::read(restoredTable, error));
-  assert(restoredTable.table_metadata.front().name == "Stress history");
-  assert(restoredTable.table_metadata.front().columns.front().unit == "N/mm^2");
-  assert(restoredTable.solver_launch_id == "fixture-launch");
+  if (!(SimResults::VtkResultsMetadataCodec::read(restoredTable, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(restoredTable.table_metadata.front().name == "Stress history"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(restoredTable.table_metadata.front().columns.front().unit == "N/mm^2"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(restoredTable.solver_launch_id == "fixture-launch"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   auto partitions = vtkSmartPointer<vtkPartitionedDataSet>::New();
   partitions->SetPartition(0, grid);
   partitions->SetPartition(1, reader->GetOutput());
-  assert(SimResults::VtkResultsMetadataCodec::write_frame(*partitions, source, 0, error));
+  if (!(SimResults::VtkResultsMetadataCodec::write_frame(*partitions, source, 0, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   SimResults::VtkResultsData restoredPartitions;
   restoredPartitions.datasets.emplace_back();
   restoredPartitions.increments.emplace_back();
@@ -149,13 +251,37 @@ int main() {
   restoredPartitions.increments.front().dataset = std::shared_ptr<vtkDataObject>(partitions.GetPointer(), [](vtkDataObject* value) {
     value->Delete();
   });
-  assert(SimResults::VtkResultsMetadataCodec::read(restoredPartitions, error));
-  assert(restoredPartitions.increments.front().fields.size() == 1);
+  if (!(SimResults::VtkResultsMetadataCodec::read(restoredPartitions, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(restoredPartitions.increments.front().fields.size() == 1))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   auto* metadata = vtkStringArray::SafeDownCast(reader->GetOutput()->GetFieldData()->GetAbstractArray("CubitSim.ResultsMetadata"));
-  assert(metadata != nullptr);
+  if (!(metadata != nullptr))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
   metadata->SetValue(0, "{\"version\":999}");
-  assert(!SimResults::VtkResultsMetadataCodec::read(restoredPartitions, error));
-  assert(restoredPartitions.solver_launch_id == "fixture-launch");
-  assert(restoredPartitions.increments.front().fields.front().component_units.front().unit == "N/mm^2");
-  return 0;
+  if (!(!SimResults::VtkResultsMetadataCodec::read(restoredPartitions, error)))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(restoredPartitions.solver_launch_id == "fixture-launch"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (!(restoredPartitions.increments.front().fields.front().component_units.front().unit == "N/mm^2"))
+  {
+    std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  return EXIT_SUCCESS;
 }

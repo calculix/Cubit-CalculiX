@@ -1,5 +1,7 @@
 #include "CubitMessage.hpp"
 #include "Core/units/CalculiXPhysicalModelUnits.hpp"
+#include "Core/interactions/CalculiXInteractionsInterface.hpp"
+#include "CubitInterface.hpp"
 #include "Core/application/SettingsRead.hpp"
 #include "Core/bcs/CoreBCsDisplacements.hpp"
 #include <string>
@@ -10,6 +12,32 @@
 CoreBCsDisplacements::CoreBCsDisplacements() {}
 
 CoreBCsDisplacements::~CoreBCsDisplacements() {}
+
+bool CoreBCsDisplacements::get_solver_boundaries(int id, CalculiXDofUnits::Boundaries& boundaries, std::string& error)
+{
+  const int index = get_bcs_data_id_from_bc_id(id);
+  if (index < 0 || bcs_data[index].size() < 7)
+  {
+    error = "Missing mechanical boundary data.";
+    return false;
+  }
+  const int values = get_displacement_data_id_from_displacement_id(bcs_data[index][5]);
+  const int modes = get_mode_data_id_from_displacement_id(bcs_data[index][5]);
+  if (values < 0 || modes < 0 || displacement_data[values].size() != 7 || mode_data[modes].size() != 7)
+  {
+    error = "Incomplete mechanical boundary components.";
+    return false;
+  }
+  std::set<int> rotationNodes;
+  if (!CalculiXInteractionsInterface().get_rotation_node_ids(rotationNodes, error))
+  {
+    return false;
+  }
+  const auto nodes = CubitInterface::get_nodeset_nodes_inclusive(bcs_data[index][4]);
+  return CalculiXDofUnits::boundaries(nodes, rotationNodes,
+    std::vector<double>(displacement_data[values].begin() + 1, displacement_data[values].end()),
+    std::vector<int>(mode_data[modes].begin() + 1, mode_data[modes].end()), boundaries, error);
+}
 
 bool CoreBCsDisplacements::init() {
   if (is_initialized) {
@@ -425,24 +453,23 @@ std::string CoreBCsDisplacements::get_bc_export(int bc_id) {
   std::string prescribed;
   std::string fixed;
 
-  for (int dof = 1; dof <= 6; dof++) {
-    int mode = mode_data[mode_data_id][dof];
-    if (mode < 0 || mode > 2) {
-      return "";
+  CalculiXDofUnits::Boundaries boundaries;
+  std::string error;
+  if (!get_solver_boundaries(bc_id, boundaries, error))
+  {
+    PRINT_ERROR("Cannot export BC %d: %s\n", bc_id, error.c_str());
+    return {};
+  }
+  for (const auto& boundary : boundaries)
+  {
+    const std::string target = std::to_string(boundary.first.first) + "," + std::to_string(boundary.first.second) + "," + std::to_string(boundary.first.second);
+    if (boundary.second.first == 1)
+    {
+      prescribed += target + "," + ccx_application_iface.to_string_scientific(boundary.second.second) + "\n";
     }
-
-    if (mode == 1) {
-      prescribed.append(
-          nodeset_name + "," +
-          std::to_string(dof) + "," +
-          std::to_string(dof) + "," +
-          ccx_application_iface.to_string_scientific(
-              displacement_data[displacement_data_id][dof]) + "\n");
-    } else if (mode == 2) {
-      fixed.append(
-          nodeset_name + "," +
-          std::to_string(dof) + "," +
-          std::to_string(dof) + "\n");
+    else
+    {
+      fixed += target + "\n";
     }
   }
 
@@ -507,18 +534,16 @@ std::string CoreBCsDisplacements::get_hbc_export(int bc_id) {
 
   std::string constrained;
 
-  for (int dof = 1; dof <= 6; dof++) {
-    int mode = mode_data[mode_data_id][dof];
-    if (mode < 0 || mode > 2) {
-      return "";
-    }
-
-    if (mode != 0) {
-      constrained.append(
-          nodeset_name + "," +
-          std::to_string(dof) + "," +
-          std::to_string(dof) + "\n");
-    }
+  CalculiXDofUnits::Boundaries boundaries;
+  std::string error;
+  if (!get_solver_boundaries(bc_id, boundaries, error))
+  {
+    PRINT_ERROR("Cannot export homogeneous BC %d: %s\n", bc_id, error.c_str());
+    return {};
+  }
+  for (const auto& boundary : boundaries)
+  {
+    constrained += std::to_string(boundary.first.first) + "," + std::to_string(boundary.first.second) + "," + std::to_string(boundary.first.second) + "\n";
   }
 
   if (constrained.empty()) {
@@ -571,23 +596,16 @@ std::string CoreBCsDisplacements::get_initial_displacement_export(int bc_id) {
 
   std::string initial;
 
-  for (int dof = 1; dof <= 6; dof++) {
-    int mode = mode_data[mode_data_id][dof];
-    if (mode < 0 || mode > 2) {
-      return "";
-    }
-
-    if (mode != 0) {
-      double value = 0.0;
-      if (mode == 1) {
-        value = displacement_data[displacement_data_id][dof];
-      }
-
-      initial.append(
-          nodeset_name + "," +
-          std::to_string(dof) + "," +
-          ccx_application_iface.to_string_scientific(value) + "\n");
-    }
+  CalculiXDofUnits::Boundaries boundaries;
+  std::string error;
+  if (!get_solver_boundaries(bc_id, boundaries, error))
+  {
+    PRINT_ERROR("Cannot export initial displacement BC %d: %s\n", bc_id, error.c_str());
+    return {};
+  }
+  for (const auto& boundary : boundaries)
+  {
+    initial += std::to_string(boundary.first.first) + "," + std::to_string(boundary.first.second) + "," + ccx_application_iface.to_string_scientific(boundary.second.second) + "\n";
   }
 
   if (initial.empty()) {

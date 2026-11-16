@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "BCsTemperaturesPropertiesWidget.hpp"
 #include "Core/bcs/CalculiXBCsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -25,11 +26,11 @@ bool BCsTemperaturesPropertiesWidget::setTemperature(int id)
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
   addReference(assignment, PropertyReferenceKind::Nodeset, "Nodeset", QString::fromStdString(settings.nodeset));
   auto* components = addGroup("components", "Components", PropertySection::Data);
-  addValue(components, "Magnitude", QString::fromStdString(settings.magnitude));
+  addValue(components, CalculiXUnitPresentation::title("Magnitude", "temperature"), QString::fromStdString(settings.magnitude));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "OP", QString::fromStdString(settings.operation));
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Amplitude", QString::fromStdString(settings.amplitude));
-  addValue(settingsGroup, "Time Delay", QString::fromStdString(settings.timeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time Delay", "time"), QString::fromStdString(settings.timeDelay));
   addValue(settingsGroup, "Keyword Type", QString::fromStdString(settings.keyword));
   return true;
 }

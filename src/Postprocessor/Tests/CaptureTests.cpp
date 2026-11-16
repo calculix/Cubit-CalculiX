@@ -1,3 +1,5 @@
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include "Framework/Results/ResultsUnits.hpp"
 #include "CaptureTests.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include <QTemporaryDir>
@@ -42,6 +44,24 @@ int capture_cases(const std::shared_ptr<PostprocessorApplicationInterface>& app)
     QByteArray& png,QJsonObject& provenance,std::string&)
   {
     check(snapshot.session.active_view_id == view && frozen.get() != app.get(),"Capture did not create a private application");
+    check(snapshot.provenance.contains("presentation_units") && frozen->captured_units(),"Capture omitted its presentation context");
+    SimUnits::WorkspaceUnitContext live;
+    std::string unitError;
+    check(framework_units().workspace_context("postprocessor",live,unitError),"Cannot retain live unit context");
+    check(framework_units().set_display_unit("postprocessor","stress","Pa",unitError),"Cannot modify live units during capture fixture");
+    if (frozen->captured_units())
+    {
+      double displayed = 0.0;
+      double expected = 0.0;
+      std::string unit;
+      std::string expectedUnit;
+      const SimUnits::QuantityUnit sourceUnit("stress","MPa",SimUnits::Stress);
+      check(SimResults::ResultsUnits::display_value(200,sourceUnit,snapshot.presentation_units,expected,expectedUnit,unitError) &&
+        SimResults::ResultsUnits::display_value(200,sourceUnit,*frozen->captured_units(),displayed,unit,unitError) &&
+        expected == displayed && unit == expectedUnit,"Frozen capture followed a live unit change");
+    }
+    check(framework_units().set_workspace_context(live,unitError),"Cannot restore live unit context");
+
     check(frozen->result_data(source) == data,"Capture duplicated or lost the immutable result handle");
     check(!frozen->session().views.at(view).selection.entity,"Capture retained transient selection highlighting");
     std::string local;

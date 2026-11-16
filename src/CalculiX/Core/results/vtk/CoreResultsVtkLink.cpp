@@ -5,10 +5,12 @@
 #include "Core/results/dat/CoreResultsDat.hpp"
 #include "Core/results/ResultReadNumbers.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "CubitInterface.hpp"
 #include "CubitMessage.hpp"
 #include "MeshExportInterface.hpp"
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <cctype>
 #include <cmath>
@@ -124,7 +126,30 @@ namespace
     return true;
   }
 
-  bool capture_model(CoreResultsVtkMesh& mesh, std::string& error) {
+  bool capture_model(CoreResultsVtkMesh& mesh, const std::string& source_system, std::string& error)
+  {
+    if (source_system.empty())
+    {
+      error = "Recorded result units are unavailable.";
+      return false;
+    }
+
+    double geometryLengthSI = 0.0;
+    double coordinateScale = 0.0;
+
+    if (!framework_units().geometry_to_si(1.0, geometryLengthSI, error) ||
+        !framework_units().system_from_si(geometryLengthSI, SimUnits::Length,
+          source_system, coordinateScale, error))
+    {
+      return false;
+    }
+
+    if (!std::isfinite(coordinateScale) || coordinateScale <= 0.0)
+    {
+      error = "Invalid current-model coordinate scale.";
+      return false;
+    }
+
     CalculiXMeshInterface mesh_interface;
     const auto blocks = mesh_interface.get_blocks();
     if (blocks.empty()) {
@@ -144,8 +169,24 @@ namespace
     int start = 0;
     int count = 0;
     while ((count = exporter->get_coords(start, buffer_size, x, y, z, ids)) > 0) {
-      for (int i = 0; i < count; ++i) {
-        mesh.nodes.push_back({ids[i], {{x[i], y[i], z[i]}}});
+      for (int i = 0; i < count; ++i)
+      {
+        const std::array<double, 3> coordinates = {
+          x[i] * coordinateScale,
+          y[i] * coordinateScale,
+          z[i] * coordinateScale
+        };
+
+        for (double coordinate : coordinates)
+        {
+          if (!std::isfinite(coordinate))
+          {
+            error = "Non-finite converted current-model coordinate.";
+            return false;
+          }
+        }
+
+        mesh.nodes.push_back({ids[i], coordinates});
       }
       start += count;
     }
@@ -598,7 +639,7 @@ bool CoreResultsVtkLink::compatible(const CoreResultsVtkMesh& result, const Core
   return true;
 }
 
-bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const CoreResultsDat& dat, const std::string& input_path, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& output) const
+bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const CoreResultsDat& dat, const std::string& input_path, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& output, const std::string& source_system) const
 {
   const double tolerances[] = {options.coordinate_absolute_tolerance, options.coordinate_relative_tolerance, options.time_absolute_tolerance, options.time_relative_tolerance};
   for (double tolerance : tolerances) {
@@ -622,7 +663,8 @@ bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const Co
     return false;
   }
   CoreResultsVtkMesh current;
-  if (capture_model(current, reason) && compatible(reference, current, options, reason)) {
+  if (capture_model(current, source_system, reason) && compatible(reference, current, options, reason))
+  {
     result.link_source = SimResults::LinkSource::CurrentModel;
     result.mesh = std::move(current);
     // Even with unchanged topology the user may have changed full/reduced

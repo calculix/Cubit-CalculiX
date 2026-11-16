@@ -24,6 +24,15 @@ int main()
 {
   using namespace Postprocessor;
   ResultColoring c;
+  check(c.bands == ColoringDefaults::default_bands,"New representations must default to banded coloring");
+  auto positioned = c;
+  positioned.legend_position = std::array<double,2>{0.8,0.06};
+  std::string positionError;
+  check(valid_coloring(positioned,positionError) && !same_coloring(c,positioned),"Legend position was ignored by validation or comparison");
+  positioned.legend_position = std::array<double,2>{std::numeric_limits<double>::quiet_NaN(),0.06};
+  check(!valid_coloring(positioned,positionError),"Nonfinite legend position accepted");
+  positioned.legend_position = std::array<double,2>{1.1,0.06};
+  check(!valid_coloring(positioned,positionError),"Out-of-viewport legend position accepted");
   c.palette = ColorPalette::Grayscale;
   c.minimum = {true,0,{0,0,1}};
   c.maximum = {true,100,{1,0,1}};

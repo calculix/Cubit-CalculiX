@@ -1,5 +1,6 @@
 #pragma once
 #include <QJsonObject>
+#include "ReportProgress.hpp"
 #include <map>
 #include <optional>
 #include <string>
@@ -20,6 +21,8 @@ struct ReportVisualReference
 class ReportImageRequest
 {
 public:
+  // Transient, borrowed during synchronous provider collection; never persisted.
+  ReportProgress* progress = nullptr;
   ReportImageRequest();
   std::string provider;
   // Opaque provider-defined purpose and scope, e.g. setup / step:17.

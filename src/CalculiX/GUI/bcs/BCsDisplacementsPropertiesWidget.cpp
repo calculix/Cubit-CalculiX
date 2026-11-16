@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "BCsDisplacementsPropertiesWidget.hpp"
 #include "Core/bcs/CalculiXBCsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -27,14 +28,14 @@ bool BCsDisplacementsPropertiesWidget::setDisplacement(int id)
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "OP", QString::fromStdString(settings.operation));
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Amplitude", QString::fromStdString(settings.amplitude));
-  addValue(settingsGroup, "Time Delay", QString::fromStdString(settings.timeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time Delay", "time"), QString::fromStdString(settings.timeDelay));
   auto* components = addGroup("components", "Components", PropertySection::Data);
-  addValue(components, "Displacement X", QString::fromStdString(settings.component1));
-  addValue(components, "Displacement Y", QString::fromStdString(settings.component2));
-  addValue(components, "Displacement Z", QString::fromStdString(settings.component3));
-  addValue(components, "Rotation X", QString::fromStdString(settings.component4));
-  addValue(components, "Rotation Y", QString::fromStdString(settings.component5));
-  addValue(components, "Rotation Z", QString::fromStdString(settings.component6));
+  addValue(components, CalculiXUnitPresentation::title("Displacement X", "length"), QString::fromStdString(settings.component1));
+  addValue(components, CalculiXUnitPresentation::title("Displacement Y", "length"), QString::fromStdString(settings.component2));
+  addValue(components, CalculiXUnitPresentation::title("Displacement Z", "length"), QString::fromStdString(settings.component3));
+  addValue(components, CalculiXUnitPresentation::title("Rotation X", "angle"), QString::fromStdString(settings.component4));
+  addValue(components, CalculiXUnitPresentation::title("Rotation Y", "angle"), QString::fromStdString(settings.component5));
+  addValue(components, CalculiXUnitPresentation::title("Rotation Z", "angle"), QString::fromStdString(settings.component6));
   return true;
 }
 

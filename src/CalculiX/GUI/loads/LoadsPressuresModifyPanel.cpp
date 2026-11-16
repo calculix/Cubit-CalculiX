@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "LoadsPressuresModifyPanel.hpp"
@@ -111,6 +112,10 @@ LoadsPressuresModifyPanel::LoadsPressuresModifyPanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this, SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_3, *lineEdit_3, label_3->text(), "pressure");
+  unitPresentation->bind(*label_6, *lineEdit_6, label_6->text(), "time");
 
   isInitialized = true;
 }
@@ -273,6 +278,7 @@ bool LoadsPressuresModifyPanel::setPressure(int id)
   originalValues.insert("lineEdit_6", lineEdit_6->text());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

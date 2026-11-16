@@ -43,6 +43,17 @@ std::string CoreTopologyAdjointStepExport::get_export(const CoreTopologyAdjointS
 
   std::ostringstream output;
   output << "** Topology adjoint calculation\n";
+  std::string axisQuantity;
+  std::string error;
+  if (!data.steps.get_step_axis_quantity(final_step[0], axisQuantity, error))
+  {
+    PRINT_ERROR("Cannot export adjoint step axis: %s\n", error.c_str());
+    return {};
+  }
+  if (!axisQuantity.empty())
+  {
+    output << "** CUBIT_SIM_STEP_AXIS=1;" << axisQuantity << "\n";
+  }
   output << step_definition;
 
   if (step_definition.back() != '\n')
@@ -53,19 +64,9 @@ std::string CoreTopologyAdjointStepExport::get_export(const CoreTopologyAdjointS
   if (!boundaries.empty())
   {
     output << "*BOUNDARY\n";
-    CoreMeshQuery mesh_query(data.mesh);
-
     for (const auto& boundary : boundaries)
     {
-      const std::string nodeset_name = mesh_query.get_nodeset_name(boundary.first);
-
-      if (nodeset_name.empty())
-      {
-        PRINT_ERROR("Missing adjoint boundary nodeset name.\n");
-        return "";
-      }
-
-      output << nodeset_name << "," << boundary.second << "," << boundary.second << ",0.000000\n";
+      output << boundary.first << "," << boundary.second << "," << boundary.second << ",0.000000\n";
     }
   }
 

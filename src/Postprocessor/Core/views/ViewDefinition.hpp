@@ -6,6 +6,7 @@
 #include <string>
 #include <cstdint>
 #include "../selection/SelectionState.hpp"
+#include "ScaleDefinition.hpp"
 #include "../tables/ResultTables.hpp"
 #include "../annotations/AnnotationDefinition.hpp"
 
@@ -46,6 +47,10 @@ namespace Postprocessor
     std::optional<TableReference> table;
     std::optional<std::string> plot_id;
     bool plot_active = false;
+    // Fixed native scene basis, independent of presentation-unit preferences.
+    // Unknown sources remain explicitly uncalibrated rather than guessed.
+    std::string scene_unit;
+    bool scale_visible = ScaleDefaults::visible;
   };
 }
 

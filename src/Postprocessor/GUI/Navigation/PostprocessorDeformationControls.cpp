@@ -58,10 +58,12 @@ PostprocessorDeformationControls::PostprocessorDeformationControls(
   : QWidget(parent), application(std::move(active)), submit(std::move(dispatcher)), silent(std::move(preview))
 {
   setObjectName("Postprocessor.DeformationControls");
-  setSizePolicy(QSizePolicy::Preferred,QSizePolicy::Fixed);
+  setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
   auto* layout = new QHBoxLayout(this);
   layout->setContentsMargins(0,0,0,0);
   layout->setSpacing(4);
+  layout->setAlignment(Qt::AlignLeft);
+  layout->setSizeConstraint(QLayout::SetFixedSize);
   enabled = new QCheckBox(tr("Deform"),this);
   enabled->setObjectName("Postprocessor.Deformation.Enabled");
   enabled->setToolTip(tr("Immediately enable or disable deformation of the selected source in the active view."));
@@ -70,6 +72,7 @@ PostprocessorDeformationControls::PostprocessorDeformationControls(
   fields->setObjectName("Postprocessor.Deformation.Field");
   fields->setMinimumContentsLength(8);
   fields->setMaximumWidth(180);
+  fields->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
   fields->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
   fields->setToolTip(tr("Immediately select Automatic displacement or an explicit vector for the active source and view."));
   layout->addWidget(fields);
@@ -77,6 +80,7 @@ PostprocessorDeformationControls::PostprocessorDeformationControls(
   scale = new QLineEdit(this);
   scale->setObjectName("Postprocessor.Deformation.Scale");
   scale->setMaximumWidth(85);
+  scale->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
   scale->setToolTip(tr("Finite nonnegative multiplier; units must match. Valid edits preview after a short pause. Enter or leaving the field journals the final value once."));
   auto* validator = new QDoubleValidator(scale);
   validator->setBottom(0);

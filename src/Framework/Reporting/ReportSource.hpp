@@ -3,6 +3,8 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <optional>
+#include "ReportSourceUnits.hpp"
 
 class ReportSource
 {
@@ -15,6 +17,8 @@ public:
   std::vector<std::string> input_files;
   std::vector<std::string> fingerprints;
   std::string provenance;
+  // Exported deck units; never the independently recorded native geometry units.
+  std::optional<ReportSourceUnits> source_units;
   std::string run_identity;
   // Durable solver launch/setup IDs, independent of result-conversion tokens.
   std::string solver_launch_id;

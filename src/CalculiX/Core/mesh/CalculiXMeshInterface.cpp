@@ -4,12 +4,15 @@
 #include <QString>
 #include "CoreMeshElementMapping.hpp"
 #include "CalculiXMeshInterface.hpp"
+#include "Framework/Drawing/DrawingCaptureColors.hpp"
 #include "CoreMeshQuery.hpp"
 #include "CoreBlocks.hpp"
 #include "CoreMeshGeometry.hpp"
 #include "CoreMeshTreeData.hpp"
 #include <string>
 #include <vector>
+#include <set>
+#include <limits>
 
 #include "Core/loadCalculiXCore.hpp"
 
@@ -21,10 +24,12 @@ bool CalculiXMeshInterface::get_block_capture_color(int id, std::string& color, 
     error = "Cannot read native color for block " + std::to_string(id) + ".";
     return false;
   }
-  const auto rgb = block->color();
-  color = QString("#%1%2%3").arg(rgb.red, 2, 16, QLatin1Char('0')).arg(rgb.green, 2, 16, QLatin1Char('0')).arg(rgb.blue, 2, 16, QLatin1Char('0')).toStdString();
-  error.clear();
-  return true;
+  const auto native = block->color();
+  if (native.alpha != 0)
+  {
+    return DrawingCaptureColors::encode(native, color, error);
+  }
+  return DrawingCaptureColors::block(block, color, error);
 }
 
 bool CalculiXMeshInterface::get_assignment_entity_name(const std::string& type, int id, std::string& name)
@@ -325,5 +330,47 @@ bool CalculiXMeshInterface::get_sideset_properties(int id, MeshProperties& prope
     error = "Unable to read the sideset faces.";
     return false;
   }
+  return true;
+}
+
+bool CalculiXMeshInterface::get_sideset_element_sides(int id,
+  std::vector<std::pair<int, int>>& output, std::string& error)
+{
+  error.clear();
+  SidesetHandle handle = nullptr;
+  if (ccx_core.me_iface == nullptr ||
+      !ccx_core.me_iface->get_sideset_handle(id, handle) || handle == nullptr)
+  {
+    error = "Unable to read pressure sideset " + std::to_string(id) + ".";
+    return false;
+  }
+  constexpr int batchSize = 512;
+  std::vector<ElementHandle> elements(batchSize);
+  std::vector<ElementType> types(batchSize);
+  std::vector<int> sides(batchSize);
+  // Only type/side facts are needed, not an additional copy of every face.
+  std::set<std::pair<int, int>> distinct;
+  int offset = 0;
+  int count = 0;
+  while ((count = ccx_core.me_iface->get_sideset_sides(handle, offset, batchSize, elements, types, sides)) > 0)
+  {
+    if (count > batchSize || offset > (std::numeric_limits<int>::max)() - count)
+    {
+      error = "Pressure sideset exceeds the supported SDK query range.";
+      return false;
+    }
+    for (int index = 0; index < count; ++index)
+    {
+      distinct.emplace(static_cast<int>(types[index]), sides[index]);
+    }
+    offset += count;
+  }
+  if (count < 0)
+  {
+    error = "Unable to read pressure sideset faces.";
+    return false;
+  }
+  std::vector<std::pair<int, int>> candidate(distinct.begin(), distinct.end());
+  output = std::move(candidate);
   return true;
 }

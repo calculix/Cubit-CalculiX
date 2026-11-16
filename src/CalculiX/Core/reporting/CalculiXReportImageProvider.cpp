@@ -194,8 +194,14 @@ bool CalculiXReportImageProvider::collect(const ReportImageRequest& request, Rep
     }
   }());
   std::size_t embeddedBytes = 0;
+  std::size_t completedImages = 0;
   const auto append = [&](const std::string& purpose, int stepId, ReportSection& section)
   {
+    const auto stage = "Capturing " + purpose + " / " + section.title;
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Images, stage, completedImages, count, error))
+    {
+      return false;
+    }
     ReportImageRequest imageRequest = request;
     imageRequest.purpose = purpose;
     if (stepId > 0) {
@@ -209,6 +215,10 @@ bool CalculiXReportImageProvider::collect(const ReportImageRequest& request, Rep
     std::string captureError;
     if (!render(imageRequest, image, captureError))
     {
+      if (!ReportProgress::advance(request.progress, ReportProgressStage::Images, stage, ++completedImages, count, error))
+      {
+        return false;
+      }
       unavailable(candidate, section.id, purpose + " image unavailable: " + captureError);
       return true;
     }
@@ -225,6 +235,10 @@ bool CalculiXReportImageProvider::collect(const ReportImageRequest& request, Rep
         return purpose + " reference setup";
       }
     }());
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Images, stage, ++completedImages, count, error))
+    {
+      return false;
+    }
     section.images.push_back(std::move(image));
     return true;
   };

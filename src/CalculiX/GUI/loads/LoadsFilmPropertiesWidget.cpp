@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsFilmPropertiesWidget.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -25,13 +26,13 @@ bool LoadsFilmPropertiesWidget::setFilm(int id)
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
   addReference(assignment, PropertyReferenceKind::Sideset, "Sideset", QString::fromStdString(settings.sideset));
   auto* components = addGroup("components", "Components", PropertySection::Data);
-  addValue(components, "Temperature", QString::fromStdString(settings.temperature));
-  addValue(components, "Coefficient", QString::fromStdString(settings.coefficient));
+  addValue(components, CalculiXUnitPresentation::title("Temperature", "temperature"), QString::fromStdString(settings.temperature));
+  addValue(components, CalculiXUnitPresentation::title("Coefficient", "heat_transfer"), QString::fromStdString(settings.coefficient));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Amplitude", QString::fromStdString(settings.amplitude));
-  addValue(settingsGroup, "Time Delay", QString::fromStdString(settings.timeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time Delay", "time"), QString::fromStdString(settings.timeDelay));
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Film amplitude", QString::fromStdString(settings.secondaryAmplitude));
-  addValue(settingsGroup, "Film Time Delay", QString::fromStdString(settings.secondaryTimeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Film Time Delay", "time"), QString::fromStdString(settings.secondaryTimeDelay));
   addValue(settingsGroup, "OP", QString::fromStdString(settings.operation));
   return true;
 }

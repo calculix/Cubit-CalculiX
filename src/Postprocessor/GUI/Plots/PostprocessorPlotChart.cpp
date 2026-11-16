@@ -1,5 +1,6 @@
 #include <type_traits>
 #include "PostprocessorPlotChart.hpp"
+#include "Postprocessor/Core/plots/PlotAxisUnits.hpp"
 #include "PostprocessorPlotRendering.hpp"
 #include <utility>
 #include "PostprocessorPlotInteraction.hpp"
@@ -122,7 +123,7 @@ void PostprocessorPlotChart::cancel()
 void PostprocessorPlotChart::set_data(const Postprocessor::PlotDefinition& definition,const Postprocessor::PlotData& data)
 {
   populate_plot_chart(chart,definition,data);
-  apply_axes(definition.axes);
+  apply_axes(Postprocessor::presented_plot_axes(definition,data));
   request_frame();
 }
 void PostprocessorPlotChart::apply_axes(const Postprocessor::PlotAxes& value)

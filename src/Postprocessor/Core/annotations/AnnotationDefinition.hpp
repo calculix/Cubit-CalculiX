@@ -45,6 +45,6 @@ namespace Postprocessor
   // Element leaders use the arithmetic mean of original cell-node positions
   // after deformation. This is a geometric anchor, not a result average.
   ProbeResult annotation_probe(const SimResults::VtkResultsData& data, const Representation& display,
-    const EntityReference& entity);
+    const EntityReference& entity, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
 }
 #endif

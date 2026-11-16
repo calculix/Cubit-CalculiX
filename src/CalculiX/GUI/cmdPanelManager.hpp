@@ -31,6 +31,7 @@ public:
   // Cleanup (for example, when we unload the component)
   void clear();
   void clearTopologyPanels(int topology_id = -1);
+  void refreshUnitLabels();
 
 private:
   std::unique_ptr<NavigationModel> navigationModel;

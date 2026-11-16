@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-bool SimResults::ResultsUnits::display_value(double input, const SimUnits::QuantityUnit& source, const std::string& workspace, double& output, std::string& label, std::string& error) {
+bool SimResults::ResultsUnits::display_value(double input, const SimUnits::QuantityUnit& source, const std::string& workspace, double& output, std::string& label, std::string& error, const SimUnits::WorkspaceUnitContext* presentation) {
   output = input;
   label.clear();
   error.clear();
@@ -15,7 +15,30 @@ bool SimResults::ResultsUnits::display_value(double input, const SimUnits::Quant
   if (source.quantity.empty()) {
     return true;
   }
-  if (!framework_units().display_unit(workspace, source.quantity, label, error)) {
+  if (presentation)
+  {
+    if (presentation->workspace != workspace)
+    {
+      error = "Presentation unit context belongs to another workspace.";
+      return false;
+    }
+    const auto preferred = presentation->display_units.find(source.quantity);
+    if (preferred != presentation->display_units.end())
+    {
+      label = preferred->second;
+    }
+    else
+    {
+      SimUnits::QuantityUnit target;
+      if (!framework_units().system_unit(presentation->system, source.quantity, target, error))
+      {
+        return false;
+      }
+      label = target.unit;
+    }
+  }
+  else if (!framework_units().display_unit(workspace, source.quantity, label, error))
+  {
     return false;
   }
   if (!std::isfinite(input)) {
@@ -75,10 +98,16 @@ bool SimResults::ResultsUnits::field_quantity(const Field& field, const std::str
   return true;
 }
 
-bool SimResults::ResultsUnits::field_value(double input, const Field& field, const std::string& component, bool magnitude, const std::string& workspace, double& output, std::string& label, std::string& error) {
+bool SimResults::ResultsUnits::field_value(double input, const Field& field, const std::string& component, bool magnitude, const std::string& workspace, double& output, std::string& label, std::string& error, const SimUnits::WorkspaceUnitContext* presentation) {
   SimUnits::QuantityUnit quantity;
   if (!field_quantity(field, component, magnitude, quantity, error)) {
     return false;
   }
-  return display_value(input, quantity, workspace, output, label, error);
+  return display_value(input, quantity, workspace, output, label, error, presentation);
+}
+
+bool SimResults::ResultsUnits::display_value(double input, const SimUnits::QuantityUnit& source,
+  const SimUnits::WorkspaceUnitContext& presentation, double& output, std::string& label, std::string& error)
+{
+  return display_value(input, source, presentation.workspace, output, label, error, &presentation);
 }

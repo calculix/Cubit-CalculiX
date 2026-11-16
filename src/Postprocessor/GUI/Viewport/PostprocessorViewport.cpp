@@ -2,6 +2,7 @@
 #include "PostprocessorViewport.hpp"
 #include "PostprocessorScene.hpp"
 #include "CameraInteraction.hpp"
+#include "PostprocessorLegendInteraction.hpp"
 #include "PostprocessorTriad.hpp"
 #include "Postprocessor/GUI/Annotations/PostprocessorAnnotationDisplay.hpp"
 #include "Postprocessor/GUI/Annotations/PostprocessorAnnotationInteraction.hpp"
@@ -11,6 +12,7 @@
 #include "CubitMessage.hpp"
 #include "Postprocessor/Commands/selection/PickCommandText.hpp"
 
+#include <algorithm>
 #include <QEvent>
 #include <QMouseEvent>
 #include <QCursor>
@@ -47,6 +49,14 @@ PostprocessorViewport::PostprocessorViewport(const std::string& view_id,
   sceneWindow->AddRenderer(renderer);
   setRenderWindow(sceneWindow.GetPointer());
   scene = std::make_unique<PostprocessorScene>(renderer, viewId);
+  legendInteraction = std::make_unique<PostprocessorLegendInteraction>(this,scene.get(),viewId,active,submit,silent,
+    [this]()
+    {
+      queue_render();
+    },[this](const std::string& error)
+    {
+      report_error(error);
+    });
   triad = std::make_unique<PostprocessorTriad>(sceneWindow);
   annotationDisplay = std::make_unique<PostprocessorAnnotationDisplay>(renderer,viewId,this);
   annotationInteraction = std::make_unique<PostprocessorAnnotationInteraction>(this,annotationDisplay.get(),viewId,
@@ -86,6 +96,7 @@ PostprocessorViewport::~PostprocessorViewport()
 
 void PostprocessorViewport::cancel_interaction()
 {
+  legendInteraction->cancel();
   annotationInteraction->cancel();
   interaction->cancel();
 }
@@ -203,7 +214,23 @@ void PostprocessorViewport::update_hover()
   {
     text << "Unavailable";
   }
-  text << "\nStep " << result->step << " / Increment " << result->increment << " / Time " << result->time;
+  if (!result->value_unit.empty())
+  {
+    text << " [" << result->value_unit << "]";
+  }
+  text << "\nStep " << result->step << " / Increment " << result->increment << " / Time ";
+  if (result->presentation_time)
+  {
+    text << *result->presentation_time;
+  }
+  else
+  {
+    text << result->time;
+  }
+  if (!result->time_unit.empty())
+  {
+    text << " [" << result->time_unit << "]";
+  }
   tooltipEntity = entity;
   tooltipText = QString::fromStdString(text.str()).toHtmlEscaped().replace("\n","<br>");
   QToolTip::showText(mapToGlobal(hoverPosition.toPoint()),tooltipText,this);
@@ -292,6 +319,12 @@ bool PostprocessorViewport::event(QEvent* event)
   {
     contextClick = false;
   }
+  if (legendInteraction && legendInteraction->handle(event))
+  {
+    clear_hover();
+    event->accept();
+    return true;
+  }
   if (annotationInteraction && annotationInteraction->handle(event))
   {
     clear_hover();
@@ -343,7 +376,8 @@ bool PostprocessorViewport::event(QEvent* event)
   {
     auto* mouse = static_cast<QMouseEvent*>(event);
     if (mouse->buttons() == Qt::NoButton && mouse->modifiers() == Qt::NoModifier &&
-        annotationDisplay->label_at(mouse->position()).empty())
+        annotationDisplay->label_at(mouse->position()).empty() &&
+        !scene->legend_at(mouse->position().x()/std::max(1,width()),1.0-mouse->position().y()/std::max(1,height())))
     {
       hoverPosition = mouse->position();
       if (!hoverTimer->isActive())
@@ -484,6 +518,7 @@ void PostprocessorViewport::render_frame()
   }
   QScopedValueRollback<bool> guard(renderingFrame, true);
   timings.begin_frame();
+  legendInteraction->flush_preview();
   annotationInteraction->flush_preview();
   interaction->flush_preview();
   frameDirty = false;
@@ -500,7 +535,7 @@ void PostprocessorViewport::on_frame_presented()
   timings.presented();
   queue_timing_report();
   awaitingPresentation = false;
-  if (frameDirty || interaction->preview_pending() || annotationInteraction->preview_pending())
+  if (frameDirty || interaction->preview_pending() || annotationInteraction->preview_pending() || legendInteraction->preview_pending())
   {
     request_frame();
   }

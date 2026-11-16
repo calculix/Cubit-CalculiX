@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
 #include "StepsModifySteadyStateDynamicsPanel.hpp"
@@ -144,6 +145,12 @@ StepsModifySteadyStateDynamicsPanel::StepsModifySteadyStateDynamicsPanel(QWidget
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_5, *lineEdit_5, label_5->text(), "frequency");
+  unitPresentation->bind(*label_6, *lineEdit_6, label_6->text(), "frequency");
+  unitPresentation->bind(*label_10, *lineEdit_10, label_10->text(), "time");
+  unitPresentation->bind(*label_11, *lineEdit_11, label_11->text(), "time");
 
   isInitialized = true;
 }
@@ -375,6 +382,7 @@ bool StepsModifySteadyStateDynamicsPanel::setStep(int id)
   originalValues.insert("lineEdit_11", lineEdit_11->text());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

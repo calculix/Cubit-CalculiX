@@ -4,6 +4,8 @@
 #include "Core/drawing/CoreDrawSnapshotCapture.hpp"
 #include "Core/reporting/CalculiXReportInputReader.hpp"
 #include "Framework/Storage/HDF5Tool.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include <cmath>
 #include <QDateTime>
 #include <QFile>
 #include <QTemporaryDir>
@@ -30,13 +32,59 @@ int jobSnapshotTests()
     return file.open(QIODevice::WriteOnly) && file.write(bytes) == bytes.size();
   };
   check(write(mesh, "*NODE\n1,0,0,0\n2,1,0,0\n3,0,1,0\n") &&
-      write(root, "*INCLUDE, INPUT=\"mesh input.inp\"\n*STEP\n*STATIC\n*END STEP\n"), "Create archived input fixture");
+      write(root, "** CUBIT_SIM_UNIT_SYSTEM=N-mm-s\n** CUBIT_SIM_GEOMETRY_UNIT=mm\n*INCLUDE, INPUT=\"mesh input.inp\"\n*STEP\n*STATIC\n*END STEP\n"), "Create archived input fixture");
   CalculiXJobRunRecord record;
   record.jobId = 1;
   record.launchId = "launch-one";
   record.launchedAt = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs).toStdString();
   check(CoreJobSnapshotBuilder::captureInput(root.toStdString(), record.input, error) && record.input.files.size() == 2,
     "Archive exact input bytes and quoted INCLUDE dependencies");
+  check(record.read_input_units(error), "Read snapshot coordinate provenance from the archived deck");
+  {
+    CalculiXJobRunRecord meshRecord;
+    meshRecord.input.rootFile = "mesh.inp";
+    meshRecord.input.files["mesh.inp"] = "*NODE\n1,0,0,0\n2,0.1,0,0\n3,0,0.1,0\n*ELEMENT, TYPE=S3, ELSET=BLOCK_1\n1,1,2,3\n*STEP\n*STATIC\n*END STEP\n";
+    const std::map<std::string, std::string> colors = {{"BLOCK_1", "#123456"}};
+    DrawingGeometry geometry;
+    double size = -1;
+    int steps = -1;
+    for (const auto& units : {std::pair<const char*, const char*>{"SI", "mm"}, {"N-mm-s", "m"}, {"N-mm-s", "mm"}})
+    {
+      meshRecord.unitSystem = units.first;
+      meshRecord.geometryLengthUnit = units.second;
+      double expected = 0.1;
+      if (meshRecord.unitSystem == "SI")
+      {
+        expected = 100.0;
+      }
+      else if (meshRecord.geometryLengthUnit == "m")
+      {
+        expected = 0.0001;
+      }
+      const bool built = CoreJobSnapshotBuilder::buildSetupModel(meshRecord, colors, geometry, size, steps, error);
+      check(built, "Build exported mesh in its recorded geometry units");
+      if (built)
+      {
+        check(steps == 1 && geometry.primitives.size() == 1 &&
+            std::abs(geometry.primitives.front().points[1][0] - expected) < 1e-12 &&
+            std::abs(size - expected * 0.1) < 1e-12,
+          "Mesh positions and symbol size share the camera/condition coordinate basis");
+      }
+    }
+    const double previousSize = size;
+    const int previousSteps = steps;
+    const auto previousCount = geometry.primitives.size();
+    meshRecord.geometryLengthUnit.clear();
+    check(!CoreJobSnapshotBuilder::buildSetupModel(meshRecord, colors, geometry, size, steps, error) &&
+        size == previousSize && steps == previousSteps && geometry.primitives.size() == previousCount,
+      "Unknown coordinate units preserve the previous snapshot outputs");
+    meshRecord.unitSystem = "SI";
+    meshRecord.geometryLengthUnit = "mm";
+    meshRecord.input.files["mesh.inp"].replace("0.1,0,0", "1e308,0,0");
+    check(!CoreJobSnapshotBuilder::buildSetupModel(meshRecord, colors, geometry, size, steps, error) &&
+        size == previousSize && steps == previousSteps && geometry.primitives.size() == previousCount,
+      "Overflow in coordinate scaling preserves previous snapshot outputs");
+  }
   auto setup = std::make_shared<CalculiXJobSetupSnapshot>();
   setup->camera.available = true;
   setup->camera.position = {2, -3, 4};
@@ -66,6 +114,9 @@ int jobSnapshotTests()
   setup->fingerprint = CoreJobSnapshotBuilder::setupFingerprint(*setup);
   record.setup = setup;
   check(CoreJobSnapshotBuilder::validate(record, error), "Validate complete launch/input/setup linkage");
+  auto missingUnits = record;
+  missingUnits.geometryLengthUnit.clear();
+  check(!CoreJobSnapshotBuilder::validate(missingUnits, error), "A typed setup cannot omit coordinate provenance");
   const auto archived = record.input;
   check(write(mesh, "*NODE\n1,99,99,99\n"), "Change external input after launch");
   ReportSource source;

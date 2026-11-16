@@ -483,3 +483,20 @@ explicit minimum/maximum. Table cells offer Plot columns. Plots occupy the
 right side beside the viewport, sharing Table/Plot tabs with an open table.
 Closing preserves the definition. Axis-only changes do not rebuild the source
 tree or re-extract table histories. See :doc:`plots` for commands and CSV export.
+
+Contextual right dock and view tools
+-----------------------------------
+
+The right dock shows one editor at a time. An explicit tree selection opens its
+source information. Clicking blank tree space clears a source inspector while
+leaving an explicitly opened Legend, Clip or Section editor intact. The Legend
+button opens field/component/unit information, range settings, palette, limits
+and legend visibility in that order. Clip and Section have individual buttons.
+The selected SVG families are L1, C1, S1, R3 and V2.
+
+Standard-view buttons provide Front, Back, Top, Bottom, Left, Right, Isometric,
+Orthographic and Perspective. Switching projection preserves apparent height at
+the focal plane. The scale button toggles a per-view ruler, initially off.
+Navigation occupies the row above Command Line in the middle column. Both the
+viewport/Command Line boundary and the left/right dock boundaries remain
+resizable. The deformation controls use their content width.

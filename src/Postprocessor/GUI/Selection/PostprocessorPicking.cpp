@@ -1,3 +1,4 @@
+#include <vtkMatrix4x4.h>
 #include <type_traits>
 #include "PostprocessorPicking.hpp"
 #include "Postprocessor/GUI/Viewport/PostprocessorScene.hpp"
@@ -105,6 +106,16 @@ bool PostprocessorScene::pick(double x, double y, Postprocessor::EntityKind kind
     {
       double position[3];
       picked->GetPoint(index,position);
+      if (actor)
+      {
+        double native[4] = {position[0],position[1],position[2],1};
+        double world[4];
+        actor->GetMatrix()->MultiplyPoint(native,world);
+        for (int axis = 0; axis < 3; ++axis)
+        {
+          position[axis] = world[axis];
+        }
+      }
       renderer->SetWorldPoint(position[0],position[1],position[2],1);
       renderer->WorldToDisplay();
       const auto* screen = renderer->GetDisplayPoint();
@@ -113,7 +124,7 @@ bool PostprocessorScene::pick(double x, double y, Postprocessor::EntityKind kind
       {
         const auto* front = occluders->GetPickPosition();
         double bounds[6];
-        picked->GetBounds(bounds);
+        actor->GetBounds(bounds);
         const double diagonal = std::hypot(bounds[1]-bounds[0],bounds[3]-bounds[2],bounds[5]-bounds[4]);
         const auto* direction = renderer->GetActiveCamera()->GetDirectionOfProjection();
         const double separation = (front[0]-position[0])*direction[0] +

@@ -213,6 +213,19 @@ SimUnits::CoreFrameworkUnits::CoreFrameworkUnits() {
   add_unit(UnitDefinition("H", {1, 2, -2, 0, -2, 0, 0}, 1.0));
   add_unit(UnitDefinition("F", {-1, -2, 4, 0, 2, 0, 0}, 1.0));
   add_quantity(QuantityUnit("dimensionless", "1", Dimensionless));
+  add_quantity(QuantityUnit("relative_error", "%", Dimensionless));
+  add_quantity(QuantityUnit("phase_angle", "deg", Dimensionless, UnitRole::Angle));
+  add_quantity(QuantityUnit("mass_flow", "kg/s", {1, 0, -1, 0, 0, 0, 0}));
+  add_quantity(QuantityUnit("angular_velocity_squared", "1/s^2", {0, 0, -2, 0, 0, 0, 0}));
+  add_quantity(QuantityUnit("electric_potential", "V", {1, 2, -3, 0, -1, 0, 0}));
+  add_quantity(QuantityUnit("electric_field", "V/m", {1, 1, -3, 0, -1, 0, 0}));
+  add_quantity(QuantityUnit("electric_current_density", "A/m^2", {0, -2, 0, 0, 1, 0, 0}));
+  add_quantity(QuantityUnit("magnetic_flux_density", "T", {1, 0, -2, 0, -1, 0, 0}));
+  add_quantity(QuantityUnit("stress_intensity", "Pa*m^0.5", {1, -0.5, -2, 0, 0, 0, 0}));
+  add_quantity(QuantityUnit("turbulent_kinetic_energy", "m^2/s^2", {0, 2, -2, 0, 0, 0, 0}));
+  add_quantity(QuantityUnit("turbulence_density_rate", "kg/(m^3*s)", {1, -3, -1, 0, 0, 0, 0}));
+  // Cycle count is dimensionless; the quantity identifies length per cycle.
+  add_quantity(QuantityUnit("crack_growth_per_cycle", "m", Length));
   add_quantity(QuantityUnit("strain", "1", Dimensionless));
   add_quantity(QuantityUnit("poisson_ratio", "1", Dimensionless));
   add_quantity(QuantityUnit("mass", "kg", Mass));
@@ -237,6 +250,7 @@ SimUnits::CoreFrameworkUnits::CoreFrameworkUnits() {
   add_quantity(QuantityUnit("inverse_stress", "1/Pa", InverseStress));
   add_quantity(QuantityUnit("density", "kg/m^3", Density));
   add_quantity(QuantityUnit("energy", "J", Energy));
+  add_quantity(QuantityUnit("energy_density", "J/m^3", Stress));
   add_quantity(QuantityUnit("power", "W", Power));
   add_quantity(QuantityUnit("force_per_length", "N/m", {1, 0, -2, 0, 0, 0, 0}));
   add_quantity(QuantityUnit("force_per_volume", "N/m^3", {1, -2, -2, 0, 0, 0, 0}));
@@ -427,6 +441,12 @@ bool SimUnits::CoreFrameworkUnits::system_unit(const std::string& system, const 
     error = "Unknown unit-system preset: " + system;
     return false;
   }
+  if (quantityId == "relative_error")
+  {
+    // CCX error values are native percentages, not unscaled fractions.
+    output = candidate;
+    return true;
+  }
   const auto& preset = found->second;
   if (candidate.role == UnitRole::AbsoluteTemperature || candidate.role == UnitRole::TemperatureDifference || candidate.role == UnitRole::Angle) {
     output = candidate;
@@ -484,18 +504,31 @@ bool SimUnits::CoreFrameworkUnits::workspace_context(const std::string& workspac
   output = found->second;
   return true;
 }
-bool SimUnits::CoreFrameworkUnits::set_workspace_context(const WorkspaceUnitContext& context, std::string& error) {
+bool SimUnits::CoreFrameworkUnits::validate_workspace_context(const WorkspaceUnitContext& context, std::string& error) const
+{
   error.clear();
-  if (contexts.find(context.workspace) == contexts.end() || systems.find(context.system) == systems.end()) {
+  if (contexts.find(context.workspace) == contexts.end() || systems.find(context.system) == systems.end())
+  {
     error = "Unknown workspace or unit-system preset.";
     return false;
   }
-  for (const auto& item : context.display_units) {
+  for (const auto& item : context.display_units)
+  {
     QuantityUnit definition;
     double result = 0.0;
-    if (!quantity(item.first, definition, error) || !to_si(0.0, item.second, definition.dimension, definition.role, result, error)) {
+    if (!quantity(item.first, definition, error) || !to_si(0.0, item.second, definition.dimension, definition.role, result, error))
+    {
       return false;
     }
+  }
+  return true;
+}
+
+bool SimUnits::CoreFrameworkUnits::set_workspace_context(const WorkspaceUnitContext& context, std::string& error)
+{
+  if (!validate_workspace_context(context, error))
+  {
+    return false;
   }
   contexts[context.workspace] = context;
   ++changeGeneration;

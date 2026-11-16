@@ -90,3 +90,79 @@ bool ReportJson::integer(const QJsonObject& input, const char* key, int& output,
   output = static_cast<int>(number);
   return true;
 }
+
+
+QJsonValue ReportJson::quantity(const std::optional<ReportQuantity>& value)
+{
+  if (!value)
+  {
+    return QJsonValue(QJsonValue::Null);
+  }
+  QJsonArray dimension;
+  for (double exponent : value->dimension)
+  {
+    dimension.append(exponent);
+  }
+  return QJsonObject{{"quantity", QString::fromStdString(value->quantity)},
+    {"unit", QString::fromStdString(value->unit)}, {"dimension", dimension}, {"role", static_cast<int>(value->role)}};
+}
+
+bool ReportJson::validate_quantity(const ReportQuantity& value, std::string& error)
+{
+  if (value.quantity.empty() || value.unit.empty() || value.unit.size() > 4096 ||
+      static_cast<int>(value.role) < 0 || static_cast<int>(value.role) > static_cast<int>(SimUnits::UnitRole::Angle))
+  {
+    error = "Invalid report quantity metadata.";
+    return false;
+  }
+  for (double exponent : value.dimension)
+  {
+    if (!std::isfinite(exponent))
+    {
+      error = "Report quantity dimensions must be finite.";
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ReportJson::quantity(const QJsonValue& input, std::optional<ReportQuantity>& output, std::string& error)
+{
+  if (input.isNull())
+  {
+    output.reset();
+    return true;
+  }
+  if (!input.isObject())
+  {
+    error = "Expected report quantity metadata.";
+    return false;
+  }
+  const auto object = input.toObject();
+  ReportQuantity candidate;
+  int role = 0;
+  if (!text(object, "quantity", candidate.quantity, error) || !text(object, "unit", candidate.unit, error) ||
+      !integer(object, "role", role, error) || role < 0 || role > static_cast<int>(SimUnits::UnitRole::Angle) ||
+      !object.value("dimension").isArray() || object.value("dimension").toArray().size() != 7)
+  {
+    error = "Invalid report quantity metadata.";
+    return false;
+  }
+  candidate.role = static_cast<SimUnits::UnitRole>(role);
+  const auto dimensions = object.value("dimension").toArray();
+  for (int i = 0; i < dimensions.size(); ++i)
+  {
+    if (!dimensions[i].isDouble() || !std::isfinite(dimensions[i].toDouble()))
+    {
+      error = "Report quantity dimensions must be finite numbers.";
+      return false;
+    }
+    candidate.dimension[static_cast<std::size_t>(i)] = dimensions[i].toDouble();
+  }
+  if (!validate_quantity(candidate, error))
+  {
+    return false;
+  }
+  output = std::move(candidate);
+  return true;
+}

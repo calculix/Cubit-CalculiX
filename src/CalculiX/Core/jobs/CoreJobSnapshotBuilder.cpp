@@ -2,6 +2,7 @@
 #include "Core/drawing/CalculiXDrawInterface.hpp"
 #include "Core/export/CalculiXExportInterface.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include <QJsonDocument>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -82,9 +83,35 @@ void sceneHash(QCryptographicHash& hash, const CalculiXJobSetupScene& scene) {
   }
 }
 
+bool coordinateScale(const CalculiXJobRunRecord& record, double& output, std::string& error)
+{
+  if (record.unitSystem.empty() || record.geometryLengthUnit.empty())
+  {
+    error = "Setup snapshots require recorded solver and geometry units.";
+    return false;
+  }
+  // Length conversions are linear: x_geometry = x_solver * scale. Use the
+  // run metadata, not mutable workspace defaults, for historical consistency.
+  double solverLengthInSI = 0.0;
+  double scale = 0.0;
+  if (!framework_units().system_to_si(1.0, SimUnits::Length, record.unitSystem, solverLengthInSI, error) ||
+      !framework_units().from_si(solverLengthInSI, record.geometryLengthUnit, SimUnits::Length,
+        SimUnits::UnitRole::Linear, scale, error))
+  {
+    return false;
+  }
+  if (!std::isfinite(scale) || scale <= 0.0)
+  {
+    error = "Invalid snapshot coordinate scale.";
+    return false;
+  }
+  output = scale;
+  return true;
+}
+
 // Reads exactly the emitted node/connectivity records, never the live Cubit
 // mesh. Corner faces approximate high-order geometry, as in normal captures.
-bool emittedMesh(const CalculiXJobInputBundle& input, const std::map<std::string, std::string>& blockColors,
+bool emittedMesh(const CalculiXJobInputBundle& input, const std::map<std::string, std::string>& blockColors, double solverToGeometry,
   DrawingGeometry& output, double& size, int& stepCount, std::string& error) {
   std::map<int, std::array<double, 3>> nodes;
   std::vector<std::pair<std::string, std::vector<int>>> elements;
@@ -162,7 +189,7 @@ bool emittedMesh(const CalculiXJobInputBundle& input, const std::map<std::string
         }
         std::array<double, 3> point;
         for (int axis = 0; axis < 3; ++axis) {
-          point[axis] = fields[axis + 1].trimmed().toDouble(&ok);
+          point[axis] = fields[axis + 1].trimmed().toDouble(&ok) * solverToGeometry;
           if (!ok || !std::isfinite(point[axis])) {
             error = "Invalid exported node coordinates.";
             return false;
@@ -272,6 +299,37 @@ bool emittedMesh(const CalculiXJobInputBundle& input, const std::map<std::string
 
 CoreJobSnapshotBuilder::CoreJobSnapshotBuilder() = default;
 
+bool CoreJobSnapshotBuilder::buildSetupModel(const CalculiXJobRunRecord& record,
+  const std::map<std::string, std::string>& blockColors, DrawingGeometry& model,
+  double& symbolSize, int& stepCount, std::string& error)
+{
+  error.clear();
+  double scale = 0.0;
+  if (!coordinateScale(record, scale, error))
+  {
+    return false;
+  }
+  DrawingGeometry candidate;
+  double candidateSize = 0.0;
+  int candidateSteps = 0;
+  try
+  {
+    if (!emittedMesh(record.input, blockColors, scale, candidate, candidateSize, candidateSteps, error))
+    {
+      return false;
+    }
+  }
+  catch (const std::exception& exception)
+  {
+    error = std::string("Cannot read archived setup mesh: ") + exception.what();
+    return false;
+  }
+  model = std::move(candidate);
+  symbolSize = candidateSize;
+  stepCount = candidateSteps;
+  return true;
+}
+
 std::string CoreJobSnapshotBuilder::inputFingerprint(const CalculiXJobInputBundle& input) {
   QCryptographicHash hash(QCryptographicHash::Sha256);
   token(hash, "calculix.input.bundle.1");
@@ -300,7 +358,7 @@ std::string CoreJobSnapshotBuilder::inputFingerprint(const CalculiXJobInputBundl
 
 std::string CoreJobSnapshotBuilder::setupFingerprint(const CalculiXJobSetupSnapshot& setup) {
   QCryptographicHash hash(QCryptographicHash::Sha256);
-  token(hash, "calculix.setup.2");
+  token(hash, "calculix.setup.3");
   token(hash, setup.id);
   number(hash, setup.symbolSize);
   geometryHash(hash, setup.model);
@@ -417,7 +475,7 @@ bool CoreJobSnapshotBuilder::prepare(int jobId, const std::string& filename,
       }
     }
     if (!DrawingCaptureCamera::current(setup->camera, error) ||
-        !emittedMesh(candidate.input, blockColors, setup->model, setup->symbolSize, emittedSteps, error)) {
+        !buildSetupModel(candidate, blockColors, setup->model, setup->symbolSize, emittedSteps, error)) {
       return false;
     }
     setup->modelDefinitions.unavailableReason = "A job setup picture requires a frozen analysis step; unassigned model definitions are not substituted.";
@@ -489,6 +547,11 @@ bool CoreJobSnapshotBuilder::validate(const CalculiXJobRunRecord& record, std::s
     return true;
   }
   const auto& setup = *record.setup;
+  double setupScale = 0.0;
+  if (!coordinateScale(record, setupScale, error))
+  {
+    return false;
+  }
   if (setup.id.empty() || !setup.camera.valid() || !std::isfinite(setup.symbolSize) || setup.symbolSize <= 0 || setup.model.primitives.empty() || setup.steps.size() > 256) {
     return fail("Invalid setup snapshot metadata.");
   }

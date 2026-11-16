@@ -31,8 +31,8 @@ block 2 add vol 2
 block 3 add vol 3 to 5
 #block all element type hex20
 
-#nodeset 1 add surface 4  
-#nodeset 1 name "plate_1"
+nodeset 1 add surface 4
+nodeset 1 name "plate_1"
 #nodeset 2 add surface 12  
 #nodeset 2 name "plate_2"
 
@@ -56,14 +56,18 @@ sideset 8 name "plates_holes"
 ccx units system "N-mm-s"
 ccx units geometry unit "mm"
 ccx create material "steel"
-ccx modify material 1 add card elastic model iso
+ccx modify material 1 card elastic model iso
 ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"
-ccx modify material 1 add card density model default
+ccx modify material 1 activate card elastic
+ccx modify material 1 card density model default
 ccx modify material 1 card density row 1 values 7850 273.15 unit "SI"
-ccx modify material 1 add card expansion model iso
+ccx modify material 1 activate card density
+ccx modify material 1 card expansion model iso
 ccx modify material 1 card expansion row 1 values 1.2e-05 273.15 unit "SI"
-ccx modify material 1 add card plastic model iso
+ccx modify material 1 activate card expansion
+ccx modify material 1 card plastic model iso
 ccx modify material 1 card plastic row 1 values 235000000 0 273.15 unit "SI"
+ccx modify material 1 activate card plastic
 
 ccx create section solid block all material 1
 

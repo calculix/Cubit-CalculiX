@@ -41,6 +41,14 @@ std::vector<ReportOption> ReportUserOptions::definitions()
     option.label = entry[1];
     option.kind = entry[2];
     option.default_value = entry[3];
+    if (option.kind == "boolean")
+    {
+      option.group_id = "report.content.document";
+      if (option.key == "header_line" || option.key == "footer_line" || option.key == "decoration_cover")
+      {
+        option.group_id = "report.content.decoration";
+      }
+    }
     result.push_back(std::move(option));
   }
   return result;

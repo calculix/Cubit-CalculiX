@@ -8,7 +8,8 @@ namespace Postprocessor
   inline std::string field_qualifier_syntax()
   {
     return " [origin <string:type='quoted',number='1',label='field_origin'>]"
-      " [association <string:type='unquoted',number='1',label='field_association'>]";
+      " [association <string:type='unquoted',number='1',label='field_association'>]"
+      " [set <string:type='quoted',number='1',label='field_set'>]";
   }
   inline bool read_field_qualifiers(CubitCommandData& data,FieldQualifiers& output,std::string& error)
   {
@@ -38,6 +39,16 @@ namespace Postprocessor
         return false;
       }
       candidate.association = association;
+    }
+    if (data.find_keyword("SET"))
+    {
+      std::string name;
+      if (!data.get_string("field_set",name) || name.empty())
+      {
+        error = "Set requires a nonempty quoted result set name.";
+        return false;
+      }
+      candidate.set_name = name;
     }
     output = candidate;
     error.clear();

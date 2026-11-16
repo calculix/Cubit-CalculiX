@@ -1,6 +1,7 @@
 #include <type_traits>
 #include "PostprocessorResultsTree.hpp"
 #include <QSignalBlocker>
+#include <QMouseEvent>
 #include <QHeaderView>
 #include <QTreeWidgetItemIterator>
 #include <QSet>
@@ -247,12 +248,37 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
   });
   connect(this, &QTreeWidget::currentItemChanged, this, [this,select](QTreeWidgetItem* current, QTreeWidgetItem*)
   {
+    if (refreshing)
+    {
+      return;
+    }
     if (current == nullptr)
     {
+      QTimer::singleShot(0,this,[this]()
+      {
+        if (!currentItem() && selection_cleared)
+        {
+          selection_cleared();
+        }
+      });
       return;
     }
     const auto kind = static_cast<ResultTreeItemKind>(current->data(0, Kind).toInt());
     const auto name = current->data(0, SourceName).toString();
+    if (inspect_source && !name.isEmpty())
+    {
+      // Dispatch after this signal returns: commands can rebuild the tree.
+      // Never retain an item pointer across a command boundary.
+      QTimer::singleShot(0,this,[this,name]()
+      {
+        const auto* selected = currentItem();
+        if (selected && selected->data(0,SourceName).toString() == name && inspect_source)
+        {
+          inspect_source(name);
+        }
+      });
+    }
+
     if (kind == ResultTreeItemKind::Source || kind == ResultTreeItemKind::Dataset || kind == ResultTreeItemKind::Field)
     {
       const auto id = current->data(0,SourceId).toString().toStdString();
@@ -731,4 +757,15 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
       return activeRoot;
     }
   }());
+}
+
+void PostprocessorResultsTree::mousePressEvent(QMouseEvent* event)
+{
+  const bool empty = itemAt(event->position().toPoint()) == nullptr;
+  QTreeWidget::mousePressEvent(event);
+  if (empty && event->button() == Qt::LeftButton && !refreshing)
+  {
+    clearSelection();
+    setCurrentItem(nullptr);
+  }
 }

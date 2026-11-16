@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "SectionsPropertiesWidget.hpp"
 #include "Core/sections/CalculiXSectionsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -30,7 +31,7 @@ bool SectionsPropertiesWidget::setSection(int id)
       addReference(assignment, PropertyReferenceKind::Material, "Material", QString::fromStdString(settings.material));
       addReference(assignment, PropertyReferenceKind::Orientation, "Orientation", QString::fromStdString(settings.orientation));
       auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
-      addValue(settingsGroup, "Thickness", QString::fromStdString(settings.thickness));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Thickness", "length"), QString::fromStdString(settings.thickness));
       break;
     }
     case 2:
@@ -41,7 +42,7 @@ bool SectionsPropertiesWidget::setSection(int id)
       addReference(assignment, PropertyReferenceKind::Material, "Material", QString::fromStdString(settings.material));
       addReference(assignment, PropertyReferenceKind::Orientation, "Orientation", QString::fromStdString(settings.orientation));
       auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
-      addValue(settingsGroup, "Thickness", QString::fromStdString(settings.thickness));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Thickness", "length"), QString::fromStdString(settings.thickness));
       addValue(settingsGroup, "Offset", QString::fromStdString(settings.offset));
       break;
     }
@@ -54,12 +55,12 @@ bool SectionsPropertiesWidget::setSection(int id)
       addReference(assignment, PropertyReferenceKind::Orientation, "Orientation", QString::fromStdString(settings.orientation));
       auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
       addValue(settingsGroup, "beam Type", QString::fromStdString(settings.beamType));
-      addValue(settingsGroup, "Parameter 1", QString::fromStdString(settings.parameter1));
-      addValue(settingsGroup, "Parameter 2", QString::fromStdString(settings.parameter2));
-      addValue(settingsGroup, "Parameter 3", QString::fromStdString(settings.parameter3));
-      addValue(settingsGroup, "Parameter 4", QString::fromStdString(settings.parameter4));
-      addValue(settingsGroup, "Parameter 5", QString::fromStdString(settings.parameter5));
-      addValue(settingsGroup, "Parameter 6", QString::fromStdString(settings.parameter6));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Parameter 1", "length"), QString::fromStdString(settings.parameter1));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Parameter 2", "length"), QString::fromStdString(settings.parameter2));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Parameter 3", "length"), QString::fromStdString(settings.parameter3));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Parameter 4", "length"), QString::fromStdString(settings.parameter4));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Parameter 5", "length"), QString::fromStdString(settings.parameter5));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Parameter 6", "length"), QString::fromStdString(settings.parameter6));
       addValue(settingsGroup, "x", QString::fromStdString(settings.x));
       addValue(settingsGroup, "y", QString::fromStdString(settings.y));
       addValue(settingsGroup, "z", QString::fromStdString(settings.z));
@@ -75,7 +76,7 @@ bool SectionsPropertiesWidget::setSection(int id)
       addReference(assignment, PropertyReferenceKind::Material, "Material", QString::fromStdString(settings.material));
       addReference(assignment, PropertyReferenceKind::Orientation, "Orientation", QString::fromStdString(settings.orientation));
       auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
-      addValue(settingsGroup, "Thickness", QString::fromStdString(settings.thickness));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Thickness", "length"), QString::fromStdString(settings.thickness));
       addValue(settingsGroup, "Offset", QString::fromStdString(settings.offset));
       break;
     }

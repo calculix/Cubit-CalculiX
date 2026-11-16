@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "StepsPropertiesWidget.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -46,12 +47,12 @@ bool StepsPropertiesWidget::setStep(int id)
       addValue(settingsGroup, "Direct", QString::fromStdString(settings.procedure.at(2)));
       addValue(settingsGroup, "Explicit", QString::fromStdString(settings.procedure.at(3)));
       addValue(settingsGroup, "Time Reset", QString::fromStdString(settings.procedure.at(4)));
-      addValue(settingsGroup, "Total Time at Start", QString::fromStdString(settings.procedure.at(5)));
-      addValue(settingsGroup, "Initial  Time Increment", QString::fromStdString(settings.procedure.at(6)));
-      addValue(settingsGroup, "Time period of Step", QString::fromStdString(settings.procedure.at(7)));
-      addValue(settingsGroup, "Minimum Time Increment", QString::fromStdString(settings.procedure.at(8)));
-      addValue(settingsGroup, "Maximum Time Increment", QString::fromStdString(settings.procedure.at(9)));
-      addValue(settingsGroup, "Initial  Time Increment CFD", QString::fromStdString(settings.procedure.at(10)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Total Time at Start", "time"), QString::fromStdString(settings.procedure.at(5)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Initial  Time Increment", "time"), QString::fromStdString(settings.procedure.at(6)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Time period of Step", "time"), QString::fromStdString(settings.procedure.at(7)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Minimum Time Increment", "time"), QString::fromStdString(settings.procedure.at(8)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Maximum Time Increment", "time"), QString::fromStdString(settings.procedure.at(9)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Initial  Time Increment CFD", "time"), QString::fromStdString(settings.procedure.at(10)));
       break;
     }
     case 3:
@@ -63,8 +64,8 @@ bool StepsPropertiesWidget::setStep(int id)
       addValue(settingsGroup, "Global", QString::fromStdString(settings.procedure.at(3)));
       addValue(settingsGroup, "CYCMPC", QString::fromStdString(settings.procedure.at(4)));
       addValue(settingsGroup, "Eigenfrequencies", QString::fromStdString(settings.procedure.at(5)));
-      addValue(settingsGroup, "lower", QString::fromStdString(settings.procedure.at(6)));
-      addValue(settingsGroup, "upper", QString::fromStdString(settings.procedure.at(7)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("lower", "frequency"), QString::fromStdString(settings.procedure.at(6)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("upper", "frequency"), QString::fromStdString(settings.procedure.at(7)));
       break;
     }
     case 4:
@@ -88,16 +89,16 @@ bool StepsPropertiesWidget::setStep(int id)
       addValue(settingsGroup, "Frequency", QString::fromStdString(settings.procedure.at(4)));
       addValue(settingsGroup, "Modal Dynamic", QString::fromStdString(settings.procedure.at(5)));
       addValue(settingsGroup, "Storage", QString::fromStdString(settings.procedure.at(6)));
-      addValue(settingsGroup, "DELTMX", QString::fromStdString(settings.procedure.at(7)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("DELTMX", "temperature_difference"), QString::fromStdString(settings.procedure.at(7)));
       addValue(settingsGroup, "Time Reset", QString::fromStdString(settings.procedure.at(8)));
-      addValue(settingsGroup, "Total Time at Start", QString::fromStdString(settings.procedure.at(9)));
-      addValue(settingsGroup, "Initial  Time Increment", QString::fromStdString(settings.procedure.at(10)));
-      addValue(settingsGroup, "Time Period of Step", QString::fromStdString(settings.procedure.at(11)));
-      addValue(settingsGroup, "Minimum  Time Increment", QString::fromStdString(settings.procedure.at(12)));
-      addValue(settingsGroup, "Maximum  Time Increment", QString::fromStdString(settings.procedure.at(13)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Total Time at Start", "time"), QString::fromStdString(settings.procedure.at(9)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Initial  Time Increment", "time"), QString::fromStdString(settings.procedure.at(10)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Time Period of Step", "time"), QString::fromStdString(settings.procedure.at(11)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Minimum  Time Increment", "time"), QString::fromStdString(settings.procedure.at(12)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Maximum  Time Increment", "time"), QString::fromStdString(settings.procedure.at(13)));
       addValue(settingsGroup, "Eigenfrequencies", QString::fromStdString(settings.procedure.at(14)));
-      addValue(settingsGroup, "lower", QString::fromStdString(settings.procedure.at(15)));
-      addValue(settingsGroup, "upper", QString::fromStdString(settings.procedure.at(16)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("lower", "frequency"), QString::fromStdString(settings.procedure.at(15)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("upper", "frequency"), QString::fromStdString(settings.procedure.at(16)));
       break;
     }
     case 6:
@@ -108,15 +109,15 @@ bool StepsPropertiesWidget::setStep(int id)
       addValue(settingsGroup, "Direct", QString::fromStdString(settings.procedure.at(2)));
       addValue(settingsGroup, "Alpha", QString::fromStdString(settings.procedure.at(3)));
       addValue(settingsGroup, "Steady State", QString::fromStdString(settings.procedure.at(4)));
-      addValue(settingsGroup, "DELTMX", QString::fromStdString(settings.procedure.at(5)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("DELTMX", "temperature_difference"), QString::fromStdString(settings.procedure.at(5)));
       addValue(settingsGroup, "Time Reset", QString::fromStdString(settings.procedure.at(6)));
-      addValue(settingsGroup, "Total Time at Start", QString::fromStdString(settings.procedure.at(7)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Total Time at Start", "time"), QString::fromStdString(settings.procedure.at(7)));
       addValue(settingsGroup, "Compressible", QString::fromStdString(settings.procedure.at(8)));
-      addValue(settingsGroup, "Initial  Time Increment", QString::fromStdString(settings.procedure.at(9)));
-      addValue(settingsGroup, "Time Period of Step", QString::fromStdString(settings.procedure.at(10)));
-      addValue(settingsGroup, "Minimum  Time Increment", QString::fromStdString(settings.procedure.at(11)));
-      addValue(settingsGroup, "Maximum  Time Increment", QString::fromStdString(settings.procedure.at(12)));
-      addValue(settingsGroup, "Initial  Time Increment CFD", QString::fromStdString(settings.procedure.at(13)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Initial  Time Increment", "time"), QString::fromStdString(settings.procedure.at(9)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Time Period of Step", "time"), QString::fromStdString(settings.procedure.at(10)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Minimum  Time Increment", "time"), QString::fromStdString(settings.procedure.at(11)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Maximum  Time Increment", "time"), QString::fromStdString(settings.procedure.at(12)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Initial  Time Increment CFD", "time"), QString::fromStdString(settings.procedure.at(13)));
       break;
     }
     case 7:
@@ -127,14 +128,14 @@ bool StepsPropertiesWidget::setStep(int id)
       addValue(settingsGroup, "Direct", QString::fromStdString(settings.procedure.at(2)));
       addValue(settingsGroup, "Alpha", QString::fromStdString(settings.procedure.at(3)));
       addValue(settingsGroup, "Steady State", QString::fromStdString(settings.procedure.at(4)));
-      addValue(settingsGroup, "DELTMX", QString::fromStdString(settings.procedure.at(5)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("DELTMX", "temperature_difference"), QString::fromStdString(settings.procedure.at(5)));
       addValue(settingsGroup, "Explicit", QString::fromStdString(settings.procedure.at(6)));
       addValue(settingsGroup, "Time Reset", QString::fromStdString(settings.procedure.at(7)));
-      addValue(settingsGroup, "Total Time at Start", QString::fromStdString(settings.procedure.at(8)));
-      addValue(settingsGroup, "Initial  Time Increment", QString::fromStdString(settings.procedure.at(9)));
-      addValue(settingsGroup, "Time Period of Step", QString::fromStdString(settings.procedure.at(10)));
-      addValue(settingsGroup, "Minimum  Time Increment", QString::fromStdString(settings.procedure.at(11)));
-      addValue(settingsGroup, "Maximum  Time Increment", QString::fromStdString(settings.procedure.at(12)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Total Time at Start", "time"), QString::fromStdString(settings.procedure.at(8)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Initial  Time Increment", "time"), QString::fromStdString(settings.procedure.at(9)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Time Period of Step", "time"), QString::fromStdString(settings.procedure.at(10)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Minimum  Time Increment", "time"), QString::fromStdString(settings.procedure.at(11)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Maximum  Time Increment", "time"), QString::fromStdString(settings.procedure.at(12)));
       break;
     }
     case 8:
@@ -146,11 +147,11 @@ bool StepsPropertiesWidget::setStep(int id)
       addValue(settingsGroup, "Alpha", QString::fromStdString(settings.procedure.at(3)));
       addValue(settingsGroup, "Explicit", QString::fromStdString(settings.procedure.at(4)));
       addValue(settingsGroup, "Realtive to Absolute", QString::fromStdString(settings.procedure.at(5)));
-      addValue(settingsGroup, "Initial  Time Increment", QString::fromStdString(settings.procedure.at(6)));
-      addValue(settingsGroup, "Time Period of Step", QString::fromStdString(settings.procedure.at(7)));
-      addValue(settingsGroup, "Minimum  Time Increment", QString::fromStdString(settings.procedure.at(8)));
-      addValue(settingsGroup, "Maximum  Time Increment", QString::fromStdString(settings.procedure.at(9)));
-      addValue(settingsGroup, "Initial  Time Increment CFD", QString::fromStdString(settings.procedure.at(10)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Initial  Time Increment", "time"), QString::fromStdString(settings.procedure.at(6)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Time Period of Step", "time"), QString::fromStdString(settings.procedure.at(7)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Minimum  Time Increment", "time"), QString::fromStdString(settings.procedure.at(8)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Maximum  Time Increment", "time"), QString::fromStdString(settings.procedure.at(9)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Initial  Time Increment CFD", "time"), QString::fromStdString(settings.procedure.at(10)));
       break;
     }
     case 9:
@@ -159,12 +160,17 @@ bool StepsPropertiesWidget::setStep(int id)
       auto* settingsGroup = addGroup("procedure", "Procedure", PropertySection::Data);
       addValue(settingsGroup, "Solver", QString::fromStdString(settings.procedure.at(1)));
       addValue(settingsGroup, "Direct", QString::fromStdString(settings.procedure.at(2)));
-      addValue(settingsGroup, "DELTMX", QString::fromStdString(settings.procedure.at(3)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("DELTMX", "modal_force"), QString::fromStdString(settings.procedure.at(3)));
       addValue(settingsGroup, "Steady State", QString::fromStdString(settings.procedure.at(4)));
-      addValue(settingsGroup, "Initial  Time Increment", QString::fromStdString(settings.procedure.at(5)));
-      addValue(settingsGroup, "Time Period of Step", QString::fromStdString(settings.procedure.at(6)));
-      addValue(settingsGroup, "Minimum  Time Increment", QString::fromStdString(settings.procedure.at(7)));
-      addValue(settingsGroup, "Maximum  Time Increment", QString::fromStdString(settings.procedure.at(8)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Initial  Time Increment", "time"), QString::fromStdString(settings.procedure.at(5)));
+      std::string periodQuantity = "time";
+      if (!settings.procedure.at(4).empty())
+      {
+        periodQuantity = "dimensionless";
+      }
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Time Period of Step", periodQuantity), QString::fromStdString(settings.procedure.at(6)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Minimum  Time Increment", "time"), QString::fromStdString(settings.procedure.at(7)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("Maximum  Time Increment", "time"), QString::fromStdString(settings.procedure.at(8)));
       break;
     }
     case 10:
@@ -173,13 +179,13 @@ bool StepsPropertiesWidget::setStep(int id)
       auto* settingsGroup = addGroup("procedure", "Procedure", PropertySection::Data);
       addValue(settingsGroup, "Solver", QString::fromStdString(settings.procedure.at(1)));
       addValue(settingsGroup, "Harmonic", QString::fromStdString(settings.procedure.at(2)));
-      addValue(settingsGroup, "lower Bound Frequency", QString::fromStdString(settings.procedure.at(3)));
-      addValue(settingsGroup, "upper Bound Frequency", QString::fromStdString(settings.procedure.at(4)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("lower Bound Frequency", "frequency"), QString::fromStdString(settings.procedure.at(3)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("upper Bound Frequency", "frequency"), QString::fromStdString(settings.procedure.at(4)));
       addValue(settingsGroup, "Data Points", QString::fromStdString(settings.procedure.at(5)));
       addValue(settingsGroup, "Bias", QString::fromStdString(settings.procedure.at(6)));
       addValue(settingsGroup, "Fourier", QString::fromStdString(settings.procedure.at(7)));
-      addValue(settingsGroup, "lower Bound Time", QString::fromStdString(settings.procedure.at(8)));
-      addValue(settingsGroup, "upper Bound Time", QString::fromStdString(settings.procedure.at(9)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("lower Bound Time", "time"), QString::fromStdString(settings.procedure.at(8)));
+      addValue(settingsGroup, CalculiXUnitPresentation::title("upper Bound Time", "time"), QString::fromStdString(settings.procedure.at(9)));
       break;
     }
     case 11:

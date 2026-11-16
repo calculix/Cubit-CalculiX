@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
 #include "StepsModifyFrequencyPanel.hpp"
@@ -128,6 +129,10 @@ StepsModifyFrequencyPanel::StepsModifyFrequencyPanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_8, *lineEdit_8, label_8->text(), "frequency");
+  unitPresentation->bind(*label_9, *lineEdit_9, label_9->text(), "frequency");
 
   isInitialized = true;
 }
@@ -343,6 +348,7 @@ bool StepsModifyFrequencyPanel::setStep(int id)
   originalValues.insert("lineEdit_9", lineEdit_9->text());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

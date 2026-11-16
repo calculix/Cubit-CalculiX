@@ -19,7 +19,7 @@ std::vector<std::string> PostTableCommand::get_syntax()
 std::vector<std::string> PostTableCommand::get_syntax_help()
 {
   return {"post table open \"name\" [scope frame|global] [type \"metadata type\"] [entry N] [source \"<source>\"]",
-    "post table field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] [source \"<source>\"]"};
+    "post table field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] [set \"name\"] [source \"<source>\"]"};
 }
 std::vector<std::string> PostTableCommand::get_help()
 {

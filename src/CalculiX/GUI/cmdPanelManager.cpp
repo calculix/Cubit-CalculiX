@@ -1134,3 +1134,11 @@ void cmdPanelManager::clearTopologyPanels(int topology_id)
     myFactory->clearTopologyPanels(topology_id);
   }
 }
+
+void cmdPanelManager::refreshUnitLabels()
+{
+  if (myFactory != nullptr)
+  {
+    myFactory->refreshUnitLabels();
+  }
+}

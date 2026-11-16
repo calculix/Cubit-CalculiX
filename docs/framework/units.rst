@@ -190,11 +190,19 @@ unit. Preparation cleanup restores the original canonical step data.
 Report model tables use independent Report preferences and include a quantity/unit
 legend. Existing VTK and job data retain their immutable source-unit metadata;
 changing a model preset does not reinterpret an earlier result.
+Report collection lazily converts each requested Core domain once, retaining the
+detached view only for that collection pass. A later collection starts with fresh
+model values and Report preferences. No converted view is retained globally.
+
+Film export uses a detached solver-unit view for both its header and its data
+rows, including the heat-transfer coefficient. Canonical SI storage is unchanged.
 
 All temperature exports use kelvin; an explicitly supplied ``ABSOLUTE ZERO``
 must therefore be zero. Beam and shell-edge distributed loads require force per
 length and are rejected by the pressure-only command until that separate input
-quantity is implemented. Opaque custom solver text is preserved literally; its
+quantity is implemented. Pressure target validation queries live sideset element
+types and native side numbers through the mesh interface; it does not depend on export-cache
+population. Opaque custom solver text is preserved literally; its
 numbers have no quantity declarations and require review when changing solver
 units. Export validation reports known dimensional limits before opening the
 output file.
@@ -268,3 +276,87 @@ Actions retain their readable workspace commands and shared editor ownership.
 from the deployed component's ``Icons`` directory. The Framework build stages
 ``Materials.svg`` and ``Units.svg`` alongside the existing workspace icons.
 Missing resources report through CubitMessage.
+
+Mechanical components and result axes
+------------------------------------
+
+Force/displacement components 1--3 retain their translational dimensions;
+moment/rotation components 4--6 retain moment/radian dimensions. On a rigid-body
+``ROT NODE``, export maps components 4--6 onto solver DOFs 1--3. Nonzero
+translational components on that node are rejected. Existing zero supports are
+accepted, identical zero constraints coalesce, and contradictory prescriptions
+fail before export. Equation coefficients use the inverse quantity of the actual
+node/solver DOF. Changing a rotation-node role while nonzero equation terms
+reference that node requires removing/redefining those equations first.
+
+Displacement projection converts the retained result's solver length unit into
+Cubit geometry units before applying its dimensionless scale. Rotation dummy
+nodes are excluded from geometric displacement projection. Centrifugal drawing
+converts its displayed origin into the same geometry units as element centres.
+
+Generated step exports record ``CUBIT_SIM_STEP_AXIS`` comments keyed by emitted
+solver-step ordinal. Harmonic steady-state output uses frequency; transient and
+nonharmonic time samples use time. Job records and retained result metadata
+preserve this information independently of the current model. Missing or
+ambiguous axis provenance remains unknown, including externally supplied decks
+without a declaration. FRD mode numbers alone do not establish an axis quantity.
+Increment tables use the same quantity as their frame abscissa.
+
+FRD ``FLUX``, ``RFL`` and ``ENER`` carry heat-flux, power and energy-density
+quantities. Mechanical/elastic/plastic strains are dimensionless. Integrated
+energy tables retain energy rather than energy-density units.
+
+CalculiX command panels display physical input units beside fields and table
+columns. Changing preferences converts existing numeric drafts through SI,
+including coordinate vectors and affine absolute temperatures. An incomplete
+draft prevents partial panel conversion and blocks Apply until resolved in its
+still-displayed units. A settings reload adopts the queried display basis without
+converting the values a second time. Unit formatting does not execute model
+commands or share panel layouts.
+
+Report unit snapshots
+---------------------
+
+Report profiles store their presentation system and display overrides. Loading a
+profile validates all settings before applying them. Selecting an existing source
+does not restore that document's former presentation preferences. Generation and
+Update record the actual Report presentation settings in the immutable document
+configuration; export renders its stored values without another conversion.
+
+A presentation change marks all existing reports as requiring Update, including
+reports for other sources. These flags survive project save/load. The old preview
+remains available, but export is disabled until that source is updated. Applying
+identical unit settings does not invalidate reports. Explicit/default profile
+preferences apply before provider collection; if collection fails, the selected
+preferences remain active and the previous document remains unchanged.
+
+Current-model physical properties have individual unit labels and numeric cells.
+Mechanical translations/rotations and forces/moments carry distinct quantities.
+Step procedure fields use the same solver-owned quantity mapping as conversion.
+Constraint coefficients use the reciprocal unit of the referenced DOF; absolute
+temperature offsets never enter these homogeneous equation coefficients.
+
+Material reporting reads the CalculiX material store and uses Report preferences
+only for presentation. Creep coefficients use the existing Framework material
+conversion with row-dependent exponents, stress and time units. No material is
+copied into a Report workspace store, and canonical material values are unchanged.
+
+Literal job input tables retain their source units and label them in each table.
+Archived run units or explicit input declarations establish this provenance;
+current workspace settings never fill missing declarations. Exported coordinate
+units are separate from the native geometry unit used to construct setup images.
+
+Postprocessor images retain their captured pixels and presentation-unit
+provenance. Preview/PDF and ODT use the same caption formatter to show those
+preferences separately from Report table units. Changing Report preferences does
+not reinterpret existing images.
+
+Reporting DTOs validate JSON shape, metadata dimensions and finite numeric cells
+without depending on Framework Core. Report Core validates physical expressions,
+dimensions and temperature roles at generation, project persistence and export
+boundaries. Providers supply physical assertions; Report does not infer solver
+quantities from table titles. Existing Postprocessor table conversions remain
+validated by their Results interfaces, and unknown units remain explicit.
+
+Report project persistence uses schema 3 for unit snapshots, typed cell metadata
+and pending unit updates. Development files from earlier schemas are not migrated.

@@ -1,3 +1,4 @@
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "Postprocessor/GUI/ResultsTree/PostprocessorResultsTree.hpp"
 #include "Postprocessor/GUI/Navigation/PostprocessorFrameNavigation.hpp"
 #include <QApplication>
@@ -27,6 +28,10 @@ int main(int argc, char** argv)
   QApplication app(argc, argv);
   auto data = std::make_shared<SimResults::VtkResultsData>();
   data->increments.resize(3);
+  for (auto& frame : data->increments)
+  {
+    frame.independent_variable = SimUnits::QuantityUnit("time","s",SimUnits::Time);
+  }
   data->increments[0].step = 1;
   data->increments[0].increment = 1;
   data->increments[2].step = 2;
@@ -218,6 +223,15 @@ int main(int argc, char** argv)
   {
     playButton->click();
     check(playback.playing && timer->isActive(),"Play did not start the animation timer");
+    std::string unitError;
+    const int interval = timer->interval();
+    check(framework_units().set_display_unit("postprocessor","time","ms",unitError),"Cannot set navigation time unit");
+    animated.refresh(data,shown,mesh,"animation",playback);
+    auto* frameList = animated.findChild<QComboBox*>();
+    check(frameList && frameList->itemText(frameList->count()-1).contains("300 [ms]"),"Navigation kept raw time values or omitted units");
+    check(playback.playing && timer->isActive() && timer->interval() == interval,"Unit text refresh restarted/stopped animation");
+    check(framework_units().set_display_unit("postprocessor","time","s",unitError),"Cannot restore navigation time unit");
+
     QMetaObject::invokeMethod(timer,"timeout",Qt::DirectConnection);
     animated.refresh(data,shown,mesh,"animation",playback);
     check(shown == 2 && ticks == 1 && commits == 0,"Animation must skip unavailable frames and avoid per-frame journal commits");

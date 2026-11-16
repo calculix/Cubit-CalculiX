@@ -1,4 +1,9 @@
 add_library(cubitsim_reporting STATIC
+  ReportContentGroup.cpp ReportContentGroup.hpp
+  ReportProgress.cpp ReportProgress.hpp
+  ReportQuantity.cpp ReportQuantity.hpp
+  ReportSourceUnits.cpp ReportSourceUnits.hpp
+  ReportUnitSettings.cpp ReportUnitSettings.hpp
   ReportConfiguration.cpp
   ReportConfiguration.hpp
   ReportDiagnostic.cpp

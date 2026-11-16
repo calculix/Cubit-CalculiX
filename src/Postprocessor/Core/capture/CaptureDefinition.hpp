@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QByteArray>
 #include <cstdint>
+#include "Framework/Core/units/WorkspaceUnitContext.hpp"
 namespace Postprocessor
 {
   namespace CaptureDefaults
@@ -41,6 +42,7 @@ namespace Postprocessor
     CaptureDefinition request;
     PostprocessorSession session;
     UserOptions options;
+    SimUnits::WorkspaceUnitContext presentation_units;
     std::map<std::string,std::shared_ptr<const SimResults::VtkResultsData>> sources;
     std::string target_id;
     // Logical widget dimensions, used only for presentation scaling.

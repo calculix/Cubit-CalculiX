@@ -186,9 +186,17 @@ void ReportPreviewWindow::set_layout(std::shared_ptr<const ReportDocumentLayout>
       }
     };
     collectTitles(layout->report().sections);
+    // Layout-owned anchors are not provider sections in ReportDocument.
+    titles["report.diagnostics"] = tr("Sources and diagnostics").toStdString();
     for (const auto& section : layout->contents())
     {
-      auto* item = new QListWidgetItem(QString::fromStdString(titles.at(section.first)), contents);
+      const auto title = titles.find(section.first);
+      if (title == titles.end())
+      {
+        PRINT_WARNING("Report preview skipped an unknown page anchor: %s\n", section.first.c_str());
+        continue;
+      }
+      auto* item = new QListWidgetItem(QString::fromStdString(title->second), contents);
       item->setData(Qt::UserRole, section.second);
     }
   }

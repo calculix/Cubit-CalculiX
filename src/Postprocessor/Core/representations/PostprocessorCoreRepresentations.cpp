@@ -1,3 +1,4 @@
+#include "ResultColoringUnits.hpp"
 #include <type_traits>
 #include "../application/PostprocessorCore.hpp"
 #include "ResultMesh.hpp"
@@ -36,6 +37,12 @@ namespace Postprocessor
         display.visible = visible;
         return true;
       }
+    }
+    auto& sceneUnit = staged.views.at(view_id).scene_unit;
+    const auto sourceData = result_data(source_id);
+    if (sceneUnit.empty() && sourceData)
+    {
+      sceneUnit = filter_coordinate_unit(*sourceData,increment);
     }
     Representation display;
     display.coloring.palette = default_palette;
@@ -173,9 +180,43 @@ namespace Postprocessor
   }
 
   bool PostprocessorCore::set_coloring(const std::string& source_id, const std::string& view_id,
-    const ResultColoring& coloring, std::string& error, bool activateResult)
+    const ResultColoring& requested, std::string& error, bool activateResult)
   {
     error.clear();
+    auto coloring = requested;
+    if (coloring.field)
+    {
+      for (const auto& group : field_groups(source_id,std::nullopt))
+      {
+        if (!group.unit_issue.empty() &&
+            (group.key == coloring.field->group_key || (coloring.field->group_key.empty() &&
+              group.field.array_name == coloring.field->array_name && group.field.association == coloring.field->association)))
+        {
+          error = group.unit_issue;
+          return false;
+        }
+      }
+      const auto source = result_data(source_id);
+      if (source)
+      {
+        for (const auto& frame : source->increments)
+        {
+          const auto* field = find_field(frame, *coloring.field);
+          if (field)
+          {
+            if (!bind_coloring_units(coloring, *field, error))
+            {
+              return false;
+            }
+            break;
+          }
+        }
+      }
+    }
+    else
+    {
+      coloring.bounds_unit.reset();
+    }
     if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max() ||
         !valid_coloring(coloring, error))
     {

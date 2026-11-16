@@ -1,3 +1,5 @@
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include "../representations/ResultColoringUnits.hpp"
 #include <type_traits>
 #include "PostprocessorSessionCodec.hpp"
 #include "../filters/FilterCodec.hpp"
@@ -144,6 +146,46 @@ namespace
       integer(object,"mode",value.mode) && integer(object,"subcase",value.subcase) &&
       integer(object,"nodal_diameter",value.nodal_diameter) && number(object,"time",value.time);
   }
+  QJsonValue bounds_unit_json(const std::optional<SimUnits::QuantityUnit>& value)
+  {
+    if (!value)
+    {
+      return QJsonValue(QJsonValue::Null);
+    }
+    return Object{{"quantity",q(value->quantity)},{"unit",q(value->unit)},
+      {"dimension",vector_json(value->dimension)},{"role",static_cast<int>(value->role)}};
+  }
+
+  bool bounds_unit_read(const QJsonValue& json, std::optional<SimUnits::QuantityUnit>& output)
+  {
+    if (json.isUndefined() || json.isNull())
+    {
+      output.reset();
+      return true;
+    }
+    if (!json.isObject())
+    {
+      return false;
+    }
+    const auto object = json.toObject();
+    SimUnits::QuantityUnit value;
+    int role = -1;
+    if (!text(object,"quantity",value.quantity) || !text(object,"unit",value.unit) ||
+        !vector_read(object.value("dimension"),value.dimension) || !integer(object,"role",role) ||
+        role < static_cast<int>(SimUnits::UnitRole::Linear) || role > static_cast<int>(SimUnits::UnitRole::Angle))
+    {
+      return false;
+    }
+    value.role = static_cast<SimUnits::UnitRole>(role);
+    std::string error;
+    if (!valid_coloring_units(value,error))
+    {
+      return false;
+    }
+    output = std::move(value);
+    return true;
+  }
+
   QJsonValue field_json(const std::optional<FieldSelection>& value)
   {
     if (!value)
@@ -249,7 +291,7 @@ namespace Postprocessor
     for (const auto& item : state.views)
     {
       const auto& view = item.second;
-      Object object{{"id",q(view.id)},{"name",q(view.name)},{"pick_mode",static_cast<int>(view.selection.mode)}};
+      Object object{{"id",q(view.id)},{"name",q(view.name)},{"scene_unit",q(view.scene_unit)},{"scale_visible",view.scale_visible},{"pick_mode",static_cast<int>(view.selection.mode)}};
       object.insert("annotations",annotations_to_json(view.annotations));
       object.insert("plot",[&]() -> QJsonValue {
         if (view.plot_id) {
@@ -299,7 +341,8 @@ namespace Postprocessor
       }
       const auto& color = display.coloring;
       const auto& deform = display.deformation;
-      Object coloring{{"field",field_json(color.field)},{"palette",static_cast<int>(color.palette)},
+      Object coloring{{"field",field_json(color.field)},{"bounds_unit",bounds_unit_json(color.bounds_unit)},
+        {"palette",static_cast<int>(color.palette)},
         {"range_mode",static_cast<int>(color.range_mode)},{"range",vector_json(color.fixed_range)},
         {"reversed",color.reversed},{"legend",color.legend_visible},{"bands",[&]() -> QJsonValue {
           if (color.bands) {
@@ -309,6 +352,10 @@ namespace Postprocessor
           }
         }()},
         {"minimum",limit_json(color.minimum)},{"maximum",limit_json(color.maximum)}};
+      if (color.legend_position)
+      {
+        coloring.insert("legend_position",vector_json(*color.legend_position));
+      }
       Object deformation{{"enabled",deform.enabled},{"field",field_json(deform.field)},{"mode",static_cast<int>(deform.field_mode)},
         {"scale",deform.scale},{"overlay",deform.overlay}};
       displays.append(Object{{"id",q(display.id)},{"name",q(display.name)},{"source",q(display.input.object_id)},{"feature",display.input.owner == OutputOwner::Feature},
@@ -482,6 +529,14 @@ namespace Postprocessor
       }
       const auto object = value.toObject();
       ViewDefinition view;
+      if (object.contains("scene_unit") && !text(object,"scene_unit",view.scene_unit))
+      {
+        return false;
+      }
+      if (object.contains("scale_visible") && !boolean(object,"scale_visible",view.scale_visible))
+      {
+        return false;
+      }
       int mode = -1;
       if (!text(object,"id",view.id) || !text(object,"name",view.name) || !integer(object,"pick_mode",mode) || mode < 0 || mode > 2)
       {
@@ -611,7 +666,8 @@ namespace Postprocessor
       }
       const auto color = object.value("coloring").toObject();
       int palette = -1, range = -1;
-      if (!field_read(color.value("field"),display.coloring.field) || !integer(color,"palette",palette) || palette < 0 || palette > 4 ||
+      if (!field_read(color.value("field"),display.coloring.field) ||
+          !bounds_unit_read(color.value("bounds_unit"),display.coloring.bounds_unit) || !integer(color,"palette",palette) || palette < 0 || palette > 4 ||
           !integer(color,"range_mode",range) || range < 0 || range > 3 || !vector_read(color.value("range"),display.coloring.fixed_range) ||
           !boolean(color,"reversed",display.coloring.reversed) || !boolean(color,"legend",display.coloring.legend_visible) ||
           !limit_read(color.value("minimum"),display.coloring.minimum) || !limit_read(color.value("maximum"),display.coloring.maximum))
@@ -619,6 +675,8 @@ namespace Postprocessor
         return false;
       }
       display.coloring.palette = static_cast<ColorPalette>(palette); display.coloring.range_mode = static_cast<ColorRangeMode>(range);
+      // A saved null explicitly means continuous, independent of new defaults.
+      display.coloring.bands.reset();
       if (!color.value("bands").isNull())
       {
         int bands = 0;
@@ -627,6 +685,15 @@ namespace Postprocessor
           return false;
         }
         display.coloring.bands = static_cast<unsigned int>(bands);
+      }
+      if (color.contains("legend_position"))
+      {
+        std::array<double,2> position;
+        if (!vector_read(color.value("legend_position"),position))
+        {
+          return false;
+        }
+        display.coloring.legend_position = position;
       }
       const auto deform = object.value("deformation").toObject();
       int deformMode = -1, fps = 0;
@@ -776,6 +843,15 @@ namespace Postprocessor
     }
     for (const auto& item : state.views)
     {
+      if (!item.second.scene_unit.empty())
+      {
+        double ignored = 0;
+        if (!framework_units().to_si(1,item.second.scene_unit,SimUnits::Length,SimUnits::UnitRole::Linear,ignored,error) ||
+            !std::isfinite(ignored) || ignored <= 0)
+        {
+          return false;
+        }
+      }
       if (item.first.empty() || item.first != item.second.id || (item.second.camera && !CameraOperations::valid(*item.second.camera)) ||
           (item.second.table && (state.sources.count(item.second.table->source_id) == 0 || item.second.table->key.empty())))
       {

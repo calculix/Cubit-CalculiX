@@ -5,6 +5,7 @@
 #include "CoreStepOutputExport.hpp"
 #include "Core/export/CoreCustomLines.hpp"
 #include "Core/mesh/CoreSidesetFaces.hpp"
+#include "CubitMessage.hpp"
 
 #include <vector>
 
@@ -14,9 +15,27 @@ std::string CoreStepExport::get_export(const CoreStepExportData& data)
     "********************************** S T E P S ****************************"
   };
 
+  int solverStep = 0;
   for (const auto& step : data.steps.steps_data)
   {
-    lines.push_back(data.steps.get_step_export(step[0]));
+    ++solverStep;
+    std::string quantity;
+    std::string error;
+    if (step.size() < 9 || !data.steps.get_step_axis_quantity(step[0], quantity, error))
+    {
+      PRINT_ERROR("Cannot export step axis: %s\n", error.c_str());
+      return {};
+    }
+    if (!quantity.empty())
+    {
+      lines.push_back("** CUBIT_SIM_STEP_AXIS=" + std::to_string(solverStep) + ";" + quantity);
+    }
+    const auto definition = data.steps.get_step_export(step[0]);
+    if (definition.empty())
+    {
+      return {};
+    }
+    lines.push_back(definition);
     const auto load_ids = data.steps.get_load_data_ids_from_loads_id(step[5]);
 
     if (!CoreStepLoadExport::append(data.steps, data.loadsforces, data.customlines, load_ids, lines) ||

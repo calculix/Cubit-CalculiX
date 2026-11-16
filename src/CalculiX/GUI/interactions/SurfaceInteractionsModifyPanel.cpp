@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "SurfaceInteractionsModifyPanel.hpp"
@@ -163,6 +164,7 @@ SurfaceInteractionsModifyPanel::SurfaceInteractionsModifyPanel(QWidget *parent) 
 
   widget_3 =  new PanelTable(nullptr);
   widget_3->update({"pressure","overclosure"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   //widget_3->setColumnWidth(0,150);
   //widget_3->setMinimumSize(200,280);
 
@@ -176,6 +178,7 @@ SurfaceInteractionsModifyPanel::SurfaceInteractionsModifyPanel(QWidget *parent) 
 
   widget_5 =  new PanelTable(nullptr);
   widget_5->update({"Conductance","Contact pressure","Temperature"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   //widget_5->setColumnWidth(1,200);
   //widget_5->setMinimumSize(300,280);
 
@@ -226,6 +229,21 @@ SurfaceInteractionsModifyPanel::SurfaceInteractionsModifyPanel(QWidget *parent) 
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
   QObject::connect(comboBox_1, SIGNAL(currentIndexChanged(int)),this,  SLOT(comboBox_currentIndexChanged(int)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_4, *lineEdit_4, label_4->text(), "length");
+  unitPresentation->bind(*label_5, *lineEdit_5, label_5->text(), "stress");
+  unitPresentation->bind(*label_6, *lineEdit_6, label_6->text(), "force_per_volume");
+  unitPresentation->bind(*label_7, *lineEdit_7, label_7->text(), "stress");
+  unitPresentation->bind(*label_8, *lineEdit_8, label_8->text(), "length");
+  unitPresentation->bind(*label_9, *lineEdit_9, label_9->text(), "force_per_volume");
+  unitPresentation->bind(*label_12, *lineEdit_12, label_12->text(), "velocity");
+  unitPresentation->bind(*label_14, *lineEdit_14, label_14->text(), "force_per_volume");
+  unitPresentation->bind_table(*widget_3, 0, "stress");
+  unitPresentation->bind_table(*widget_3, 1, "length");
+  unitPresentation->bind_table(*widget_5, 0, "heat_transfer");
+  unitPresentation->bind_table(*widget_5, 1, "stress");
+  unitPresentation->bind_table(*widget_5, 2, "temperature");
 
   isInitialized = true;
 }
@@ -576,7 +594,9 @@ bool SurfaceInteractionsModifyPanel::setSurfaceInteraction(int id)
   lineEdit_14->setText(QString::fromStdString(settings.lambdaValue));
 
   widget_3->update({"pressure", "overclosure"}, settings.pressureOverclosure);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   widget_5->update({"Conductance", "Contact pressure", "Temperature"}, settings.conductance);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   originalValues.insert("lineEdit_1", lineEdit_1->text());
   originalValues.insert("lineEdit_2", lineEdit_2->text());
   originalValues.insert("comboBox_1", comboBox_1->currentText());
@@ -594,6 +614,7 @@ bool SurfaceInteractionsModifyPanel::setSurfaceInteraction(int id)
   originalValues.insert("widget_3", widget_3->snapshot());
   originalValues.insert("widget_5", widget_5->snapshot());
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

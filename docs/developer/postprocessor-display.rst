@@ -675,3 +675,26 @@ camera gestures clear pending feedback. Camera/geometry/selection revisions clea
 stale hover. Hover changes neither Core state nor the journal; click commits use
 the existing pick/clear commands. An empty or occluded click clears the committed
 selection and probe.
+
+
+Compact result legends
+----------------------
+
+New representations use 12 color bands and black element edges. Explicitly saved
+continuous coloring remains continuous when a project is reopened. Legend frames
+use a compact bottom-right layout, approximately 140 by 220 pixels with a 24 pixel
+color bar and smaller text. Capture scaling preserves their relative appearance.
+
+A legend can be dragged by its bar or title. Movement previews execute silently;
+release journals one command. Escape restores the initial position without adding
+a journal entry. Double-click opens that source's legend properties in the right
+dock through a command::
+
+  post legend position 0.75 0.06 source "first_run"
+  post legend position automatic source "first_run"
+  post properties legend source "first_run"
+
+Positions are normalized bottom-left viewport coordinates, bounded to [0,1]. The
+rendered frame is clamped to the viewport. An omitted position uses automatic
+layout. Positions belong to each representation, persist with the project, and
+are included in the frozen viewport capture state and provenance.

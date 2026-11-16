@@ -604,7 +604,7 @@ Resolution considers the complete source catalogue across frames, scoped by the
 specified dataset, component or declared vector magnitude. Field identity never
 depends on the active frame, catalogue ordering or the first matching result.
 Ambiguity produces readable candidates and leaves the operation unchanged.
-GUI generation tries the field name alone, then origin, association or both;
+GUI generation tries the field name alone, then origin, association, set and their combinations;
 it verifies that the resulting selector resolves to the exact selected identity.
 If those qualifiers cannot distinguish a variant, it refuses the action rather
 than emitting an encoded key. Disabled label/plot actions expose the reason in
@@ -620,3 +620,47 @@ Clipping and sections
 
 See :doc:`filters` for ``post clip``, ``post section`` and ``post filter``
 syntax, per-view behavior and source-data contracts.
+
+Contextual properties, standard views and scale
+----------------------------------------------
+
+These actions target the Postprocessor viewport and its right-hand properties
+editor. They do not alter Cubit's camera. Opening an editor is journaled::
+
+  post properties source "first_run"
+  post properties legend
+  post properties clip
+  post properties section
+  post properties close
+  post view front
+  post view back
+  post view top
+  post view bottom
+  post view left
+  post view right
+  post view iso
+  post view projection parallel
+  post view projection perspective
+  post scale on
+  post scale off
+
+Source names are exact opened-source names. Properties commands require the
+workspace GUI. Closing properties leaves an empty right dock. Standard-view
+buttons use these readable commands, honoring the existing camera-journaling
+option; a disabled option dispatches the same command silently.
+
+Disambiguating result sets
+--------------------------
+
+Spatial field selectors accept an optional ``set "name"`` qualifier after the
+origin and association qualifiers. It matches the result field's exact set name,
+not a dataset ordinal. GUI journals include it when repeated field names would
+otherwise be ambiguous, for example::
+
+  post color field "strains" set "ip_BLOCK_1" component "exx" source "bolted_connection"
+  post color field "stresses" set "ip_BLOCK_2" component "sxx" source "bolted_connection"
+
+The same shared qualifier applies to deformation, labels, spatial field tables
+and plot field selection. Existing commands without a set qualifier and legacy
+field keys remain supported. Unresolved ambiguity is reported without selecting
+the first matching field.

@@ -1,6 +1,7 @@
 #include <type_traits>
 #include <vtkSmartPointer.h>
 #include "PostprocessorPlotRendering.hpp"
+#include "Postprocessor/Core/plots/PlotAxisUnits.hpp"
 #include "Postprocessor/Core/session/PostprocessorSession.hpp"
 #include <vtkChartXY.h>
 #include <vtkAxis.h>
@@ -67,36 +68,57 @@ void populate_plot_chart(vtkChartXY* chart,const Postprocessor::PlotDefinition& 
     }
   }
   std::string xTitle;
+  std::string yTitle;
+  std::string xUnit;
+  std::string yUnit;
+  bool mixedX = false;
+  bool mixedY = false;
+  bool first = true;
   for (std::size_t index = 0; index < definition.curves.size() && index < data.curves.size(); ++index)
   {
-    if (definition.curves[index].visible)
+    const auto& curve = data.curves[index];
+    if (!definition.curves[index].visible || std::none_of(curve.samples.begin(),curve.samples.end(),[](const auto& sample)
+      {
+        return sample.valid;
+      }))
     {
-      if (xTitle.empty())
-      {
-        xTitle = data.curves[index].x_title;
-      }
-      else if (xTitle != data.curves[index].x_title)
-      {
-        xTitle = "X (mixed columns)";
-      }
+      continue;
+    }
+    if (first)
+    {
+      xTitle = curve.x_title;
+      yTitle = curve.y_title;
+      xUnit = curve.x_unit;
+      yUnit = curve.y_unit;
+      first = false;
+    }
+    else
+    {
+      mixedX = mixedX || xTitle != curve.x_title;
+      mixedY = mixedY || yTitle != curve.y_title;
     }
   }
-  chart->GetAxis(vtkAxis::BOTTOM)->SetTitle([&]() -> std::common_type_t<decltype(std::string("X")), decltype(xTitle)> {
-    if (xTitle.empty()) {
-      return std::string("X");
-    } else {
-      return xTitle;
-    }
-  }());
-  chart->GetAxis(vtkAxis::LEFT)->SetTitle([&]() -> std::common_type_t<decltype(data.curves.front().y_title), decltype("Value")> {
-    if (data.curves.size() == 1) {
-      return data.curves.front().y_title;
-    } else {
-      return "Value";
-    }
-  }());
+  if (mixedX)
+  {
+    xTitle = "X ["+xUnit+"]";
+  }
+  if (mixedY)
+  {
+    yTitle = "Value ["+yUnit+"]";
+  }
+  if (xTitle.empty())
+  {
+    xTitle = "X";
+  }
+  if (yTitle.empty())
+  {
+    yTitle = "Value";
+  }
+  chart->GetAxis(vtkAxis::BOTTOM)->SetTitle(xTitle);
+  chart->GetAxis(vtkAxis::LEFT)->SetTitle(yTitle);
   chart->SetShowLegend(Postprocessor::PlotDefaults::legend_visible);
   chart->SetIgnoreNanInBounds(true);
+  const auto presentedAxes = Postprocessor::presented_plot_axes(definition,data);
   for (int axis : {vtkAxis::BOTTOM,vtkAxis::LEFT})
   {
     auto* value = chart->GetAxis(axis);
@@ -106,11 +128,11 @@ void populate_plot_chart(vtkChartXY* chart,const Postprocessor::PlotDefinition& 
       value->GetLabelProperties()->SetFontSize(std::max(1,static_cast<int>(std::lround(value->GetLabelProperties()->GetFontSize()*scale))));
       value->GetTitleProperties()->SetFontSize(std::max(1,static_cast<int>(std::lround(value->GetTitleProperties()->GetFontSize()*scale))));
     }
-    const auto& range = [&]() -> decltype((definition.axes.x)) {
+    const auto& range = [&]() -> decltype((presentedAxes.x)) {
       if (axis == vtkAxis::BOTTOM) {
-        return definition.axes.x;
+        return presentedAxes.x;
       } else {
-        return definition.axes.y;
+        return presentedAxes.y;
       }
     }();
     value->SetBehavior([&]() -> std::common_type_t<decltype(vtkAxis::FIXED), decltype(vtkAxis::AUTO)> {

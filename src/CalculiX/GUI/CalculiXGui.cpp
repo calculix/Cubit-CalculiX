@@ -169,6 +169,10 @@ void CalculiXGui::update()
   application.trace_event("gui.update.enter");
   if (boolwithGUI)
   {
+    if (mycmdPanels != nullptr)
+    {
+      mycmdPanels->refreshUnitLabels();
+    }
     if (myCCXDockWindowModelTree)
     {
       application.trace_event("gui.model_tree.enter");

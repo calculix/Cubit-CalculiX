@@ -39,6 +39,7 @@ private slots:
   void on_pushButton_apply_clicked(bool);
 
 private:
+  QComboBox* axisBox = nullptr;
   int loadedEntityId = -1;
   QHash<QString, QString> originalValues;
   bool fieldChanged(const QString& field, const QString& value) const;

@@ -64,6 +64,7 @@ private:
   QLabel* view;
   QLabel* field;
   QLabel* component;
+  QLabel* unitLabel;
   QComboBox* palette;
   QCheckBox* reversed;
   QComboBox* contours;

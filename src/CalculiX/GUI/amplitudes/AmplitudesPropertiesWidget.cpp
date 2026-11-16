@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "AmplitudesPropertiesWidget.hpp"
 #include "Core/amplitudes/CalculiXAmplitudesInterface.hpp"
 #include "CubitMessage.hpp"
@@ -24,7 +25,7 @@ bool AmplitudesPropertiesWidget::setAmplitude(int id)
   addEditableName(general, id, QString::fromStdString(settings.name));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "Axis", QString::fromStdString(settings.axis));
-  addValue(settingsGroup, "Shift x", QString::fromStdString(settings.shiftX));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Shift x", settings.axis), QString::fromStdString(settings.shiftX));
   addValue(settingsGroup, "Shift y", QString::fromStdString(settings.shiftY));
   addValue(settingsGroup, "Time=TotalTime", QString::fromStdString(settings.totalTime));
   if (!settings.points.empty())
@@ -33,7 +34,7 @@ bool AmplitudesPropertiesWidget::setAmplitude(int id)
     if (settings.axis == "frequency") {
       axisTitle = "Frequency";
     }
-    addTable("points", "Points", {axisTitle, "Amplitude"}, settings.points);
+    addTable("points", "Points", {CalculiXUnitPresentation::title(axisTitle, settings.axis), "Amplitude"}, settings.points);
   }
   return true;
 }

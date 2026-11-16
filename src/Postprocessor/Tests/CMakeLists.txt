@@ -23,6 +23,7 @@ add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Results" results)
 
 add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/application/PostprocessorCoreUnits.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/ResultColoringUnits.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/PlaneOperations.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/ClipFilter.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/SectionFilter.cpp"
@@ -41,6 +42,8 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorCaptureInterface.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Annotations/PostprocessorAnnotationPainter.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotData.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotAxisUnits.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotRangeUnits.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotHistory.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotTableData.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PostprocessorCorePlots.cpp"
@@ -84,17 +87,21 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/PostprocessorCoreAnimation.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/PostprocessorCoreColorRange.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/views/PostprocessorCoreViews.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/views/PostprocessorCoreSceneUnits.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/views/PostprocessorCoreCamera.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/views/CameraOperations.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/views/CameraCommandText.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/views/CameraCommandTiming.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Viewport/PostprocessorLegendInteraction.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Viewport/CameraInteraction.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Viewport/CameraTimings.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Options/PostprocessorMouseOptionsPanel.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Properties/PostprocessorDisplayProperties.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/options/PostprocessorUserOptions.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorApplicationInterface.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorViewToolsInterface.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Viewport/PostprocessorScene.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Viewport/PostprocessorScaleOverlay.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Viewport/PostprocessorColorMap.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Viewport/PostprocessorTriad.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Navigation/PostprocessorFrameNavigation.cpp"
@@ -209,7 +216,7 @@ if (WIN32)
 endif ()
 
 # Annotation cases share the selection fixture but keep feature tests separate.
-target_sources(postprocessor_selection_tests PRIVATE AnnotationTests.cpp)
+target_sources(postprocessor_selection_tests PRIVATE AnnotationTests.cpp LegendTests.cpp)
 
 target_sources(postprocessor_selection_tests PRIVATE PlotTests.cpp)
 
@@ -232,4 +239,20 @@ target_link_libraries(postprocessor_units_metadata_tests PRIVATE postprocessor_d
 add_test(NAME postprocessor_units_metadata COMMAND postprocessor_units_metadata_tests)
 if (WIN32)
   set_property(TEST postprocessor_units_metadata APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
+endif ()
+
+add_executable(postprocessor_coloring_units_tests ColoringUnitsTests.cpp)
+target_link_libraries(postprocessor_coloring_units_tests PRIVATE postprocessor_display_code)
+add_test(NAME postprocessor_coloring_units COMMAND postprocessor_coloring_units_tests)
+set_tests_properties(postprocessor_coloring_units PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+if (WIN32)
+  set_property(TEST postprocessor_coloring_units APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
+endif ()
+
+add_executable(postprocessor_presentation_units_tests PresentationUnitsTests.cpp)
+target_link_libraries(postprocessor_presentation_units_tests PRIVATE postprocessor_display_code)
+add_test(NAME postprocessor_presentation_units COMMAND postprocessor_presentation_units_tests)
+set_tests_properties(postprocessor_presentation_units PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+if (WIN32)
+  set_property(TEST postprocessor_presentation_units APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
 endif ()

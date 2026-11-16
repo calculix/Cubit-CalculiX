@@ -2,6 +2,9 @@
 #include "ReportToolbar.hpp"
 #include "ReportExportDialog.hpp"
 #include "ReportContentTree.hpp"
+#include "ReportOutlineTree.hpp"
+#include <QTabWidget>
+#include <QScopedValueRollback>
 #include "ReportSettingsDialog.hpp"
 #include "ReportPreviewWidget.hpp"
 #include "ReportPreviewWindow.hpp"
@@ -100,11 +103,6 @@ ReportWorkspace::ReportWorkspace(QWidget* host, std::weak_ptr<ReportApplicationI
   updateButton = new QPushButton(tr("Update"), this);
   settingsButton = new QPushButton(tr("Report settings"), this);
   settingsButton->setObjectName("ReportSettingsButton");
-  auto* unitsButton = new QPushButton(tr("Unitsâ€¦"), this);
-  actions->addWidget(unitsButton);
-  connect(unitsButton, &QPushButton::clicked, this, [this]() {
-    dispatch("report units open");
-  });
   auto* openPreview = new QPushButton(tr("Open preview / Export"), this);
   for (auto* button : {generateButton, updateButton, settingsButton, openPreview}) {
     actions->addWidget(button);
@@ -221,8 +219,16 @@ ReportWorkspace::ReportWorkspace(QWidget* host, std::weak_ptr<ReportApplicationI
     });
     return result;
   };
-  tree = new ReportContentTree(treeDock, callback);
-  treeDock->setWidget(tree);
+  contentTabs = new QTabWidget(treeDock);
+  contentTabs->setObjectName("ReportContentTabs");
+  tree = new ReportContentTree(contentTabs, callback);
+  outline = new ReportOutlineTree(contentTabs, [this](int pageNumber)
+  {
+    dispatch("report preview page " + std::to_string(pageNumber), true);
+  });
+  contentTabs->addTab(tree, tr("Content"));
+  contentTabs->addTab(outline, tr("Outline"));
+  treeDock->setWidget(contentTabs);
   treeDock->hide();
   auto previewCallback = [this](const std::string& command, std::string& error) {
     const bool result = silent(command, error);
@@ -311,11 +317,19 @@ void ReportWorkspace::profile_action(const std::string& action) {
   }
 }
 
-void ReportWorkspace::refresh() {
-  const auto active = application.lock();
-  if (!active) {
+void ReportWorkspace::refresh()
+{
+  if (refreshing)
+  {
     return;
   }
+  const auto active = application.lock();
+  // Transient busy refreshes must not clear the last committed preview.
+  if (!active || active->busy())
+  {
+    return;
+  }
+  QScopedValueRollback<bool> operation(refreshing, true);
   const auto& state = active->session();
   toolbar->set_export_enabled(active->document() != nullptr && !state.configuration_changed && !state.pending_source);
   const auto& request = active->configuration_request();
@@ -397,8 +411,16 @@ void ReportWorkspace::refresh() {
       profiles->setCurrentIndex(0);
     }
   }
-  std::shared_ptr<const ReportDocumentLayout> layout;
-  if (active->document() && !state.pending_source && active->layout(layout, error)) {
+  auto outlinedDocument = active->document();
+  if (state.pending_source)
+  {
+    outlinedDocument.reset();
+  }
+  // Counts become available before the expensive pagination begins.
+  outline->refresh(outlinedDocument);
+  const auto layout = active->prepared_layout();
+  if (layout && !state.pending_source) {
+    outline->refresh(outlinedDocument, &layout->contents(), layout->page_count());
     page->set_layout(layout);
     preview->set_layout(layout);
     const bool navigate = pageRevision != active->preview_page_revision();
@@ -432,6 +454,8 @@ void ReportWorkspace::refresh() {
     preview->hide();
     if (state.pending_source) {
       status->setText(tr("This source has no generated report. Configure its content, then Generate."));
+    } else if (active->document() && error.empty()) {
+      status->setText(tr("Report generated. Use Open preview / Export to prepare its preview."));
     } else if (error.empty()) {
       status->setText(tr("Choose a source, configure content, then Generate."));
     } else {

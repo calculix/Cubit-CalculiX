@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "LoadsFilmModifyPanel.hpp"
@@ -130,6 +131,12 @@ LoadsFilmModifyPanel::LoadsFilmModifyPanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_3, *lineEdit_3, label_3->text(), "temperature");
+  unitPresentation->bind(*label_4, *lineEdit_4, label_4->text(), "heat_transfer");
+  unitPresentation->bind(*label_6, *lineEdit_6, label_6->text(), "time");
+  unitPresentation->bind(*label_8, *lineEdit_8, label_8->text(), "time");
 
   isInitialized = true;
 }
@@ -338,6 +345,7 @@ bool LoadsFilmModifyPanel::setFilm(int id)
   originalValues.insert("comboBox_9", comboBox_9->currentText());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

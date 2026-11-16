@@ -75,6 +75,14 @@ namespace
 }
 namespace Postprocessor
 {
+  const SimUnits::WorkspaceUnitContext* table_presentation(const ResultTableData& data)
+  {
+    if (data.presentation_units)
+    {
+      return &*data.presentation_units;
+    }
+    return nullptr;
+  }
   std::string result_table_column_unit(const ResultTableData& data, std::size_t column) {
     if (column >= data.column_units.size()) {
       return "unknown unit";
@@ -82,7 +90,7 @@ namespace Postprocessor
     double value = 0.0;
     std::string unit;
     std::string error;
-    if (!SimResults::ResultsUnits::display_value(0.0, data.column_units[column], "postprocessor", value, unit, error)) {
+    if (!SimResults::ResultsUnits::display_value(0.0, data.column_units[column], "postprocessor", value, unit, error, table_presentation(data))) {
       return "unknown unit";
     }
     return unit;
@@ -201,7 +209,7 @@ namespace Postprocessor
     }
     return result;
   }
-  static std::string native_cell(vtkTable* table, std::size_t row, std::size_t column, const std::vector<SimUnits::QuantityUnit>& units) {
+  static std::string native_cell(vtkTable* table, std::size_t row, std::size_t column, const std::vector<SimUnits::QuantityUnit>& units, const SimUnits::WorkspaceUnitContext* presentation) {
     auto* array = table->GetColumn(static_cast<vtkIdType>(column));
     if (!array || row >= static_cast<std::size_t>(array->GetNumberOfTuples())) {
       return "Unavailable";
@@ -228,7 +236,7 @@ namespace Postprocessor
         if (column < units.size()) {
           std::string label;
           std::string error;
-          if (!SimResults::ResultsUnits::display_value(converted, units[column], "postprocessor", converted, label, error)) {
+          if (!SimResults::ResultsUnits::display_value(converted, units[column], "postprocessor", converted, label, error, presentation)) {
             return "Unavailable";
           }
         }
@@ -244,13 +252,22 @@ namespace Postprocessor
     return text.str();
   }
 
-  ResultTableData result_table_data(std::shared_ptr<const SimResults::VtkResultsData> data,const TableReference& reference) {
+  ResultTableData result_table_data(std::shared_ptr<const SimResults::VtkResultsData> data,const TableReference& reference, const SimUnits::WorkspaceUnitContext* presentation) {
     // Globals/step summaries retain their own columns and occur exactly once.
     if (!reference.field && reference.key.rfind("global:",0) == 0) {
-      return frame_table_data(std::move(data),reference);
+      auto result = frame_table_data(std::move(data),reference);
+      if (presentation)
+      {
+        result.presentation_units = *presentation;
+      }
+      return result;
     }
     ResultTableData result;
     result.owner = data;
+    if (presentation)
+    {
+      result.presentation_units = *presentation;
+    }
     result.frame_columns = true;
     result.status = "Unavailable across frames";
     if (!data) {
@@ -376,7 +393,7 @@ namespace Postprocessor
       return {};
     }
     if (!data.frame_columns && data.table) {
-      return native_cell(data.table.get(), row, column, data.column_units);
+      return native_cell(data.table.get(), row, column, data.column_units, table_presentation(data));
     }
     const auto* matched = row_part(data,row);
     if (!matched) {
@@ -407,7 +424,7 @@ namespace Postprocessor
       std::string label;
       std::string error;
       const auto& time = frame.independent_variable;
-      if (!SimResults::ResultsUnits::display_value(frame.time, time, "postprocessor", converted, label, error)) {
+      if (!SimResults::ResultsUnits::display_value(frame.time, time, "postprocessor", converted, label, error, table_presentation(data))) {
         return "Unavailable";
       }
       value << std::setprecision(17) << converted;
@@ -425,7 +442,7 @@ namespace Postprocessor
     }
     column = static_cast<std::size_t>(part.column_map[payload]);
     if (part.table) {
-      return native_cell(part.table.get(), row - part.first_row, column, part.column_units);
+      return native_cell(part.table.get(), row - part.first_row, column, part.column_units, table_presentation(data));
     }
     const auto index = row-part.first_row;
     if (column == 0) {
@@ -462,7 +479,7 @@ namespace Postprocessor
     selection.component = part.field.components[component];
     double value = 0;
     std::string error;
-    if (!color_sample(part.mesh,part.field,selection,index,value,error) || !std::isfinite(value)) {
+    if (!color_sample(part.mesh,part.field,selection,index,value,error,table_presentation(data)) || !std::isfinite(value)) {
       return "Unavailable";
     }
     std::ostringstream text;

@@ -1,5 +1,9 @@
 #include <type_traits>
 #include "ReportDocumentLayout.hpp"
+#include "Framework/Reporting/ReportProgress.hpp"
+#include "CubitMessage.hpp"
+#include <QElapsedTimer>
+#include "ReportFigureCaption.hpp"
 #include "ReportPageDecoration.hpp"
 #include "Report/Core/ReportLogo.hpp"
 #include <utility>
@@ -24,7 +28,7 @@
 ReportDocumentLayout::ReportDocumentLayout() = default;
 ReportDocumentLayout::~ReportDocumentLayout() = default;
 
-bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& error)
+bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& error, ReportProgress* progress)
 {
   auto* app = qobject_cast<QGuiApplication*>(QCoreApplication::instance());
   if (app == nullptr || QThread::currentThread() != app->thread())
@@ -36,7 +40,36 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   {
     return false;
   }
+  QElapsedTimer timer;
+  timer.start();
+  std::size_t totalCells = 0, totalImages = 0, totalRows = 0, totalTables = 0;
+  std::function<void(const ReportSection&)> count = [&](const ReportSection& section)
+  {
+    for (const auto& table : section.tables)
+    {
+      totalCells += (table.rows.size() + 1) * table.columns.size();
+      totalRows += table.rows.size();
+      ++totalTables;
+    }
+    totalImages += section.images.size();
+    for (const auto& child : section.children)
+    {
+      count(child);
+    }
+  };
+  for (const auto& section : document.sections)
+  {
+    count(section);
+  }
+  PRINT_INFO("Report preview: %llu tables, %llu rows, %llu cells, %llu images.\n",
+    static_cast<unsigned long long>(totalTables), static_cast<unsigned long long>(totalRows),
+    static_cast<unsigned long long>(totalCells), static_cast<unsigned long long>(totalImages));
+  std::size_t completedCells = 0, completedImages = 0;
   auto candidate = std::make_unique<QTextDocument>();
+  candidate->setUndoRedoEnabled(false);
+  // Suppress repeated pagination while constructing tables. The temporary
+  // document is discarded atomically on failure or cancellation.
+  candidate->setLayoutEnabled(false);
   const auto& settings = document.configuration.values;
   auto setting = [&](const std::string& key, const std::string& fallback)
   {
@@ -68,6 +101,7 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   candidate->setDefaultTextOption(option);
   const int precision = QString::fromStdString(setting("precision", "5")).toInt();
   QTextCursor cursor(candidate.get());
+  cursor.beginEditBlock();
   auto paragraph = [&](const QString& value, int heading, bool pageBreak)
   {
     if (cursor.position() != 0)
@@ -147,7 +181,7 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   // Insert real headings first, then resolve physical pages and replace
   // fixed-width, monospaced TOC page fields without changing their geometry.
   std::vector<std::pair<std::string, int>> headings;
-  std::vector<std::pair<QTextCursor, std::string>> toc;
+  std::vector<std::pair<int, std::string>> toc;
   std::set<std::string> renderedNotes;
   if (setting("contents", "true") == "true")
   {
@@ -158,13 +192,12 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
       QTextCharFormat digits = cursor.charFormat();
       digits.setFontFamily("Courier New");
       cursor.setCharFormat(digits);
-      QTextCursor field = cursor;
+      const int field = cursor.position();
       cursor.insertText("0000");
-      field.setPosition(cursor.position(), QTextCursor::KeepAnchor);
       toc.push_back({field, section.id});
     }
   }
-  std::function<void(const ReportSection&, int)> appendSection = [&](const ReportSection& section, int level)
+  std::function<bool(const ReportSection&, int)> appendSection = [&](const ReportSection& section, int level)
   {
     paragraph(QString::fromStdString(section.title), [&]() -> int {
       if (level == 0) {
@@ -180,6 +213,10 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
     }
     for (const auto& sourceTable : section.tables)
     {
+      if (!ReportProgress::advance(progress, ReportProgressStage::PreviewContent, "Building preview tables", completedCells + completedImages, totalCells + totalImages, error))
+      {
+        return false;
+      }
       paragraph(QString::fromStdString(sourceTable.title), 2, false);
       QTextTableFormat format;
       format.setHeaderRowCount(1);
@@ -188,8 +225,8 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
       format.setCellPadding(4);
       format.setCellSpacing(0);
       format.setWidth(QTextLength(QTextLength::PercentageLength, 100));
-      auto* table = cursor.insertTable(static_cast<int>(sourceTable.rows.size()) + 1,
-        static_cast<int>(sourceTable.columns.size()), format);
+      // Append rows in bounded batches instead of allocating one huge table.
+      auto* table = cursor.insertTable(1, static_cast<int>(sourceTable.columns.size()), format);
       for (std::size_t col = 0; col < sourceTable.columns.size(); ++col)
       {
         auto cell = table->cellAt(0, static_cast<int>(col));
@@ -202,17 +239,34 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
           title += " [" + QString::fromStdString(sourceTable.units[col]) + "]";
         }
         cell.firstCursorPosition().insertText(title);
-        for (std::size_t row = 0; row < sourceTable.rows.size(); ++row)
+        ++completedCells;
+      }
+      for (std::size_t row = 0; row < sourceTable.rows.size(); ++row)
+      {
+        if (row % 128 == 0)
         {
-          const auto value = sourceTable.rows[row][col];
-          table->cellAt(static_cast<int>(row) + 1, static_cast<int>(col)).firstCursorPosition().insertText(
-            [&]() -> std::common_type_t<decltype(QString::number(value.toDouble(), 'g', precision)), decltype(value.toString())> {
-              if (value.isDouble()) {
-                return QString::number(value.toDouble(), 'g', precision);
-              } else {
-                return value.toString();
-              }
-            }());
+          const auto batch = (std::min)(std::size_t(128), sourceTable.rows.size() - row);
+          table->insertRows(table->rows(), static_cast<int>(batch));
+        }
+        for (std::size_t col = 0; col < sourceTable.columns.size(); ++col)
+        {
+          const auto& value = sourceTable.rows[row][col];
+          QString display;
+          if (value.isDouble())
+          {
+            display = QString::number(value.toDouble(), 'g', precision);
+          }
+          else
+          {
+            display = value.toString();
+          }
+          table->cellAt(static_cast<int>(row) + 1, static_cast<int>(col)).firstCursorPosition().insertText(display);
+          ++completedCells;
+          if (completedCells % 256 == 0 &&
+              !ReportProgress::advance(progress, ReportProgressStage::PreviewContent, "Building preview tables", completedCells + completedImages, totalCells + totalImages, error))
+          {
+            return false;
+          }
         }
       }
       cursor = table->lastCursorPosition();
@@ -220,6 +274,10 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
     }
     for (const auto& image : section.images)
     {
+      if (!ReportProgress::advance(progress, ReportProgressStage::PreviewContent, "Adding preview images", completedCells + completedImages, totalCells + totalImages, error))
+      {
+        return false;
+      }
       const QImage pixels = QImage::fromData(QByteArray::fromBase64(QByteArray::fromStdString(image.base64_data)));
       const QUrl url("report-image:" + QString::fromStdString(image.id));
       candidate->addResource(QTextDocument::ImageResource, url, pixels);
@@ -230,7 +288,11 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
       format.setWidth(pixels.width() * scale);
       format.setHeight(pixels.height() * scale);
       cursor.insertImage(format);
-      paragraph(QString::fromStdString(image.caption), 0, false);
+      paragraph(ReportFigureCaption::text(image, document.configuration), 0, false);
+      if (!ReportProgress::advance(progress, ReportProgressStage::PreviewContent, "Adding preview images", completedCells + ++completedImages, totalCells + totalImages, error))
+      {
+        return false;
+      }
     }
     const auto note = document.notes.find(section.id);
     if (note != document.notes.end() && !note->second.empty())
@@ -241,12 +303,19 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
     }
     for (const auto& child : section.children)
     {
-      appendSection(child, level + 1);
+      if (!appendSection(child, level + 1))
+      {
+        return false;
+      }
     }
+    return true;
   };
   for (const auto& section : document.sections)
   {
-    appendSection(section, 0);
+    if (!appendSection(section, 0))
+    {
+      return false;
+    }
   }
   for (const auto& note : document.notes)
   {
@@ -257,6 +326,7 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
     }
   }
   paragraph("Sources and diagnostics", 1, cursor.position() != 0);
+  headings.push_back({"report.diagnostics", cursor.block().position()});
   paragraph(QString::fromStdString(document.source.provenance), 0, false);
   if (!document.source.snapshot_fingerprint.empty())
   {
@@ -271,8 +341,22 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   {
     paragraph(QString::fromStdString(issue.severity + " / " + issue.section_id + ": " + issue.message), 0, false);
   }
+  cursor.endEditBlock();
+  PRINT_INFO("Report preview content constructed in %lld ms.\n", static_cast<long long>(timer.elapsed()));
   std::vector<std::pair<std::string, int>> pages;
+  if (!ReportProgress::advance(progress, ReportProgressStage::Pagination, "Paginating report preview", 0, 1, error))
+  {
+    return false;
+  }
+  timer.restart();
+  // Qt pagination is synchronous; progress cannot claim page-by-page completion.
+  candidate->setLayoutEnabled(true);
   candidate->documentLayout()->documentSize();
+  PRINT_INFO("Report preview pagination: %d pages in %lld ms.\n", candidate->pageCount(), static_cast<long long>(timer.elapsed()));
+  if (!ReportProgress::advance(progress, ReportProgressStage::Pagination, "Paginating report preview", 1, 1, error))
+  {
+    return false;
+  }
   if (candidate->pageCount() > 9999)
   {
     error = "Report exceeds the supported preview size (9999 pages). Narrow the selected content.";
@@ -286,6 +370,12 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   }
   // Four-digit fields have stable character counts. Use monospaced digits so
   // replacing 0000 cannot change line wrapping or invalidate heading positions.
+  if (!ReportProgress::advance(progress, ReportProgressStage::Contents, "Updating report contents", 0, toc.size(), error))
+  {
+    return false;
+  }
+  candidate->setLayoutEnabled(false);
+  cursor.beginEditBlock();
   for (auto& item : toc)
   {
     const auto found = std::find_if(pages.begin(), pages.end(), [&](const auto& value)
@@ -294,8 +384,19 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
     });
     if (found != pages.end())
     {
-      item.first.insertText(QString::number(found->second + 1).rightJustified(4, '0'));
+      // Subsequent construction appends text; equal-width replacements preserve offsets.
+      QTextCursor field(candidate.get());
+      field.setPosition(item.first);
+      field.setPosition(item.first + 4, QTextCursor::KeepAnchor);
+      field.insertText(QString::number(found->second + 1).rightJustified(4, '0'));
     }
+  }
+  // Content edits are complete before the prepared layout becomes visible.
+  cursor.endEditBlock();
+  candidate->setLayoutEnabled(true);
+  if (!ReportProgress::advance(progress, ReportProgressStage::Contents, "Updating report contents", toc.size(), toc.size(), error))
+  {
+    return false;
   }
   text = std::move(candidate);
   paper = page;

@@ -1,3 +1,4 @@
+#include "Framework/Core/units/WorkspaceUnitContext.hpp"
 #ifndef POSTPROCESSOR_RESULTTABLES_HPP
 #define POSTPROCESSOR_RESULTTABLES_HPP
 #include "Framework/Results/VtkResultsData.hpp"
@@ -46,6 +47,7 @@ namespace Postprocessor
   struct ResultTableData
   {
     std::shared_ptr<const SimResults::VtkResultsData> owner;
+    std::optional<SimUnits::WorkspaceUnitContext> presentation_units;
     std::shared_ptr<vtkTable> table;
     std::vector<ResultTablePart> parts;
     std::vector<std::string> columns;
@@ -57,7 +59,7 @@ namespace Postprocessor
     std::optional<std::size_t> active_frame;
   };
   std::vector<ResultTableDescriptor> result_tables(const SimResults::VtkResultsData& data, std::optional<std::size_t> frame);
-  ResultTableData result_table_data(std::shared_ptr<const SimResults::VtkResultsData> data, const TableReference& reference);
+  ResultTableData result_table_data(std::shared_ptr<const SimResults::VtkResultsData> data, const TableReference& reference, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
   // Binary-search the frame owning a logical row. Globals have no frame.
   std::optional<std::size_t> result_table_row_frame(const ResultTableData& data, std::size_t row);
   std::string result_table_cell(const ResultTableData& data, std::size_t row, std::size_t column);

@@ -33,6 +33,9 @@ protected:
   void showEvent(QShowEvent* event) override;
 
 private:
+  QString parameter_text(const SimResults::Increment& frame) const;
+  void refresh_frame_labels();
+  std::optional<std::uint64_t> labelUnitGeneration;
   void choose(int position);
   void advance_animation();
   void synchronize_animation(const Postprocessor::AnimationDefinition& animation);

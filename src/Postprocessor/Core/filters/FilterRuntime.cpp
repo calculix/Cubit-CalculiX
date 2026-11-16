@@ -1,3 +1,4 @@
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "FilterRuntime.hpp"
 #include "../representations/ResultMesh.hpp"
 #include <vtkDataSet.h>
@@ -25,6 +26,14 @@
 #include <algorithm>
 namespace Postprocessor
 {
+  std::string filter_coordinate_unit(const SimResults::VtkResultsData& source, std::size_t frame)
+  {
+    if (frame < source.increments.size() && !source.increments[frame].coordinate_unit.empty())
+    {
+      return source.increments[frame].coordinate_unit;
+    }
+    return source.source_units.coordinate_unit;
+  }
   namespace
   {
     constexpr const char* parentName = "__CubitSimFilterParentCell";
@@ -221,6 +230,17 @@ namespace Postprocessor
         error = "Filter input frame is unavailable.";
       }
       return false;
+    }
+    const auto coordinateUnit = filter_coordinate_unit(*source,display.increment_index);
+    if (!filter.coordinate_unit.empty())
+    {
+      double scale = 0.0;
+      if (coordinateUnit.empty() || !framework_units().convert(1.0,filter.coordinate_unit,coordinateUnit,scale,error) ||
+          std::abs(scale-1.0) > 1e-12)
+      {
+        error = "The source coordinate-unit basis changed; recreate the plane filter using the current native coordinates.";
+        return false;
+      }
     }
     EvaluatedOutput candidate;
     candidate.source = source;

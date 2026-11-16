@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/sections/CalculiXSectionsInterface.hpp"
 #include "SectionsModifyMembranePanel.hpp"
@@ -91,6 +92,9 @@ SectionsModifyMembranePanel::SectionsModifyMembranePanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_4, *lineEdit_4, label_4->text(), "length");
 
   isInitialized = true;
 }
@@ -242,6 +246,7 @@ bool SectionsModifyMembranePanel::setSection(int id)
   originalValues.insert("lineEdit_5", lineEdit_5->text());
 
   loadedEntityId = id;
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   pushButton_apply->setEnabled(true);
   return true;
 }

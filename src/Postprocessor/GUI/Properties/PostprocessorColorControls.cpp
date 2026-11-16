@@ -130,6 +130,7 @@ void PostprocessorColorControls::publish()
   if (!active->readable_field(sourceId,selected,selector,error))
   {
     PRINT_ERROR("Cannot journal result field: %s\n",error.c_str());
+    refresh();
     return;
   }
   const auto fieldArg = Postprocessor::field_command_text(selector);
@@ -301,6 +302,7 @@ void PostprocessorColorControls::apply_field(const QString& name, std::size_t fi
       if (!active->readable_field(entry.first,selected,selector,error))
       {
         PRINT_ERROR("Cannot journal result field: %s\n",error.c_str());
+        refresh();
         return;
       }
       const auto fieldArg = Postprocessor::field_command_text(selector);

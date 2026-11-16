@@ -1,3 +1,4 @@
+#include "../representations/ResultColoringUnits.hpp"
 #include "../application/PostprocessorCore.hpp"
 #include "Framework/Interfaces/ResultSourceProviderInterface.hpp"
 #include "../representations/ResultMesh.hpp"
@@ -86,16 +87,22 @@ namespace
 
   // New sources only: choose blocks, otherwise the first present category in
   // catalogue/tree order. Other representations and restored state are untouched.
-  void initialize_result_display(Postprocessor::PostprocessorSession& staged,
-    const SimResults::VtkResultsData& data, const std::vector<SimResults::Dataset>& datasets)
+  bool initialize_result_display(Postprocessor::PostprocessorSession& staged,
+    const SimResults::VtkResultsData& data, const std::vector<SimResults::Dataset>& datasets, std::string& error)
   {
     const auto active = staged.representations.find(staged.active_representation_id);
     if (active == staged.representations.end())
     {
-      return;
+      return true;
     }
     auto& display = active->second;
     const auto& frame = data.increments.at(display.increment_index);
+    auto& sceneUnit = staged.views.at(display.view_id).scene_unit;
+    if (sceneUnit.empty())
+    {
+      sceneUnit = Postprocessor::filter_coordinate_unit(data,display.increment_index);
+    }
+
     const auto parts = Postprocessor::result_mesh_parts(frame.dataset.get());
     std::set<std::size_t> present;
     for (const auto& part : parts)
@@ -163,9 +170,14 @@ namespace
       if (range)
       {
         display.coloring.field = std::move(selection);
+        if (!Postprocessor::bind_coloring_units(display.coloring, field, error))
+        {
+          return false;
+        }
         break;
       }
     }
+    return true;
   }
 
   bool valid_name(const std::string& name)
@@ -428,7 +440,10 @@ namespace Postprocessor
       }
       if (mesh_increment)
       {
-        initialize_result_display(staged_state,*published.data,staged_runtime.at(source_id).datasets);
+        if (!initialize_result_display(staged_state,*published.data,staged_runtime.at(source_id).datasets,error))
+        {
+          return false;
+        }
       }
       if (!mesh_increment && !prepare_table(staged_state,source_id,published.data,error))
       {
@@ -523,6 +538,24 @@ namespace Postprocessor
 
       const auto mesh_increment = first_mesh_increment(*published.data);
       auto staged_state = state;
+      if (loaded->second.data)
+      {
+        for (auto& item : staged_state.filters)
+        {
+          if (item.second.input.object_id == source_id && item.second.coordinate_unit.empty())
+          {
+            for (const auto& display : state.representations)
+            {
+              if (display.second.input.owner == OutputOwner::Feature && display.second.input.object_id == item.first)
+              {
+                item.second.coordinate_unit = filter_coordinate_unit(*loaded->second.data,display.second.increment_index);
+                break;
+              }
+            }
+          }
+        }
+      }
+
       auto staged_runtime = runtime;
       staged_state.sources.at(source_id).reference = std::visit(
         [](const auto& reference) -> SourceReference

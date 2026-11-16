@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "DampingPropertiesWidget.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -27,11 +28,11 @@ bool DampingPropertiesWidget::setDamping(int id)
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   if (id == 0 || id == 1)
   {
-    addValue(settingsGroup, "Alpha", QString::fromStdString(settings.alpha));
+    addValue(settingsGroup, CalculiXUnitPresentation::title("Alpha", "inverse_time"), QString::fromStdString(settings.alpha));
   }
   if (id == 0 || id == 2)
   {
-    addValue(settingsGroup, "Beta", QString::fromStdString(settings.beta));
+    addValue(settingsGroup, CalculiXUnitPresentation::title("Beta", "time"), QString::fromStdString(settings.beta));
   }
   return true;
 }

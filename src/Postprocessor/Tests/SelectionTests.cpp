@@ -5,6 +5,7 @@
 #include "FieldSelectorTests.hpp"
 #include "TableSelectorTests.hpp"
 #include "CaptureTests.hpp"
+#include "LegendTests.hpp"
 #include "Postprocessor/Commands/selection/PickCommandText.hpp"
 #include "Postprocessor/GUI/Viewport/PostprocessorScene.hpp"
 #include "Postprocessor/GUI/Viewport/CameraInteraction.hpp"
@@ -31,6 +32,7 @@
 #include <vtkPointData.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
+#include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
 #include <vtkTypeInt64Array.h>
 #include <vtkUnstructuredGrid.h>
@@ -49,6 +51,25 @@ namespace
       std::cerr << message << '\n';
       ++failures;
     }
+  }
+  vtkIdType visible_vertex_count(vtkRenderer* renderer)
+  {
+    vtkIdType count = 0;
+    auto* actors = renderer->GetActors();
+    actors->InitTraversal();
+    while (auto* actor = actors->GetNextActor())
+    {
+      auto* mapper = vtkPolyDataMapper::SafeDownCast(actor->GetMapper());
+      if (actor->GetVisibility() && mapper)
+      {
+        mapper->Update();
+        if (auto* data = mapper->GetInput())
+        {
+          count += data->GetNumberOfVerts();
+        }
+      }
+    }
+    return count;
   }
   std::shared_ptr<SimResults::VtkResultsData> fixture()
   {
@@ -296,6 +317,7 @@ int main(int argc,char** argv)
   failures += annotation_cases(app);
   failures += plot_cases(app);
   failures += capture_cases(app);
+  failures += legend_cases(app);
   const auto source = app->session().active_source_id;
   const auto view = app->session().active_view_id;
   auto renderer = vtkSmartPointer<vtkOpenGLRenderer>::New();
@@ -401,6 +423,7 @@ int main(int argc,char** argv)
   window->SetSize(400,400);
   window->AddRenderer(renderer);
   check(scene.synchronize(*app,error),"Cannot synchronize CPU picking scene");
+  check(visible_vertex_count(renderer) > 0,"Integration-point cloud lost its visible points");
   renderer->SetWorldPoint(0.25,0.25,0.25,1);
   renderer->WorldToDisplay();
   const double x = renderer->GetDisplayPoint()[0], y = renderer->GetDisplayPoint()[1];
@@ -409,10 +432,38 @@ int main(int argc,char** argv)
     picked->integration_point == 3,"CPU point picking lost integration-point provenance");
   check(app->set_dataset_visibility("Model",DatasetVisibilityAction::ShowAll,std::nullopt,error) && scene.synchronize(*app,error),"Cannot show occluding mesh");
   check(scene.pick(x,y,EntityKind::IntegrationPoint,picked,error) && !picked,"Point picker selected an occluded integration point");
+  check(app->set_dataset_visibility("Model",DatasetVisibilityAction::ShowOnly,Selector{std::size_t{0}},error) &&
+    scene.synchronize(*app,error),"Cannot isolate mesh node picking");
+  check(visible_vertex_count(renderer) == 0,"Mesh renders permanent node markers");
   renderer->SetWorldPoint(0,0,1,1);
   renderer->WorldToDisplay();
   check(scene.pick(renderer->GetDisplayPoint()[0],renderer->GetDisplayPoint()[1],EntityKind::Node,picked,error) &&
-    picked && picked->entity_id == 45,"Original mesh node marker did not pick its solver node ID");
+    picked && picked->entity_id == 45,"Undrawn original mesh node did not pick its solver node ID");
+  const auto nodeHoverRevision = app->session().views.at(view).selection.revision;
+  if (picked)
+  {
+    check(scene.set_hover(picked,*app) && visible_vertex_count(renderer) == 1,"Node hover did not draw a temporary marker");
+    check(app->session().views.at(view).selection.revision == nodeHoverRevision,"Node hover mutated Core selection");
+    check(scene.clear_hover() && visible_vertex_count(renderer) == 0,"Node hover left a permanent marker");
+  }
+  deformation->enabled = true;
+  deformation->scale = 0.1;
+  check(app->set_deformation("Model",*deformation,error) && scene.synchronize(*app,error),"Cannot deform undrawn node picking geometry");
+  renderer->SetWorldPoint(0.1,0.2,1.3,1);
+  renderer->WorldToDisplay();
+  check(scene.pick(renderer->GetDisplayPoint()[0],renderer->GetDisplayPoint()[1],EntityKind::Node,picked,error) &&
+    picked && picked->entity_id == 45,"Undrawn node picking geometry did not follow deformation");
+  check(visible_vertex_count(renderer) == 0,"Deformation restored permanent node markers");
+  deformation->enabled = false;
+  check(app->set_deformation("Model",*deformation,error) &&
+    app->set_dataset_visibility("Model",DatasetVisibilityAction::Hide,Selector{std::size_t{0}},error) &&
+    scene.synchronize(*app,error),"Cannot hide undrawn node picking geometry");
+  renderer->SetWorldPoint(0,0,1,1);
+  renderer->WorldToDisplay();
+  check(scene.pick(renderer->GetDisplayPoint()[0],renderer->GetDisplayPoint()[1],EntityKind::Node,picked,error) &&
+    !picked,"Hidden mesh retained pickable nodes");
+  check(app->set_dataset_visibility("Model",DatasetVisibilityAction::ShowAll,std::nullopt,error) &&
+    scene.synchronize(*app,error),"Cannot restore mesh picking scene");
   renderer->SetWorldPoint(0.2,0.2,0.6,1);
   renderer->WorldToDisplay();
   check(scene.pick(renderer->GetDisplayPoint()[0],renderer->GetDisplayPoint()[1],EntityKind::Element,picked,error) &&

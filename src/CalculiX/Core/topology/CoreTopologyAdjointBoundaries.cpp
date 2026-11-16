@@ -55,6 +55,13 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
       return false;
     }
 
+    CalculiXDofUnits::Boundaries mapped;
+    std::string error;
+    if (!displacements.get_solver_boundaries(bc_id, mapped, error))
+    {
+      PRINT_ERROR("Cannot resolve adjoint boundary %d: %s\n", bc_id, error.c_str());
+      return false;
+    }
     for (int dof = 1; dof <= 6; ++dof)
     {
       const int mode = displacements.mode_data[mode_data_id][dof];
@@ -76,10 +83,10 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
         }
       }
 
-      if (mode != 0)
-      {
-        collected.emplace(nodeset_id, dof);
-      }
+    }
+    for (const auto& boundary : mapped)
+    {
+      collected.insert(boundary.first);
     }
 
     return true;

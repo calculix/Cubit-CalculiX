@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsBodyHeatfluxCreatePanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -101,6 +102,10 @@ LoadsBodyHeatfluxCreatePanel::LoadsBodyHeatfluxCreatePanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_2, *lineEdit_2, label_2->text(), "body_heat_flux");
+  unitPresentation->bind(*label_7, *lineEdit_7, label_7->text(), "time");
 
   isInitialized = true;
   

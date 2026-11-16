@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsCentrifugalPropertiesWidget.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -23,15 +24,15 @@ bool LoadsCentrifugalPropertiesWidget::setCentrifugal(int id)
   auto* general = addIdentity("Centrifugal", settings.id);
   addEditableName(general, id, QString::fromStdString(settings.name));
   auto* components = addGroup("components", "Components", PropertySection::Data);
-  addValue(components, "Magnitude", QString::fromStdString(settings.magnitude));
-  addValue(components, "Coordinate", QString::fromStdString(settings.coordinate));
+  addValue(components, CalculiXUnitPresentation::title("Magnitude", "frequency_squared"), QString::fromStdString(settings.magnitude));
+  addValue(components, CalculiXUnitPresentation::title("Coordinate", "length"), QString::fromStdString(settings.coordinate));
   addValue(components, "Direction", QString::fromStdString(settings.direction));
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
   addReference(assignment, PropertyReferenceKind::Block, "Block", QString::fromStdString(settings.block));
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   addValue(settingsGroup, "OP", QString::fromStdString(settings.operation));
   addReference(settingsGroup, PropertyReferenceKind::Amplitude, "Amplitude", QString::fromStdString(settings.amplitude));
-  addValue(settingsGroup, "Time Delay", QString::fromStdString(settings.timeDelay));
+  addValue(settingsGroup, CalculiXUnitPresentation::title("Time Delay", "time"), QString::fromStdString(settings.timeDelay));
   return true;
 }
 

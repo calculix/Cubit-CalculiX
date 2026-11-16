@@ -1,6 +1,9 @@
 #include "CalculiXDomainUnits.hpp"
+#include <map>
+#include "CalculiXDofUnits.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include <cmath>
+#include <limits>
 #include <iomanip>
 #include <locale>
 #include <sstream>
@@ -95,7 +98,15 @@ bool scalar(std::string& value, const std::string& quantity, CalculiXDomainUnitV
   }
   std::ostringstream output;
   output.imbue(std::locale::classic());
-  output << std::setprecision(17) << numeric;
+  // Limit solver fields without rounding canonical storage or display views.
+  if (view == CalculiXDomainUnitView::Solver)
+  {
+    output << std::scientific << std::setprecision(6) << numeric;
+  }
+  else
+  {
+    output << std::setprecision(17) << numeric;
+  }
   value = output.str();
   return true;
 }
@@ -165,20 +176,23 @@ bool CalculiXDomainUnits::convert(CoreConstraints& model, CalculiXDomainUnitView
   if (!fields(candidate.tie_constraint_data, {{4, "length"}}, view, error)) {
     return false;
   }
+  std::set<int> rotationNodes;
+  if (!candidate.equation_data.empty() && !candidate.get_rotation_node_ids(rotationNodes, error))
+  {
+    return false;
+  }
   for (auto& row : candidate.equation_data) {
-    if (row.size() != 4 || !std::isfinite(row[2]) || !std::isfinite(row[3]) || std::floor(row[2]) != row[2]) {
+    if (row.size() != 4 || !std::isfinite(row[1]) || row[1] <= 0.0 ||
+        row[1] > static_cast<double>((std::numeric_limits<int>::max)()) || std::floor(row[1]) != row[1] ||
+        !std::isfinite(row[2]) || row[2] < 1.0 || row[2] > 11.0 ||
+        !std::isfinite(row[3]) || std::floor(row[2]) != row[2]) {
       error = "Incomplete constraint equation term.";
       return false;
     }
     std::string quantity;
-    if (row[2] >= 1 && row[2] <= 3) {
-      quantity = "length";
-    } else if (row[2] >= 4 && row[2] <= 6) {
-      quantity = "angle";
-    } else if (row[2] == 11) {
-      quantity = "temperature_difference";
-    } else {
-      error = "Unsupported equation degree of freedom.";
+    if (!CalculiXDofUnits::equation_quantity(static_cast<int>(row[2]),
+        rotationNodes.count(static_cast<int>(row[1])) != 0, quantity, error))
+    {
       return false;
     }
     double scale = 1.0;
@@ -247,87 +261,132 @@ bool CalculiXDomainUnits::convert(CoreSurfaceInteractions& model, CalculiXDomain
   return true;
 }
 
-bool CalculiXDomainUnits::convert(CoreSteps& model, CalculiXDomainUnitView view, std::string& error) {
+std::vector<std::string> CalculiXDomainUnits::procedure_quantities(int type, const std::vector<std::string>& row)
+{
+  std::vector<std::string> result(row.size());
+  std::vector<std::pair<std::size_t, std::string>> fields;
+  switch (type)
+  {
+    case 2: fields = {{5, "time"}, {6, "time"}, {7, "time"}, {8, "time"}, {9, "time"}, {10, "time"}}; break;
+    case 3: fields = {{6, "frequency"}, {7, "frequency"}}; break;
+    case 5: fields = {{7, "temperature_difference"}, {9, "time"}, {10, "time"}, {11, "time"}, {12, "time"}, {13, "time"}, {15, "frequency"}, {16, "frequency"}}; break;
+    case 6: fields = {{5, "temperature_difference"}, {7, "time"}, {9, "time"}, {10, "time"}, {11, "time"}, {12, "time"}, {13, "time"}}; break;
+    case 7: fields = {{5, "temperature_difference"}, {8, "time"}, {9, "time"}, {10, "time"}, {11, "time"}, {12, "time"}}; break;
+    case 8: fields = {{6, "time"}, {7, "time"}, {8, "time"}, {9, "time"}, {10, "time"}}; break;
+    case 9: fields = {{3, "modal_force"}, {5, "time"}, {7, "time"}, {8, "time"}}; break;
+    case 10: fields = {{3, "frequency"}, {4, "frequency"}, {8, "time"}, {9, "time"}}; break;
+    default: break;
+  }
+  for (const auto& field : fields)
+  {
+    if (field.first < result.size())
+    {
+      result[field.first] = field.second;
+    }
+  }
+  if (type == 9 && row.size() > 6 && row[4].empty())
+  {
+    result[6] = "time";
+  }
+  return result;
+}
+
+namespace
+{
+bool procedureFields(std::vector<std::vector<std::string>>& rows, int type, CalculiXDomainUnitView view, std::string& error)
+{
+  const std::map<int, std::size_t> widths = {{2, 11}, {3, 8}, {5, 17}, {6, 14}, {7, 13}, {8, 11}, {9, 9}, {10, 10}};
+  for (auto& row : rows)
+  {
+    if (row.size() < widths.at(type))
+    {
+      error = "Incomplete physical step procedure.";
+      return false;
+    }
+    const auto quantities = CalculiXDomainUnits::procedure_quantities(type, row);
+    for (std::size_t index = 0; index < row.size(); ++index)
+    {
+      if (!quantities[index].empty() && !scalar(row[index], quantities[index], view, error))
+      {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+}
+
+bool CalculiXDomainUnits::convert(CoreSteps& model, CalculiXDomainUnitView view, std::string& error)
+{
   error.clear();
   auto candidate = model;
-  if (!fields(candidate.static_data, {{5, "time"}, {6, "time"}, {7, "time"}, {8, "time"}, {9, "time"}, {10, "time"}}, view, error)) {
+  if (!procedureFields(candidate.static_data, 2, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.frequency_data, {{6, "frequency"}, {7, "frequency"}}, view, error)) {
+  if (!procedureFields(candidate.frequency_data, 3, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.heattransfer_data, {{7, "temperature_difference"}, {9, "time"}, {10, "time"}, {11, "time"}, {12, "time"}, {13, "time"}, {15, "frequency"}, {16, "frequency"}}, view, error)) {
+  if (!procedureFields(candidate.heattransfer_data, 5, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.coupledtd_data, {{5, "temperature_difference"}, {7, "time"}, {9, "time"}, {10, "time"}, {11, "time"}, {12, "time"}, {13, "time"}}, view, error)) {
+  if (!procedureFields(candidate.coupledtd_data, 6, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.uncoupledtd_data, {{5, "temperature_difference"}, {8, "time"}, {9, "time"}, {10, "time"}, {11, "time"}, {12, "time"}}, view, error)) {
+  if (!procedureFields(candidate.uncoupledtd_data, 7, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.dynamic_data, {{6, "time"}, {7, "time"}, {8, "time"}, {9, "time"}, {10, "time"}}, view, error)) {
+  if (!procedureFields(candidate.dynamic_data, 8, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.modal_dynamic_data, {{5, "time"}, {7, "time"}, {8, "time"}}, view, error)) {
+  if (!procedureFields(candidate.modal_dynamic_data, 9, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.steady_state_dynamics_data, {{3, "frequency"}, {4, "frequency"}, {8, "time"}, {9, "time"}}, view, error)) {
+  if (!procedureFields(candidate.steady_state_dynamics_data, 10, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.backup_static_data, {{5, "time"}, {6, "time"}, {7, "time"}, {8, "time"}, {9, "time"}, {10, "time"}}, view, error)) {
+  if (!procedureFields(candidate.backup_static_data, 2, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.backup_frequency_data, {{6, "frequency"}, {7, "frequency"}}, view, error)) {
+  if (!procedureFields(candidate.backup_frequency_data, 3, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.backup_heattransfer_data, {{7, "temperature_difference"}, {9, "time"}, {10, "time"}, {11, "time"}, {12, "time"}, {13, "time"}, {15, "frequency"}, {16, "frequency"}}, view, error)) {
+  if (!procedureFields(candidate.backup_heattransfer_data, 5, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.backup_coupledtd_data, {{5, "temperature_difference"}, {7, "time"}, {9, "time"}, {10, "time"}, {11, "time"}, {12, "time"}, {13, "time"}}, view, error)) {
+  if (!procedureFields(candidate.backup_coupledtd_data, 6, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.backup_uncoupledtd_data, {{5, "temperature_difference"}, {8, "time"}, {9, "time"}, {10, "time"}, {11, "time"}, {12, "time"}}, view, error)) {
+  if (!procedureFields(candidate.backup_uncoupledtd_data, 7, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.backup_dynamic_data, {{6, "time"}, {7, "time"}, {8, "time"}, {9, "time"}, {10, "time"}}, view, error)) {
+  if (!procedureFields(candidate.backup_dynamic_data, 8, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.backup_modal_dynamic_data, {{5, "time"}, {7, "time"}, {8, "time"}}, view, error)) {
+  if (!procedureFields(candidate.backup_modal_dynamic_data, 9, view, error))
+  {
     return false;
   }
-  if (!fields(candidate.backup_steady_state_dynamics_data, {{3, "frequency"}, {4, "frequency"}, {8, "time"}, {9, "time"}}, view, error)) {
+  if (!procedureFields(candidate.backup_steady_state_dynamics_data, 10, view, error))
+  {
     return false;
-  }
-  for (auto& row : candidate.modal_dynamic_data) {
-    if (row.size() < 9) {
-      error = "Incomplete modal dynamic procedure.";
-      return false;
-    }
-    if (row[4].empty()) {
-      if (!scalar(row[6], "time", view, error)) {
-        return false;
-      }
-    }
-    if (!scalar(row[3], "modal_force", view, error)) {
-      return false;
-    }
-  }
-  for (auto& row : candidate.backup_modal_dynamic_data) {
-    if (row.size() < 9) {
-      error = "Incomplete modal dynamic procedure.";
-      return false;
-    }
-    if (row[4].empty()) {
-      if (!scalar(row[6], "time", view, error)) {
-        return false;
-      }
-    }
-    if (!scalar(row[3], "modal_force", view, error)) {
-      return false;
-    }
   }
   candidate.domain_unit_view = true;
-  if (view == CalculiXDomainUnitView::Input || view == CalculiXDomainUnitView::Native) {
+  if (view == CalculiXDomainUnitView::Input || view == CalculiXDomainUnitView::Native)
+  {
     candidate.domain_unit_view = false;
   }
   model = std::move(candidate);

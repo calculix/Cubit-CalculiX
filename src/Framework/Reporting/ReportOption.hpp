@@ -10,6 +10,7 @@ public:
   ReportOption();
   std::string key;
   std::string label;
+  std::string group_id;
   std::string kind;
   std::string default_value;
   std::vector<std::string> choices;

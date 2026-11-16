@@ -2,6 +2,8 @@
 #include "Core/drawing/CoreDrawScene.hpp"
 #include "Core/drawing/CalculiXCaptureRequest.hpp"
 #include "Framework/Drawing/DrawingCaptureRenderer.hpp"
+#include "Framework/Drawing/DrawingCaptureColors.hpp"
+#include "CubitColor.hpp"
 #include "CubitColorTable.hpp"
 #include <QGuiApplication>
 #include <iostream>
@@ -25,6 +27,13 @@ int captureTests(int argc, char** argv)
     }
   };
   std::string error;
+  std::string color = "previous color";
+  check(!DrawingCaptureColors::encode(CUBIT_DEFAULT_COLOR, color, error) && color == "previous color",
+    "Unset native color must not become opaque black");
+  check(DrawingCaptureColors::encode(CUBIT_BLACK, color, error) && color == "#000000",
+    "Explicit opaque black remains a valid assigned color");
+  check(DrawingCaptureColors::encode(CUBIT_GREEN, color, error) && color == "#00ff00",
+    "Native byte RGB encodes green correctly");
   CalculiXCaptureRequest request;
   DrawingCaptureRenderer renderer;
   DrawingFrame frame;

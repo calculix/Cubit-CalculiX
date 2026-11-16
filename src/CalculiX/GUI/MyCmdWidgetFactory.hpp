@@ -38,6 +38,7 @@ public:
   // Clean up our widgets
   void clear();
   void clearTopologyPanels(int topology_id = -1);
+  void refreshUnitLabels();
 
 private slots:
   // Removes our cache when a parent widget (object) is destroyed.
@@ -48,6 +49,8 @@ private:
   // example).
   QMap<QWidget*, NavigationWidgetCache*> widget_cache;
   QList<QPointer<QWidget>> topologyPanels;
+  QList<QPointer<QWidget>> unitPanels;
+  unsigned long long unitGeneration = 0;
   bool openingMaterialEditor = false;
   QWidget* createWidget(const QString &name);
 };

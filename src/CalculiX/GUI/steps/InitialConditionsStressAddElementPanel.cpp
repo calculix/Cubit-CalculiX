@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "InitialConditionsStressAddElementPanel.hpp"
 #include <vector>
 #include <QString>
@@ -113,6 +114,14 @@ InitialConditionsStressAddElementPanel::InitialConditionsStressAddElementPanel(Q
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_4, *lineEdit_4, label_4->text(), "stress");
+  unitPresentation->bind(*label_5, *lineEdit_5, label_5->text(), "stress");
+  unitPresentation->bind(*label_6, *lineEdit_6, label_6->text(), "stress");
+  unitPresentation->bind(*label_7, *lineEdit_7, label_7->text(), "stress");
+  unitPresentation->bind(*label_8, *lineEdit_8, label_8->text(), "stress");
+  unitPresentation->bind(*label_9, *lineEdit_9, label_9->text(), "stress");
 
   isInitialized = true;
 }

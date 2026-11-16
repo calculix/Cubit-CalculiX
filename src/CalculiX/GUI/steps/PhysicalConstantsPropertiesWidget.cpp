@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "PhysicalConstantsPropertiesWidget.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
 #include "CubitMessage.hpp"
@@ -27,15 +28,15 @@ bool PhysicalConstantsPropertiesWidget::setPhysicalConstants(int id)
   auto* settingsGroup = addGroup("settings", "Settings", PropertySection::Settings);
   if (id == 0 || id == 1)
   {
-    addValue(settingsGroup, "Absolute Zero", QString::fromStdString(settings.absoluteZero));
+    addValue(settingsGroup, CalculiXUnitPresentation::title("Absolute Zero", "temperature"), QString::fromStdString(settings.absoluteZero));
   }
   if (id == 0 || id == 2)
   {
-    addValue(settingsGroup, "Stefan Boltzmann", QString::fromStdString(settings.stefanBoltzmann));
+    addValue(settingsGroup, CalculiXUnitPresentation::title("Stefan Boltzmann", "stefan_boltzmann"), QString::fromStdString(settings.stefanBoltzmann));
   }
   if (id == 0 || id == 3)
   {
-    addValue(settingsGroup, "Newton Gravity", QString::fromStdString(settings.newtonGravity));
+    addValue(settingsGroup, CalculiXUnitPresentation::title("Newton Gravity", "newton_gravity"), QString::fromStdString(settings.newtonGravity));
   }
   return true;
 }

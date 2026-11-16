@@ -24,6 +24,7 @@ namespace Postprocessor
   struct FilterDefinition
   {
     std::string id, name;
+    std::string coordinate_unit; // Native origin unit; empty means unknown/legacy.
     OutputReference input;
     FilterKind kind = FilterKind::Clip;
     PlaneDefinition plane;

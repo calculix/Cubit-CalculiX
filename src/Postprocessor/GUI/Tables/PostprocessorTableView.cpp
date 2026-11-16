@@ -1,3 +1,4 @@
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include <type_traits>
 #include "PostprocessorTableView.hpp"
 #include "PostprocessorTableModel.hpp"
@@ -101,6 +102,9 @@ void PostprocessorTableView::show_data(Postprocessor::ResultTableData data)
       return " — "+data.status;
     }
   }())).c_str()));
+  const auto generation = framework_units().generation();
+  const bool unitsChanged = !shownUnitGeneration || *shownUnitGeneration != generation;
+  shownUnitGeneration = generation;
   const bool newTable = shown.owner != data.owner || shown.title != data.title || shown.columns != data.columns || shown.frame_columns != data.frame_columns;
   bool same = !newTable && shown.table == data.table && shown.rows == data.rows && shown.parts.size() == data.parts.size();
   for (std::size_t index = 0; same && index < data.parts.size(); ++index)
@@ -116,6 +120,12 @@ void PostprocessorTableView::show_data(Postprocessor::ResultTableData data)
     shown.active_frame = data.active_frame;
     shown.status = data.status;
     model->set_active_frame(data.active_frame);
+    if (unitsChanged)
+    {
+      model->refresh_units();
+      widen_columns_for_visible_rows();
+      queue_column_fit();
+    }
     return;
   }
   shown = data; // Copies metadata and owning handles; never materializes result rows.

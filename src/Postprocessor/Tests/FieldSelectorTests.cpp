@@ -76,6 +76,37 @@ int field_selector_cases(const std::shared_ptr<PostprocessorApplicationInterface
   readable.name = "unchanged";
   check(!readable_result_field({frd,duplicate},selected,readable,error) && readable.name == "unchanged",
     "Unrepresentable ambiguity fell back to an opaque journal field or changed output");
+  auto block1 = ip;
+  block1.field.name = block1.field.array_name = "strains";
+  block1.field.source = "DAT";
+  block1.field.set_name = "ip_BLOCK_1";
+  block1.field.components = {"exx","eyy"};
+  block1.key = field_group_key(block1.field);
+  auto block2 = block1;
+  block2.field.set_name = "ip_BLOCK_2";
+  block2.field.dataset_id = 2;
+  block2.datasets = {2};
+  block2.key = field_group_key(block2.field);
+  FieldSelection blockSelection{std::nullopt,block1.field.array_name,block1.field.association,"exx",false,block1.key};
+  check(readable_result_field({block1,block2},blockSelection,readable,error) &&
+      readable.qualifiers.set_name == "ip_BLOCK_1" &&
+      field_command_text(readable) == "field \"strains\" set \"ip_BLOCK_1\"",
+    "Repeated DAT integration-point fields did not generate a readable set qualifier");
+  check(resolve_result_field({block2,block1},readable,std::nullopt,"exx",false,false,resolved,error) && resolved.key == block1.key,
+    "Set-qualified field did not replay to its exact identity after catalogue reordering");
+  auto foreign = block1;
+  foreign.field.source = "FRD";
+  foreign.key = field_group_key(foreign.field);
+  check(readable_result_field({block2,foreign,block1},blockSelection,readable,error) &&
+      readable.qualifiers.set_name == "ip_BLOCK_1" && readable.qualifiers.origin == "DAT",
+    "Origin and set collision was not jointly qualified");
+  check(resolve_result_field({foreign,block2,block1},readable,std::nullopt,"exx",false,false,resolved,error) && resolved.key == block1.key,
+    "Combined origin/set qualifiers resolved to another field");
+  readable.qualifiers.set_name = "missing_set";
+  check(!resolve_result_field({block1,block2},readable,std::nullopt,"exx",false,false,resolved,error),
+    "An unknown set silently selected another result group");
+  readable.qualifiers.set_name = "set \"with quotes\"";
+  check(field_command_text(readable).contains("set 'set \"with quotes\"'"),"Set names were not safely quoted");
   const auto source = app->session().active_source_id;
   const auto settings = app->coloring("Model",error);
   if (settings && settings->field)

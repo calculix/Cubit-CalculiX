@@ -9,6 +9,11 @@ ReportSession::ReportSession() = default;
 
 QJsonObject ReportSession::to_json() const
 {
+  QJsonArray pendingUnits;
+  for (const auto& id : units_pending_update)
+  {
+    pendingUnits.append(QString::fromStdString(id));
+  }
   QJsonArray docs;
   for (const auto& item : documents)
   {
@@ -19,7 +24,7 @@ QJsonObject ReportSession::to_json() const
   {
     draftsJson.insert(QString::fromStdString(entry.first), entry.second.to_json());
   }
-  return {{"pending_request", pending_request.to_json()}, {"pending_source", pending_source}, {"drafts", draftsJson}, {"documents", docs}, {"active_id", QString::fromStdString(active_id)},
+  return {{"units_pending_update", pendingUnits}, {"pending_request", pending_request.to_json()}, {"pending_source", pending_source}, {"drafts", draftsJson}, {"documents", docs}, {"active_id", QString::fromStdString(active_id)},
     {"request", request.to_json()}, {"configuration_changed", configuration_changed}};
 }
 
@@ -123,7 +128,22 @@ bool ReportSession::from_json(const QJsonObject& input, ReportSession& output, s
     }
     candidate.drafts.emplace(it.key().toStdString(), std::move(draft));
   }
-  candidate.configuration_changed = input.value("configuration_changed").toBool();
+  if (!input.value("units_pending_update").isArray())
+  {
+    error = "Missing pending report unit updates.";
+    return false;
+  }
+  for (const auto value : input.value("units_pending_update").toArray())
+  {
+    const auto id = value.toString().toStdString();
+    if (!value.isString() || candidate.documents.count(id) == 0 || !candidate.units_pending_update.insert(id).second)
+    {
+      error = "Invalid pending report unit update.";
+      return false;
+    }
+  }
+  candidate.configuration_changed = input.value("configuration_changed").toBool() ||
+    candidate.units_pending_update.count(candidate.active_id) != 0;
   output = std::move(candidate);
   return true;
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "ReportSection.hpp"
+#include "ReportContentGroup.hpp"
 #include "ReportOption.hpp"
 #include "ReportConfiguration.hpp"
 #include <string>
@@ -14,5 +15,6 @@ public:
   int revision = 1;
   std::vector<ReportSection> sections;
   std::vector<ReportOption> options;
+  std::vector<ReportContentGroup> content_groups;
   ReportConfiguration defaults;
 };

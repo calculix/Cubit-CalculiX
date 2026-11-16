@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "ContactPairsCreatePanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -103,6 +104,9 @@ ContactPairsCreatePanel::ContactPairsCreatePanel(QWidget *parent) :
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
   QObject::connect(radioButton_5, SIGNAL(toggled(bool)),this,  SLOT(on_radioButton_5_toggled(bool)));
   QObject::connect(radioButton_6, SIGNAL(toggled(bool)),this,  SLOT(on_radioButton_6_toggled(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_5, *lineEdit_5, label_5->text(), "length");
 
   isInitialized = true;
 }

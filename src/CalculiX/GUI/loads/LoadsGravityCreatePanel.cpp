@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsGravityCreatePanel.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
@@ -100,6 +101,10 @@ LoadsGravityCreatePanel::LoadsGravityCreatePanel(QWidget *parent) :
   HBoxLayout_pushButton_apply->addWidget(pushButton_apply);
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_1, *lineEdit_1, label_1->text(), "acceleration");
+  unitPresentation->bind(*label_6, *lineEdit_6, label_6->text(), "time");
 
   isInitialized = true;
 }

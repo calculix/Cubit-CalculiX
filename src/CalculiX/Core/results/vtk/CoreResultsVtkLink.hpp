@@ -16,8 +16,10 @@ public:
    * indices remain valid only until those readers are changed. No datasets are
    * allocated here; a successful plan does not mean conversion is complete.
    * Failure leaves output unchanged and reports a Cubit error.
+   * Current-model coordinates are converted to the recorded source system
+   * before comparison. Unknown source units use the INP/FRD fallback.
    */
-  bool prepare(int job_id, const CoreResultsFrd& frd, const CoreResultsDat& dat, const std::string& input_path, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& output) const;
+  bool prepare(int job_id, const CoreResultsFrd& frd, const CoreResultsDat& dat, const std::string& input_path, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& output, const std::string& source_system = {}) const;
 
   // External INP is authoritative when supplied. Never capture the live model.
   // A DAT-only source without an INP produces tables, not invented coordinates.

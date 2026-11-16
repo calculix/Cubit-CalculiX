@@ -5,10 +5,13 @@
 
 #include <vector>
 #include <string>
+#include <set>
 class CoreConstraints
 {
 
 public:
+  bool get_rotation_node_ids(std::set<int>& nodes, std::string& error) const;
+  bool validate_rotation_node_change(const CoreConstraints& candidate, std::string& error) const;
   bool domain_unit_view = false;
   bool get_settings(int id, ConstraintsSettings& settings, std::string& error) const;
   const std::vector<std::string>* get_constraint_data(int constraint_id);

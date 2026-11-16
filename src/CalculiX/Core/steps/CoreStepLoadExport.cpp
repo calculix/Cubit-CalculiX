@@ -11,6 +11,7 @@
 #include "Core/loads/CoreLoadsRadiation.hpp"
 #include "Core/loads/CoreLoadsSurfaceTraction.hpp"
 #include "Core/loads/CoreLoadsBodyHeatflux.hpp"
+#include "Core/units/CalculiXPhysicalModelUnits.hpp"
 #include "CubitMessage.hpp"
 
 namespace
@@ -115,6 +116,19 @@ bool CoreStepLoadExport::append(
   CoreSidesetFaces& sideset_faces, const std::vector<int>& assignment_ids,
   std::vector<std::string>& lines)
 {
+  // The header and data rows must use the same detached solver-unit view.
+  if (!loads.unit_view)
+  {
+    auto solverLoads = loads;
+    std::string error;
+    if (!CalculiXPhysicalModelUnits::convert(solverLoads, CalculiXUnitView::Solver, error))
+    {
+      PRINT_ERROR("Cannot export film loads: %s\n", error.c_str());
+      return false;
+    }
+    return append(steps, solverLoads, customlines, sideset_faces, assignment_ids, lines);
+  }
+
   const auto append_data = [&](const std::vector<int>& load, std::vector<std::string>& output)
   {
     const auto faces = sideset_faces.get_sideset_face(load[4]);

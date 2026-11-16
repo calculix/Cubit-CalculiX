@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include <type_traits>
 #include "InitialConditionsPropertiesWidget.hpp"
 #include "Core/steps/CalculiXStepsInterface.hpp"
@@ -36,11 +37,11 @@ bool InitialConditionsPropertiesWidget::setInitialCondition(int id)
   }
   if (!settings.blockStress.empty())
   {
-    addTable("block_stresses", "Block stresses", {"Block ID", "Sxx", "Syy", "Szz", "Sxy", "Sxz", "Syz"}, settings.blockStress);
+    addTable("block_stresses", "Block stresses", {"Block ID", CalculiXUnitPresentation::title("Sxx", "stress"), CalculiXUnitPresentation::title("Syy", "stress"), CalculiXUnitPresentation::title("Szz", "stress"), CalculiXUnitPresentation::title("Sxy", "stress"), CalculiXUnitPresentation::title("Sxz", "stress"), CalculiXUnitPresentation::title("Syz", "stress")}, settings.blockStress);
   }
   if (!settings.elementStress.empty())
   {
-    addTable("element_stresses", "Element stresses", {"Element ID", "Integration point", "Sxx", "Syy", "Szz", "Sxy", "Sxz", "Syz"}, settings.elementStress);
+    addTable("element_stresses", "Element stresses", {"Element ID", "Integration point", CalculiXUnitPresentation::title("Sxx", "stress"), CalculiXUnitPresentation::title("Syy", "stress"), CalculiXUnitPresentation::title("Szz", "stress"), CalculiXUnitPresentation::title("Sxy", "stress"), CalculiXUnitPresentation::title("Sxz", "stress"), CalculiXUnitPresentation::title("Syz", "stress")}, settings.elementStress);
   }
   return true;
 }

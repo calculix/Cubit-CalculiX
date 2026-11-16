@@ -1,3 +1,4 @@
+#include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "SurfaceInteractionsCreatePanel.hpp"
 #include <QString>
 #include "GUI/common/PanelTable.hpp"
@@ -128,6 +129,7 @@ SurfaceInteractionsCreatePanel::SurfaceInteractionsCreatePanel(QWidget *parent) 
   widget_3 =  new PanelTable(nullptr);
   matrix.clear();
   widget_3->update({"pressure","overclosure"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   //widget_3->setColumnWidth(0,150);
   widget_3->setMinimumSize(200,280);
 
@@ -159,6 +161,16 @@ SurfaceInteractionsCreatePanel::SurfaceInteractionsCreatePanel(QWidget *parent) 
 
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
   QObject::connect(comboBox_1, SIGNAL(currentIndexChanged(int)),this,  SLOT(comboBox_currentIndexChanged(int)));
+
+  auto* unitPresentation = new CalculiXUnitPresentation(this);
+  unitPresentation->bind(*label_4, *lineEdit_4, label_4->text(), "length");
+  unitPresentation->bind(*label_5, *lineEdit_5, label_5->text(), "stress");
+  unitPresentation->bind(*label_6, *lineEdit_6, label_6->text(), "force_per_volume");
+  unitPresentation->bind(*label_7, *lineEdit_7, label_7->text(), "stress");
+  unitPresentation->bind(*label_8, *lineEdit_8, label_8->text(), "length");
+  unitPresentation->bind(*label_9, *lineEdit_9, label_9->text(), "force_per_volume");
+  unitPresentation->bind_table(*widget_3, 0, "stress");
+  unitPresentation->bind_table(*widget_3, 1, "length");
 
   isInitialized = true;
 }
@@ -216,6 +228,7 @@ void SurfaceInteractionsCreatePanel::on_pushButton_apply_clicked(bool)
     lineEdit_9->setText("");
     matrix.clear();
     widget_3->update({"pressure","overclosure"},matrix);
+  CalculiXUnitPresentation::accept_loaded_values(*this);
   
   }
   
