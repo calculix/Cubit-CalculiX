@@ -1,10 +1,12 @@
 #include "GifAnimation.hpp"
 
 // gif.h contains definitions: include it in this translation unit only.
-#include "gif.h"
+#include "Utility/gif.h"
 
 #include <QFile>
 #include <QImage>
+#include <QPainter>
+#include <memory>
 
 #include <algorithm>
 #include <cmath>
@@ -23,43 +25,32 @@ FILE* open_gif_file(const QString& path)
 #endif
 }
 
-class GifWriterGuard
-{
-public:
-  GifWriter writer{};
-
-  ~GifWriterGuard()
-  {
-    if (writer.f)
-    {
-      GifEnd(&writer);
-    }
-  }
-
-  GifWriterGuard() = default;
-  GifWriterGuard(const GifWriterGuard&) = delete;
-  GifWriterGuard& operator=(const GifWriterGuard&) = delete;
-};
 }
 
 bool GifAnimation::write(const QStringList& frame_paths,
                          const QString& output_path, int fps, QString& error,
-                         const std::atomic_bool& cancelled, std::atomic_int& completed_frames)
+                         const std::atomic_bool& cancelled, std::atomic_int& completed_frames,
+                         bool loop,const QColor& background)
 {
   error.clear();
   completed_frames.store(0);
-  if (frame_paths.isEmpty() || fps < 1 || fps > 100)
+  if (frame_paths.isEmpty() || fps < 1 || fps > 100 || !background.isValid() || background.alpha() != 255)
   {
     error = "Invalid GIF frames or frame rate.";
     return false;
   }
 
-  // GIF frame delays have a resolution of one hundredth of a second.
-  const uint32_t delay = static_cast<uint32_t>(
-      std::max(1L, std::lround(100.0 / fps)));
-
-  GifWriterGuard guard;
+  GifWriter writer{};
+  const auto close = [](GifWriter* value)
+  {
+    if (value->f)
+    {
+      GifEnd(value);
+    }
+  };
+  const std::unique_ptr<GifWriter,decltype(close)> guard(&writer,close);
   QSize frame_size;
+  std::size_t index = 0;
 
   for (const QString& frame_path : frame_paths)
   {
@@ -74,14 +65,28 @@ bool GifAnimation::write(const QStringList& frame_paths,
       return false;
     }
 
-    const QImage rgba = loaded.convertToFormat(QImage::Format_RGBA8888);
+    QImage opaque(loaded.size(),QImage::Format_ARGB32_Premultiplied);
+    if (opaque.isNull())
+    {
+      error = "Cannot allocate GIF background pixels.";
+      return false;
+    }
+    opaque.fill(background);
+    {
+      QPainter painter(&opaque);
+      painter.drawImage(0,0,loaded);
+    }
+    const QImage rgba = opaque.convertToFormat(QImage::Format_RGBA8888);
     if (rgba.isNull())
     {
       error = "Unable to convert GIF frame to RGBA.";
       return false;
     }
 
-    if (!guard.writer.f)
+    // Distribute centisecond rounding instead of rounding every frame equally.
+    const uint32_t delay = static_cast<uint32_t>(std::max(1LL,
+      std::llround((index+1)*100.0/fps)-std::llround(index*100.0/fps)));
+    if (!writer.f)
     {
       frame_size = rgba.size();
       const qint64 pixel_count =
@@ -101,9 +106,9 @@ bool GifAnimation::write(const QStringList& frame_paths,
       }
 
       // GifBeginFile takes ownership of the file, including on failure.
-      if (!GifBeginFile(&guard.writer, file,
+      if (!GifBeginFile(&writer, file,
                         static_cast<uint32_t>(rgba.width()),
-                        static_cast<uint32_t>(rgba.height()), delay))
+                        static_cast<uint32_t>(rgba.height()), loop ? delay : 0))
       {
         error = "Unable to initialize GIF encoder.";
         return false;
@@ -115,18 +120,19 @@ bool GifAnimation::write(const QStringList& frame_paths,
       return false;
     }
 
-    if (!GifWriteFrame(&guard.writer, rgba.constBits(),
+    if (!GifWriteFrame(&writer, rgba.constBits(),
                        static_cast<uint32_t>(rgba.width()),
                        static_cast<uint32_t>(rgba.height()), delay, 8, false) ||
-        std::ferror(guard.writer.f) != 0)
+        std::ferror(writer.f) != 0)
     {
       error = "Unable to encode or write GIF frame.";
       return false;
     }
     completed_frames.fetch_add(1);
+    ++index;
   }
 
-  if (!GifEnd(&guard.writer))
+  if (!GifEnd(&writer))
   {
     error = "Unable to finish GIF output.";
     return false;

@@ -21,7 +21,4 @@ set(UTILITY_SRC
     ${CMAKE_CURRENT_LIST_DIR}/ElementPhysicalMapping.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ElementIntegration.hpp
     ${CMAKE_CURRENT_LIST_DIR}/ElementIntegration.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/GifAnimation.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/GifAnimation.hpp
-    ${CUBITSIM_SOURCE_ROOT}/Utility/gif.h
     PARENT_SCOPE)

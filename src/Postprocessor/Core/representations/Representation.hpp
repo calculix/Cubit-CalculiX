@@ -2,6 +2,7 @@
 #define POSTPROCESSOR_REPRESENTATION_HPP
 
 #include "ResultColoring.hpp"
+#include "VectorPlotDefinition.hpp"
 #include "DatasetAppearance.hpp"
 #include <map>
 #include "AnimationDefinition.hpp"
@@ -79,6 +80,7 @@ namespace Postprocessor
     std::size_t increment_index = 0;
     ResultColoring coloring;
     ResultDeformation deformation;
+    VectorPlotDefinition vectors;
     AnimationDefinition animation;
   };
   inline bool dataset_visible(const Representation& display, std::size_t dataset)

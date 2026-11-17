@@ -1,5 +1,6 @@
 #ifndef POSTPROCESSOR_ANIMATIONDEFINITION_HPP
 #define POSTPROCESSOR_ANIMATIONDEFINITION_HPP
+#include "AnimationRotation.hpp"
 namespace Postprocessor
 {
   namespace AnimationDefaults
@@ -14,6 +15,7 @@ namespace Postprocessor
   {
     int frames_per_second = AnimationDefaults::frames_per_second;
     bool loop = AnimationDefaults::loop;
+    AnimationRotation rotation;
     // Transient playback request; never persist as an automatically running session.
     bool playing = false;
   };

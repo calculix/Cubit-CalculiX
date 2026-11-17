@@ -31,6 +31,8 @@ public:
   ~CameraInteraction() override;
   bool handle(QEvent* event);
   void cancel();
+  void discard();
+  bool active() const noexcept;
   void synchronize();
   void fit();
   bool command_active() const noexcept;

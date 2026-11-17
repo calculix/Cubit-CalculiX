@@ -36,6 +36,10 @@ namespace Postprocessor
           const auto& filter = entry.second;
           const auto input = application->session().sources.find(filter.input.object_id);
           PRINT_INFO("%s | %s | source %s\n",filter.name.c_str(),[&]() -> const char* {
+            if (filter.kind == FilterKind::Threshold)
+            {
+              return "Threshold";
+            }
             if (filter.kind == FilterKind::Clip) {
               return "Clip";
             } else {
@@ -158,6 +162,10 @@ namespace Postprocessor
               if (selected->second.kind == FilterKind::Section)
               {
                 page = "section";
+              }
+              if (selected->second.kind == FilterKind::Threshold)
+              {
+                page = "threshold";
               }
               accepted = application->show_properties(page,"",error);
             }

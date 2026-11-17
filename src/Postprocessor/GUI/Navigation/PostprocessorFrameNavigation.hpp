@@ -3,6 +3,10 @@
 
 #include <QWidget>
 #include <QTimer>
+#include <QElapsedTimer>
+#include <QIcon>
+#include <array>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -16,15 +20,19 @@ class QToolButton;
 class QSlider;
 class QHideEvent;
 class QShowEvent;
-class QCheckBox;
+class QIcon;
 class QSpinBox;
 class PostprocessorFrameNavigation : public QWidget
 {
 public:
   explicit PostprocessorFrameNavigation(std::function<void(std::size_t)> select, QWidget* parent = nullptr,
-    std::function<bool(std::size_t)> preview = {}, std::function<void(const QString&)> animation = {},std::function<bool()> ready = {});
+    std::function<bool(std::size_t)> preview = {}, std::function<void(const QString&)> animation = {},std::function<bool()> ready = {},
+    std::function<bool(double)> rotation = {});
   ~PostprocessorFrameNavigation() override;
   void stop_playback(bool commit = true);
+  void set_loop_icon(const QIcon& icon);
+  void set_rotation_icons(const std::array<QIcon,3>& icons);
+  void reset_navigation();
   void refresh(const std::shared_ptr<const SimResults::VtkResultsData>& data,
     std::optional<std::size_t> current, const std::function<bool(std::size_t)>& has_mesh, const std::string& context = {}, const Postprocessor::AnimationDefinition& animation = {}, bool allow_animation = true);
   bool matches_context(const std::string& key, const std::shared_ptr<const SimResults::VtkResultsData>& data, std::optional<std::size_t> current) const;
@@ -38,6 +46,7 @@ private:
   std::optional<std::uint64_t> labelUnitGeneration;
   void choose(int position);
   void advance_animation();
+  void advance_rotation();
   void synchronize_animation(const Postprocessor::AnimationDefinition& animation);
   void commit_animation_frame();
   void flush_preview();
@@ -52,8 +61,13 @@ private:
   bool running = false;
   bool playbackAllowed = true;
   QTimer animationTimer;
+  QTimer rotationTimer;
+  QElapsedTimer rotationClock;
+  std::function<bool(double)> rotationStep;
+  std::array<QToolButton*,3> rotations;
+  std::uint64_t generation = 0;
   QToolButton* play;
-  QCheckBox* loop;
+  QToolButton* loop;
   QSpinBox* fps;
   QComboBox* frames;
   QSlider* slider;

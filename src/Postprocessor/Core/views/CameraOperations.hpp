@@ -30,6 +30,9 @@ namespace Postprocessor
     // Angles are degrees, right-hand positive: yaw about orthonormal view-up,
     // then pitch about the resulting right vector. Focal point/distance persist.
     bool rotate(const CameraDefinition& base, double yaw, double pitch, CameraDefinition& output, std::string& error);
+    // Fixed world X, Y, Z axes through the focal point, applied in that order.
+    bool rotate_world(const CameraDefinition& base,const std::array<double,3>& degrees,
+      CameraDefinition& output,std::string& error);
     // Distances are scene units along screen-right/up; move position and focal
     // point together. Input/output may alias; failure never changes output.
     // Spin about viewing direction, keeping position and focal point fixed.

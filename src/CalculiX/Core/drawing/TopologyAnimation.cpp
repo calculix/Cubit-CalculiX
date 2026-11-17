@@ -2,7 +2,7 @@
 #include "Core/application/CalculiXApplicationInterface.hpp"
 #include "Core/topology/CalculiXTopologyInterface.hpp"
 #include "CubitMessage.hpp"
-#include "GifAnimation.hpp"
+#include "Framework/Media/GifAnimation.hpp"
 
 #include <QCoreApplication>
 #include <QGuiApplication>

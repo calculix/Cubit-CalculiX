@@ -36,6 +36,8 @@ public:
   void fit_view();
   bool camera_command_active() const noexcept;
   bool prepare_animation_step();
+  bool animation_rotation_ready() const;
+  void prepare_model_reset();
 
 protected:
   void initializeGL() override;
@@ -87,6 +89,7 @@ private:
   bool frameDirty = false;
   bool awaitingPresentation = false;
   bool renderingFrame = false;
+  bool modelResetPending = false;
   bool animationPresentationCredit = false;
 };
 

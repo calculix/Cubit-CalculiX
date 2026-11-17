@@ -1,6 +1,7 @@
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "Framework/Results/ResultsUnits.hpp"
 #include "CaptureTests.hpp"
+#include "AnimationCaptureTests.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include <QTemporaryDir>
 #include <QFile>
@@ -86,5 +87,5 @@ int capture_cases(const std::shared_ptr<PostprocessorApplicationInterface>& app)
   check(!write_capture_png(path.toStdString(),QByteArray("replacement"),error),"Capture overwrote an existing file");
   QFile file(path);
   check(file.open(QIODevice::ReadOnly) && file.readAll() == png,"No-overwrite failure damaged existing PNG");
-  return failures;
+  return failures+animation_capture_cases();
 }

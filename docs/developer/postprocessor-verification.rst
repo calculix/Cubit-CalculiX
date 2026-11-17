@@ -834,3 +834,127 @@ Presentation contexts and axis compatibility (not executed)
 * When native execution is authorized, run ``postprocessor_presentation_units``
   and the extended navigation, selection/plot and capture cases. None were built
   or run during this patch.
+
+Threshold verification (not built)
+-----------------------------------
+
+The existing ``postprocessor_filters`` target includes ``ThresholdTests.cpp``.
+No build or executable test run was performed for this change. Once authorized:
+
+* Check All nodes (default) and Any node using partially and fully matching cells.
+* Check inclusive/equal bounds, lower-only/upper-only bounds, invalid order and
+  rejection of both limits off. Rejected edits must preserve state and revisions.
+* Verify validity masks, NaN, infinity, vector magnitude, element results and
+  discrete integration points. Missing fields must yield empty output and warnings.
+* Verify exact original IDs above 2^53, retained nodes/edges, source immutability,
+  empty output, bypass and the complementary removed reference.
+* Check field-unit conversion, role-aware temperature conversion, equal bounds
+  and open bounds across workspace unit changes and frame changes.
+* Save/reload All and Any filters, including dataset-qualified filters whose
+  numeric dataset IDs change. Reject malformed definitions atomically and retain
+  compatibility with existing plane projects and unresolved sources.
+* Check toolbar/tree properties routing, normal command journaling/replay,
+  duplicate GUI refresh suppression and command-based Core error reporting.
+* Check picking, entity highlights, labels, deformation overlay, fit, legends and
+  PNG capture. Threshold must not show a plane overlay or include removed cells
+  in retained-output picking/ranges.
+* Exercise source refresh/closure, reset, visibility and independent views.
+
+Loop navigation button
+-----------------------
+
+Loop uses a checkable ``QToolButton`` with the infinity SVG
+``PostprocessorAnimationLoop.svg``. The object name remains
+``Postprocessor.Animation.Loop``. Its toggled signal retains the existing normal
+animation-command callback; refresh blocks signals while synchronizing the saved
+per-representation state. ``NavigationTests.cpp`` now locates the tool button and
+clicks it for the existing enable/disable-during-playback cases. No build or test
+executable was run for this UI change.
+
+Reported Windows build failure: results-tree icon scope
+-------------------------------------------------------
+
+The user-reported Release build reached ``PostprocessorResultsTree.cpp`` and
+failed with C2065 for ``filter`` in the generic tree-item creation helper.
+A Threshold-specific icon check had also been inserted there, outside the filter
+loop. That duplicate check was removed. Threshold icon selection remains in the
+named-filter row loop, where the filter definition is available. No rebuild was
+run for this correction; Windows build completion remains unverified.
+
+
+Smooth rotation and reset-during-playback regression
+----------------------------------------------------
+
+No build, executable tests or native Cubit reproduction were run for this change.
+The reported crash/hang has a source-level reentrancy hazard: synchronous model
+reset refresh can hide a running navigation widget, whose hide handler normally
+submits pause/final-frame commands. Reset now invokes command-free cancellation
+before Core state is cleared; in-flight callbacks check an invalidation generation.
+This addresses that hazard but native confirmation is still required.
+
+``AnimationRotationTests.hpp/.cpp`` extends ``postprocessor_navigation_tests``:
+
+* Off/180 defaults, X/Y/Z controls, normal toggle commands and signal-blocked refresh.
+* Independent camera updates between mesh frames and continuous phase across loops.
+* Custom/negative/multiple-axis rotations, fixed focal point and projection.
+* Invalid elapsed times/angles preserve state; rotation codec round-trip and legacy defaults.
+* Reset inside readiness, frame dispatch and camera dispatch callbacks stops both timers.
+* Queued commits remain cancelled even if the same apparent context is recreated.
+* Hiding navigation after reset emits no nested pause or final-frame commands.
+
+When builds are authorized, run the navigation, camera, display and project
+persistence suites. In Cubit, play with and without rotation/deformation enabled,
+press Reset repeatedly, and reopen results. Check that playback does not resume,
+no stale command appears, actor/source buffers are released and the viewport
+remains responsive. Also test custom angles over repeated loops and FPS changes.
+
+
+Shared animation export verification (not built)
+-------------------------------------------------
+
+Framework/Media/Tests is a standalone Qt-only test project, independent of Cubit
+and workspaces. It covers PNG alpha/manifest, GIF encoding and loop metadata,
+missing MP4 encoder, invalid dimensions, cancellation, no overwrite and staging
+cleanup. AnimationCaptureTests.hpp/.cpp extends postprocessor_selection_tests with
+frame-range planning, skipped frames, independent FPS, smooth camera samples,
+continuous phase across passes, invalid inputs and live-state immutability.
+
+No build, executable tests, FFmpeg process or native OpenGL capture was run.
+When authorized, verify all formats at 1920x1080, non-ASCII paths, reset during
+rendering/writing/encoding, source refresh/close, project reload, plugin unload,
+missing/unsupported FFmpeg, encoder failure and output paths created during export.
+Check final publication/cancel races, temporary-file cleanup, alpha restrictions,
+labels/legend/triad, deformation, empty threshold outputs and simultaneous live
+playback. Check CalculiX topology GIF export after moving the shared encoder.
+
+Vector plots and busy playback regression (runtime verification pending)
+-----------------------------------------------------------------------
+
+The reported VTK 9.4.2 compile error in vector actor color assignment was
+corrected by using the three-value RGB setter; its array overload requires a
+mutable pointer. Rebuilding and native verification remain user-run checks.
+
+No build or compiled tests were run for these changes. ``VectorPlotTests`` is
+registered in the filter test executable and covers physical XYZ extraction,
+derived-column exclusion, zero/masked/nonfinite samples, exact 64-bit node
+provenance, deformation anchors, immutable source geometry, uniform scaling,
+hidden datasets, element centers, strict codec rollback, legacy defaults and
+command quoting. Navigation test sources include a transient busy exception
+followed by successful frame advancement.
+
+Native acceptance checks:
+
+* Select DISP and FORC from the beam results; compare arrows against components
+  and magnitudes. Confirm E/S tensors are excluded.
+* Check surface and interior samples on linear and higher-order meshes, a DAT
+  heat-flux integration-point cloud, and element-associated vector fixtures.
+* Exercise Clip, Section and Threshold, including generated nodal samples and
+  masked values. No fabricated solver IDs should reach picking.
+* Verify proportional lengths and legend units remain stable over frames;
+  uniform mode should preserve direction and magnitude coloring.
+* Save/reopen settings in two views; refresh reordered datasets and reject a
+  missing/ambiguous dataset without replacing the source.
+* Export a picture, report and short animations with vectors, including a
+  legend-off capture and presentation-unit changes during export.
+* Toggle rotation and deformation during playback and reset repeatedly. Busy
+  callbacks should retry; actual errors should still report through Cubit.

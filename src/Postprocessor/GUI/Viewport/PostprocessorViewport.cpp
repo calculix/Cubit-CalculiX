@@ -101,6 +101,22 @@ void PostprocessorViewport::cancel_interaction()
   interaction->cancel();
 }
 
+void PostprocessorViewport::prepare_model_reset()
+{
+  modelResetPending = true;
+  animationPresentationCredit = false;
+  interaction->discard();
+  legendInteraction->discard();
+  annotationInteraction->discard();
+  hoverTimer->stop();
+  clear_hover();
+}
+
+bool PostprocessorViewport::animation_rotation_ready() const
+{
+  return !renderingFrame && isVisible() && isValid() && !interaction->active();
+}
+
 void PostprocessorViewport::fit_view()
 {
   interaction->fit();
@@ -441,6 +457,11 @@ void PostprocessorViewport::showEvent(QShowEvent* event)
 
 void PostprocessorViewport::synchronize(const std::shared_ptr<PostprocessorApplicationInterface>& active)
 {
+  if (modelResetPending && renderingFrame)
+  {
+    return;
+  }
+  modelResetPending = false;
   interaction->synchronize();
   application = active;
   if (!active)
@@ -530,7 +551,20 @@ void PostprocessorViewport::request_frame()
   QTimer::singleShot(0, this, [this]()
   {
     renderQueued = false;
-    render_frame();
+    try
+    {
+      render_frame();
+    }
+    catch (const std::exception& exception)
+    {
+      awaitingPresentation = false;
+      report_error(exception.what());
+    }
+    catch (...)
+    {
+      awaitingPresentation = false;
+      report_error("Unknown failure while preparing a Postprocessor frame.");
+    }
   });
 }
 
@@ -548,6 +582,13 @@ void PostprocessorViewport::render_frame()
   frameDirty = false;
   awaitingPresentation = true;
   render_scene();
+  if (modelResetPending)
+  {
+    QTimer::singleShot(0,this,[this]()
+    {
+      synchronize(application.lock());
+    });
+  }
   timings.await_presentation();
   // QVTK renders into its FBO; Qt then composes/presents that result. Never call
   // Render from paintGL or queue another VTK frame until this one is presented.
@@ -638,6 +679,10 @@ void PostprocessorViewport::render_scene()
     timings.record(CameraTimingStage::TriadUpdate, triadStarted);
     const auto renderStarted = timings.frame_stamp();
     sceneWindow->Render();
+    if (modelResetPending)
+    {
+      return;
+    }
     annotationDisplay->show();
     annotationDisplay->synchronize(*active);
     timings.record(CameraTimingStage::RenderCall, renderStarted);
@@ -663,6 +708,10 @@ void PostprocessorViewport::render_scene()
   catch (const std::exception& exception)
   {
     report_error(exception.what());
+  }
+  catch (...)
+  {
+    report_error("Unknown failure while rendering a Postprocessor frame.");
   }
 }
 

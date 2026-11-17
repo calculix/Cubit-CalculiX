@@ -19,6 +19,7 @@ public:
   void flush_preview();
   bool preview_pending() const;
   void cancel();
+  void discard();
 private:
   bool owns_legend() const;
   bool send(const std::optional<std::array<double,2>>& position,bool journal);

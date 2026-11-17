@@ -1,5 +1,6 @@
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "FilterRuntime.hpp"
+#include "ThresholdFilter.hpp"
 #include "../representations/ResultMesh.hpp"
 #include <vtkDataSet.h>
 #include <vtkPolyData.h>
@@ -82,6 +83,32 @@ namespace Postprocessor
       }
       result->SetPoints(points);
       result->SetVerts(vertices);
+      return result;
+    }
+    std::shared_ptr<vtkPolyData> retained_points(vtkDataSet* mesh)
+    {
+      auto result = own(vtkPolyData::New());
+      vtkNew<vtkPoints> points;
+      points->SetDataTypeToDouble();
+      for (vtkIdType index = 0; index < mesh->GetNumberOfPoints(); ++index)
+      {
+        double point[3];
+        mesh->GetPoint(index,point);
+        points->InsertNextPoint(point);
+      }
+      vtkNew<vtkCellArray> vertices;
+      for (vtkIdType index = 0; index < mesh->GetNumberOfPoints(); ++index)
+      {
+        vertices->InsertNextCell(1,&index);
+      }
+      result->SetPoints(points);
+      result->SetVerts(vertices);
+      result->GetPointData()->ShallowCopy(mesh->GetPointData());
+      if (mesh->GetPointData()->HasArray("IntegrationPointId") &&
+          mesh->GetNumberOfCells() == mesh->GetNumberOfPoints())
+      {
+        result->GetCellData()->ShallowCopy(mesh->GetCellData());
+      }
       return result;
     }
     std::shared_ptr<vtkPolyData> all_edges(vtkDataSet* mesh)
@@ -223,15 +250,29 @@ namespace Postprocessor
   }
   std::shared_ptr<vtkPolyData> filter_parent_edges(vtkDataSet* mesh,const FilterDefinition& filter,
     const SimResults::Increment& frame,std::size_t dataset,const std::vector<std::size_t>& cells,std::string& error) {
+    std::set<vtkIdType> accepted;
+    if (filter.enabled && filter.kind == FilterKind::Threshold)
+    {
+      std::vector<vtkIdType> retained;
+      std::string warning;
+      if (!ThresholdFilter::select_cells(mesh,frame,dataset,filter.threshold,retained,warning,error))
+      {
+        return {};
+      }
+      accepted.insert(retained.begin(),retained.end());
+    }
     vtkNew<vtkIdList> ids;
     for (auto index : cells) {
-      ids->InsertNextId(static_cast<vtkIdType>(index));
+      if (!filter.enabled || filter.kind != FilterKind::Threshold || accepted.count(static_cast<vtkIdType>(index)))
+      {
+        ids->InsertNextId(static_cast<vtkIdType>(index));
+      }
     }
     vtkNew<vtkExtractCells> extract;
     extract->SetInputData(mesh);
     extract->SetCellList(ids);
     extract->Update();
-    if (!filter.enabled)
+    if (!filter.enabled || filter.kind == FilterKind::Threshold)
     {
       return all_edges(extract->GetOutput());
     }
@@ -254,7 +295,7 @@ namespace Postprocessor
       return false;
     }
     const auto coordinateUnit = filter_coordinate_unit(*source,display.increment_index);
-    if (!filter.coordinate_unit.empty())
+    if (filter.kind != FilterKind::Threshold && !filter.coordinate_unit.empty())
     {
       double scale = 0.0;
       if (coordinateUnit.empty() || !framework_units().convert(1.0,filter.coordinate_unit,coordinateUnit,scale,error) ||
@@ -284,6 +325,91 @@ namespace Postprocessor
       auto* mesh = input.second;
       if (moved) {
         mesh = moved.get();
+      }
+      if (filter.kind == FilterKind::Threshold)
+      {
+        auto threshold = filter.threshold;
+        if (threshold.field.dataset_id && !threshold.dataset_kind.empty())
+        {
+          std::optional<std::size_t> rebound;
+          for (const auto& metadata : source->datasets)
+          {
+            if (metadata.kind == threshold.dataset_kind && metadata.name == threshold.dataset_name &&
+                metadata.model_id == threshold.dataset_model)
+            {
+              if (rebound)
+              {
+                error = "The threshold dataset identity is ambiguous.";
+                return false;
+              }
+              rebound = metadata.id;
+            }
+          }
+          if (!rebound)
+          {
+            error = "The saved threshold dataset is unavailable.";
+            return false;
+          }
+          threshold.field.dataset_id = rebound;
+        }
+        std::vector<vtkIdType> retained;
+        if (filter.enabled)
+        {
+          if (!ThresholdFilter::select_cells(mesh,frame,input.first,threshold,retained,warning,error))
+          {
+            return false;
+          }
+          if (!warning.empty())
+          {
+            candidate.warnings[input.first] = warning;
+          }
+        }
+        else
+        {
+          for (vtkIdType index = 0; index < mesh->GetNumberOfCells(); ++index)
+          {
+            retained.push_back(index);
+          }
+        }
+        if (!ThresholdFilter::extract(mesh,retained,part.mesh,error))
+        {
+          return false;
+        }
+        part.nodes = retained_points(part.mesh.get());
+        part.edges = all_edges(part.mesh.get());
+        if (filter.enabled && filter.reference_visible)
+        {
+          const std::set<vtkIdType> selected(retained.begin(),retained.end());
+          std::vector<vtkIdType> removed;
+          for (vtkIdType index = 0; index < mesh->GetNumberOfCells(); ++index)
+          {
+            if (!selected.count(index))
+            {
+              removed.push_back(index);
+            }
+          }
+          if (!ThresholdFilter::extract(mesh,removed,part.removed,error))
+          {
+            return false;
+          }
+        }
+        if (display.deformation.enabled && display.deformation.overlay)
+        {
+          std::shared_ptr<vtkDataSet> reference;
+          if (!ThresholdFilter::extract(input.second,retained,reference,error))
+          {
+            return false;
+          }
+          part.reference_edges = all_edges(reference.get());
+        }
+        const auto index = static_cast<unsigned int>(input.first);
+        if (collection->GetNumberOfPartitionedDataSets() <= index)
+        {
+          collection->SetNumberOfPartitionedDataSets(index+1);
+        }
+        collection->SetPartition(index,0,part.mesh.get());
+        candidate.parts.push_back(std::move(part));
+        continue;
       }
       const bool ip = mesh->GetPointData()->HasArray("IntegrationPointId");
       part.nodes = original_points(mesh,filter);

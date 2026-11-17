@@ -148,3 +148,38 @@ saved; scalar buffers and runtime revisions are excluded. Source restoration
 still occurs after solver workspace loading. Unavailable references retain their
 settings. Definitions are validated before publication, cache revisions reseeded
 and restored cameras left intact.
+
+Threshold definitions
+----------------------
+
+``FilterCodec`` stores ``kind: threshold`` with a nested ``threshold`` object.
+``ThresholdCodec`` records field identity, component/magnitude, optional bounds,
+All/Any node rule, physical bound units, and optional dataset kind/name/model
+identity. Dataset IDs are hints; evaluation resolves the saved identity against
+the current source catalogue. Missing or ambiguous identities fail without
+silently substituting another dataset. Unit descriptors and finite bounds are
+validated before publishing definitions. Plane records keep their existing
+format and remain readable. Capture provenance uses the same filter codec.
+Threshold geometry remains runtime-only. Native save/load verification is pending.
+
+
+Animation rotation settings
+----------------------------
+
+Representation records now include ``rotation``, an array in X, Y, Z order, each
+entry containing boolean ``enabled`` and finite ``degrees``. Missing arrays in
+older projects restore three disabled axes at 180 degrees. Malformed arrays fail
+before publication. ``AnimationRotationCodec.hpp/.cpp`` owns this conversion.
+Only user settings and the ordinary saved view camera are persisted. Continuous
+phase, base anchors, timers and retained runtime snapshots are excluded. Playback
+continues to restore paused.
+
+Vector representation settings
+------------------------------
+
+An optional ``vectors`` object stores the selected field, enabled state, length
+mode, scale, surface selection, density and coloring. A separate
+``vector_dataset`` durable binding follows the existing color/deformation
+binding route. Missing vector settings in older projects default off. Invalid
+settings reject the detached restore candidate. A missing dataset during source
+refresh preserves the previous source rather than binding a reused index.

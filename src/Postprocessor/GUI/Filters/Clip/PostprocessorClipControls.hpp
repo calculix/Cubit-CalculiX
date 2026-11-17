@@ -18,6 +18,7 @@ public:
     std::function<void(const QString&)> silent = {});
   ~PostprocessorClipControls() override;
   void refresh();
+  void discard_pending();
 protected:
   bool eventFilter(QObject* watched,QEvent* event) override;
   void hideEvent(QHideEvent* event) override;

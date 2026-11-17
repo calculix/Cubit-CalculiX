@@ -1,5 +1,6 @@
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "CaptureDefinition.hpp"
+#include "../representations/VectorPlotCodec.hpp"
 #include "../filters/FilterCodec.hpp"
 #include "../application/PostprocessorCore.hpp"
 #include "../plots/PlotCodec.hpp"
@@ -148,6 +149,7 @@ namespace Postprocessor
         item.insert("magnitude",field.magnitude);
         item.insert("association",static_cast<int>(field.association));
       }
+      item.insert("vectors",vector_plot_to_json(display.vectors));
       if (display.deformation.field)
       {
         item.insert("deformation_field",QString::fromStdString(field_selection_key(*display.deformation.field)));
@@ -234,6 +236,8 @@ namespace Postprocessor
     captureUnits = snapshot.presentation_units;
     state = snapshot.session;
     runtime.clear();
+    filter_cache.clear();
+    animation_rotation.clear();
     for (const auto& source : snapshot.sources)
     {
       SourceRuntime value(source.second,1,first_mesh_increment(*source.second));

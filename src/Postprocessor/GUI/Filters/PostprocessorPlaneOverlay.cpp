@@ -25,8 +25,8 @@ PostprocessorPlaneOverlay::~PostprocessorPlaneOverlay()
 }
 void PostprocessorPlaneOverlay::update(const Postprocessor::FilterDefinition* filter,double extent)
 {
-  actor->SetVisibility(filter != nullptr && filter->enabled);
-  if (!filter || !filter->enabled)
+  actor->SetVisibility(filter != nullptr && filter->enabled && filter->kind != Postprocessor::FilterKind::Threshold);
+  if (!filter || !filter->enabled || filter->kind == Postprocessor::FilterKind::Threshold)
   {
     return;
   }

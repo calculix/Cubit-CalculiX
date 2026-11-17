@@ -1,6 +1,7 @@
 #include <type_traits>
 #include "Postprocessor/Core/representations/ResultReferenceMesh.hpp"
 #include "PostprocessorScene.hpp"
+#include "Postprocessor/GUI/VectorPlot/PostprocessorVectorActors.hpp"
 #include "PostprocessorDatasetAppearance.hpp"
 #include "PostprocessorScaleOverlay.hpp"
 #include "Postprocessor/GUI/Filters/PostprocessorPlaneOverlay.hpp"
@@ -586,6 +587,30 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
           apply_dataset_appearance(surface,application.dataset_appearance(evaluated->source_id,viewId,surface.dataset),
             item,Postprocessor::dataset_visible(display,surface.dataset));
         }
+        group->vectors.reset();
+        if (display.visible && display.vectors.enabled && display.vectors.field)
+        {
+          std::string vectorError;
+          const auto range = application.all_frame_range(evaluated->source_id,*display.vectors.field,vectorError,display.hidden_datasets);
+          Postprocessor::VectorPlotData arrows;
+          double maximum = 0;
+          if (range)
+          {
+            maximum = (*range)[1];
+          }
+          if (vectorError.empty() && Postprocessor::prepare_vector_plot(*evaluated->source,*data,display,maximum,arrows,vectorError,application.captured_units()))
+          {
+            group->vectors = std::make_unique<PostprocessorVectorActors>(renderer,arrows,display.vectors,factor,legendSlot++,display.coloring.legend_visible);
+            if (!arrows.warning.empty())
+            {
+              group->warnings[display.vectors.field->dataset_id.value_or(0)] = arrows.warning;
+            }
+          }
+          else
+          {
+            group->warnings[display.vectors.field->dataset_id.value_or(0)] = vectorError;
+          }
+        }
         next.emplace(entry.first, group);
       }
       // Remove closed/replaced/failed inputs even when another display failed.
@@ -838,5 +863,9 @@ void PostprocessorScene::scale_capture(double scale)
   for (const auto& display : displays)
   {
     display.second->coloring->set_capture_scale(scale);
+    if (display.second->vectors)
+    {
+      display.second->vectors->scale_capture(scale);
+    }
   }
 }

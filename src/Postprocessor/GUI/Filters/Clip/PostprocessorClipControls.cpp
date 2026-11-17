@@ -570,6 +570,13 @@ void PostprocessorClipControls::cancel_motion()
   motionStart.reset();
   motionPreviewed = false;
 }
+
+void PostprocessorClipControls::discard_pending()
+{
+  motionTimer->stop();
+  motionStart.reset();
+  motionPreviewed = false;
+}
 bool PostprocessorClipControls::eventFilter(QObject* watched,QEvent* event)
 {
   if (watched == position && (event->type() == QEvent::KeyPress || event->type() == QEvent::ShortcutOverride) &&

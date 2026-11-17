@@ -1,11 +1,12 @@
-Clipping and section cuts
-=========================
+Clipping, sections and thresholds
+=================================
 
 A named clip retains one side of a plane. A named section intersects the mesh
-with a plane. Both are derived outputs: they do not change the solver mesh or
-published result arrays. This first implementation provides numeric controls in
-the Filters dock, with separate Clip and Section tabs. Interactive plane dragging
-and filter chains are deferred.
+with a plane. A named threshold retains elements or discrete integration points
+matching scalar limits. All filters are derived outputs: they do not change the
+solver mesh or published result arrays. Numeric controls are available in separate
+Clip, Section and Threshold pages in the right properties dock. Interactive plane
+dragging and filter chains are deferred.
 
 Commands
 --------
@@ -114,3 +115,91 @@ Plane definitions retain the known native length basis. Refreshing into a
 different coordinate scale invalidates the derived output; recreate that plane
 in the new source basis. Changing workspace presentation units does not alter
 plane coordinates. See :doc:`units` for legacy/unknown-unit handling.
+
+Threshold filter
+----------------
+
+The Threshold toolbar button (selected mesh cells) opens its properties in the
+right dock. It creates a named feature output of a source, like Clip and Section.
+Select a scalar component or a declared vector magnitude, optionally qualify one
+dataset, and enable a lower limit, upper limit, or both. Both enabled limits must
+be finite and lower must not exceed upper. Bounds are inclusive; equal bounds
+select exact matches. Threshold selection is independent of result coloring.
+
+For nodal results, **All nodes** is the default: every node of an element must
+match. **Any node** retains the whole element when at least one node matches.
+Both modes preserve the whole original element, including higher-order nodes;
+there is no scalar interpolation or geometric clipping. Invalid masks, NaN and
+infinite samples never match. Element results use each element's own value.
+Integration points remain individual vertex cells and ignore the nodal rule.
+
+For example, with limits 30 through 80, an element with node values 20, 40, 70,
+90 is removed by All nodes and retained by Any node. An element with values 40,
+60, 70, 50 is retained by both rules.
+
+Commands (each example is one command line)::
+
+   post properties threshold
+   post threshold create "Stress band" source "snap_fit" field "S" component "MISES" lower 100 upper 250 nodes all
+   post threshold configure "Stress band" field "S" component "SXX" lower 100 upper 250 nodes any
+   post threshold field "Stress band" field "S" component "SXX"
+   post threshold limits "Stress band" lower off upper 250
+   post threshold nodes "Stress band" all
+   post threshold reference "Stress band" on
+   post filter select "Stress band"
+   post filter disable "Stress band"
+   post filter enable "Stress band"
+   post filter hide "Stress band" view "view1"
+   post filter rename "Stress band" "High stress"
+   post filter remove "High stress"
+
+Field selectors accept the same origin, association, set and dataset qualifiers
+as coloring. Use ``component magnitude`` only for declared physical vectors.
+``configure`` replaces field, limits and node rule atomically. ``field`` changes
+the field while retaining the numeric limits; numbers are interpreted in the
+new field's current presentation unit. ``limits`` replaces both bounds in the
+current presentation unit. ``off`` disables that bound; both cannot be off.
+
+Every committed GUI action submits a command through the workspace's normal
+Cubit command-line dispatcher. Programmatic refresh submits no commands. Core
+validates settings and command handlers report failures with Cubit messages;
+Threshold does not open validation message boxes. Rejected changes preserve
+the last valid definition and output. New-filter controls prepare the arguments
+until Create threshold submits the complete creation command.
+
+Limits retain quantity, unit, dimension and temperature-role metadata. Workspace
+unit changes convert their numbers while preserving physical selection. Each
+frame is evaluated using its native field units and the retained bounds. Unknown
+units remain explicitly unknown; incompatible physical units reject evaluation.
+Dataset-qualified definitions retain kind, name and model identity for refresh
+and project reload, rather than trusting a reusable numeric dataset ID.
+
+A dataset/frame without the selected field contributes empty geometry and a
+warning. An empty match is valid. Nonselected datasets contribute empty geometry
+while the filter is enabled. Bypass shows the original geometry. Optional Show
+removed portion displays the complementary cells in gray. Removed cells cannot
+be picked as retained output. Original node/element/IP IDs remain exact; source
+buffers are immutable. Node markers, edges, entity highlights, undeformed overlay,
+current-frame ranges and capture use the same retained geometry. All-frame ranges
+continue to describe the original source, as for plane filters.
+
+Threshold settings, node rule, unit descriptors, dataset identities, enabled state
+and per-view representations are saved with the project. There is no generated
+geometry in the saved definition. Existing projects containing only plane filters
+remain readable. Closing a source removes its threshold features; reset clears
+all filters. Inputs remain sources; filter chaining is deferred.
+
+Threshold implementation files (relative to ``src/Postprocessor``)::
+
+   Core/filters/ThresholdDefinition.hpp / .cpp
+   Core/filters/ThresholdFilter.hpp / .cpp
+   Core/filters/ThresholdCodec.hpp / .cpp
+   Core/filters/FilterDefinition.hpp / .cpp
+   Commands/filters/PostThresholdCommand.hpp / .cpp
+   Commands/filters/ThresholdCommandText.hpp / .cpp
+   GUI/Filters/Threshold/PostprocessorThresholdControls.hpp / .cpp
+   Interfaces/PostprocessorFiltersInterface.cpp
+
+This implementation has not been built or exercised in Cubit. Verification cases
+are included in ``ThresholdTests.cpp`` and ``FilterTests.cpp`` for the existing
+``postprocessor_filters`` test target; compilation remains pending authorization.

@@ -18,3 +18,8 @@ implementations are excluded.
    reporting
    calculix-job-snapshots
    ../README
+
+.. toctree::
+   :maxdepth: 1
+
+   media

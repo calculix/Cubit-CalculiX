@@ -60,6 +60,23 @@ bool Postprocessor::PostprocessorCore::configure_units(const std::string& system
       return false;
     }
   }
+  for (auto& entry : candidate.filters)
+  {
+    auto& filter = entry.second;
+    if (filter.kind == Postprocessor::FilterKind::Threshold)
+    {
+      if (filter.revision == std::numeric_limits<std::uint64_t>::max())
+      {
+        error = "Threshold revision identifiers are exhausted.";
+        return false;
+      }
+      if (!Postprocessor::convert_threshold_units(filter.threshold,stagedUnits,error))
+      {
+        return false;
+      }
+      ++filter.revision;
+    }
+  }
   ++candidate.plot_revision;
   for (auto& entry : candidate.plots)
   {
@@ -76,6 +93,7 @@ bool Postprocessor::PostprocessorCore::configure_units(const std::string& system
   // Both publications are non-throwing; no global context is changed on failure.
   framework_units().swap_project_state(stagedUnits);
   state.swap(candidate);
+  filter_cache.clear();
   for (auto& entry : runtime)
   {
     entry.second.all_frame_ranges.clear();

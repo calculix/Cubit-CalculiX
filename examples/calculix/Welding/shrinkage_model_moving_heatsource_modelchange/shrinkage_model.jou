@@ -71,7 +71,7 @@ nodeset 5 name "initial_temp"
 ccx units system "N-mm-s"
 ccx units geometry unit "m"
 ccx create material "X5CrNi189"
-ccx modify material 1 add card density model default
+ccx modify material 1 card density model default
 ccx modify material 1 card density row 1 values 7910 293.15 unit "SI"
 ccx modify material 1 card density row 2 values 7880 363.15 unit "SI"
 ccx modify material 1 card density row 3 values 7840 473.15 unit "SI"
@@ -81,12 +81,14 @@ ccx modify material 1 card density row 6 values 7690 813.15 unit "SI"
 ccx modify material 1 card density row 7 values 7640 923.15 unit "SI"
 ccx modify material 1 card density row 8 values 7590 1033.15 unit "SI"
 ccx modify material 1 card density row 9 values 7540 1143.15 unit "SI"
-ccx modify material 1 add card conductivity model iso
+ccx modify material 1 activate card density
+ccx modify material 1 card conductivity model iso
 ccx modify material 1 card conductivity row 1 values 11.63 293.15 unit "SI"
 ccx modify material 1 card conductivity row 2 values 15 473.15 unit "SI"
 ccx modify material 1 card conductivity row 3 values 17.5 673.15 unit "SI"
 ccx modify material 1 card conductivity row 4 values 18 873.15 unit "SI"
-ccx modify material 1 add card elastic model iso
+ccx modify material 1 activate card conductivity
+ccx modify material 1 card elastic model iso
 ccx modify material 1 card elastic row 1 values 199000000000 0.28 297.15 unit "SI"
 ccx modify material 1 card elastic row 2 values 187000000000 0.3 473.15 unit "SI"
 ccx modify material 1 card elastic row 3 values 169000000000 0.28 703.15 unit "SI"
@@ -94,14 +96,16 @@ ccx modify material 1 card elastic row 4 values 163000000000 0.28 753.15 unit "S
 ccx modify material 1 card elastic row 5 values 153000000000 0.29 863.15 unit "SI"
 ccx modify material 1 card elastic row 6 values 143000000000 0.28 973.15 unit "SI"
 ccx modify material 1 card elastic row 7 values 127000000000 0.25 1093.15 unit "SI"
-ccx modify material 1 add card expansion model iso
+ccx modify material 1 activate card elastic
+ccx modify material 1 card expansion model iso
 ccx modify material 1 card expansion row 1 values 1.63e-05 373.15 unit "SI"
 ccx modify material 1 card expansion row 2 values 1.71e-05 573.15 unit "SI"
 ccx modify material 1 card expansion row 3 values 1.8e-05 773.15 unit "SI"
 ccx modify material 1 card expansion row 4 values 1.9e-05 973.15 unit "SI"
 ccx modify material 1 card expansion row 5 values 2e-05 1073.15 unit "SI"
+ccx modify material 1 activate card expansion
 ccx modify material 1 card expansion reference temperature 293.15 unit "SI"
-ccx modify material 1 add card plastic model iso
+ccx modify material 1 card plastic model iso
 ccx modify material 1 card plastic row 1 values 550000000 0 293.15 unit "SI"
 ccx modify material 1 card plastic row 2 values 670000000 0.0966332 293.15 unit "SI"
 ccx modify material 1 card plastic row 3 values 1000000000 0.394975 293.15 unit "SI"
@@ -155,7 +159,8 @@ ccx modify material 1 card plastic row 50 values 255000000 0.0979921 1073.15 uni
 ccx modify material 1 card plastic row 51 values 295000000 0.297677 1073.15 unit "SI"
 ccx modify material 1 card plastic row 52 values 315000000 0.59752 1073.15 unit "SI"
 ccx modify material 1 card plastic row 53 values 330000000 0.807402 1073.15 unit "SI"
-ccx modify material 1 add card specific_heat model default
+ccx modify material 1 activate card plastic
+ccx modify material 1 card specific_heat model default
 ccx modify material 1 card specific_heat row 1 values 456 293.15 unit "SI"
 ccx modify material 1 card specific_heat row 2 values 490 363.15 unit "SI"
 ccx modify material 1 card specific_heat row 3 values 532 473.15 unit "SI"
@@ -165,6 +170,7 @@ ccx modify material 1 card specific_heat row 6 values 586 813.15 unit "SI"
 ccx modify material 1 card specific_heat row 7 values 599 923.15 unit "SI"
 ccx modify material 1 card specific_heat row 8 values 620 1033.15 unit "SI"
 ccx modify material 1 card specific_heat row 9 values 645 1143.15 unit "SI"
+ccx modify material 1 activate card specific_heat
 
 #sections
 ccx create section solid block all material 1

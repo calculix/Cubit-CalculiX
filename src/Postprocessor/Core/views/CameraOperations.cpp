@@ -133,6 +133,36 @@ bool rotate(const CameraDefinition& base, double yaw, double pitch, CameraDefini
   return publish(candidate, output, error);
 }
 
+bool rotate_world(const CameraDefinition& base,const std::array<double,3>& degrees,
+  CameraDefinition& output,std::string& error)
+{
+  error.clear();
+  if (!valid(base) || !finite(degrees))
+  {
+    error = "Animation rotation requires a valid camera and finite angles.";
+    return false;
+  }
+  Vector offset;
+  auto up = base.view_up;
+  for (std::size_t axis = 0; axis < 3; ++axis)
+  {
+    offset[axis] = base.position[axis]-base.focal_point[axis];
+  }
+  const std::array<Vector,3> axes = {{{1,0,0},{0,1,0},{0,0,1}}};
+  for (std::size_t axis = 0; axis < axes.size(); ++axis)
+  {
+    offset = rotated(offset,axes[axis],degrees[axis]);
+    up = rotated(up,axes[axis],degrees[axis]);
+  }
+  auto candidate = base;
+  for (std::size_t axis = 0; axis < 3; ++axis)
+  {
+    candidate.position[axis] = base.focal_point[axis]+offset[axis];
+  }
+  candidate.view_up = up;
+  return publish(candidate,output,error);
+}
+
 bool standard_view(const CameraDefinition& base, StandardView view, CameraDefinition& output, std::string& error)
 {
   error.clear();

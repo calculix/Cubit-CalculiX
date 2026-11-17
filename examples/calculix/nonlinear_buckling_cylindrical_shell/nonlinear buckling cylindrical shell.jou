@@ -20,21 +20,25 @@ nodeset 2 name "top"
 ccx units system "N-mm-s"
 ccx units geometry unit "mm"
 ccx create material "Steel"
-ccx modify material 1 add card elastic model iso
+ccx modify material 1 card elastic model iso
 ccx modify material 1 card elastic row 1 values 200000000000 0.3 273.15 unit "SI"
-# ccx modify material 1 add card plastic model iso
+ccx modify material 1 activate card elastic
+# ccx modify material 1 card plastic model iso
 # ccx modify material 1 card plastic row 1 values 400000000 0 273.15 unit "SI"
 # ccx modify material 1 card plastic row 2 values 420000000 0.02 273.15 unit "SI"
 # ccx modify material 1 card plastic row 3 values 500000000 0.2 273.15 unit "SI"
 # ccx modify material 1 card plastic row 4 values 600000000 0.5 273.15 unit "SI"
+# ccx modify material 1 activate card plastic
 
 
 ccx create material "Alu"
-ccx modify material 2 add card elastic model iso
+ccx modify material 2 card elastic model iso
 ccx modify material 2 card elastic row 1 values 70000000000 0.35 273.15 unit "SI"
-# ccx modify material 2 add card plastic model iso
+ccx modify material 2 activate card elastic
+# ccx modify material 2 card plastic model iso
 # ccx modify material 2 card plastic row 1 values 160000000 0 273.15 unit "SI"
 # ccx modify material 2 card plastic row 2 values 340000000 0.02 273.15 unit "SI"
+# ccx modify material 2 activate card plastic
 
 #ccx create section shell block 1 material 1 thickness 2 offset 0
 ccx create section shell block 1 material 2 thickness 2 offset 0
@@ -75,10 +79,12 @@ ccx wait job 1
 
 ccx delete step 1
 
-ccx modify material 1 add card plastic model iso
+ccx modify material 1 card plastic model iso
 ccx modify material 1 card plastic row 1 values 400000000 0 273.15 unit "SI"
-ccx modify material 2 add card plastic model iso
+ccx modify material 1 activate card plastic
+ccx modify material 2 card plastic model iso
 ccx modify material 2 card plastic row 1 values 160000000 0 273.15 unit "SI"
+ccx modify material 2 activate card plastic
 ccx modify displacement 2 dof_3 -20
 
 ccx create step name "nonlinear" static

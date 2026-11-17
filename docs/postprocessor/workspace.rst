@@ -258,11 +258,11 @@ the saved layout and visibility. Command Line retains its own center-column dock
 Animation controls
 -------------------
 
-Result navigation includes a Play/Pause button, an FPS spinbox and a Loop
-checkbox. Play starts from the current frame, skipping frames without displayable
-meshes. Starting from the final frame restarts from the first. Loop is initially
-off, so playback stops at the end. Check Loop to repeat the sequence; changing
-it during playback applies immediately. Playback does not interpolate physical
+Result navigation includes a Play/Pause button, an FPS spinbox and a checkable Loop
+button with an infinity icon. Play starts from the current frame, skipping frames without displayable
+meshes. Starting from the final frame restarts from the first. Loop defaults to on for new representations; saved projects retain their explicit
+setting. Press Loop to toggle repetition. Its checked state indicates that looping
+is enabled; changing it during playback applies immediately. Playback does not interpolate physical
 time between result frames. FPS is a target rate and may be lower for expensive
 frame updates.
 
@@ -493,9 +493,13 @@ Contextual right dock and view tools
 
 The right dock shows one editor at a time. An explicit tree selection opens its
 source information. Clicking blank tree space clears a source inspector while
-leaving an explicitly opened Legend, Clip or Section editor intact. The Legend
+leaving an explicitly opened Legend, Clip, Section or Threshold editor intact. The Legend
 button opens field/component/unit information, range settings, palette, limits
-and legend visibility in that order. Clip and Section have individual buttons.
+and legend visibility in that order. Clip, Section and Threshold have individual buttons. The Threshold button uses
+a selected-cell mesh icon and opens field/component, dataset, inclusive lower/upper
+limits, All nodes/Any node, enabled, visibility and removed-reference controls.
+All nodes is the default. Threshold edits use the normal command-line dispatcher;
+see :doc:`filters` for semantics and commands.
 The selected SVG families are L1, C1, S1, R3 and V2.
 
 Standard-view buttons provide Front, Back, Top, Bottom, Left, Right, Isometric,
@@ -571,3 +575,57 @@ frame rate is not guaranteed.
 
 Loop defaults to on for new representations. Saved projects retain their
 explicit Loop setting, and playback never starts automatically on project load.
+
+
+Smooth animation-axis rotation
+-------------------------------
+
+Three checkable buttons after Loop rotate the camera around world X, Y and Z.
+They use circular-arrow icons with axis letters. All axes default to off; each
+axis retains a default angle of 180 degrees per nominal complete frame pass.
+Multiple enabled axes compose in fixed X, Y, Z order around the camera focal
+point, preserving zoom and projection. Negative angles reverse rotation.
+
+Camera motion updates independently of mesh frames, approximately every 16 ms.
+Elapsed time determines motion, rather than the number of timer callbacks. A
+sequence with N displayable frames at F frames/second has nominal duration N/F
+seconds, including the last frame's display interval. Twenty frames at 10 FPS
+therefore rotate 180 degrees in approximately two seconds by default. Missing
+mesh frames do not count. Rendering can limit the achieved refresh rate; blocking
+GUI-thread work can still cause a visible pause.
+
+Rotation continues across repeated passes, including custom angles: a 180-degree
+setting continues through 180, 360, 540 degrees rather than resetting each loop.
+Pause freezes the current view; resume reanchors there without including paused
+time. Changes to axes/angles reanchor to the current camera without jumping.
+Manual camera gestures temporarily take priority and rotation then reanchors.
+Changing FPS changes the nominal rotation speed. Settings belong to the source's
+representation in each view and are saved; playback never starts on project load.
+
+Buttons issue normal ``post animation rotation`` commands through the command
+line. Automatic camera ticks use the playback silent-command route and update
+only the viewport, without refreshing the result tree for each camera tick.
+
+Model reset during playback cancels mesh/camera timers and pending navigation
+commits before clearing sources. Cancellation does not send pause, restore or
+preview commands from inside the reset notification. No native runtime verification
+has been performed for this change.
+
+
+Animation render toolbar action
+---------------------------------
+
+The capture toolbar order is Screenshot, Render Image, Render Animation, Add to
+Report. Render Animation uses the approved filmstrip/sparkle SVG and opens the
+animation export dialog. A nonmodal progress window reports the shared export job
+and submits ``post capture animation cancel`` when cancelled. See :doc:`capture`.
+
+Vector controls
+---------------
+
+The navigation row includes Vectors controls beside deformation. Select a
+compatible vector field, enable Vectors and use Options for proportional or
+uniform length, scale, surface/all samples, maximum count, sampling stride and
+magnitude/solid coloring. Every edit submits a ``post vector`` command. Selecting
+an output in the results tree targets its representation in the active view.
+See :doc:`vectors`.

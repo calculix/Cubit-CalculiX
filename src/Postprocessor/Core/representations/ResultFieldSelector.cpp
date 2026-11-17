@@ -1,6 +1,7 @@
 #include <type_traits>
 #include "ResultFieldSelector.hpp"
 #include "ResultDeformation.hpp"
+#include "ResultVectors.hpp"
 #include <algorithm>
 #include <set>
 namespace Postprocessor
@@ -39,7 +40,7 @@ namespace Postprocessor
         (!selector.qualifiers.association || *selector.qualifiers.association == field.association) &&
         (!selector.qualifiers.set_name || *selector.qualifiers.set_name == field.set_name) &&
         (!dataset || std::find(group.datasets.begin(),group.datasets.end(),*dataset) != group.datasets.end()) &&
-        (!magnitude || field.vector_components.has_value()) && (!vectorOnly || deformation_vector(field)) &&
+        (!magnitude || field.vector_components.has_value()) && (!vectorOnly || spatial_vector(field)) &&
         (magnitude || component.empty() || std::find(field.components.begin(),field.components.end(),component) != field.components.end());
     }
     std::string describe(const ResultFieldGroup& group)

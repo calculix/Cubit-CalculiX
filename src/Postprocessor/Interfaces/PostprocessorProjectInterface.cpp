@@ -6,6 +6,7 @@
 #include <exception>
 bool PostprocessorApplicationInterface::read_project_definitions(const std::string& filename, std::string& error)
 {
+  cancel_animation_capture();
   preparedProject.reset();
   auto candidate = std::make_unique<Postprocessor::PreparedPostprocessorProject>();
   if (!Postprocessor::PostprocessorProjectPersistence().read(filename,candidate->definitions,error))

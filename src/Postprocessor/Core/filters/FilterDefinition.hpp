@@ -1,9 +1,10 @@
 #pragma once
 #include "../representations/Representation.hpp"
 #include <cstdint>
+#include "ThresholdDefinition.hpp"
 namespace Postprocessor
 {
-  enum class FilterKind { Clip, Section };
+  enum class FilterKind { Clip, Section, Threshold };
   enum class ClipSide { Positive, Negative };
   namespace FilterDefaults
   {
@@ -14,6 +15,7 @@ namespace Postprocessor
     inline constexpr double plane_line_width = 1.5;
     inline constexpr const char* clip_name_prefix = "Clip ";
     inline constexpr const char* section_name_prefix = "Section ";
+    inline constexpr const char* threshold_name_prefix = "Threshold ";
     inline constexpr double relative_tolerance = 1e-12;
     inline constexpr double removed_opacity = 0.15;
     inline constexpr std::array<double,3> removed_color = {0.55,0.55,0.55};
@@ -32,6 +34,7 @@ namespace Postprocessor
     OutputReference input;
     FilterKind kind = FilterKind::Clip;
     PlaneDefinition plane;
+    ThresholdDefinition threshold;
     ClipSide keep = ClipSide::Positive;
     std::uint64_t revision = 1;
     bool enabled = true;

@@ -433,7 +433,11 @@ Playback controls operate on the active source/view, or an explicit source::
    post animation loop off
    post animation play source "first_run"
 
-FPS is an integer from 1 to 120, default 10. Loop defaults off. FPS and loop
+The navigation infinity button toggles ``post animation loop on/off`` through the
+normal GUI command-line route. Its checked state mirrors the active representation;
+programmatic refresh emits no loop command.
+
+FPS is an integer from 1 to 120, default 10. Loop defaults on. FPS and loop
 are independent settings on each representation. Play requires at least two
 displayable frames. Play at the final displayable frame restarts at the first;
 otherwise it continues from the selected frame. With Loop off, playback pauses
@@ -472,7 +476,7 @@ Select a mesh dataset by zero-based ID or quoted published name::
 
    post show dataset 2
    post hide dataset "Mesh"
-   post show only dataset "Integration points — ELSET_A" source "first_run"
+   post show only dataset "Integration points â€” ELSET_A" source "first_run"
    post show dataset all source "first_run"
 
 All forms accept optional ``source "name"``; omission uses the active source.
@@ -615,10 +619,10 @@ Table-field commands also use this resolver, without a component constraint.
 Native tables use readable names with optional scope/type/entry qualifiers;
 see :doc:`tables`. Old encoded keys remain accepted by both paths.
 
-Clipping and sections
----------------------
+Clipping, sections and thresholds
+---------------------------------
 
-See :doc:`filters` for ``post clip``, ``post section`` and ``post filter``
+See :doc:`filters` for ``post clip``, ``post section``, ``post threshold`` and ``post filter``
 syntax, per-view behavior and source-data contracts.
 
 Contextual properties, standard views and scale
@@ -631,6 +635,7 @@ editor. They do not alter Cubit's camera. Opening an editor is journaled::
   post properties legend
   post properties clip
   post properties section
+  post properties threshold
   post properties close
   post view front
   post view back
@@ -664,3 +669,50 @@ The same shared qualifier applies to deformation, labels, spatial field tables
 and plot field selection. Existing commands without a set qualifier and legacy
 field keys remain supported. Unresolved ambiguity is reported without selecting
 the first matching field.
+
+
+Animation-axis rotation
+------------------------
+
+Enable or disable axes independently and set their degrees per nominal pass::
+
+   post animation rotation x on
+   post animation rotation y off
+   post animation rotation z angle 180
+   post animation rotation x angle -360 source "first_run"
+
+All axes default to off with an angle of 180 degrees. Setting an angle does not
+change its enabled state. Values must be finite; negative angles reverse direction
+and zero keeps that axis stationary. Commands affect the active view and accept
+the existing optional source qualifier. Invalid settings report Cubit errors and
+preserve committed state. World axes pass through the camera focal point and
+compose X, Y, Z. Rotation continues across loop boundaries.
+
+The playback camera timer submits the following internal elapsed-time operation
+through the silent command dispatcher (seconds must be finite and nonnegative)::
+
+   post animation advance 0.016 source "first_run"
+
+This advances the camera only while the selected representation is playing and
+has rotation enabled. It does not advance the mesh frame. Speed is the retained
+angle divided by nominal pass duration (displayable frame count / FPS). The timer
+uses measured elapsed time; it does not assume each callback arrived after 16 ms.
+
+
+Animation rendering/export
+----------------------------
+
+``post capture animation`` exports a frozen mesh view as GIF, MP4 or a PNG
+sequence. The file argument is a new directory for PNG output. Result FPS and
+output FPS are independent; axis rotation is sampled at every output timestamp.
+See :doc:`capture` for complete options, limits, dependencies and examples.
+``post capture animation status`` reports progress and ``post capture animation
+cancel`` requests asynchronous cancellation. GUI export and cancellation use these
+commands; failures are reported through Cubit messages.
+
+Vector display
+--------------
+
+``post vector`` selects a declared XYZ field and controls arrow visibility,
+length, scale, sampling density and coloring per representation. See
+:doc:`vectors` for syntax, defaults, units and filter/animation behavior.

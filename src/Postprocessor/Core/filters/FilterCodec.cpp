@@ -1,4 +1,5 @@
 #include "FilterCodec.hpp"
+#include "ThresholdCodec.hpp"
 #include <QJsonObject>
 #include <cmath>
 #include <set>
@@ -10,6 +11,14 @@ namespace Postprocessor
     for (const auto& item : filters)
     {
       const auto& value = item.second;
+      if (value.kind == FilterKind::Threshold)
+      {
+        result.append(QJsonObject{{"id",QString::fromStdString(value.id)},{"name",QString::fromStdString(value.name)},
+          {"source",QString::fromStdString(value.input.object_id)},{"kind","threshold"},
+          {"enabled",value.enabled},{"reference_visible",value.reference_visible},
+          {"threshold",threshold_to_json(value.threshold)}});
+        continue;
+      }
       result.append(QJsonObject{{"id",QString::fromStdString(value.id)},{"name",QString::fromStdString(value.name)},
         {"enabled",value.enabled},{"reference_visible",value.reference_visible},
         {"source",QString::fromStdString(value.input.object_id)},{"coordinate_unit",QString::fromStdString(value.coordinate_unit)},{"kind",[&]() -> const char* {
@@ -50,7 +59,7 @@ namespace Postprocessor
     {
       const auto object = entry.toObject();
       FilterDefinition filter;
-      for (const auto* key : {"id","name","source","kind","keep"})
+      for (const auto* key : {"id","name","source","kind"})
       {
         if (!object.value(QLatin1String(key)).isString())
         {
@@ -81,6 +90,20 @@ namespace Postprocessor
       filter.name = object.value("name").toString().toStdString();
       filter.input = {OutputOwner::Source,object.value("source").toString().toStdString(),0};
       const auto kind = object.value("kind").toString();
+      if (kind == "threshold")
+      {
+        filter.kind = FilterKind::Threshold;
+        if (!threshold_from_json(object.value("threshold"),filter.threshold,error) || !valid_filter(filter,error))
+        {
+          return false;
+        }
+        if (!names.insert(filter.name).second || !result.emplace(filter.id,filter).second)
+        {
+          error = "Saved filters require unique identifiers and names.";
+          return false;
+        }
+        continue;
+      }
       const auto keep = object.value("keep").toString();
       if ((kind != "clip" && kind != "section") || (keep != "positive" && keep != "negative"))
       {

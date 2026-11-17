@@ -441,6 +441,23 @@ void CameraInteraction::cancel()
   }
 }
 
+void CameraInteraction::discard()
+{
+  wheelTimer.stop();
+  restoreTimer.stop();
+  pending = false;
+  restorePending = false;
+  mode = Mode::None;
+  navigationDisplays.clear();
+  navigationSources.clear();
+  navigationFilters.clear();
+}
+
+bool CameraInteraction::active() const noexcept
+{
+  return mode != Mode::None || restorePending;
+}
+
 void CameraInteraction::restore()
 {
   if (!restorePending)

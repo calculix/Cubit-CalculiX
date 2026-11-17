@@ -8,7 +8,6 @@
 #include <QSlider>
 #include <QHideEvent>
 #include <QShowEvent>
-#include <QCheckBox>
 #include <QSpinBox>
 #include <QAbstractSlider>
 #include <QSignalBlocker>
@@ -17,10 +16,14 @@
 #include <cmath>
 #include <algorithm>
 #include <utility>
+#include <exception>
+#include "CubitMessage.hpp"
 
 PostprocessorFrameNavigation::PostprocessorFrameNavigation(std::function<void(std::size_t)> callback, QWidget* parent,
-  std::function<bool(std::size_t)> previewCallback, std::function<void(const QString&)> animationCallback,std::function<bool()> ready)
-  : QWidget(parent), select(std::move(callback)), preview(std::move(previewCallback)), animationCommand(std::move(animationCallback)),animationReady(std::move(ready))
+  std::function<bool(std::size_t)> previewCallback, std::function<void(const QString&)> animationCallback,std::function<bool()> ready,
+  std::function<bool(double)> rotation)
+  : QWidget(parent), select(std::move(callback)), preview(std::move(previewCallback)), animationCommand(std::move(animationCallback)),
+    animationReady(std::move(ready)),rotationStep(std::move(rotation))
 {
   setObjectName("Postprocessor.FrameNavigation");
   setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
@@ -54,18 +57,79 @@ PostprocessorFrameNavigation::PostprocessorFrameNavigation(std::function<void(st
   fps->setSuffix(tr(" fps"));
   fps->setToolTip(tr("Target animation frames per second"));
   layout->addWidget(fps);
-  loop = new QCheckBox(tr("Loop"),this);
+  loop = new QToolButton(this);
+  loop->setCheckable(true);
+  loop->setToolButtonStyle(Qt::ToolButtonIconOnly);
+  loop->setIconSize(QSize(24,24));
+  loop->setText(tr("Loop"));
+  loop->setAccessibleName(tr("Loop"));
   loop->setObjectName("Postprocessor.Animation.Loop");
   loop->setChecked(Postprocessor::AnimationDefaults::loop);
   loop->setToolTip(tr("Restart at the first displayable frame after the last frame"));
   layout->addWidget(loop);
+  const char* axes[] = {"x","y","z"};
+  for (std::size_t axis = 0; axis < rotations.size(); ++axis)
+  {
+    auto* control = new QToolButton(this);
+    control->setObjectName("Postprocessor.Animation.Rotation."+QString::fromLatin1(axes[axis]));
+    control->setCheckable(true);
+    control->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    control->setIconSize(QSize(24,24));
+    const auto label = tr("Rotate around %1").arg(QString::fromLatin1(axes[axis]).toUpper());
+    control->setText(label);
+    control->setAccessibleName(label);
+    layout->addWidget(control);
+    rotations[axis] = control;
+    connect(control,&QToolButton::toggled,this,[this,axis](bool checked)
+    {
+      if (animationCommand)
+      {
+        const char* names[] = {"x","y","z"};
+        QString state = "off";
+        if (checked)
+        {
+          state = "on";
+        }
+        animationCommand("rotation "+QString::fromLatin1(names[axis])+" "+state);
+      }
+    });
+  }
+  rotationTimer.setParent(this);
+  rotationTimer.setObjectName("Postprocessor.Animation.RotationTimer");
+  rotationTimer.setTimerType(Qt::PreciseTimer);
+  rotationTimer.setInterval(16);
+  connect(&rotationTimer,&QTimer::timeout,this,[this]()
+  {
+    advance_rotation();
+  });
   animationTimer.setParent(this);
   animationTimer.setObjectName("Postprocessor.Animation.Timer");
   animationTimer.setTimerType(Qt::PreciseTimer);
   animationTimer.setSingleShot(true);
   connect(&animationTimer,&QTimer::timeout,this,[this]()
   {
-    advance_animation();
+    try
+    {
+      advance_animation();
+    }
+    catch (const std::exception& exception)
+    {
+      if (QString::fromUtf8(exception.what()).trimmed() == QStringLiteral("Cubit is busy"))
+      {
+        if (running)
+        {
+          animationTimer.start(Postprocessor::AnimationDefaults::presentation_retry_ms);
+        }
+        return;
+      }
+      reset_navigation();
+      PRINT_ERROR("Cannot advance animation: %s\n",exception.what());
+    }
+    catch (...)
+    {
+      reset_navigation();
+      PRINT_ERROR("Cannot advance animation: unknown failure.\n");
+    }
   });
   connect(play,&QToolButton::clicked,this,[this]()
   {
@@ -86,7 +150,7 @@ PostprocessorFrameNavigation::PostprocessorFrameNavigation(std::function<void(st
       animationCommand("fps "+QString::number(value));
     }
   });
-  connect(loop,&QCheckBox::toggled,this,[this](bool checked)
+  connect(loop,&QToolButton::toggled,this,[this](bool checked)
   {
     if (animationCommand)
     {
@@ -132,7 +196,12 @@ PostprocessorFrameNavigation::PostprocessorFrameNavigation(std::function<void(st
   });
   connect(slider,&QSlider::sliderPressed,this,[this]()
   {
+    const auto ownerGeneration = generation;
     stop_playback(false);
+    if (generation != ownerGeneration || indices.empty())
+    {
+      return;
+    }
     dragging = true;
     baseline = expected;
     pending.reset();
@@ -164,8 +233,13 @@ void PostprocessorFrameNavigation::choose(int position)
 {
   if (position >= 0 && static_cast<std::size_t>(position) < indices.size())
   {
+    const auto ownerGeneration = generation;
+    const auto frame = indices[static_cast<std::size_t>(position)];
     stop_playback(false);
-    select(indices[static_cast<std::size_t>(position)] + 1);
+    if (generation == ownerGeneration && select)
+    {
+      select(frame+1);
+    }
   }
 }
 
@@ -192,7 +266,13 @@ void PostprocessorFrameNavigation::refresh(const std::shared_ptr<const SimResult
     }
     return;
   }
+  if (!owned)
+  {
+    ++generation;
+  }
   animationTimer.stop();
+  rotationTimer.stop();
+  rotationClock.invalidate();
   running = false;
   abandon_drag();
   snapshot = data;
@@ -257,9 +337,10 @@ void PostprocessorFrameNavigation::refresh(const std::shared_ptr<const SimResult
     const auto frame = expected;
     const auto source = snapshot;
     const auto owner = context;
-    QTimer::singleShot(0,this,[this,frame,source,owner]()
+    const auto ownerGeneration = generation;
+    QTimer::singleShot(0,this,[this,frame,source,owner,ownerGeneration]()
     {
-      if (!running && expected == frame && snapshot == source && context == owner && animationCommand)
+      if (generation == ownerGeneration && !running && expected == frame && snapshot == source && context == owner && animationCommand)
       {
         animationCommand(QStringLiteral("pause"));
       }
@@ -304,12 +385,16 @@ void PostprocessorFrameNavigation::flush_preview()
   {
     return;
   }
+  const auto ownerGeneration = generation;
   if (preview && !preview(frame+1))
   {
     abandon_drag();
     return;
   }
-  expected = frame;
+  if (generation == ownerGeneration && dragging)
+  {
+    expected = frame;
+  }
 }
 
 void PostprocessorFrameNavigation::finish_drag()
@@ -345,13 +430,14 @@ void PostprocessorFrameNavigation::abandon_drag()
 
 void PostprocessorFrameNavigation::hideEvent(QHideEvent* event)
 {
+  const auto ownerGeneration = generation;
   stop_playback();
   const auto restore = baseline;
   const bool changed = dragging && expected != baseline;
   abandon_drag();
   // A workspace switch cancels a drag rather than retaining an unjournaled
   // final preview. The owner callback guards source/view/snapshot identity.
-  if (changed && restore && preview && preview(*restore+1))
+  if (generation == ownerGeneration && changed && restore && preview && preview(*restore+1) && generation == ownerGeneration)
   {
     expected = restore;
   }
@@ -360,8 +446,8 @@ void PostprocessorFrameNavigation::hideEvent(QHideEvent* event)
 
 PostprocessorFrameNavigation::~PostprocessorFrameNavigation()
 {
-  animationTimer.stop();
-  previewTimer.stop();
+  reset_navigation();
+  rotationStep = {};
   animationCommand = {};
   preview = {};
 }
@@ -372,9 +458,16 @@ void PostprocessorFrameNavigation::showEvent(QShowEvent* event)
   synchronize_animation(playback);
 }
 
+void PostprocessorFrameNavigation::set_loop_icon(const QIcon& icon)
+{
+  loop->setIcon(icon);
+}
+
 void PostprocessorFrameNavigation::synchronize_animation(const Postprocessor::AnimationDefinition& animation)
 {
   const int previousRate = playback.frames_per_second;
+  const bool wasRunning = running;
+  const auto previousRotation = playback.rotation;
   playback = animation;
   const QSignalBlocker loopBlocker(loop);
   const QSignalBlocker fpsBlocker(fps);
@@ -404,6 +497,33 @@ void PostprocessorFrameNavigation::synchronize_animation(const Postprocessor::An
       return tr("Play result animation");
     }
   }());
+  bool rotate = false;
+  const char* axes[] = {"X","Y","Z"};
+  for (std::size_t axis = 0; axis < rotations.size(); ++axis)
+  {
+    const QSignalBlocker blocker(rotations[axis]);
+    rotations[axis]->setChecked(playback.rotation[axis].enabled);
+    rotations[axis]->setEnabled(playbackAllowed && !indices.empty() && static_cast<bool>(animationCommand));
+    rotations[axis]->setToolTip(tr("Rotate around world %1: %2 degrees per pass")
+      .arg(QString::fromLatin1(axes[axis])).arg(QString::number(playback.rotation[axis].degrees,'g',8)));
+    rotate = rotate || playback.rotation[axis].enabled;
+  }
+  if (running && rotate && rotationStep)
+  {
+    if (!wasRunning || !rotationClock.isValid() || !Postprocessor::same_animation_rotation(previousRotation,playback.rotation))
+    {
+      rotationClock.start();
+    }
+    if (!rotationTimer.isActive())
+    {
+      rotationTimer.start();
+    }
+  }
+  else
+  {
+    rotationTimer.stop();
+    rotationClock.invalidate();
+  }
   play->setEnabled(canPlay);
   fps->setEnabled(playbackAllowed && !indices.empty() && static_cast<bool>(animationCommand));
   loop->setEnabled(playbackAllowed && !indices.empty() && static_cast<bool>(animationCommand));
@@ -414,9 +534,10 @@ void PostprocessorFrameNavigation::commit_animation_frame()
   const auto frame = expected;
   const auto data = snapshot;
   const auto key = context;
-  QTimer::singleShot(0,this,[this,frame,data,key]()
+  const auto ownerGeneration = generation;
+  QTimer::singleShot(0,this,[this,frame,data,key,ownerGeneration]()
   {
-    if (frame && expected == frame && snapshot == data && context == key && !running && select)
+    if (generation == ownerGeneration && frame && expected == frame && snapshot == data && context == key && !running && select)
     {
       select(*frame+1);
     }
@@ -429,12 +550,24 @@ void PostprocessorFrameNavigation::stop_playback(bool commit)
   {
     return;
   }
+  advance_rotation();
+  if (!running)
+  {
+    return;
+  }
+  const auto ownerGeneration = generation;
   running = false;
   playback.playing = false;
   animationTimer.stop();
+  rotationTimer.stop();
+  rotationClock.invalidate();
   if (animationCommand)
   {
     animationCommand(QStringLiteral("pause"));
+  }
+  if (generation != ownerGeneration)
+  {
+    return;
   }
   synchronize_animation(playback);
   if (commit)
@@ -449,9 +582,17 @@ void PostprocessorFrameNavigation::advance_animation()
   {
     return;
   }
+  const auto ownerGeneration = generation;
   if (animationReady && !animationReady())
   {
-    animationTimer.start(Postprocessor::AnimationDefaults::presentation_retry_ms);
+    if (generation == ownerGeneration && running)
+    {
+      animationTimer.start(Postprocessor::AnimationDefaults::presentation_retry_ms);
+    }
+    return;
+  }
+  if (generation != ownerGeneration || !running || !expected)
+  {
     return;
   }
   const auto found = std::find(indices.begin(),indices.end(),*expected);
@@ -474,6 +615,10 @@ void PostprocessorFrameNavigation::advance_animation()
   if (!preview || !preview(frame+1))
   {
     stop_playback(false);
+    return;
+  }
+  if (generation != ownerGeneration || !running)
+  {
     return;
   }
   expected = frame;
@@ -534,5 +679,61 @@ void PostprocessorFrameNavigation::refresh_frame_labels()
     }
     frames->setItemText(static_cast<int>(row),tr("Frame %1 | Step %2 | Increment %3 | %4")
       .arg(static_cast<qulonglong>(indices[row]+1)).arg(step).arg(increment).arg(parameter_text(frame)));
+  }
+}
+
+void PostprocessorFrameNavigation::set_rotation_icons(const std::array<QIcon,3>& icons)
+{
+  for (std::size_t axis = 0; axis < rotations.size(); ++axis)
+  {
+    rotations[axis]->setIcon(icons[axis]);
+  }
+}
+
+void PostprocessorFrameNavigation::reset_navigation()
+{
+  ++generation;
+  running = false;
+  playback.playing = false;
+  animationTimer.stop();
+  rotationTimer.stop();
+  rotationClock.invalidate();
+  abandon_drag();
+  baseline.reset();
+  expected.reset();
+  snapshot.reset();
+  indices.clear();
+  context.clear();
+}
+
+void PostprocessorFrameNavigation::advance_rotation()
+{
+  if (!running || !rotationStep || !rotationClock.isValid())
+  {
+    return;
+  }
+  const auto ownerGeneration = generation;
+  const double seconds = static_cast<double>(rotationClock.nsecsElapsed())/1e9;
+  rotationClock.restart();
+  try
+  {
+    if (!rotationStep(seconds) && generation == ownerGeneration)
+    {
+      reset_navigation();
+    }
+  }
+  catch (const std::exception& exception)
+  {
+    if (QString::fromUtf8(exception.what()).trimmed() == QStringLiteral("Cubit is busy"))
+    {
+      return;
+    }
+    reset_navigation();
+    PRINT_ERROR("Cannot advance animation rotation: %s\n",exception.what());
+  }
+  catch (...)
+  {
+    reset_navigation();
+    PRINT_ERROR("Cannot advance animation rotation: unknown failure.\n");
   }
 }

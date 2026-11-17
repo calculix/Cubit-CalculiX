@@ -104,6 +104,7 @@ bool PostprocessorApplicationInterface::select_source(const std::string& name, s
 }
 
 bool PostprocessorApplicationInterface::close_source(const std::string& name, std::string& error) {
+  cancel_animation_capture();
   error.clear();
   const auto id = core.source_id_from_name(name);
 
@@ -131,6 +132,16 @@ std::optional<Postprocessor::AnimationDefinition> PostprocessorApplicationInterf
   error = "The source has no representation in the active view.";
   return std::nullopt;
 }
+bool PostprocessorApplicationInterface::advance_animation_rotation(const std::string& name,double seconds,std::string& error)
+{
+  std::string id = core.session().active_source_id;
+  if (!name.empty())
+  {
+    id = core.source_id_from_name(name);
+  }
+  return core.advance_animation_rotation(id,core.session().active_view_id,seconds,error);
+}
+
 bool PostprocessorApplicationInterface::set_animation(const std::string& name,const Postprocessor::AnimationDefinition& animation,std::string& error) {
   std::string id = core.session().active_source_id;
   if (!name.empty()) {
@@ -293,10 +304,12 @@ bool PostprocessorApplicationInterface::frame_has_mesh(const std::string& source
 }
 
 bool PostprocessorApplicationInterface::reset(std::string& error) {
+  cancel_animation_capture();
   return core.reset(error);
 }
 
 bool PostprocessorApplicationInterface::close_all_sources(std::string& error) {
+  cancel_animation_capture();
   return core.close_all_sources(error);
 }
 
@@ -513,6 +526,7 @@ bool PostprocessorApplicationInterface::open_file(const std::string& prefix, con
   return opened;
 }
 bool PostprocessorApplicationInterface::refresh_source(const std::string& name, std::string& error) {
+  cancel_animation_capture();
   const auto id = core.source_id_from_name(name);
   const auto source = core.session().sources.find(id);
   if (source == core.session().sources.end()) {

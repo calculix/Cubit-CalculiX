@@ -3,10 +3,14 @@
 #include <cctype>
 #include "Postprocessor/GUI/Properties/PostprocessorDisplayProperties.hpp"
 #include "PostprocessorWorkspace.hpp"
+#include "Postprocessor/GUI/VectorPlot/PostprocessorVectorControls.hpp"
 #include "Postprocessor/GUI/Filters/Clip/PostprocessorClipControls.hpp"
 #include "Postprocessor/GUI/Filters/Section/PostprocessorSectionControls.hpp"
+#include "Postprocessor/GUI/Filters/Threshold/PostprocessorThresholdControls.hpp"
 #include "Postprocessor/Commands/tables/TableCommandText.hpp"
 #include "Postprocessor/GUI/Capture/PostprocessorCaptureDialog.hpp"
+#include "Postprocessor/GUI/Capture/PostprocessorAnimationCaptureDialog.hpp"
+#include <QProgressDialog>
 #include "PostprocessorToolbar.hpp"
 #include "Postprocessor/GUI/Sources/PostprocessorSourceControls.hpp"
 #include "Postprocessor/GUI/Sources/PostprocessorImportDialog.hpp"
@@ -34,6 +38,7 @@
 #include <QMenu>
 #include <QTabWidget>
 #include <QSignalBlocker>
+#include <QScopedValueRollback>
 #include <QToolButton>
 #include <QInputDialog>
 #include <QLineEdit>
@@ -219,7 +224,38 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   },[this]()
   {
     return viewport->prepare_animation_step();
+  },[this,dispatch = silent](double seconds)
+  {
+    const auto guarded = frame_command(1);
+    const auto suffix = guarded.indexOf(" source ");
+    const auto active = this->application.lock();
+    if (!active || suffix < 0 || !dispatch)
+    {
+      return false;
+    }
+    if (!viewport->animation_rotation_ready())
+    {
+      return true;
+    }
+    const QScopedValueRollback<bool> guard(animationCameraCommand,true);
+    std::string error;
+    const auto command = "post animation advance "+QString::number(seconds,'g',17)+guarded.mid(suffix);
+    if (!dispatch(command.toUtf8().toStdString(),error))
+    {
+      PRINT_ERROR("Cannot advance animation camera: %s\n",error.c_str());
+      return false;
+    }
+    viewport->synchronize(active);
+    return true;
   });
+  if (const auto active = this->application.lock())
+  {
+    navigation->set_loop_icon(PostprocessorIconLoader::load(active->active_icons_path(),"PostprocessorAnimationLoop"));
+    navigation->set_rotation_icons({
+      PostprocessorIconLoader::load(active->active_icons_path(),"PostprocessorAnimationRotationX"),
+      PostprocessorIconLoader::load(active->active_icons_path(),"PostprocessorAnimationRotationY"),
+      PostprocessorIconLoader::load(active->active_icons_path(),"PostprocessorAnimationRotationZ")});
+  }
   navigationToolbar->addWidget(navigation);
   navigationDock = new QDockWidget(tr("Result navigation"), host);
   navigationDock->setObjectName("Postprocessor.NavigationDock");
@@ -260,6 +296,20 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     },deformationToolbar);
   deformationToolbar->setSizePolicy(QSizePolicy::Maximum,QSizePolicy::Fixed);
   deformationToolbar->addWidget(deformationControls);
+  vectorControls = new PostprocessorVectorControls(this->application,
+    [this](const std::string& command,std::string& error)
+    {
+      viewport->cancel_interaction();
+      const bool accepted = submitCommand && submitCommand(command,error);
+      QTimer::singleShot(0,this,[this]()
+      {
+        panelRevision.reset();
+        refresh();
+      });
+      return accepted;
+    },deformationToolbar);
+  deformationToolbar->addWidget(vectorControls);
+
   auto* navigationRow = new QWidget(navigationDock);
   navigationRow->setObjectName("Postprocessor.NavigationRow");
   navigationRow->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
@@ -580,9 +630,9 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     viewport->fit_view();
   });
   viewsToolbar->addAction(fit);
-  const char* captureIcons[] = {"PostprocessorCaptureViewport","PostprocessorRenderImage","PostprocessorAddToReport"};
-  const QString captureTips[] = {tr("Save viewport screenshot"),tr("Render PNG image"),tr("Add image to Report")};
-  for (int index = 0; index < 3; ++index)
+  const char* captureIcons[] = {"PostprocessorCaptureViewport","PostprocessorRenderImage","PostprocessorRenderAnimation","PostprocessorAddToReport"};
+  const QString captureTips[] = {tr("Save viewport screenshot"),tr("Render PNG image"),tr("Render animation"),tr("Add image to Report")};
+  for (int index = 0; index < 4; ++index)
   {
     const auto app = this->application.lock();
     QIcon icon;
@@ -594,7 +644,14 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     action->setToolTip(captureTips[index]);
     connect(action,&QAction::triggered,this,[this,index]()
     {
-      capture_dialog(index == 2,index == 0);
+      if (index == 2)
+      {
+        animation_capture_dialog();
+      }
+      else
+      {
+        capture_dialog(index == 3,index == 0);
+      }
     });
   }
   pickControls = new PostprocessorPickControls(this->application,[this](const QString& command) {
@@ -750,6 +807,13 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   sectionScroll->setWidget(sectionControls);
   sectionEditorPage = sectionScroll;
   propertiesPages->addWidget(sectionEditorPage);
+  thresholdControls = new PostprocessorThresholdControls(this->application,dispatchFilter,propertiesPages);
+  auto* thresholdScroll = new QScrollArea(propertiesPages);
+  thresholdScroll->setWidgetResizable(true);
+  thresholdScroll->setFrameShape(QFrame::NoFrame);
+  thresholdScroll->setWidget(thresholdControls);
+  thresholdEditorPage = thresholdScroll;
+  propertiesPages->addWidget(thresholdEditorPage);
   if (const auto app = this->application.lock())
   {
     app->set_properties_handler([this](const std::string& page,const std::string& source,std::string& error)
@@ -757,7 +821,7 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       return show_properties(page,source,error);
     });
   }
-  for (const auto* tool : {"Clip","Section"})
+  for (const auto* tool : {"Clip","Section","Threshold"})
   {
     QIcon icon;
     if (const auto app = this->application.lock())
@@ -977,13 +1041,25 @@ void PostprocessorWorkspace::dataset_command(const QString& name, Postprocessor:
 
 bool PostprocessorWorkspace::camera_command_active() const noexcept
 {
-  return viewport != nullptr && viewport->camera_command_active();
+  return animationCameraCommand || (viewport != nullptr && viewport->camera_command_active());
+}
+
+void PostprocessorWorkspace::prepare_model_reset()
+{
+  // Model notifications must not submit nested Cubit commands or restore previews.
+  navigation->reset_navigation();
+  deformationControls->discard_pending();
+  clipControls->discard_pending();
+  sectionControls->discard_pending();
+  viewport->prepare_model_reset();
+  panelRevision.reset();
 }
 
 void PostprocessorWorkspace::refresh() {
   annotationControls->refresh();
   clipControls->refresh();
   sectionControls->refresh();
+  thresholdControls->refresh();
   try {
     const auto active = application.lock();
 
@@ -991,6 +1067,10 @@ void PostprocessorWorkspace::refresh() {
       return;
     }
 
+    if (active->animation_capture_active() && !animationProgress)
+    {
+      show_animation_progress();
+    }
     const auto& state = active->session();
     const auto currentView = state.views.find(state.active_view_id);
     std::uint64_t selectionRevision = 0;
@@ -1034,11 +1114,13 @@ void PostprocessorWorkspace::refresh() {
       }
       colorControls->refresh();
       deformationControls->refresh();
+      vectorControls->refresh();
       pickControls->refresh();
       pickControls->setEnabled(true);
       const bool spatialSource = active->source_has_mesh(state.active_source_id);
       colorControls->setEnabled(spatialSource);
       deformationControls->setEnabled(spatialSource);
+      vectorControls->setEnabled(spatialSource && vectorControls->isEnabled());
       panelPlotActive = plotActive;
       panelPlotRevision = state.plot_revision;
       panelSelectionRevision = selectionRevision;
@@ -1299,6 +1381,12 @@ bool PostprocessorWorkspace::show_properties(const std::string& page,const std::
     clipControls->refresh();
     title = tr("Clip properties");
   }
+  else if (page == "threshold")
+  {
+    selected = thresholdEditorPage;
+    thresholdControls->refresh();
+    title = tr("Threshold properties");
+  }
   else if (page == "section")
   {
     selected = sectionEditorPage;
@@ -1361,4 +1449,68 @@ void PostprocessorWorkspace::camera_tool(const QString& command)
     }
     viewport->request_redraw();
   }
+}
+
+void PostprocessorWorkspace::animation_capture_dialog()
+{
+  const auto active = application.lock();
+  if (!active)
+  {
+    return;
+  }
+  if (active->animation_capture_active())
+  {
+    show_animation_progress();
+    return;
+  }
+  const auto command = postprocessor_animation_capture_dialog(this,*active);
+  if (!command.isEmpty())
+  {
+    submit(command);
+    QTimer::singleShot(0,this,[this]()
+    {
+      show_animation_progress();
+    });
+  }
+}
+void PostprocessorWorkspace::show_animation_progress()
+{
+  const auto active = application.lock();
+  if (!active || !active->animation_capture_active())
+  {
+    return;
+  }
+  if (animationProgress)
+  {
+    animationProgress->show();
+    animationProgress->raise();
+    return;
+  }
+  auto* progress = new QProgressDialog(tr("Preparing animation export..."),tr("Cancel export"),0,0,this);
+  animationProgress = progress;
+  progress->setWindowTitle(tr("Render animation"));
+  progress->setWindowModality(Qt::NonModal);
+  progress->setMinimumDuration(0);
+  progress->setAutoClose(false);
+  progress->setAutoReset(false);
+  progress->setAttribute(Qt::WA_DeleteOnClose);
+  connect(progress,&QProgressDialog::canceled,this,[this]()
+  {
+    submit("post capture animation cancel");
+  });
+  auto* timer = new QTimer(progress);
+  timer->setInterval(200);
+  connect(timer,&QTimer::timeout,progress,[this,progress]()
+  {
+    const auto active = application.lock();
+    if (!active || !active->animation_capture_active())
+    {
+      progress->blockSignals(true); // Programmatic completion must not issue a cancel command.
+      progress->close();
+      return;
+    }
+    progress->setLabelText(QString::fromStdString(active->animation_capture_status()));
+  });
+  timer->start();
+  progress->show();
 }

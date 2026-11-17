@@ -28,7 +28,7 @@ not merely whether a filename contains the word Utility.
    * - ``CubitWrapInput`` / ``CGALTool``
      - Collect/prepare current input and write a CGAL alpha wrap as STL. Alpha/offset, overwrite and import are explicit workflow choices; no CGAL implementation details are reproduced here.
    * - ``GifAnimation``
-     - Encode an ordered list of frame files with cancellation/progress values and error text. It does not own native Cubit capture or GUI logging.
+     - Shared Framework/Media utility: encode ordered frame files with cancellation/progress and error text. CalculiX topology and Postprocessor export use the same implementation; see :doc:`media`.
    * - ``PlotChart`` / ``ScientificNumber`` / ``StopWatch``
      - Project plotting, numeric presentation and elapsed-time support. Presentation rounding is not solver input precision or a numerical tolerance.
    * - ``ThreadPool``

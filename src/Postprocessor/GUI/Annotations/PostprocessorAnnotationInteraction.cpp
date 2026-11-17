@@ -79,6 +79,13 @@ void PostprocessorAnnotationInteraction::cancel()
   moved = false;
   previewed = false;
 }
+void PostprocessorAnnotationInteraction::discard()
+{
+  pending = false;
+  label.clear();
+  moved = false;
+  previewed = false;
+}
 bool PostprocessorAnnotationInteraction::preview_pending() const
 {
   return pending;

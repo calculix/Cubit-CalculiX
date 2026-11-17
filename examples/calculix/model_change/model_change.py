@@ -122,14 +122,18 @@ for v in volume_list:
 cubit.cmd('ccx units system "N-mm-s"')
 cubit.cmd('ccx units geometry unit "mm"')
 cubit.cmd('ccx create material "solid"')
-cubit.cmd('ccx modify material 1 add card density model default')
+cubit.cmd('ccx modify material 1 card density model default')
 cubit.cmd('ccx modify material 1 card density row 1 values 8000 273.15 unit "SI"')
-cubit.cmd('ccx modify material 1 add card specific_heat model default')
+cubit.cmd('ccx modify material 1 activate card density')
+cubit.cmd('ccx modify material 1 card specific_heat model default')
 cubit.cmd('ccx modify material 1 card specific_heat row 1 values 420 273.15 unit "SI"')
-cubit.cmd('ccx modify material 1 add card conductivity model iso')
+cubit.cmd('ccx modify material 1 activate card specific_heat')
+cubit.cmd('ccx modify material 1 card conductivity model iso')
 cubit.cmd('ccx modify material 1 card conductivity row 1 values 50 273.15 unit "SI"')
-cubit.cmd('ccx modify material 1 add card elastic model iso')
+cubit.cmd('ccx modify material 1 activate card conductivity')
+cubit.cmd('ccx modify material 1 card elastic model iso')
 cubit.cmd('ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"')
+cubit.cmd('ccx modify material 1 activate card elastic')
 
 
 #section

@@ -31,7 +31,7 @@ The default N-mm-s workspace displays stress in N/mm^2 and density in kg/m^3.
 Solver export converts values to the selected coherent solver unit system.
 Changing display units does not change the physical material values.
 
-Unit-bearing table headings use compact notation such as ``N/mm²`` and ``°C``.
+Unit-bearing table headings use compact notation such as ``N/mmÂ²`` and ``Â°C``.
 Their tooltips retain the original input unit expression. Cells display readable
 numbers such as ``0.3`` and ``273.15`` instead of exposing binary representation
 tails. An unedited cell retains its original stored precision when other cells
@@ -134,3 +134,18 @@ do not create empty active cards.
 The Materials icon is the penultimate action on the CalculiX workspace toolbar,
 followed by Units. Postprocessor and Report do not show a Materials action.
 The shared management window and workspace-local material IDs are unchanged.
+
+Example journals and Python scripts
+-----------------------------------
+
+Repository examples configure the cards already installed by material
+creation. They use ``card KEY model MODEL``, enter the rows, then
+``activate card KEY``. This applies to elasticity, plasticity, density,
+specific heat, expansion, conductivity and rate dependence. Selecting a model
+or writing rows does not activate an inactive card. ``add card`` is reserved
+for a card explicitly removed earlier.
+
+The topology beam examples and the other affected CalculiX examples follow
+this sequence. The migration preserves model choices, row values, explicit
+SI units and intentionally commented commands. Python example syntax was
+checked without running Cubit; journal and solver execution remain pending.

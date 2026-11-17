@@ -18,6 +18,7 @@ public:
   PostprocessorDeformationControls(std::weak_ptr<PostprocessorApplicationInterface> application,
     Submit submit, Submit silent, QWidget* parent);
   void refresh();
+  void discard_pending();
 
 protected:
   bool eventFilter(QObject* watched, QEvent* event) override;

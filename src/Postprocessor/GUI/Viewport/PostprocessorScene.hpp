@@ -16,6 +16,7 @@ class vtkRenderer;
 class PostprocessorApplicationInterface;
 class PostprocessorPlaneOverlay;
 class PostprocessorScaleOverlay;
+class PostprocessorVectorActors;
 
 class PostprocessorScene
 {
@@ -61,6 +62,7 @@ private:
     std::vector<DatasetActor> actors;
     std::vector<PostprocessorColorSurface> surfaces;
     std::unique_ptr<PostprocessorColorMap> coloring;
+    std::unique_ptr<PostprocessorVectorActors> vectors;
   };
   std::shared_ptr<RepresentationActors> build(const std::shared_ptr<const SimResults::VtkResultsData>& data,
     const Postprocessor::Representation& display, std::string& error,const Postprocessor::EvaluatedOutput* evaluated = nullptr);

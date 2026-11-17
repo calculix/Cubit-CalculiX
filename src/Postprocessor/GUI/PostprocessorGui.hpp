@@ -28,6 +28,7 @@ public:
   void stop() noexcept;
   std::array<int,2> capture_reference_size(Postprocessor::CaptureTarget target,const std::string& id) const;
   void refresh();
+  void prepare_model_reset();
   bool workspace_view(WorkspaceView& view, std::string& error);
 
 private:

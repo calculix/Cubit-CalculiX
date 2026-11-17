@@ -6,6 +6,7 @@
 #include <vtkPointData.h>
 #include <vtkPolyData.h>
 #include "CameraOperations.hpp"
+#include "../representations/VectorPlotRuntime.hpp"
 #include <algorithm>
 #include <cmath>
 #include <exception>
@@ -47,6 +48,22 @@ namespace Postprocessor
         if (!data || display.increment_index >= data->increments.size())
         {
           continue;
+        }
+        std::optional<std::array<double,6>> vectorBounds;
+        if (display.vectors.enabled && display.vectors.field)
+        {
+          std::string issue;
+          const auto range = all_frame_range(evaluated->source_id,*display.vectors.field,issue,display.hidden_datasets);
+          VectorPlotData arrows;
+          double maximum = 0;
+          if (range)
+          {
+            maximum = (*range)[1];
+          }
+          if (issue.empty() && prepare_vector_plot(*evaluated->source,*data,display,maximum,arrows,issue,captured_units()) && !arrows.samples.empty())
+          {
+            vectorBounds = arrows.bounds;
+          }
         }
         const auto& frame = data->increments[display.increment_index];
         for (const auto& part : result_mesh_parts(frame.dataset.get()))
@@ -108,6 +125,14 @@ namespace Postprocessor
                   current[axis*2+1] = std::max(current[axis*2+1],original[axis*2+1]);
                 }
               }
+            }
+          }
+          if (vectorBounds)
+          {
+            for (std::size_t axis = 0; axis < 3; ++axis)
+            {
+              current[axis*2] = std::min(current[axis*2],(*vectorBounds)[axis*2]);
+              current[axis*2+1] = std::max(current[axis*2+1],(*vectorBounds)[axis*2+1]);
             }
           }
           double factor = 1;

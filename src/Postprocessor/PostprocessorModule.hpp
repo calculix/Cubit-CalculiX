@@ -17,6 +17,7 @@ class PostprocessorReportResultProvider;
 class PostprocessorCommands;
 class PostprocessorGui;
 class PostprocessorModelObserver;
+class PostprocessorAnimationRenderer;
 
 class PostprocessorModule : public ModuleInterface, public CommandProviderInterface,
   public ComponentProviderInterface, public WorkspaceProviderInterface, public ProjectStateProviderInterface
@@ -56,6 +57,7 @@ private:
   std::unique_ptr<PostprocessorReportImageProvider> imageProvider;
   std::unique_ptr<PostprocessorReportResultProvider> resultProvider;
   std::unique_ptr<PostprocessorGui> gui;
+  std::unique_ptr<PostprocessorAnimationRenderer> animationRenderer;
   std::unique_ptr<PostprocessorModelObserver> modelObserver;
   std::function<bool(const std::string&, std::string&)> submitCommand;
   std::function<bool(const std::string&, std::string&)> silentCommand;

@@ -2,6 +2,7 @@
 #include "Interfaces/PostprocessorReportImageProvider.hpp"
 #include "Interfaces/PostprocessorReportResultProvider.hpp"
 #include "GUI/Capture/PostprocessorCaptureRenderer.hpp"
+#include "GUI/Capture/PostprocessorAnimationRenderer.hpp"
 #include "Commands/PostprocessorCommands.hpp"
 #include "Interfaces/PostprocessorApplicationInterface.hpp"
 #include "GUI/PostprocessorGui.hpp"
@@ -40,6 +41,11 @@ bool PostprocessorModule::initialize(UserOptionsInterface& options, DrawingInter
   imageProvider = std::make_unique<PostprocessorReportImageProvider>(application);
   resultProvider = std::make_unique<PostprocessorReportResultProvider>(application);
   modelObserver = std::make_unique<PostprocessorModelObserver>([this]() {
+    application->cancel_animation_capture();
+    if (gui != nullptr)
+    {
+      gui->prepare_model_reset();
+    }
     std::string error;
     if (!application->reset(error)) {
       PRINT_ERROR("Cannot reset Postprocessor: %s\n", error.c_str());
@@ -115,14 +121,35 @@ bool PostprocessorModule::start_component(int withGUI, QWidget* host, std::strin
   },[this](Postprocessor::CaptureTarget target,const std::string& id) {
     return gui->capture_reference_size(target,id);
   });
+  if (!animationRenderer)
+  {
+    animationRenderer = std::make_unique<PostprocessorAnimationRenderer>();
+  }
+  application->set_animation_export_services([this](const Postprocessor::AnimationCapturePlan& plan,
+    const std::shared_ptr<PostprocessorApplicationInterface>& frozen,std::string& error)
+  {
+    return animationRenderer->start(plan,frozen,error);
+  },[this]()
+  {
+    animationRenderer->cancel();
+  },[this]()
+  {
+    return animationRenderer->active();
+  },[this]()
+  {
+    return animationRenderer->status();
+  });
   return true;
 }
 
 void PostprocessorModule::stop_component() noexcept
 {
   if (application) {
+    application->cancel_animation_capture();
+    application->set_animation_export_services({},{},{},{});
     application->set_capture_renderer({});
   }
+  animationRenderer.reset();
   gui.reset();
 }
 

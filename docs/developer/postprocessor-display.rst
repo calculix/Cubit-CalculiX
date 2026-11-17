@@ -704,7 +704,7 @@ Filter tree, plane motion and removed-side reference
 ----------------------------------------------------
 
 Each source with filters has a final, initially expanded ``Filters`` group after
-its mesh categories, results and tables. Clip/section rows use their toolbar
+its mesh categories, results and tables. Clip/section/threshold rows use their toolbar
 icons. Their checkboxes enable or bypass the operation; a disabled filter passes
 through its complete displayed input, including deformation and original-node
 picking. Output Show/Hide remains a separate per-view context action. Selecting
@@ -823,3 +823,91 @@ checkbox. For dataset/category visibility, Core and tree resolve the active
 visible output first, another visible output next, then the selected hidden
 output and finally the original source. Selecting a hidden filter therefore
 cannot redirect block visibility changes away from the visible mesh.
+
+Threshold feature outputs
+-------------------------
+
+Threshold uses the existing filter registry and ``OutputOwner::Feature`` with
+per-view representations. Scalar matching and whole-cell extraction belong in
+Core, not GUI. ``ThresholdFilter`` reuses field scalar extraction and validity
+masks, with an explicit native presentation context followed by conversion to
+stored bound units. It preserves original attributes, including integer IDs.
+Threshold node markers and edges come from retained cells. Reference deformation
+uses the same retained source-cell indices; removed-reference geometry uses the
+complement. Plane validation, motion controls and plane overlays exclude Threshold.
+
+GUI controls submit command text through ``PostprocessorWorkspace::submit`` and
+``CommandDispatcher::submit`` to Cubit's command widget. ``PostThresholdCommand``
+uses the application interface; Core stages and evaluates changes before swapping
+state/cache. Command failures use ``CubitMessage.hpp`` / ``PRINT_ERROR``. Threshold
+has no message boxes or silent preview path. Controls refresh under a loading
+guard and must not send commands. Every new class has paired header/source files.
+
+The properties command parser, interface whitelist, workspace page, tree icon,
+filter listing and filter selection distinguish Threshold explicitly. The scalar
+field is stored in the feature definition independently of representation coloring.
+Workspace unit changes convert threshold bounds transactionally and clear geometry
+caches. The code has not been compiled or verified in a native Cubit session.
+
+
+Smooth camera rotation and reset lifecycle
+-------------------------------------------
+
+``AnimationRotation.hpp/.cpp`` defines finite per-axis angles and enabled flags.
+``AnimationRotationRuntime.hpp/.cpp`` retains a transient base camera, continuous
+phase, immutable source snapshot, frame count and last-published camera revision.
+Core reanchors when settings, source snapshot or external camera ownership change.
+``CameraOperations::rotate_world`` rotates position offset and view-up about the
+focal point in fixed world X, Y, Z order. Absolute evaluation from the anchor avoids
+incremental camera drift. Runtime anchors are cleared on source lifecycle changes
+and reset; they are never serialized.
+
+``PostprocessorFrameNavigation`` has separate mesh and camera timers. Camera ticks
+use QElapsedTimer, call the injected elapsed-time dispatcher, and submit
+``post animation advance``. The workspace suppresses its generic command-complete
+panel refresh for these camera-only commands and synchronizes the viewport directly.
+The viewport coalesces redraws and existing presentation credits keep camera
+updates from starving mesh animation. Live manual gestures take priority.
+
+Before Core reset, PostprocessorModule calls PostprocessorGui's command-free
+``prepare_model_reset`` lifecycle hook. It stops navigation/rotation timers,
+invalidates pending callback generations, abandons deformation/plane edits and
+discards camera/legend/label gestures without restoring old values. Reset during
+a synchronous frame/readiness callback must not resume that callback's old work.
+Queued final-frame commits carry a generation token in addition to source/view
+identity. Rendering defers reset synchronization when a VTK frame is already on
+the stack and timer boundaries report C++ exceptions through Cubit messages.
+
+Vector plot architecture
+------------------------
+
+``Representation::vectors`` stores display-only vector settings. The Core
+``ResultVectors`` reader validates explicitly declared component indices,
+validity masks and compatible linear quantity metadata. ``VectorPlotRuntime``
+prepares displayed anchors and normalized directions without mutating source
+buffers. Element and integration-point fields are eligible independently of
+point-only deformation eligibility. Default density selection keeps a bounded
+heap of the lowest deterministic sample ranks.
+
+``PostVectorCommand`` uses the existing field qualifier parser and application
+interface, with transactional Core representation updates. The GUI controls
+only generate and submit commands. ``PostprocessorVectorActors`` renders shared
+arrow geometry through ``vtkGlyph3DMapper`` and owns the arrow actor and separate
+magnitude legend. The shared scene handles both interactive and captured views.
+Original sample provenance is retained on glyph input; generated clip/section
+samples have no invented node identity. Existing mesh picking is unchanged.
+
+The Core fit path uses the same preparation helper and conservative arrow
+bounds. Session JSON stores settings and a durable vector dataset binding;
+legacy records default off. Source refresh resolves that binding before commit.
+Capture manifests include vector settings and vector values use the frozen
+presentation-unit context. See :doc:`../postprocessor/vectors`.
+
+Playback busy retry
+-------------------
+
+Cubit may process navigation timer callbacks while an outer command is active.
+The exact ``Cubit is busy`` exception now leaves navigation ownership intact
+and schedules another mesh tick. Camera ticks likewise wait for their next
+interval. Other exceptions retain the existing reset-and-report behavior.
+This follows the established topology-animation retry route.

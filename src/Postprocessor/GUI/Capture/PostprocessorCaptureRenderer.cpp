@@ -84,8 +84,8 @@ namespace
     }
   };
 }
-bool PostprocessorCaptureRenderer::render(const Postprocessor::CaptureSnapshot& snapshot,
-  const std::shared_ptr<PostprocessorApplicationInterface>& frozen,QByteArray& png,
+bool PostprocessorCaptureRenderer::render_image(const Postprocessor::CaptureSnapshot& snapshot,
+  const std::shared_ptr<PostprocessorApplicationInterface>& frozen,QImage& pixelsOutput,
   QJsonObject& provenance,std::string& error) const
 {
   using namespace Postprocessor;
@@ -138,8 +138,9 @@ bool PostprocessorCaptureRenderer::render(const Postprocessor::CaptureSnapshot& 
     {
       return false;
     }
+    const auto& view = frozen->session().views.at(snapshot.target_id);
     std::array<double,6> bounds;
-    if (!frozen->visible_bounds(snapshot.target_id,bounds,error))
+    if (!view.camera && !frozen->visible_bounds(snapshot.target_id,bounds,error))
     {
       if (error.empty())
       {
@@ -147,7 +148,6 @@ bool PostprocessorCaptureRenderer::render(const Postprocessor::CaptureSnapshot& 
       }
       return false;
     }
-    const auto& view = frozen->session().views.at(snapshot.target_id);
     CameraDefinition camera;
     if (view.camera)
     {
@@ -325,10 +325,24 @@ bool PostprocessorCaptureRenderer::render(const Postprocessor::CaptureSnapshot& 
     return false;
   }
   image.setText("CubitSim.Capture",QString::fromUtf8(metadata));
+  pixelsOutput = std::move(image);
+  provenance = std::move(manifest);
+  return true;
+}
+bool PostprocessorCaptureRenderer::render(const Postprocessor::CaptureSnapshot& snapshot,
+  const std::shared_ptr<PostprocessorApplicationInterface>& frozen,QByteArray& png,
+  QJsonObject& provenance,std::string& error) const
+{
+  QImage image;
+  QJsonObject manifest;
+  if (!render_image(snapshot,frozen,image,manifest,error))
+  {
+    return false;
+  }
   QByteArray candidate;
   QBuffer buffer(&candidate);
   if (!buffer.open(QIODevice::WriteOnly) || !image.save(&buffer,"PNG") ||
-      candidate.size() > CaptureDefaults::maximum_png_bytes)
+      candidate.size() > Postprocessor::CaptureDefaults::maximum_png_bytes)
   {
     error = "Cannot encode capture PNG within the 32 MiB image limit.";
     return false;

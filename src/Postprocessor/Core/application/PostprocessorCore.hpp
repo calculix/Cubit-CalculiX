@@ -10,6 +10,7 @@
 #include "../filters/FilterRuntime.hpp"
 #include "../tables/ResultTableSelector.hpp"
 #include "../representations/ResultFieldSelector.hpp"
+#include "../representations/AnimationRotationRuntime.hpp"
 #include "Framework/Results/ResultSourceReference.hpp"
 
 #include <cstdint>
@@ -52,8 +53,10 @@ namespace Postprocessor
     // in native source length units. False leaves the output range unchanged.
     bool filter_motion_range(const std::string& name,const std::string& view,std::array<double,2>& range,std::string& error) const;
     bool create_filter(FilterDefinition requested,const std::string& view,std::string& error);
+    bool change_threshold(const std::string& name,const ThresholdDefinition& requested,std::string& error);
     bool change_filter(const std::string& name,const std::string& action,const std::string& view,
-      const PlaneDefinition& plane,const std::string& value,std::string& error);
+      const PlaneDefinition& plane,const std::string& value,std::string& error,
+      const ThresholdDefinition* threshold = nullptr);
     std::shared_ptr<vtkPolyData> filtered_entity_edges(const Representation& display,const EntityReference& entity,std::string& error) const;
     std::optional<std::array<double,3>> filtered_entity_position(const Representation& display,const EntityReference& entity) const;
     bool evaluate_output(const Representation& display,std::shared_ptr<const EvaluatedOutput>& output,std::string& error) const;
@@ -105,6 +108,7 @@ namespace Postprocessor
     bool set_frame(const std::string& source_id, const std::string& view_id,
       std::size_t increment_index, std::string& error);
     bool frame_has_mesh(const std::string& source_id, std::size_t increment_index) const;
+    bool advance_animation_rotation(const std::string& source_id,const std::string& view_id,double seconds,std::string& error);
     bool set_animation(const std::string& source_id, const std::string& view_id,
       const AnimationDefinition& animation, std::string& error);
     std::optional<std::array<double,2>> all_frame_range(const std::string& source_id,
@@ -112,6 +116,8 @@ namespace Postprocessor
       const std::set<std::size_t>& hidden = {}) const;
     bool set_coloring(const std::string& source_id, const std::string& view_id,
       const ResultColoring& coloring, std::string& error, bool activateResult = false);
+    bool set_vector_plot(const std::string& source_id,const std::string& view_id,
+      const VectorPlotDefinition& value,std::string& error);
     bool set_deformation(const std::string& source_id, const std::string& view_id,
       const ResultDeformation& deformation, std::string& error);
     std::vector<SimResults::Dataset> mesh_datasets(const std::string& source_id) const;
@@ -179,6 +185,7 @@ namespace Postprocessor
     bool prepare_initial_display(PostprocessorSession& staged, const std::string& source_id,
       const std::optional<std::size_t>& increment, std::string& error) const;
     mutable std::map<std::string,CachedFilterOutput> filter_cache;
+    std::map<std::string,AnimationRotationRuntime> animation_rotation;
     PostprocessorSession state;
     std::map<std::string,SavedRepresentationBinding> saved_bindings;
     std::map<std::string,SavedFrameReference> saved_table_frames;

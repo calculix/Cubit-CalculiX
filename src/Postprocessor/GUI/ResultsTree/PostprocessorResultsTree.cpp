@@ -595,7 +595,7 @@ void PostprocessorResultsTree::set_icons_directory(const std::string& directory)
       {"source","PostprocessorTreeSource"},{"integrationpoints","PostprocessorTreeIntegrationPoints"},
       {"results","PostprocessorTreeResults"},{"field","PostprocessorTreeField"},
       {"tables","PostprocessorTreeTables"},{"table","PostprocessorTreeTable"},
-      {"clip","PostprocessorClip"},{"section","PostprocessorSection"}})
+      {"clip","PostprocessorClip"},{"section","PostprocessorSection"},{"threshold","PostprocessorThreshold"}})
   {
     treeIcons[item.first] = PostprocessorIconLoader::load(directory,item.second);
   }
@@ -1136,6 +1136,10 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
       if (filter.kind == Postprocessor::FilterKind::Section)
       {
         icon = "section";
+      }
+      if (filter.kind == Postprocessor::FilterKind::Threshold)
+      {
+        icon = "threshold";
       }
       item->setIcon(0,treeIcons[icon]);
       item->setToolTip(0,tr("Checked: show this output. Unchecked: hide it. Enable or bypass the filter in its properties."));

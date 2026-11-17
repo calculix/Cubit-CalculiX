@@ -21,8 +21,22 @@ add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Reporting" reporting)
 add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Storage" storage)
 add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Core" model)
 add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Results" results)
+add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Media" media)
 
 add_library(postprocessor_display_code STATIC
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/VectorPlotDefinition.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/ResultVectors.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/VectorPlotRuntime.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/VectorPlotCodec.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/PostprocessorCoreVectors.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorVectorPlotInterface.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/results/VectorCommandText.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/VectorPlot/PostprocessorVectorControls.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/VectorPlot/PostprocessorVectorActors.cpp"
+
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/capture/AnimationCaptureDefinition.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/capture/AnimationCapturePlan.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorAnimationCaptureInterface.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/DatasetAppearance.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/PostprocessorCoreAppearance.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/persistence/DatasetAppearanceCodec.cpp"
@@ -37,6 +51,15 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorReportResultImages.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/application/PostprocessorCoreUnits.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/ResultColoringUnits.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/AnimationRotationCodec.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/AnimationRotation.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/AnimationRotationRuntime.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/FilterDefinition.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/ThresholdDefinition.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/ThresholdFilter.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/ThresholdCodec.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/filters/ThresholdCommandText.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Filters/Threshold/PostprocessorThresholdControls.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/PlaneOperations.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/ClipFilter.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/SectionFilter.cpp"
@@ -127,7 +150,7 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Navigation/PostprocessorFrameNavigation.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Navigation/PostprocessorDeformationControls.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/ResultsTree/PostprocessorResultsTree.cpp")
-target_link_libraries(postprocessor_display_code PUBLIC Threads::Threads cubitsim_reporting cubitsim_results cubitsim_results_io VTK::IOXML VTK::CommonDataModel
+target_link_libraries(postprocessor_display_code PUBLIC cubitsim_media Threads::Threads cubitsim_reporting cubitsim_results cubitsim_results_io VTK::IOXML VTK::CommonDataModel
   VTK::FiltersGeneral VTK::FiltersCore VTK::FiltersGeometry VTK::RenderingCore VTK::RenderingAnnotation VTK::RenderingOpenGL2 Qt6::Core Qt6::Widgets)
 target_compile_features(postprocessor_display_code PUBLIC cxx_std_17)
 add_executable(postprocessor_display_tests DisplayTests.cpp)
@@ -156,7 +179,7 @@ if (WIN32)
   set_property(TEST postprocessor_camera APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
 endif ()
 
-add_executable(postprocessor_navigation_tests NavigationTests.cpp)
+add_executable(postprocessor_navigation_tests NavigationTests.cpp AnimationRotationTests.cpp)
 target_link_libraries(postprocessor_navigation_tests PRIVATE postprocessor_display_code)
 add_test(NAME postprocessor_navigation COMMAND postprocessor_navigation_tests)
 set_tests_properties(postprocessor_navigation PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
@@ -240,13 +263,13 @@ target_sources(postprocessor_selection_tests PRIVATE AnnotationTests.cpp LegendT
 
 target_sources(postprocessor_selection_tests PRIVATE PlotTests.cpp)
 
-target_sources(postprocessor_selection_tests PRIVATE CaptureTests.cpp)
+target_sources(postprocessor_selection_tests PRIVATE CaptureTests.cpp AnimationCaptureTests.cpp)
 
 target_sources(postprocessor_selection_tests PRIVATE FieldSelectorTests.cpp)
 
 target_sources(postprocessor_selection_tests PRIVATE TableSelectorTests.cpp)
 
-add_executable(postprocessor_filter_tests FilterTests.cpp)
+add_executable(postprocessor_filter_tests FilterTests.cpp ThresholdTests.cpp VectorPlotTests.cpp)
 target_link_libraries(postprocessor_filter_tests PRIVATE postprocessor_display_code)
 add_test(NAME postprocessor_filters COMMAND postprocessor_filter_tests)
 set_tests_properties(postprocessor_filters PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

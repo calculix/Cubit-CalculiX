@@ -32,7 +32,7 @@ namespace Postprocessor
     SavedFrameReference frame;
     std::vector<SavedDatasetReference> hidden;
     std::vector<SavedDatasetAppearance> appearance;
-    std::optional<SavedDatasetReference> color_dataset, deformation_dataset;
+    std::optional<SavedDatasetReference> color_dataset, deformation_dataset, vector_dataset;
   };
   struct PostprocessorProjectState
   {

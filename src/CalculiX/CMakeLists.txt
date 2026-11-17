@@ -233,7 +233,7 @@ endif()
 
 # The wrapping command directly consumes the shared geometry API.
 target_link_libraries(calculix_commands cubitsim_geometry)
-target_link_libraries(calculix_core cubitsim_drawing)
+target_link_libraries(calculix_core cubitsim_drawing cubitsim_media)
 target_link_libraries(calculix_gui cubitsim_drawing)
 
 # The material-library GUI also uses the shared storage tool directly.

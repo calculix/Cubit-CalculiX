@@ -19,7 +19,7 @@ namespace Postprocessor
     {
       return entry.second.name == name;
     });
-    if (filter == state.filters.end())
+    if (filter == state.filters.end() || filter->second.kind == FilterKind::Threshold)
     {
       error = "The selected plane filter is unavailable.";
       return false;
@@ -138,7 +138,7 @@ namespace Postprocessor
     requested.id = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
     requested.revision = 1;
     if (source_operation_active || state.filters.size() >= FilterDefaults::maximum_filters ||
-        scene_revision == std::numeric_limits<std::uint64_t>::max() || !normalize_plane(requested.plane,error) ||
+        scene_revision == std::numeric_limits<std::uint64_t>::max() || (requested.kind != FilterKind::Threshold && !normalize_plane(requested.plane,error)) ||
         !valid_filter(requested,error) || state.sources.count(requested.input.object_id) == 0 || state.views.count(view) == 0 ||
         std::any_of(state.filters.begin(),state.filters.end(),[&](const auto& item)
         {
@@ -168,7 +168,7 @@ namespace Postprocessor
     representation.visible = true;
     representation.animation.playing = false;
     const auto sourceData = result_data(requested.input.object_id);
-    if (sourceData)
+    if (sourceData && requested.kind != FilterKind::Threshold)
     {
       requested.coordinate_unit = filter_coordinate_unit(*sourceData,representation.increment_index);
     }
@@ -211,7 +211,7 @@ namespace Postprocessor
     return true;
   }
   bool PostprocessorCore::change_filter(const std::string& name,const std::string& action,const std::string& view,
-    const PlaneDefinition& requestedPlane,const std::string& value,std::string& error)
+    const PlaneDefinition& requestedPlane,const std::string& value,std::string& error,const ThresholdDefinition* threshold)
   {
     error.clear();
     const auto found = std::find_if(state.filters.begin(),state.filters.end(),[&](const auto& item)
@@ -231,7 +231,15 @@ namespace Postprocessor
       return item.second.view_id == view && item.second.visible && item.second.input.owner == OutputOwner::Feature &&
         item.second.input.object_id == definition.id;
     });
-    if (action == "plane")
+    if (action == "threshold" && definition.kind == FilterKind::Threshold && threshold)
+    {
+      if (!valid_threshold(*threshold,error))
+      {
+        return false;
+      }
+      definition.threshold = *threshold;
+    }
+    else if (action == "plane" && definition.kind != FilterKind::Threshold)
     {
       auto plane = requestedPlane;
       if (!normalize_plane(plane,error))
@@ -252,7 +260,7 @@ namespace Postprocessor
     {
       definition.enabled = action == "enable";
     }
-    else if (action == "reference" && definition.kind == FilterKind::Clip && (value == "on" || value == "off"))
+    else if (action == "reference" && (definition.kind == FilterKind::Clip || definition.kind == FilterKind::Threshold) && (value == "on" || value == "off"))
     {
       definition.reference_visible = value == "on";
     }
@@ -391,17 +399,25 @@ namespace Postprocessor
       {
         display.animation.playing = false;
       }
-      if ((action == "plane" || action == "keep" || action == "enable" || action == "disable" || action == "reference") && display.visible && display.input.owner == OutputOwner::Feature && display.input.object_id == definition.id)
+      if ((action == "threshold" || action == "plane" || action == "keep" || action == "enable" || action == "disable" || action == "reference") && (display.visible || action == "threshold") && display.input.owner == OutputOwner::Feature && display.input.object_id == definition.id)
       {
         const auto source = result_data(definition.input.object_id);
         if (source)
         {
           auto result = std::make_shared<EvaluatedOutput>();
-          if (!evaluate_filter(definition,display,source,*result,error))
+          auto validation = definition;
+          if (action == "threshold")
+          {
+            validation.enabled = true;
+          }
+          if (!evaluate_filter(validation,display,source,*result,error))
           {
             return false;
           }
-          nextCache[display.id] = {definition.revision,display.increment_index,display.deformation,source,result};
+          if (validation.enabled == definition.enabled)
+          {
+            nextCache[display.id] = {definition.revision,display.increment_index,display.deformation,source,result};
+          }
         }
       }
     }
@@ -413,6 +429,10 @@ namespace Postprocessor
     filter_cache.swap(nextCache);
     ++scene_revision;
     return true;
+  }
+  bool PostprocessorCore::change_threshold(const std::string& name,const ThresholdDefinition& requested,std::string& error)
+  {
+    return change_filter(name,"threshold",state.active_view_id,{},"",error,&requested);
   }
   bool PostprocessorCore::evaluate_output(const Representation& display,std::shared_ptr<const EvaluatedOutput>& output,std::string& error) const
   {
@@ -530,6 +550,25 @@ namespace Postprocessor
       return {};
     }
     const auto& frame = data->increments[display.increment_index];
+    if (filter->second.kind == FilterKind::Threshold)
+    {
+      std::shared_ptr<const EvaluatedOutput> output;
+      if (!evaluate_output(display,output,error))
+      {
+        return {};
+      }
+      for (const auto& part : output->parts)
+      {
+        if (part.dataset == entity.dataset_id)
+        {
+          const auto indices = entity_indices(part.mesh.get(),entity,error);
+          auto bypass = filter->second;
+          bypass.enabled = false;
+          return filter_parent_edges(part.mesh.get(),bypass,frame,part.dataset,indices,error);
+        }
+      }
+      return {};
+    }
     for (const auto& part : result_mesh_parts(frame.dataset.get()))
     {
       if (part.first != entity.dataset_id)

@@ -2,9 +2,11 @@
 #include "PostprocessorCommands.hpp"
 #include "units/PostUnitsCommand.hpp"
 #include "filters/PostClipCommand.hpp"
+#include "filters/PostThresholdCommand.hpp"
 #include "filters/PostSectionCommand.hpp"
 #include "filters/PostFilterCommand.hpp"
 #include "capture/PostCaptureCommand.hpp"
+#include "capture/PostCaptureAnimationCommand.hpp"
 #include "plots/PostPlotCommand.hpp"
 #include "annotations/PostLabelCommand.hpp"
 #include "annotations/PostLabelsCommand.hpp"
@@ -16,6 +18,7 @@
 #include "sources/PostRefreshCommand.hpp"
 #include "results/PostFrameCommand.hpp"
 #include "results/PostAnimationCommand.hpp"
+#include "results/PostVectorCommand.hpp"
 #include "sources/PostListCommand.hpp"
 #include "sources/PostSelectCommand.hpp"
 #include "sources/PostCloseCommand.hpp"
@@ -40,7 +43,7 @@ PostprocessorCommands::PostprocessorCommands(std::weak_ptr<PostprocessorApplicat
 
 std::vector<std::string> PostprocessorCommands::command_keys() const
 {
-  return {"PostDisplayCommand", "PostViewToolsCommand", "PostUnitsCommand", "PostClipCommand", "PostSectionCommand", "PostFilterCommand", "PostCaptureCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
+  return {"PostDisplayCommand", "PostViewToolsCommand", "PostUnitsCommand", "PostClipCommand", "PostSectionCommand", "PostThresholdCommand", "PostFilterCommand", "PostCaptureCommand", "PostCaptureAnimationCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostVectorCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
     "PostShowCommand", "PostHideCommand", "PostViewFitCommand", "PostViewCameraCommand",
     "PostViewRotateCommand", "PostViewPanCommand", "PostViewZoomCommand"};
 }
@@ -53,6 +56,10 @@ CubitCommand* PostprocessorCommands::create_command(const std::string& key) {
   {
     return new PostViewToolsCommand(application);
   }
+  if (key == "PostThresholdCommand")
+  {
+    return new PostThresholdCommand(application);
+  }
   if (key == "PostClipCommand") {
     return new PostClipCommand(application);
   }
@@ -61,6 +68,10 @@ CubitCommand* PostprocessorCommands::create_command(const std::string& key) {
   }
   if (key == "PostFilterCommand") {
     return new PostFilterCommand(application);
+  }
+  if (key == "PostCaptureAnimationCommand")
+  {
+    return new PostCaptureAnimationCommand(application);
   }
   if (key == "PostCaptureCommand") {
     return new PostCaptureCommand(application);
@@ -91,6 +102,10 @@ CubitCommand* PostprocessorCommands::create_command(const std::string& key) {
   }
   if (key == "PostDeformCommand") {
     return new PostDeformCommand(application);
+  }
+  if (key == "PostVectorCommand")
+  {
+    return new PostVectorCommand(application);
   }
   if (key == "PostAnimationCommand") {
     return new PostAnimationCommand(application);

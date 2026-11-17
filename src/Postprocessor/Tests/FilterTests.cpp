@@ -1,4 +1,10 @@
 #include <type_traits>
+#include "ThresholdTests.hpp"
+#include "VectorPlotTests.hpp"
+#include "Postprocessor/GUI/Filters/Threshold/PostprocessorThresholdControls.hpp"
+#include <QComboBox>
+#include <QLineEdit>
+#include <QPushButton>
 #include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "Postprocessor/Core/filters/FilterCodec.hpp"
 #include "Postprocessor/Core/persistence/PostprocessorSessionCodec.hpp"
@@ -520,5 +526,58 @@ int main(int argc,char** argv)
   check(filters_from_json(QJsonValue(QJsonValue::Undefined),legacy,error) && legacy.empty(),"Legacy project filter defaults failed");
   slider_cases<PostprocessorClipControls>(FilterKind::Clip,"Clip");
   slider_cases<PostprocessorSectionControls>(FilterKind::Section,"Section");
+  failures += threshold_tests();
+  failures += vector_plot_tests();
+  {
+    Registry registry;
+    auto app = std::make_shared<PostprocessorApplicationInterface>(registry);
+    check(app->open_job("test",1,std::nullopt,error),"Cannot open threshold GUI fixture");
+    FilterDefinition threshold;
+    threshold.name = "Threshold test";
+    threshold.kind = FilterKind::Threshold;
+    const auto& field = registry.provider.data->increments.front().fields.front();
+    threshold.threshold.field = preferred_field_selection(field,field_group_key(field));
+    threshold.threshold.lower = 0;
+    threshold.threshold.upper = 1;
+    check(bind_threshold_units(threshold.threshold,field,error),"Cannot bind threshold GUI units");
+    check(app->create_filter(threshold,"Mesh",error),"Cannot create threshold feature");
+    const auto definition = app->session().filters.begin()->second;
+    auto invalid = definition.threshold;
+    invalid.lower = 2;
+    check(!app->change_threshold(definition.name,invalid,error) &&
+      app->session().filters.at(definition.id).revision == definition.revision,
+      "Invalid threshold update changed the committed revision");
+    std::vector<QString> commands;
+    PostprocessorThresholdControls controls(app,[&](const QString& command)
+    {
+      commands.push_back(command);
+    },nullptr);
+    controls.refresh();
+    check(commands.empty(),"Threshold refresh emitted a command");
+    auto* rule = controls.findChild<QComboBox*>("Postprocessor.Threshold.NodeRule");
+    check(rule && rule->count() == 2 && rule->currentIndex() == 0,"Threshold node options/default differ");
+    if (rule)
+    {
+      rule->setCurrentIndex(1);
+      QMetaObject::invokeMethod(rule,"activated",Qt::DirectConnection,Q_ARG(int,1));
+      check(commands.size() == 1 && commands.back() == "post threshold nodes \"Threshold test\" any",
+        "Threshold node action bypassed command submission");
+    }
+    auto* lower = controls.findChild<QLineEdit*>("Postprocessor.Threshold.Lower");
+    if (lower)
+    {
+      lower->setText("2");
+      QMetaObject::invokeMethod(lower,"editingFinished",Qt::DirectConnection);
+      check(commands.size() == 2 && commands.back().startsWith("post threshold configure ") &&
+        commands.back().contains("lower 2 upper 1"),"Threshold GUI intercepted Core range validation");
+    }
+    controls.refresh();
+    check(commands.size() == 2,"Refreshing threshold controls emitted commands");
+    check(app->change_filter(definition.name,"disable","",{},"",error),"Cannot bypass threshold");
+    auto changed = definition.threshold;
+    changed.field.component = "missing";
+    check(!app->change_threshold(definition.name,changed,error),"Bypassed threshold accepted an unavailable component");
+    check(app->close_all_sources(error) && app->session().filters.empty(),"Source closure left threshold features");
+  }
   return failures;
 }

@@ -545,6 +545,13 @@ void PostprocessorSectionControls::cancel_motion()
   motionStart.reset();
   motionPreviewed = false;
 }
+
+void PostprocessorSectionControls::discard_pending()
+{
+  motionTimer->stop();
+  motionStart.reset();
+  motionPreviewed = false;
+}
 bool PostprocessorSectionControls::eventFilter(QObject* watched,QEvent* event)
 {
   if (watched == position && (event->type() == QEvent::KeyPress || event->type() == QEvent::ShortcutOverride) &&

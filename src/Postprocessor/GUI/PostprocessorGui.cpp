@@ -81,6 +81,14 @@ void PostprocessorGui::refresh()
   }
 }
 
+void PostprocessorGui::prepare_model_reset()
+{
+  if (workspace)
+  {
+    workspace->prepare_model_reset();
+  }
+}
+
 bool PostprocessorGui::workspace_view(WorkspaceView& view, std::string& error)
 {
   error.clear();

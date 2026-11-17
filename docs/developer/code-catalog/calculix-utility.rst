@@ -32,10 +32,6 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Utility/ElementNodeOrdering.hpp <../../../src/CalculiX/Utility/ElementNodeOrdering.hpp>`
      - ``Implementation / integration``
-   * - :download:`src/CalculiX/Utility/GifAnimation.cpp <../../../src/CalculiX/Utility/GifAnimation.cpp>`
-     - ``GifWriterGuard``
-   * - :download:`src/CalculiX/Utility/GifAnimation.hpp <../../../src/CalculiX/Utility/GifAnimation.hpp>`
-     - ``GifAnimation``
    * - :download:`src/CalculiX/Utility/PersistenceTable.hpp <../../../src/CalculiX/Utility/PersistenceTable.hpp>`
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Utility/PlotChart.cpp <../../../src/CalculiX/Utility/PlotChart.cpp>`
@@ -56,3 +52,5 @@ changing a path. External utility implementations are excluded.
      - ``IsMap, IsVector, TopologyHdf5``
    * - :download:`src/CalculiX/Utility/TopologyIterationIds.hpp <../../../src/CalculiX/Utility/TopologyIterationIds.hpp>`
      - ``Implementation / integration``
+
+``GifAnimation`` moved to ``Framework/Media``; see :doc:`../media`.

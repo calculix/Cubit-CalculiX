@@ -81,6 +81,13 @@ void PostprocessorLegendInteraction::cancel()
   moved = false;
   previewed = false;
 }
+void PostprocessorLegendInteraction::discard()
+{
+  pending = false;
+  hit.reset();
+  moved = false;
+  previewed = false;
+}
 bool PostprocessorLegendInteraction::preview_pending() const
 {
   return pending;

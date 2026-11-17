@@ -1,14 +1,15 @@
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include "AnimationRotationTests.hpp"
 #include "Postprocessor/GUI/ResultsTree/PostprocessorResultsTree.hpp"
 #include "Postprocessor/GUI/Navigation/PostprocessorFrameNavigation.hpp"
 #include <QApplication>
 #include <QComboBox>
 #include <QSlider>
-#include <QCheckBox>
 #include <QSpinBox>
 #include <QToolButton>
 #include <QTimer>
 #include <iostream>
+#include <stdexcept>
 
 namespace
 {
@@ -177,6 +178,7 @@ int main(int argc, char** argv)
   Postprocessor::AnimationDefinition playback;
   playback.loop = false; // Explicitly test the non-loop path.
   bool presentationReady = true;
+  bool cubitBusy = false;
   std::size_t shown = 0;
   int commits = 0;
   int ticks = 0;
@@ -215,17 +217,21 @@ int main(int argc, char** argv)
     animatedPage->refresh(data,shown,mesh,"animation",playback);
   },[&]()
   {
+    if (cubitBusy)
+    {
+      throw std::runtime_error("Cubit is busy");
+    }
     return presentationReady;
   });
   animatedPage = &animated;
   animated.refresh(data,shown,mesh,"animation",playback);
   animated.show();
   auto* playButton = animated.findChild<QToolButton*>("Postprocessor.Animation.Play");
-  auto* loopBox = animated.findChild<QCheckBox*>("Postprocessor.Animation.Loop");
+  auto* loopButton = animated.findChild<QToolButton*>("Postprocessor.Animation.Loop");
   auto* fpsBox = animated.findChild<QSpinBox*>("Postprocessor.Animation.Fps");
   auto* timer = animated.findChild<QTimer*>("Postprocessor.Animation.Timer");
-  check(playButton && loopBox && fpsBox && timer,"Animation controls are missing");
-  if (playButton && loopBox && fpsBox && timer)
+  check(playButton && loopButton && fpsBox && timer,"Animation controls are missing");
+  if (playButton && loopButton && fpsBox && timer)
   {
     playButton->click();
     check(playback.playing && timer->isActive(),"Play did not start the animation timer");
@@ -238,6 +244,11 @@ int main(int argc, char** argv)
     check(playback.playing && timer->isActive() && timer->interval() == interval,"Unit text refresh restarted/stopped animation");
     check(framework_units().set_display_unit("postprocessor","time","s",unitError),"Cannot restore navigation time unit");
 
+    cubitBusy = true;
+    QMetaObject::invokeMethod(timer,"timeout",Qt::DirectConnection);
+    check(shown == 0 && ticks == 0 && playback.playing && timer->isActive(),
+      "A transient Cubit busy exception stopped playback instead of retrying");
+    cubitBusy = false;
     presentationReady = false;
     QMetaObject::invokeMethod(timer,"timeout",Qt::DirectConnection);
     check(shown == 0 && ticks == 0 && commits == 0 && playback.playing && timer->isActive(),
@@ -249,7 +260,8 @@ int main(int argc, char** argv)
     QMetaObject::invokeMethod(timer,"timeout",Qt::DirectConnection);
     QCoreApplication::processEvents();
     check(!playback.playing && !timer->isActive() && commits == 1,"Non-loop animation did not stop/commit at the last frame");
-    loopBox->setChecked(true);
+    check(loopButton->isCheckable() && !loopButton->isChecked(),"Loop button did not reflect the current setting");
+    loopButton->click();
     playButton->click();
     fpsBox->setValue(5);
     check(shown == 0 && playback.frames_per_second == 5 && timer->interval() == 200,"Restart at last frame or live FPS update failed");
@@ -258,7 +270,7 @@ int main(int argc, char** argv)
     QMetaObject::invokeMethod(timer,"timeout",Qt::DirectConnection);
     animated.refresh(data,shown,mesh,"animation",playback);
     check(shown == 0 && playback.playing && commits == 1,"Loop did not wrap silently to the first frame");
-    loopBox->setChecked(false);
+    loopButton->click();
     QMetaObject::invokeMethod(timer,"timeout",Qt::DirectConnection);
     animated.refresh(data,shown,mesh,"animation",playback);
     QMetaObject::invokeMethod(timer,"timeout",Qt::DirectConnection);
@@ -271,6 +283,7 @@ int main(int argc, char** argv)
   session = Postprocessor::PostprocessorSession{};
   refresh();
   check(tree.topLevelItemCount() == 0, "Reset left stale tree items");
+  failures += animation_rotation_tests();
   if (failures == 0) {
     return 0;
   } else {

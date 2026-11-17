@@ -1,6 +1,82 @@
 #include <type_traits>
 #include "PostprocessorApplicationInterface.hpp"
 #include <algorithm>
+bool PostprocessorApplicationInterface::change_threshold(const std::string& name,
+  const Postprocessor::ThresholdDefinition& requested,std::string& error)
+{
+  return core.change_threshold(name,requested,error);
+}
+bool PostprocessorApplicationInterface::threshold_field(const std::string& sourceName,
+  const Postprocessor::ResultFieldSelector& selector,const std::string& component,bool magnitude,
+  std::optional<std::size_t> dataset,Postprocessor::ThresholdDefinition& requested,std::string& error) const
+{
+  std::string source = core.session().active_source_id;
+  if (!sourceName.empty())
+  {
+    source = core.source_id_from_name(sourceName);
+  }
+  if (dataset && requested.field.dataset_id == dataset && !requested.dataset_kind.empty())
+  {
+    std::optional<std::size_t> rebound;
+    for (const auto& metadata : core.mesh_datasets(source))
+    {
+      if (metadata.kind == requested.dataset_kind && metadata.name == requested.dataset_name &&
+          metadata.model_id == requested.dataset_model)
+      {
+        if (rebound)
+        {
+          error = "The threshold dataset identity is ambiguous.";
+          return false;
+        }
+        rebound = metadata.id;
+      }
+    }
+    if (!rebound)
+    {
+      error = "The saved threshold dataset is unavailable.";
+      return false;
+    }
+    dataset = rebound;
+  }
+  Postprocessor::ResultFieldGroup match;
+  if (!Postprocessor::resolve_result_field(core.field_groups(source,std::nullopt),selector,dataset,
+      component,magnitude,false,match,error))
+  {
+    return false;
+  }
+  if (!match.unit_issue.empty())
+  {
+    error = match.unit_issue;
+    return false;
+  }
+  auto candidate = requested;
+  candidate.field = {dataset,match.field.array_name,match.field.association,component,magnitude,match.key};
+  candidate.dataset_kind.clear();
+  candidate.dataset_name.clear();
+  candidate.dataset_model = -1;
+  if (dataset)
+  {
+    const auto metadata = core.mesh_datasets(source);
+    const auto found = std::find_if(metadata.begin(),metadata.end(),[&](const auto& entry)
+    {
+      return entry.id == *dataset;
+    });
+    if (found == metadata.end())
+    {
+      error = "The threshold dataset is unavailable.";
+      return false;
+    }
+    candidate.dataset_kind = found->kind;
+    candidate.dataset_name = found->name;
+    candidate.dataset_model = found->model_id;
+  }
+  if (!Postprocessor::bind_threshold_units(candidate,match.field,error))
+  {
+    return false;
+  }
+  requested = std::move(candidate);
+  return true;
+}
 std::string PostprocessorApplicationInterface::output_source(const Postprocessor::OutputReference& input) const
 {
   return core.output_source(input);
@@ -45,6 +121,10 @@ bool PostprocessorApplicationInterface::evaluate_output(const Postprocessor::Rep
 std::string PostprocessorApplicationInterface::suggested_filter_name(Postprocessor::FilterKind kind) const
 {
   const std::string prefix = [&]() -> std::string {
+    if (kind == Postprocessor::FilterKind::Threshold)
+    {
+      return Postprocessor::FilterDefaults::threshold_name_prefix;
+    }
     if (kind == Postprocessor::FilterKind::Clip) {
       return Postprocessor::FilterDefaults::clip_name_prefix;
     } else {

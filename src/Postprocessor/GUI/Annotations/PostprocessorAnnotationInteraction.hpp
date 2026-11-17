@@ -23,6 +23,7 @@ public:
   void flush_preview();
   bool preview_pending() const;
   void cancel();
+  void discard();
 private:
   bool owns_label() const;
   bool owns_definition() const;

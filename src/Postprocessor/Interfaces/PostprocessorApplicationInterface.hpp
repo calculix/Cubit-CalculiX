@@ -5,6 +5,7 @@
 #include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "Postprocessor/Core/representations/ResultFieldSelector.hpp"
 #include "Postprocessor/Core/options/PostprocessorUserOptions.hpp"
+#include "Postprocessor/Core/capture/AnimationCapturePlan.hpp"
 
 #include <optional>
 #include <functional>
@@ -37,6 +38,16 @@ public:
     const std::shared_ptr<PostprocessorApplicationInterface>&,QByteArray&,QJsonObject&,std::string&)>;
   using CaptureSizer = std::function<std::array<int,2>(Postprocessor::CaptureTarget,const std::string&)>;
   void set_capture_renderer(CaptureRenderer renderer,CaptureSizer sizer = {});
+  using AnimationStarter = std::function<bool(const Postprocessor::AnimationCapturePlan&,
+    const std::shared_ptr<PostprocessorApplicationInterface>&,std::string&)>;
+  void set_animation_export_services(AnimationStarter start,std::function<void()> cancel,
+    std::function<bool()> active,std::function<std::string()> status);
+  bool start_animation_capture(const Postprocessor::AnimationCaptureDefinition& request,std::string& error) const;
+  void cancel_animation_capture() const;
+  bool animation_capture_active() const;
+  std::string animation_capture_status() const;
+  bool load_animation_sample(const Postprocessor::AnimationCapturePlan& plan,std::size_t index,
+    Postprocessor::CaptureSnapshot& frame,std::string& error);
   std::array<int,2> capture_reference_size(Postprocessor::CaptureTarget target,const std::string& id) const;
   bool render_capture(const Postprocessor::CaptureDefinition& request,QByteArray& png,QJsonObject& provenance,std::string& error) const;
   // Detached report rendering; never changes the live view or source state.
@@ -88,6 +99,10 @@ public:
   bool display_matches_source(const Postprocessor::Representation& display,const std::string& source,const std::string& view) const;
   bool filter_motion_range(const std::string& name,std::array<double,2>& range,std::string& error) const;
   bool create_filter(Postprocessor::FilterDefinition requested,const std::string& sourceName,std::string& error);
+  bool change_threshold(const std::string& name,const Postprocessor::ThresholdDefinition& requested,std::string& error);
+  bool threshold_field(const std::string& sourceName,const Postprocessor::ResultFieldSelector& selector,
+    const std::string& component,bool magnitude,std::optional<std::size_t> dataset,
+    Postprocessor::ThresholdDefinition& requested,std::string& error) const;
   bool change_filter(const std::string& name,const std::string& action,const std::string& view,
     const Postprocessor::PlaneDefinition& plane,const std::string& value,std::string& error);
   std::shared_ptr<vtkPolyData> filtered_entity_edges(const Postprocessor::Representation& display,const Postprocessor::EntityReference& entity,std::string& error) const;
@@ -129,12 +144,17 @@ public:
   bool close_all_sources(std::string& error);
   bool reset(std::string& error);
   std::optional<Postprocessor::AnimationDefinition> animation(const std::string& source_name, std::string& error) const;
+  bool advance_animation_rotation(const std::string& source,double seconds,std::string& error);
   bool set_animation(const std::string& source_name, const Postprocessor::AnimationDefinition& animation, std::string& error);
   std::optional<Postprocessor::ResultColoring> coloring(const std::string& source_name, std::string& error) const;
   std::optional<std::array<double,2>> all_frame_range(const std::string& source_id,
     const Postprocessor::FieldSelection& selection,std::string& error,
     const std::set<std::size_t>& hidden = {}) const;
   bool set_coloring(const std::string& source_name, const Postprocessor::ResultColoring& coloring, std::string& error);
+  std::optional<Postprocessor::VectorPlotDefinition> vector_plot(const std::string& name,std::string& error) const;
+  bool set_vector_plot(const std::string& name,const Postprocessor::VectorPlotDefinition& value,std::string& error);
+  bool vector_field(const std::string& name,const std::string& field,std::optional<std::size_t> dataset,
+    std::string& error,const Postprocessor::FieldQualifiers& qualifiers = {});
   std::optional<Postprocessor::ResultDeformation> deformation(const std::string& source_name, std::string& error) const;
   bool set_deformation(const std::string& source_name, const Postprocessor::ResultDeformation& deformation, std::string& error);
   bool deform_field(const std::string& source_name, const std::string& field,
@@ -168,6 +188,10 @@ public:
     std::uint64_t revision, const Postprocessor::CameraDefinition& camera, std::string& error);
 
 private:
+  AnimationStarter animationStarter;
+  std::function<void()> animationCancel;
+  std::function<bool()> animationActive;
+  std::function<std::string()> animationStatus;
   PropertiesHandler propertiesHandler;
   CaptureRenderer captureRenderer;
   CaptureSizer captureSizer;

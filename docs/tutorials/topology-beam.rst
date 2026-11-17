@@ -281,3 +281,11 @@ the iteration's computed stiffness factors to this new job.
 Inspect the new solve and its physical displacements and stresses through the
 normal results workflow. If the remaining model is unsuitable, reconsider the
 chosen design or threshold using the corresponding original mesh.
+
+Material preparation in the example
+-----------------------------------
+
+Creating Steel already installs the supported material cards in the inactive
+state. The beam journals configure the existing elastic card and activate it
+after entering its SI row. They no longer try to add that card a second time.
+See :doc:`../framework/materials` for the same pattern in other examples.

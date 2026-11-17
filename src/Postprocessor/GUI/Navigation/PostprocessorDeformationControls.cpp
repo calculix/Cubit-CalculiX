@@ -597,6 +597,13 @@ void PostprocessorDeformationControls::cancel_scale()
   }
 }
 
+void PostprocessorDeformationControls::discard_pending()
+{
+  scaleTimer->stop();
+  baseline.reset();
+  scaleOrigin.reset();
+}
+
 bool PostprocessorDeformationControls::eventFilter(QObject* watched, QEvent* event)
 {
   if (watched == scale && event->type() == QEvent::KeyPress)

@@ -281,3 +281,14 @@ process is resolved.
 The topology toolbar's final Alpha wrap action submits the existing wrap command
 with the selected iteration, six-decimal displayed threshold, generated STL name
 and ``overwrite``. Alpha and offset remain command defaults; import remains on.
+
+
+Shared GIF encoder
+--------------------
+
+The encoder moved from CalculiX/Utility to Framework/Media/GifAnimation.hpp/.cpp
+and is linked through cubitsim_media. TopologyAnimation still owns CalculiX-specific
+preview/capture and publication; its command/API defaults remain looping GIFs.
+Encoding retains cancellation and progress support. Centisecond delay rounding is
+now distributed across frames, so fractional GIF delays do not accumulate a speed
+error. The same helper serves Postprocessor export. See :doc:`media`.

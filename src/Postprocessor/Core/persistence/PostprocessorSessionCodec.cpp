@@ -3,6 +3,8 @@
 #include "../representations/ResultColoringUnits.hpp"
 #include <type_traits>
 #include "PostprocessorSessionCodec.hpp"
+#include "../representations/VectorPlotCodec.hpp"
+#include "../representations/AnimationRotationCodec.hpp"
 #include "DatasetAppearanceCodec.hpp"
 #include "../filters/FilterCodec.hpp"
 #include "../plots/PlotCodec.hpp"
@@ -382,7 +384,17 @@ namespace Postprocessor
             return QJsonValue(QJsonValue::Null);
           }
         }()},
-        {"appearance",appearance},{"coloring",coloring},{"deformation",deformation},{"fps",static_cast<int>(display.animation.frames_per_second)},{"loop",display.animation.loop}});
+        {"vector_dataset",[&]() -> QJsonValue
+        {
+          if (binding.vector_dataset)
+          {
+            return dataset_json(*binding.vector_dataset);
+          }
+          return QJsonValue(QJsonValue::Null);
+        }()},
+        {"vectors",vector_plot_to_json(display.vectors)},
+        {"appearance",appearance},{"coloring",coloring},{"deformation",deformation},{"fps",static_cast<int>(display.animation.frames_per_second)},{"loop",display.animation.loop},
+        {"rotation",animation_rotation_to_json(display.animation.rotation)}});
     }
     for (const auto& item : state.layout.nodes)
     {
@@ -684,9 +696,9 @@ namespace Postprocessor
           binding.appearance.push_back(saved);
         }
       }
-      for (const auto* key : {"color_dataset","deformation_dataset"})
+      for (const auto* key : {"color_dataset","deformation_dataset","vector_dataset"})
       {
-        if (!object.value(QLatin1String(key)).isNull())
+        if (!object.value(QLatin1String(key)).isNull() && !object.value(QLatin1String(key)).isUndefined())
         {
           SavedDatasetReference data;
           if (!dataset_read(object.value(QLatin1String(key)),data))
@@ -695,6 +707,8 @@ namespace Postprocessor
           }
           if (std::string(key) == "color_dataset") {
             binding.color_dataset = data;
+          } else if (std::string(key) == "vector_dataset") {
+            binding.vector_dataset = data;
           } else {
             binding.deformation_dataset = data;
           }
@@ -735,6 +749,10 @@ namespace Postprocessor
         }
         display.coloring.legend_position = position;
       }
+      if (!vector_plot_from_json(object.value("vectors"),display.vectors,error))
+      {
+        return false;
+      }
       const auto deform = object.value("deformation").toObject();
       int deformMode = -1, fps = 0;
       if (!boolean(deform,"enabled",display.deformation.enabled) || !field_read(deform.value("field"),display.deformation.field) ||
@@ -747,6 +765,10 @@ namespace Postprocessor
       display.deformation.field_mode = static_cast<DeformationFieldMode>(deformMode);
       display.animation.frames_per_second = static_cast<unsigned int>(fps);
       display.animation.playing = false;
+      if (!animation_rotation_from_json(object.value("rotation"),display.animation.rotation,error))
+      {
+        return false;
+      }
       candidate.bindings.emplace(display.id,std::move(binding));
       if (!state.representations.emplace(display.id,std::move(display)).second)
       {
@@ -987,7 +1009,8 @@ namespace Postprocessor
       }();
       if (item.first.empty() || item.first != value.id || !inputValid || value.input.port != 0 || state.views.count(value.view_id) == 0 ||
           !connections.emplace(std::to_string(static_cast<int>(value.input.owner))+":"+value.input.object_id,value.view_id).second || project.bindings.count(value.id) == 0 ||
-          !valid_coloring(value.coloring,error) || !valid_deformation(value.deformation,error))
+          !valid_coloring(value.coloring,error) || !valid_deformation(value.deformation,error) || !valid_vector_plot(value.vectors,error) ||
+          !valid_animation_rotation(value.animation.rotation,error))
       {
         return false;
       }

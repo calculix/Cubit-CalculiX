@@ -1,10 +1,25 @@
 find_package(Threads REQUIRED)
 add_library(postprocessor_core STATIC
+  Core/representations/VectorPlotDefinition.cpp
+  Core/representations/ResultVectors.cpp
+  Core/representations/VectorPlotRuntime.cpp
+  Core/representations/VectorPlotCodec.cpp
+  Core/representations/PostprocessorCoreVectors.cpp
+
+  Core/capture/AnimationCaptureDefinition.cpp
+  Core/capture/AnimationCapturePlan.cpp
   Core/representations/DatasetAppearance.cpp
   Core/representations/PostprocessorCoreAppearance.cpp
   Core/persistence/DatasetAppearanceCodec.cpp
   Core/application/PostprocessorCoreUnits.cpp
   Core/representations/ResultColoringUnits.cpp
+  Core/representations/AnimationRotationCodec.cpp
+  Core/representations/AnimationRotation.cpp
+  Core/representations/AnimationRotationRuntime.cpp
+  Core/filters/FilterDefinition.cpp
+  Core/filters/ThresholdDefinition.cpp
+  Core/filters/ThresholdFilter.cpp
+  Core/filters/ThresholdCodec.cpp
   Core/filters/PlaneOperations.cpp
   Core/filters/ClipFilter.cpp
   Core/filters/SectionFilter.cpp
@@ -71,12 +86,22 @@ add_library(postprocessor_core STATIC
   Core/layouts/LayoutDefinition.hpp
 )
 
-target_link_libraries(postprocessor_core PUBLIC cubitsim_results cubitsim_results_io PRIVATE Qt6::Core VTK::CommonDataModel VTK::FiltersCore VTK::FiltersGeneral VTK::FiltersGeometry)
+target_link_libraries(postprocessor_core PUBLIC cubitsim_results cubitsim_results_io cubitsim_media PRIVATE Qt6::Core VTK::CommonDataModel VTK::FiltersCore VTK::FiltersGeneral VTK::FiltersGeometry)
 target_include_directories(postprocessor_core PRIVATE "${CUBITSIM_SOURCE_ROOT}")
 target_compile_features(postprocessor_core PUBLIC cxx_std_17)
 set_target_properties(postprocessor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(postprocessor_module SHARED
+  Interfaces/PostprocessorVectorPlotInterface.cpp
+  Commands/results/PostVectorCommand.cpp
+  Commands/results/VectorCommandText.cpp
+  GUI/VectorPlot/PostprocessorVectorControls.cpp
+  GUI/VectorPlot/PostprocessorVectorActors.cpp
+
+  Interfaces/PostprocessorAnimationCaptureInterface.cpp
+  Commands/capture/PostCaptureAnimationCommand.cpp
+  GUI/Capture/PostprocessorAnimationRenderer.cpp
+  GUI/Capture/PostprocessorAnimationCaptureDialog.cpp
   Interfaces/PostprocessorReportFrameSelection.hpp
   Interfaces/PostprocessorReportFrameSelection.cpp
   Interfaces/PostprocessorReportExtrema.hpp
@@ -90,6 +115,9 @@ add_library(postprocessor_module SHARED
   Interfaces/PostprocessorReportResultProvider.cpp
   Interfaces/PostprocessorReportResultProvider.hpp
   Interfaces/PostprocessorFiltersInterface.cpp
+  Commands/filters/PostThresholdCommand.cpp
+  Commands/filters/ThresholdCommandText.cpp
+  GUI/Filters/Threshold/PostprocessorThresholdControls.cpp
   Commands/filters/PostClipCommand.cpp
   Commands/filters/PostSectionCommand.cpp
   Commands/filters/PostFilterCommand.cpp
@@ -279,6 +307,18 @@ add_custom_target(postprocessor_icons ALL
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/Postprocessor.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/Postprocessor.svg"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorAnimationLoop.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorAnimationLoop.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorAnimationRotationX.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorAnimationRotationX.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorAnimationRotationY.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorAnimationRotationY.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorAnimationRotationZ.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorAnimationRotationZ.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorIntegrationPoint.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorIntegrationPoint.svg"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
@@ -300,11 +340,17 @@ add_custom_target(postprocessor_icons ALL
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorRenderImage.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorRenderImage.svg"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorRenderAnimation.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorRenderAnimation.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorAddToReport.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorAddToReport.svg"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorLegend.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorLegend.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorThreshold.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorThreshold.svg"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorClip.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorClip.svg"

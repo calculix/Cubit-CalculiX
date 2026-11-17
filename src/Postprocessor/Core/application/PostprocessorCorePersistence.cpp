@@ -207,6 +207,15 @@ namespace Postprocessor
               return false;
             }
           }
+          if (display.vectors.field && display.vectors.field->dataset_id)
+          {
+            binding.vector_dataset = dataset_reference(loaded->second.datasets,*display.vectors.field->dataset_id);
+            if (!binding.vector_dataset)
+            {
+              error = "Vector dataset identity is unavailable.";
+              return false;
+            }
+          }
           if (display.deformation.field && display.deformation.field->dataset_id)
           {
             binding.deformation_dataset = dataset_reference(loaded->second.datasets,*display.deformation.field->dataset_id);
@@ -309,11 +318,13 @@ namespace Postprocessor
         }
         display.hidden_datasets.insert(*id);
       }
-      for (int index = 0; index < 2; ++index)
+      for (int index = 0; index < 3; ++index)
       {
         const auto& reference = [&]() -> decltype((binding.color_dataset)) {
           if (index == 0) {
             return binding.color_dataset;
+          } else if (index == 2) {
+            return binding.vector_dataset;
           } else {
             return binding.deformation_dataset;
           }
@@ -321,6 +332,8 @@ namespace Postprocessor
         auto& selection = [&]() -> decltype((display.coloring.field)) {
           if (index == 0) {
             return display.coloring.field;
+          } else if (index == 2) {
+            return display.vectors.field;
           } else {
             return display.deformation.field;
           }
@@ -458,6 +471,7 @@ namespace Postprocessor
     // Every allocation and validation is complete before publishing containers.
     next_source_number = next;
     filter_cache.clear();
+      animation_rotation.clear();
     state.swap(prepared.definitions.session);
     runtime.swap(prepared.runtime);
     saved_bindings.swap(prepared.definitions.bindings);

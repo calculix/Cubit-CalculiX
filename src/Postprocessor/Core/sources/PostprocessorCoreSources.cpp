@@ -535,7 +535,8 @@ namespace Postprocessor
       {
         for (auto& item : staged_state.filters)
         {
-          if (item.second.input.object_id == source_id && item.second.coordinate_unit.empty())
+          if (item.second.input.object_id == source_id && item.second.kind != FilterKind::Threshold &&
+              item.second.coordinate_unit.empty())
           {
             for (const auto& display : state.representations)
             {
@@ -656,6 +657,42 @@ namespace Postprocessor
               ++saved;
             }
           }
+          if (definition.vectors.field && definition.vectors.field->dataset_id)
+          {
+            const auto old = std::find_if(loaded->second.datasets.begin(),loaded->second.datasets.end(),[&](const auto& item)
+            {
+              return item.id == *definition.vectors.field->dataset_id;
+            });
+            std::optional<std::size_t> match;
+            if (old == loaded->second.datasets.end())
+            {
+              error = "Vector dataset has no durable identity during refresh.";
+              return false;
+            }
+            for (const auto& item : published.data->datasets)
+            {
+              bool identity = item.name == old->name;
+              if (old->model_id >= 0)
+              {
+                identity = item.model_id == old->model_id;
+              }
+              if (item.kind == old->kind && identity)
+              {
+                if (match)
+                {
+                  error = "Vector dataset is ambiguous during refresh.";
+                  return false;
+                }
+                match = item.id;
+              }
+            }
+            if (!match)
+            {
+              error = "Vector dataset is missing during refresh; previous source was retained.";
+              return false;
+            }
+            definition.vectors.field->dataset_id = *match;
+          }
           definition.dataset_appearance.swap(reboundAppearance);
           if (!mesh_increment)
           {
@@ -675,6 +712,7 @@ namespace Postprocessor
         ++display;
       }
       filter_cache.clear();
+      animation_rotation.clear();
       state.swap(staged_state);
       runtime.swap(staged_runtime);
       saved_bindings.swap(stagedAppearanceBindings);
@@ -786,6 +824,7 @@ namespace Postprocessor
         }
       }
       filter_cache.clear();
+      animation_rotation.clear();
 
 
       for (auto display = staged_state.representations.begin(); display != staged_state.representations.end();)
@@ -865,6 +904,7 @@ namespace Postprocessor
     try
     {
       filter_cache.clear();
+      animation_rotation.clear();
       PostprocessorSession staged;
       staged.plot_revision = state.plot_revision+1;
       std::uint64_t cameraRevision = 0;
@@ -929,6 +969,7 @@ namespace Postprocessor
     }
     state.filters.clear();
     filter_cache.clear();
+      animation_rotation.clear();
     state.representations.clear();
     state.sources.clear();
     for (auto& view : state.views)
