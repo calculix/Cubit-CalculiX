@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <functional>
 
-class QCheckBox;
+class QToolButton;
 class QComboBox;
 class QLineEdit;
 class QLabel;
@@ -51,10 +51,10 @@ private:
   std::optional<Context> baseline;
   std::optional<Context> scaleOrigin;
   std::vector<Postprocessor::ResultFieldGroup> catalogue;
-  QCheckBox* enabled = nullptr;
+  QToolButton* enabled = nullptr;
   QComboBox* fields = nullptr;
   QLineEdit* scale = nullptr;
-  QCheckBox* overlay = nullptr;
+  QToolButton* overlay = nullptr;
   QTimer* scaleTimer = nullptr;
   QLabel* errorLabel = nullptr;
   bool loading = false;

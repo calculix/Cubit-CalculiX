@@ -19,8 +19,8 @@
 #include <utility>
 
 PostprocessorFrameNavigation::PostprocessorFrameNavigation(std::function<void(std::size_t)> callback, QWidget* parent,
-  std::function<bool(std::size_t)> previewCallback, std::function<void(const QString&)> animationCallback)
-  : QWidget(parent), select(std::move(callback)), preview(std::move(previewCallback)), animationCommand(std::move(animationCallback))
+  std::function<bool(std::size_t)> previewCallback, std::function<void(const QString&)> animationCallback,std::function<bool()> ready)
+  : QWidget(parent), select(std::move(callback)), preview(std::move(previewCallback)), animationCommand(std::move(animationCallback)),animationReady(std::move(ready))
 {
   setObjectName("Postprocessor.FrameNavigation");
   setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Fixed);
@@ -447,6 +447,11 @@ void PostprocessorFrameNavigation::advance_animation()
 {
   if (!running || !expected)
   {
+    return;
+  }
+  if (animationReady && !animationReady())
+  {
+    animationTimer.start(Postprocessor::AnimationDefaults::presentation_retry_ms);
     return;
   }
   const auto found = std::find(indices.begin(),indices.end(),*expected);

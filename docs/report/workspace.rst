@@ -296,14 +296,81 @@ section to navigate to it. Table/image entries navigate to the containing sectio
 individual table/image page anchors are not recorded. Selecting content does not
 automatically discard rows or change the template defaults.
 
-Preview construction disables undo history and incremental layout, appends table
-rows in batches and checks cancellation between cell batches. The command output
-records table, row, cell and image counts, construction time and pagination time.
-The final Qt pagination call is synchronous. Busy/nested refreshes keep the last
-preview intact rather than displaying a transient busy error as an empty page.
+Preview preparation uses bounded text documents rather than one report-sized
+Qt layout. Core limits each batch to 128 rows, 2048 cells and 32768 text characters.
+Long textual cells continue in additional display rows; the persisted report and
+ODT retain their original semantic rows. Headers repeat on table continuations.
+Batches start on a new page, which can introduce whitespace. The native progress
+bar advances after each prepared batch and remains active through global contents
+resolution and publication. Each individual Qt pagination call is synchronous;
+progress does not claim page-by-page completion inside that call. Busy/nested
+refreshes keep the last preview intact.
 
 GUI refresh only reads the prepared cache. Generate/Update prepare it inside the
 command before completion. Source selection, explicit preview/export, note/image
 commands and project activation prepare a missing matching layout in application
 operations. A cache miss in a passive refresh never starts pagination; it displays
 "Report generated. Use Open preview / Export to prepare its preview."
+
+
+Result selection and detailed listings
+-------------------------------------
+
+The workspace template defaults ``post.results.frames`` to ``last_per_step``:
+only the last retained result frame of each selected solver step is reported.
+The content tree offers one mutually exclusive frame choice:
+
+* ``last_per_step``: canonical result order determines the final frame, not time
+  or frequency. Missing fields are not substituted from earlier frames.
+* ``envelope``: minima/maxima are compared across selected frames in Report
+  units. Governing frame identities are retained; different governing frames
+  produce separate minimum/maximum images.
+* ``all_frames``: report each selected frame independently.
+
+Block extrema and component images are enabled by default. Only verified
+``Blocks`` metadata with an originating model block ID is labeled a model block;
+arbitrary DAT element sets are not silently substituted. Positions use original
+undeformed source coordinates. Element result positions are parametric centers;
+integration-point identities are included where available.
+
+The following detailed listings default to false and are saved with profiles:
+``ccx.model.sets.nodes``, ``ccx.model.sets.elements``, ``ccx.model.sets.faces``,
+``ccx.model.mesh.nodes``, ``ccx.model.mesh.elements``,
+``post.results.nodal_values``, ``post.results.element_values`` and
+``post.results.tables``. Summary tables remain independent of detailed source
+tables. Historical set summaries show definition-record counts explicitly;
+generated ranges and named references are not mislabeled as expanded member counts.
+
+For example::
+
+   report configure settings option "post.results.frames" value "last_per_step"
+   report configure settings option "post.results.tables" value "false"
+
+Result reduction uses at most four workers with 65536 samples per immutable
+input chunk. VTK extraction, unit conversion, native progress and rendering stay
+on the host thread. Worker reduction skips invalid/nonfinite samples and resolves
+ties by original sample order. All workers join before cancellation returns.
+Automatic report images render a detached source/frame/block/component snapshot
+at the existing Full HD capture default without changing live view settings.
+
+
+Export progress and cancellation
+--------------------------------
+
+PDF and ODT exports use one Cubit native progress bar until their destination
+files have been committed. PDF reports completed pages. ODT reports content work,
+images and bounded checksum/package copying. ODT-only export does not need to
+prepare a preview first. Preview-only batch boundaries do not become forced ODT
+page breaks or alter the original semantic table rows.
+
+Cancel is checked between PDF pages, ODT cell blocks, image tasks and 64-KiB
+package I/O blocks. A single Qt painting/image-decoding call cannot be interrupted
+internally. Uncommitted temporary files are discarded, preserving existing
+exports. For ``both``, both files are encoded before publication. The final short
+commit phase is non-cancellable; two file commits are not jointly atomic. If the
+second commit fails, the error identifies the PDF that was already exported.
+
+ODT contains nested contents links, styled tables with repeated headers and
+figure/caption styles. Image dimensions preserve aspect ratio within the report
+body. ODT page numbers are calculated by the office editor, independently of PDF
+pagination. Large files requiring ZIP64 are rejected rather than truncated.

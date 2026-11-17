@@ -2,6 +2,8 @@
 #include <type_traits>
 #include "PostprocessorTableView.hpp"
 #include "PostprocessorTableModel.hpp"
+#include "PostprocessorTableFilters.hpp"
+#include "Postprocessor/Commands/plots/PlotCommandText.hpp"
 #include <QLabel>
 #include <QMenu>
 #include <QSortFilterProxyModel>
@@ -19,7 +21,7 @@
 #include <QScopedValueRollback>
 #include <algorithm>
 #include <utility>
-PostprocessorTableView::PostprocessorTableView(std::function<void()> closeTable,QWidget* parent,Plot plot) : QWidget(parent)
+PostprocessorTableView::PostprocessorTableView(std::function<void()> closeTable,QWidget* parent,Plot plot,std::function<void(const QString&)> submit) : QWidget(parent)
 {
   setObjectName("Postprocessor.TablePane");
   auto* layout = new QVBoxLayout(this);
@@ -43,7 +45,7 @@ PostprocessorTableView::PostprocessorTableView(std::function<void()> closeTable,
   heading->addWidget(close);
   layout->addLayout(heading);
   model = new PostprocessorTableModel(this);
-  auto* sorted = new QSortFilterProxyModel(this);
+  auto* sorted = new PostprocessorTableFilterProxy(this);
   sorted->setSourceModel(model);
   sorted->setSortRole(Qt::UserRole);
   table = new QTableView(this);
@@ -52,22 +54,28 @@ PostprocessorTableView::PostprocessorTableView(std::function<void()> closeTable,
   // Header sorting awaits its command contract; retain source row order.
   table->setSortingEnabled(false);
   table->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(table,&QTableView::customContextMenuRequested,this,[this,plot,sorted](const QPoint& point)
+  connect(table,&QTableView::customContextMenuRequested,this,[this,plot,submit,sorted](const QPoint& point)
   {
     const auto index = sorted->mapToSource(table->indexAt(point));
-    if (!plot || !plotReference || !index.isValid())
+    if (index.isValid())
     {
-      return;
+      show_context_menu(table->viewport()->mapToGlobal(point),index.column(),static_cast<std::size_t>(index.row()),plot,submit);
     }
-    const auto reference = *plotReference;
-    const auto data = shown;
-    QMenu menu(this);
-    auto* action = menu.addAction(tr("Plot columns…"));
-    connect(action,&QAction::triggered,&menu,[plot,reference,data,index]()
+  });
+  table->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(table->horizontalHeader(),&QHeaderView::customContextMenuRequested,this,[this,plot,submit,sorted](const QPoint& point)
+  {
+    std::optional<std::size_t> row;
+    const auto current = sorted->mapToSource(table->currentIndex());
+    if (current.isValid())
     {
-      plot(reference,data,static_cast<std::size_t>(index.row()),static_cast<std::size_t>(index.column()));
-    });
-    menu.exec(table->viewport()->mapToGlobal(point));
+      row = static_cast<std::size_t>(current.row());
+    }
+    else if (shown.rows > 0)
+    {
+      row = 0;
+    }
+    show_context_menu(table->horizontalHeader()->mapToGlobal(point),table->horizontalHeader()->logicalIndexAt(point),row,plot,submit);
   });
   table->setAlternatingRowColors(true);
   table->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -89,6 +97,90 @@ PostprocessorTableView::PostprocessorTableView(std::function<void()> closeTable,
   });
   layout->addWidget(table,1);
 }
+void PostprocessorTableView::show_context_menu(const QPoint& globalPosition,int column,
+  std::optional<std::size_t> sourceRow,const Plot& plot,const std::function<void(const QString&)>& submit)
+{
+  if (!plotReference || column < 0 || static_cast<std::size_t>(column) >= shown.columns.size())
+  {
+    return;
+  }
+  const auto reference = *plotReference;
+  const auto data = shown;
+  const auto current = [&]()
+  {
+    return plotReference && shown.owner == data.owner && shown.columns == data.columns &&
+      plotReference->source_id == reference.source_id && plotReference->key == reference.key &&
+      plotReference->field == reference.field && Postprocessor::same_table_filters(plotReference->filters,reference.filters);
+  };
+  const auto selectedColumn = static_cast<std::size_t>(column);
+  const auto& columnName = data.columns[selectedColumn];
+  const auto columnArgument = Postprocessor::plot_quote(columnName);
+  const bool filtered = std::any_of(reference.filters.begin(),reference.filters.end(),[&](const auto& filter)
+  {
+    return filter.column == columnName;
+  });
+  QMenu menu(this);
+  auto* plotAction = menu.addAction(tr("Plot columns…"));
+  plotAction->setEnabled(static_cast<bool>(plot) && sourceRow && *sourceRow < data.rows);
+  menu.addSeparator();
+  auto* edit = menu.addAction(tr("Filter column…"));
+  edit->setEnabled(static_cast<bool>(submit) && !columnArgument.isEmpty());
+  auto* clear = menu.addAction(tr("Clear column filter"));
+  clear->setEnabled(static_cast<bool>(submit) && filtered && !columnArgument.isEmpty());
+  auto* clearAll = menu.addAction(tr("Clear all filters"));
+  clearAll->setEnabled(static_cast<bool>(submit) && !reference.filters.empty());
+  const auto* chosen = menu.exec(globalPosition);
+  if (!chosen || !current())
+  {
+    return;
+  }
+  if (chosen == plotAction && plot && sourceRow && *sourceRow < data.rows)
+  {
+    plot(reference,data,*sourceRow,selectedColumn);
+  }
+  else if (chosen == clearAll && submit)
+  {
+    submit("post table filter clear all");
+  }
+  else if (chosen == clear && submit && !columnArgument.isEmpty())
+  {
+    submit("post table filter clear column "+columnArgument);
+  }
+  else if (chosen == edit && submit)
+  {
+    Postprocessor::TableFilter filter;
+    if (sourceRow && *sourceRow < data.rows)
+    {
+      filter.value = Postprocessor::result_table_cell(data,*sourceRow,selectedColumn);
+    }
+    for (const auto& existing : reference.filters)
+    {
+      if (existing.column == columnName)
+      {
+        filter = existing;
+      }
+    }
+    if (edit_table_column_filter(this,data,selectedColumn,filter) && current())
+    {
+      const auto clause = table_filter_clause(filter);
+      if (clause.isEmpty())
+      {
+        return;
+      }
+      auto command = QStringLiteral("post table filter column ")+clause;
+      if (!filter.unit.empty())
+      {
+        const auto unit = Postprocessor::plot_quote(filter.unit);
+        if (unit.isEmpty())
+        {
+          return;
+        }
+        command += " unit "+unit;
+      }
+      submit(command);
+    }
+  }
+}
 void PostprocessorTableView::set_plot_reference(const std::optional<Postprocessor::TableReference>& reference)
 {
   plotReference = reference;
@@ -103,6 +195,8 @@ void PostprocessorTableView::show_data(Postprocessor::ResultTableData data)
     }
   }())).c_str()));
   const auto generation = framework_units().generation();
+  const bool filtersChanged = !Postprocessor::same_table_filters(shown.filters,data.filters);
+  auto* filtered = static_cast<PostprocessorTableFilterProxy*>(table->model());
   const bool unitsChanged = !shownUnitGeneration || *shownUnitGeneration != generation;
   shownUnitGeneration = generation;
   const bool newTable = shown.owner != data.owner || shown.title != data.title || shown.columns != data.columns || shown.frame_columns != data.frame_columns;
@@ -119,6 +213,13 @@ void PostprocessorTableView::show_data(Postprocessor::ResultTableData data)
   {
     shown.active_frame = data.active_frame;
     shown.status = data.status;
+    shown.filters = data.filters;
+    if (filtersChanged || unitsChanged)
+    {
+      filtered->set_table(shown);
+      manualColumns.clear();
+      resize_columns_to_contents();
+    }
     model->set_active_frame(data.active_frame);
     if (unitsChanged)
     {
@@ -129,6 +230,7 @@ void PostprocessorTableView::show_data(Postprocessor::ResultTableData data)
     return;
   }
   shown = data; // Copies metadata and owning handles; never materializes result rows.
+  filtered->set_table(shown);
   model->set_data(std::move(data));
   if (newTable)
   {

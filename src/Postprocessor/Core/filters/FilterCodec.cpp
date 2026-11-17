@@ -11,6 +11,7 @@ namespace Postprocessor
     {
       const auto& value = item.second;
       result.append(QJsonObject{{"id",QString::fromStdString(value.id)},{"name",QString::fromStdString(value.name)},
+        {"enabled",value.enabled},{"reference_visible",value.reference_visible},
         {"source",QString::fromStdString(value.input.object_id)},{"coordinate_unit",QString::fromStdString(value.coordinate_unit)},{"kind",[&]() -> const char* {
           if (value.kind == FilterKind::Clip) {
             return "clip";
@@ -66,6 +67,16 @@ namespace Postprocessor
         }
         filter.coordinate_unit = object.value("coordinate_unit").toString().toStdString();
       }
+      for (const auto* flag : {"enabled","reference_visible"})
+      {
+        if (object.contains(flag) && !object.value(flag).isBool())
+        {
+          error = "Invalid saved filter flag.";
+          return false;
+        }
+      }
+      filter.enabled = object.value("enabled").toBool(true);
+      filter.reference_visible = object.value("reference_visible").toBool(true);
       filter.id = object.value("id").toString().toStdString();
       filter.name = object.value("name").toString().toStdString();
       filter.input = {OutputOwner::Source,object.value("source").toString().toStdString(),0};

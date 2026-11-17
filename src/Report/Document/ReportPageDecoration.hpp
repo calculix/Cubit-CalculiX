@@ -15,6 +15,7 @@ public:
   static QString value(const ReportDocument& report, const std::string& key);
   static bool validate_templates(const ReportConfiguration& configuration, std::string& error);
   static QString expand(const QString& pattern, const ReportDocument& report, int page, int pages);
+  static QSizeF paper_size(const ReportDocument& report);
   static QRectF body_rect(const ReportDocument& report, const QSizeF& paper);
   static QSizeF logo_size(const ReportDocument& report, double columnWidth);
   static void paint(QPainter& painter, const ReportDocument& report, const QSizeF& paper, int page, int pages);

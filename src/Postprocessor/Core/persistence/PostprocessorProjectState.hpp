@@ -16,6 +16,11 @@ namespace Postprocessor
     std::string kind, name;
     int model_id = -1;
   };
+  struct SavedDatasetAppearance
+  {
+    SavedDatasetReference dataset;
+    DatasetAppearance appearance;
+  };
   struct SavedFrameReference
   {
     bool valid = false;
@@ -26,6 +31,7 @@ namespace Postprocessor
   {
     SavedFrameReference frame;
     std::vector<SavedDatasetReference> hidden;
+    std::vector<SavedDatasetAppearance> appearance;
     std::optional<SavedDatasetReference> color_dataset, deformation_dataset;
   };
   struct PostprocessorProjectState

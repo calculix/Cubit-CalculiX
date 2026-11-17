@@ -305,27 +305,59 @@ namespace Postprocessor
     try
     {
       auto staged = state;
-      bool found = false;
-      bool changed = false;
-      for (auto& entry : staged.representations)
+      std::string selected;
+      const auto active = staged.representations.find(staged.active_representation_id);
+      if (active != staged.representations.end() && active->second.view_id == view_id &&
+          output_source(active->second.input) == source_id)
       {
-        auto& display = entry.second;
-        if (display.input.owner == OutputOwner::Source && display.input.object_id == source_id &&
-            display.view_id == view_id && display.input.port == 0)
+        selected = active->first;
+      }
+      if (selected.empty())
+      {
+        for (const auto& item : staged.representations)
         {
-          found = true;
-          changed = display.visible != visible;
-          display.visible = visible;
-          break;
+          if (display_matches_source(item.second,source_id,view_id))
+          {
+            selected = item.first;
+            break;
+          }
         }
       }
-      if (!found && visible)
+      if (visible && selected.empty())
       {
-        if (!ensure_source_representation(staged, source_id, view_id, *loaded->second.first_mesh_increment, true, error))
+        if (!ensure_source_representation(staged,source_id,view_id,*loaded->second.first_mesh_increment,true,error))
         {
           return false;
         }
-        changed = true;
+        for (const auto& item : staged.representations)
+        {
+          if (item.second.view_id == view_id && item.second.input.owner == OutputOwner::Source &&
+              item.second.input.object_id == source_id && item.second.input.port == 0)
+          {
+            selected = item.first;
+            break;
+          }
+        }
+      }
+      bool changed = staged.representations.size() != state.representations.size();
+      for (auto& item : staged.representations)
+      {
+        auto& display = item.second;
+        if (display.view_id == view_id && output_source(display.input) == source_id)
+        {
+          const bool nextVisible = visible && item.first == selected;
+          changed = changed || display.visible != nextVisible || display.animation.playing;
+          display.visible = nextVisible;
+          display.animation.playing = false;
+        }
+      }
+      if (visible && !selected.empty())
+      {
+        changed = changed || staged.active_representation_id != selected || staged.active_source_id != source_id ||
+          staged.active_view_id != view_id;
+        staged.active_representation_id = selected;
+        staged.active_source_id = source_id;
+        staged.active_view_id = view_id;
       }
       if (changed)
       {

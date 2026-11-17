@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(PostprocessorDisplayTests LANGUAGES C CXX)
+find_package(Threads REQUIRED)
 
 get_filename_component(CUBITSIM_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets OpenGLWidgets)
@@ -22,6 +23,18 @@ add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Core" model)
 add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Results" results)
 
 add_library(postprocessor_display_code STATIC
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/DatasetAppearance.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/PostprocessorCoreAppearance.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/persistence/DatasetAppearanceCodec.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorAppearanceInterface.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Properties/PostprocessorAppearanceControls.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/ResultsTree/PostprocessorStyleDelegate.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Viewport/PostprocessorDatasetAppearance.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/display/AppearanceCommandText.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorReportFrameSelection.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorReportExtrema.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorReportBlockSummary.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorReportResultImages.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/application/PostprocessorCoreUnits.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/ResultColoringUnits.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/PlaneOperations.cpp"
@@ -32,6 +45,9 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/filters/FilterCodec.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorFiltersInterface.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Filters/PostprocessorPlaneOverlay.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Filters/Clip/PostprocessorClipControls.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Filters/Section/PostprocessorSectionControls.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/filters/FilterCommandText.cpp"
 
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/tables/ResultTableSelector.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/tables/TableCommandText.cpp"
@@ -48,10 +64,12 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotTableData.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PostprocessorCorePlots.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotCodec.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PostprocessorCorePlotLabels.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/plots/PlotCsvExport.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorPlotsInterface.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/plots/PlotCommandText.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Plots/PostprocessorPlotControls.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Plots/PostprocessorPlotLabels.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Plots/PostprocessorPlotInteraction.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/annotations/PostprocessorCoreAnnotations.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/annotations/AnnotationCodec.cpp"
@@ -62,10 +80,12 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/persistence/PostprocessorSessionCodec.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/application/PostprocessorCorePersistence.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/tables/ResultTables.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/tables/TableFilters.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/tables/PostprocessorCoreTables.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/sources/VtkFileSourceProvider.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Tables/PostprocessorTableModel.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Tables/PostprocessorTableView.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Tables/PostprocessorTableFilters.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/application/PostprocessorCore.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/selection/ResultProbe.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/selection/PostprocessorCoreSelection.cpp"
@@ -107,7 +127,7 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Navigation/PostprocessorFrameNavigation.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Navigation/PostprocessorDeformationControls.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/ResultsTree/PostprocessorResultsTree.cpp")
-target_link_libraries(postprocessor_display_code PUBLIC cubitsim_results cubitsim_results_io VTK::IOXML VTK::CommonDataModel
+target_link_libraries(postprocessor_display_code PUBLIC Threads::Threads cubitsim_reporting cubitsim_results cubitsim_results_io VTK::IOXML VTK::CommonDataModel
   VTK::FiltersGeneral VTK::FiltersCore VTK::FiltersGeometry VTK::RenderingCore VTK::RenderingAnnotation VTK::RenderingOpenGL2 Qt6::Core Qt6::Widgets)
 target_compile_features(postprocessor_display_code PUBLIC cxx_std_17)
 add_executable(postprocessor_display_tests DisplayTests.cpp)
@@ -255,4 +275,16 @@ add_test(NAME postprocessor_presentation_units COMMAND postprocessor_presentatio
 set_tests_properties(postprocessor_presentation_units PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 if (WIN32)
   set_property(TEST postprocessor_presentation_units APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
+endif ()
+
+add_executable(postprocessor_report_collection_tests ReportCollectionTests.cpp)
+target_link_libraries(postprocessor_report_collection_tests PRIVATE postprocessor_display_code)
+add_test(NAME postprocessor_report_collection COMMAND postprocessor_report_collection_tests)
+
+add_executable(postprocessor_appearance_tests AppearanceTests.cpp)
+target_link_libraries(postprocessor_appearance_tests PRIVATE postprocessor_display_code)
+add_test(NAME postprocessor_appearance COMMAND postprocessor_appearance_tests)
+set_tests_properties(postprocessor_appearance PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+if (WIN32)
+  set_property(TEST postprocessor_appearance APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
 endif ()

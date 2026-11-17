@@ -5,6 +5,11 @@
 #include "Postprocessor/Core/sources/VtkFileSourceProvider.hpp"
 #include "Postprocessor/GUI/Tables/PostprocessorTableModel.hpp"
 #include "Postprocessor/GUI/Tables/PostprocessorTableView.hpp"
+#include "Postprocessor/GUI/Tables/PostprocessorTableFilters.hpp"
+#include "Postprocessor/Core/persistence/PostprocessorSessionCodec.hpp"
+#include <QJsonObject>
+#include "Postprocessor/Core/tables/TableFilterCodec.hpp"
+#include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include <QTableView>
 #include <QItemSelectionModel>
 #include "Postprocessor/GUI/ResultsTree/PostprocessorResultsTree.hpp"
@@ -165,6 +170,68 @@ int main(int argc, char** argv)
     check(!paneResets && widget->selectionModel()->selectedRows().size() == 1 &&
       widget->selectionModel()->selectedRows().front().row() == 0,"Frame highlight reset the pane or overwrote user selection");
   }
+  TableFilter identifier;
+  identifier.column = "Identifier";
+  identifier.value = "9007199254740993";
+  TableFilter frameFilter;
+  frameFilter.column = "Frame";
+  frameFilter.mode = TableFilterMode::Range;
+  frameFilter.minimum = 2;
+  frameFilter.maximum = 2;
+  check(core.change_table_filter("view1","set",identifier,error) && core.change_table_filter("view1","set",frameFilter,error),
+    "Cannot combine exact-ID and frame-range filters");
+  const auto filteredData = core.table_data("view1");
+  check(filteredData.rows == 2 && !table_row_matches(filteredData,0,filteredData.filters) &&
+    table_row_matches(filteredData,1,filteredData.filters),"Filters truncated source rows or lost inclusive/exact matching");
+  PostprocessorTableModel filteredModel(nullptr);
+  filteredModel.set_data(filteredData);
+  PostprocessorTableFilterProxy proxy(nullptr);
+  proxy.set_table(filteredData);
+  proxy.setSourceModel(&filteredModel);
+  check(proxy.rowCount() == 1 && proxy.mapToSource(proxy.index(0,0)).row() == 1 &&
+    proxy.index(0,0).data(PostprocessorTableModel::ActiveFrameRole).toBool(),
+    "Filtered proxy lost source-row mapping or active-frame highlighting");
+  auto invalidFilter = frameFilter;
+  invalidFilter.minimum = 3;
+  const auto beforeFilters = core.session().views.at("view1").table->filters;
+  check(!core.change_table_filter("view1","set",invalidFilter,error) &&
+    same_table_filters(beforeFilters,core.session().views.at("view1").table->filters),"Invalid range partially changed filters");
+  std::vector<TableFilter> decodedFilters;
+  check(table_filters_from_json(table_filters_to_json(beforeFilters),decodedFilters) && same_table_filters(beforeFilters,decodedFilters),
+    "Column-filter persistence lost exact IDs/ranges");
+  check(table_filters_from_json(QJsonValue(QJsonValue::Undefined),decodedFilters) && decodedFilters.empty(),
+    "Legacy table-filter defaults failed");
+  check(core.change_table_filter("view1","clear",frameFilter,error) && core.table_data("view1").filters.size() == 1 &&
+    core.change_table_filter("view1","clearall",{},error) && core.table_data("view1").filters.empty(),"Cannot clear table filters");
+  ResultTableData physical;
+  physical.table = table("Physical",2000);
+  physical.columns = {"Identifier","Value","Label"};
+  physical.numeric = {true,true,false};
+  physical.column_units.resize(3);
+  physical.rows = 1;
+  check(framework_units().quantity("force",physical.column_units[1],error),"Cannot resolve force units for filter test");
+  physical.column_units[1].unit = "N";
+  TableFilter physicalFilter;
+  physicalFilter.column = "Value";
+  physicalFilter.mode = TableFilterMode::Range;
+  physicalFilter.minimum = 1;
+  physicalFilter.maximum = 3;
+  physicalFilter.unit = "kN";
+  std::vector<TableFilter> physicalFilters{physicalFilter};
+  check(validate_table_filters(physical,physicalFilters,error) && table_row_matches(physical,0,physicalFilters),
+    "Physical range filter ignored its explicit unit basis");
+  physical.presentation_units = SimUnits::WorkspaceUnitContext("postprocessor");
+  physical.presentation_units->display_units["force"] = "N";
+  check(table_row_matches(physical,0,physicalFilters),"Changing display units changed a saved filter's row membership");
+  auto missingColumn = identifier;
+  missingColumn.column = "Missing";
+  check(!table_row_matches(filteredData,0,{missingColumn}),"A missing saved filter column was silently ignored");
+  PostprocessorProjectState tableProject,decodedProject;
+  check(core.change_table_filter("view1","set",identifier,error) && core.capture_project(tableProject,error) &&
+    project_from_json(project_to_json(tableProject,"."),".",decodedProject,error) &&
+    decodedProject.session.views.at("view1").table->filters.front().value == identifier.value,
+    "Project save/load did not preserve active table filters");
+  check(core.change_table_filter("view1","clearall",{},error),"Cannot clean up persisted filters");
   auto varied = std::make_shared<SimResults::VtkResultsData>();
   varied->increments.resize(3);
   varied->increments[0].tables.push_back(table("History",1));

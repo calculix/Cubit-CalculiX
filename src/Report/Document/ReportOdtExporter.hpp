@@ -1,12 +1,17 @@
 #pragma once
 #include <string>
-class ReportDocumentLayout;
+class ReportDocument;
+class ReportProgress;
+class QIODevice;
 
 class ReportOdtExporter
 {
 public:
   ReportOdtExporter();
-  // Native ODF headings, numeric tables, embedded images, master-page header
-  // and footer. Pagination remains the responsibility of the ODT editor.
-  bool write(const ReportDocumentLayout& layout, const std::string& filename, std::string& error) const;
+  // Semantic document export: no preview/pagination or value reconversion.
+  // encode owns no output device and never commits the caller's temporary file.
+  bool encode(const ReportDocument& report, QIODevice& output,
+    std::string& error, ReportProgress* progress = nullptr) const;
+  bool write(const ReportDocument& report, const std::string& filename,
+    std::string& error, ReportProgress* progress = nullptr) const;
 };

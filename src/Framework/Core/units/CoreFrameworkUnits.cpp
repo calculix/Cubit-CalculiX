@@ -553,6 +553,13 @@ bool SimUnits::CoreFrameworkUnits::display_unit(const std::string& workspace, co
     output = found->second;
     return true;
   }
+  if (quantityId == "frequency")
+  {
+    // Use the quantity's Hz default for presentation, independently of the
+    // coherent solver time unit. Explicit display preferences take priority.
+    output = definition.unit;
+    return true;
+  }
   if (!system_unit(context.system, quantityId, definition, error)) {
     return false;
   }

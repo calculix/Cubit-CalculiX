@@ -89,7 +89,7 @@ ReportSettingsDialog::ReportSettingsDialog(QWidget* parent, const ReportConfigur
   auto* captureFields = new QFormLayout(capture);
   for (const auto& option : definition.options)
   {
-    if (option.kind == "choice")
+    if (option.kind == "choice" && option.key != "post.results.frames")
     {
       auto* combo = new QComboBox(capture);
       combo->setObjectName(QString::fromStdString("ReportSetting_" + option.key));

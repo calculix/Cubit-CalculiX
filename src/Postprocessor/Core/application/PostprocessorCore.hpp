@@ -39,12 +39,18 @@ namespace Postprocessor
     // presentation override. Source units and geometry remain untouched.
     const SimUnits::WorkspaceUnitContext* captured_units() const noexcept;
 
+    DatasetAppearance dataset_appearance(const std::string& source,const std::string& view,std::size_t dataset) const;
+    bool change_dataset_appearance(const std::vector<AppearanceTarget>& targets,const AppearancePatch& patch,
+      std::string& error,bool validate_only = false);
     bool scene_scale(const Representation& display, double& factor, bool& known, std::string& error) const;
     bool standard_view(const std::string& name, std::string& error);
     bool set_scale_visible(bool visible, std::string& error);
     bool configure_units(const std::string& system, const std::string& quantity, const std::string& unit, std::string& error);
     std::string output_source(const OutputReference& input) const;
     bool display_matches_source(const Representation& display,const std::string& source,const std::string& view) const;
+    // Signed normal displacements from the current plane to displayed input bounds,
+    // in native source length units. False leaves the output range unchanged.
+    bool filter_motion_range(const std::string& name,const std::string& view,std::array<double,2>& range,std::string& error) const;
     bool create_filter(FilterDefinition requested,const std::string& view,std::string& error);
     bool change_filter(const std::string& name,const std::string& action,const std::string& view,
       const PlaneDefinition& plane,const std::string& value,std::string& error);
@@ -64,6 +70,7 @@ namespace Postprocessor
     bool add_plot_curve(const std::string& plot, const PlotCurveDefinition& curve, std::string& error);
     bool change_plot(const std::string& plot, const std::string& action, const std::string& value, std::string& error);
     bool change_plot_curve(const std::string& plot, const std::string& curve, const std::string& action, std::string& error);
+    bool set_plot_label(const std::string& plot,const std::string& target,const std::string& value,const std::string& curve,std::string& error);
     bool set_plot_axes(const std::string& plot, const PlotAxes& axes, std::string& error);
     bool plot_data(const std::string& plot, PlotData& output, std::string& error) const;
     bool add_label(const std::string& view_id, const ResultAnnotation& requested, std::string& assigned_name, std::string& error);
@@ -151,6 +158,7 @@ namespace Postprocessor
     bool select_source(const std::string& source_id, std::string& error);
     bool open_table(const std::string& source_id, const std::string& view_id, const std::string& name, bool field, std::string& error,
       const TableQualifiers& tableQualifiers = {},const FieldQualifiers& fieldQualifiers = {});
+    bool change_table_filter(const std::string& view,const std::string& action,const TableFilter& filter,std::string& error);
     bool show_3d(const std::string& view_id, std::string& error);
     ResultTableData table_data(const std::string& view_id) const;
 

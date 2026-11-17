@@ -65,6 +65,7 @@ QByteArray contents(const QString& filename)
 int reportUnitsTests(const QString& directory);
 int reportProgressTests(const QString& directory);
 int reportTreeTests();
+int reportExportTests(const QString& directory);
 
 int reportImageTests(const QString& directory, ReportProfileStoreInterface& profiles);
 
@@ -150,7 +151,7 @@ int main(int argc, char** argv)
   ReportDocumentLayout layout;
   check(layout.prepare(*core.document(), error) && layout.page_count() > 0, "Prepare paginated layout");
   check(ReportPdfExporter().write(layout, directory.filePath("report.pdf").toStdString(), error), "Export PDF");
-  check(ReportOdtExporter().write(layout, directory.filePath("report.odt").toStdString(), error), "Export editable ODT");
+  check(ReportOdtExporter().write(layout.report(), directory.filePath("report.odt").toStdString(), error), "Export editable ODT");
   QFile odt(directory.filePath("report.odt"));
   check(odt.open(QIODevice::ReadOnly), "Open exported ODT");
   const auto package = odt.readAll();
@@ -463,7 +464,7 @@ int main(int argc, char** argv)
   }
   check(headerHasInk(rendered), "Enabling cover decoration paints company text and logo in the reserved band");
   check(ReportPdfExporter().write(brandedLayout, directory.filePath("branded.pdf").toStdString(), error), "Export branded PDF");
-  check(ReportOdtExporter().write(brandedLayout, directory.filePath("branded.odt").toStdString(), error), "Export branded editable ODT");
+  check(ReportOdtExporter().write(brandedLayout.report(), directory.filePath("branded.odt").toStdString(), error), "Export branded editable ODT");
   QFile brandedOdt(directory.filePath("branded.odt"));
   check(brandedOdt.open(QIODevice::ReadOnly), "Open branded ODT");
   const auto brandedPackage = brandedOdt.readAll();
@@ -630,6 +631,7 @@ int main(int argc, char** argv)
   failures += reportUnitsTests(directory.path());
   failures += reportProgressTests(directory.path());
   failures += reportTreeTests();
+  failures += reportExportTests(directory.path());
   std::cout << failures << " report test failures\n";
   if (failures == 0) {
     return 0;

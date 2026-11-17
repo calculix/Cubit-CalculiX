@@ -4,7 +4,7 @@
 #include "Framework/Interfaces/ResultSourceProviderInterface.hpp"
 #include "Framework/Interfaces/ResultSourceRegistryInterface.hpp"
 #include <QApplication>
-#include <QCheckBox>
+#include <QToolButton>
 #include <QComboBox>
 #include <QLineEdit>
 #include <QTimer>
@@ -348,10 +348,10 @@ int main(int argc,char** argv)
     return dispatch(true,command,issue);
   },nullptr);
   activePage = &page;
-  auto* enabled = page.findChild<QCheckBox*>("Postprocessor.Deformation.Enabled");
+  auto* enabled = page.findChild<QToolButton*>("Postprocessor.Deformation.Enabled");
   auto* fields = page.findChild<QComboBox*>("Postprocessor.Deformation.Field");
   auto* scale = page.findChild<QLineEdit*>("Postprocessor.Deformation.Scale");
-  auto* overlay = page.findChild<QCheckBox*>("Postprocessor.Deformation.Overlay");
+  auto* overlay = page.findChild<QToolButton*>("Postprocessor.Deformation.Overlay");
   auto* timer = page.findChild<QTimer*>("Postprocessor.Deformation.ScalePreviewTimer");
   auto* issue = page.findChild<QLabel*>("Postprocessor.Deformation.Error");
   check(enabled && fields && scale && overlay && timer && issue,"Missing deformation controls");
@@ -359,6 +359,9 @@ int main(int argc,char** argv)
   {
     return 1;
   }
+  check(enabled->isCheckable() && overlay->isCheckable() &&
+    enabled->toolButtonStyle() == Qt::ToolButtonIconOnly && overlay->toolButtonStyle() == Qt::ToolButtonIconOnly,
+    "Deformation controls must be checkable icon buttons");
   check(!page.findChild<QWidget*>("Postprocessor.Deformation.Apply"),"Apply button still exists");
   auto edit = [&](const QString& text)
   {
@@ -387,7 +390,7 @@ int main(int argc,char** argv)
   auto settings = app->deformation("Mesh",error);
   check(settings && settings->field_mode == DeformationFieldMode::Explicit && sent.size() == 1,"Field selection was not immediate");
   enabled->setChecked(true);
-  check(app->deformation("Mesh",error)->enabled && sent.size() == 2,"Enable checkbox was not immediate");
+  check(app->deformation("Mesh",error)->enabled && sent.size() == 2,"Deform button was not immediate");
   const auto beforeScale = sent.size();
   edit("2e0");
   check(timer->isActive() && previews.empty() && sent.size() == beforeScale,"Scale edit bypassed debounce");

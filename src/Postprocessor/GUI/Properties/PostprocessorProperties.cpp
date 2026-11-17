@@ -11,7 +11,7 @@
 #include <variant>
 
 PostprocessorProperties::PostprocessorProperties(std::weak_ptr<PostprocessorApplicationInterface> application,
-  QWidget* parent) : QWidget(parent), application(application)
+  QWidget* parent,PostprocessorAppearanceControls::Submit submit) : QWidget(parent), application(application)
 {
   setObjectName("Postprocessor.Properties");
   auto* layout = new QVBoxLayout(this);
@@ -37,6 +37,8 @@ PostprocessorProperties::PostprocessorProperties(std::weak_ptr<PostprocessorAppl
   contents->addLayout(information);
   probe = new PostprocessorProbeProperties(application,content);
   contents->addWidget(probe);
+  appearance = new PostprocessorAppearanceControls(application,std::move(submit),content);
+  contents->addWidget(appearance);
 
   contents->addStretch();
   scroll->setWidget(content);
@@ -45,6 +47,7 @@ PostprocessorProperties::PostprocessorProperties(std::weak_ptr<PostprocessorAppl
 
 void PostprocessorProperties::show_source(const Postprocessor::DataSource* source)
 {
+  appearance->refresh();
   name->clear();
   origin->clear();
 
@@ -91,4 +94,9 @@ void PostprocessorProperties::show_source(const Postprocessor::DataSource* sourc
       return tr("Cubit geometry");
     }
   }, source->reference));
+}
+
+void PostprocessorProperties::set_appearance_targets(const std::vector<Postprocessor::AppearanceTarget>& targets)
+{
+  appearance->set_targets(targets);
 }

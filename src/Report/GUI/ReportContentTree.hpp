@@ -13,6 +13,7 @@ public:
 
 private:
   void change(QTreeWidgetItem* item);
+  void submit_patch(const ReportConfiguration& patch);
   void schedule_refresh();
   void collect(QTreeWidgetItem* item, bool checked, ReportConfiguration& patch) const;
   std::function<bool(const std::string&, std::string&)> submit;

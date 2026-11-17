@@ -1,5 +1,6 @@
 #pragma once
 #include <QJsonObject>
+#include "ReportProgress.hpp"
 #include <map>
 #include <string>
 #include <vector>
@@ -10,6 +11,8 @@ class ReportResultRequest
 {
 public:
   ReportResultRequest();
+  // Borrowed for synchronous reporting only; never serialized.
+  ReportProgress* progress = nullptr;
   std::string provider;
   ReportSource source;
   ReportConfiguration settings;

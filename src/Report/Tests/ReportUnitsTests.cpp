@@ -161,7 +161,7 @@ int reportUnitsTests(const QString& directory)
   check(layout.prepare(decoded, error), "Build preview layout from stored units");
   const auto frozen = decoded.to_json();
   check(ReportPdfExporter().write(layout, (directory + "/unit-regression.pdf").toStdString(), error), "Export PDF with stored unit values");
-  check(ReportOdtExporter().write(layout, (directory + "/unit-regression.odt").toStdString(), error), "Export ODT with stored unit values");
+  check(ReportOdtExporter().write(layout.report(), (directory + "/unit-regression.odt").toStdString(), error), "Export ODT with stored unit values");
   QFile odt(directory + "/unit-regression.odt");
   check(odt.open(QIODevice::ReadOnly), "Read exported unit labels");
   const auto odtBytes = odt.readAll();

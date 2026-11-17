@@ -23,6 +23,11 @@ struct PostprocessorColorSurface
   // Picking eligibility follows the owning surface actor's visibility.
   vtkSmartPointer<vtkActor> nodes;
   vtkSmartPointer<vtkPolyData> node_data;
+  vtkSmartPointer<vtkActor> points;
+  std::vector<vtkSmartPointer<vtkActor>> edges;
+  bool occludes = true;
+  bool edge_scalars = false;
+  Postprocessor::DisplayStyle style = Postprocessor::DisplayStyle::Shaded;
 };
 class PostprocessorColorMap
 {

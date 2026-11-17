@@ -1,5 +1,4 @@
 #include "JobsActionsPanel.hpp"
-#include "Core/application/CalculiXApplicationInterface.hpp"
 #include <QString>
 #include "GUI/application/GuiSendCmd.hpp"
 
@@ -137,16 +136,12 @@ void JobsActionsPanel::on_pushButton_kill_clicked(bool)
 
 void JobsActionsPanel::on_pushButton_result_load_clicked(bool)
 {
-  if (lineEdit_1->text().isEmpty())
+  const QString job = lineEdit_1->text().trimmed();
+  if (job.isEmpty())
   {
     return;
   }
-  const std::string job = lineEdit_1->text().toStdString();
-  CalculiXApplicationInterface application;
-  if (application.cmd("ccx result load job " + job))
-  {
-    application.cmd("ccx result convert job " + job);
-  }
+  GuiSendCmd::gui_cmd("ccx result load job "+job+" convert");
 }
 
 void JobsActionsPanel::on_pushButton_results_clicked(bool)

@@ -55,6 +55,113 @@ bool CameraInteraction::owns_camera() const
     !found->second.fit_pending && found->second.camera_revision == cameraRevision;
 }
 
+void CameraInteraction::capture_scene_context()
+{
+  navigationDisplays.clear();
+  navigationSources.clear();
+  navigationFilters.clear();
+  const auto app = application.lock();
+  if (!app)
+  {
+    return;
+  }
+  const auto& state = app->session();
+  navigationSource = state.active_source_id;
+  navigationDisplay = state.active_representation_id;
+  navigationSceneUnit = state.views.at(viewId).scene_unit;
+  for (const auto& item : state.representations)
+  {
+    const auto& display = item.second;
+    if (display.view_id != viewId)
+    {
+      continue;
+    }
+    navigationDisplays.emplace(item.first,display);
+    const auto source = app->output_source(display.input);
+    navigationSources[source] = app->result_data(source);
+    if (display.input.owner == OutputOwner::Feature)
+    {
+      const auto filter = state.filters.find(display.input.object_id);
+      if (filter != state.filters.end())
+      {
+        navigationFilters[filter->first] = filter->second.revision;
+      }
+    }
+  }
+}
+
+bool CameraInteraction::scene_context_matches()
+{
+  const auto app = application.lock();
+  if (!app || app->session().active_view_id != viewId)
+  {
+    return false;
+  }
+  if (app->display_revision() == sceneRevision)
+  {
+    return true;
+  }
+  const auto& state = app->session();
+  const auto view = state.views.find(viewId);
+  if (view == state.views.end() || view->second.scene_unit != navigationSceneUnit ||
+      state.active_source_id != navigationSource || state.active_representation_id != navigationDisplay)
+  {
+    return false;
+  }
+  for (const auto& source : navigationSources)
+  {
+    if (app->result_data(source.first) != source.second)
+    {
+      return false;
+    }
+  }
+  for (const auto& filter : navigationFilters)
+  {
+    const auto now = state.filters.find(filter.first);
+    if (now == state.filters.end() || now->second.revision != filter.second)
+    {
+      return false;
+    }
+  }
+  std::size_t count = 0;
+  for (const auto& item : state.representations)
+  {
+    const auto& current = item.second;
+    if (current.view_id != viewId)
+    {
+      continue;
+    }
+    ++count;
+    const auto found = navigationDisplays.find(item.first);
+    if (found == navigationDisplays.end())
+    {
+      return false;
+    }
+    const auto& original = found->second;
+    if (current.input.owner != original.input.owner || current.input.object_id != original.input.object_id ||
+        current.input.port != original.input.port || current.visible != original.visible || current.hidden_datasets != original.hidden_datasets ||
+        !same_deformation(current.deformation,original.deformation) || !same_coloring(current.coloring,original.coloring) ||
+        current.dataset_appearance.size() != original.dataset_appearance.size())
+    {
+      return false;
+    }
+    for (const auto& appearance : original.dataset_appearance)
+    {
+      const auto now = current.dataset_appearance.find(appearance.first);
+      if (now == current.dataset_appearance.end() || !same_appearance(now->second,appearance.second))
+      {
+        return false;
+      }
+    }
+  }
+  if (count != navigationDisplays.size())
+  {
+    return false;
+  }
+  sceneRevision = app->display_revision();
+  return true;
+}
+
 bool CameraInteraction::begin(Mode next, const QPointF& start)
 {
   if (mode == Mode::Wheel)
@@ -76,6 +183,7 @@ bool CameraInteraction::begin(Mode next, const QPointF& start)
   target = baseline;
   cameraRevision = view.camera_revision;
   sceneRevision = active->display_revision();
+  capture_scene_context();
   origin = start;
   point = start;
   size = surface->size();
@@ -197,7 +305,7 @@ void CameraInteraction::preview()
     return;
   }
   const auto active = application.lock();
-  if (!owns_camera() || !active || active->display_revision() != sceneRevision ||
+  if (!owns_camera() || !active || !scene_context_matches() ||
       !active->camera_navigation_ready(viewId))
   {
     cancel();
@@ -361,7 +469,7 @@ void CameraInteraction::synchronize()
     return;
   }
   const auto active = application.lock();
-  if (mode != Mode::None && (!owns_camera() || !active || active->display_revision() != sceneRevision))
+  if (mode != Mode::None && (!owns_camera() || !active || !scene_context_matches()))
   {
     cancel();
   }
@@ -483,7 +591,7 @@ bool CameraInteraction::handle(QEvent* event)
         const auto active = application.lock();
         const bool isClick = button == Qt::LeftButton && mouse->modifiers() == Qt::NoModifier && !dragStarted &&
           (point-origin).manhattanLength() < QApplication::startDragDistance() && owns_camera() && active &&
-          active->display_revision() == sceneRevision;
+          scene_context_matches();
         if (timings != nullptr)
         {
           timings->input();

@@ -10,7 +10,8 @@ std::vector<std::string> PostClipCommand::get_syntax()
   const std::string name = " <string:type='quoted',number='1',label='filter_name'>";
   const std::string source = " [source <string:type='quoted',number='1',label='source_name'>]";
   return {"post clip create"+name+source+Postprocessor::plane_syntax() + " [keep {positive|negative}]",
-    "post clip plane"+name+Postprocessor::plane_syntax(),"post clip keep"+name+" {positive|negative}"};
+    "post clip plane"+name+Postprocessor::plane_syntax(),"post clip keep"+name+" {positive|negative}",
+    "post clip reference"+name+" {on|off}"};
 }
 std::vector<std::string> PostClipCommand::get_syntax_help()
 {

@@ -22,6 +22,14 @@ ReportNativeProgress::ReportNativeProgress(bool guiAvailable, ReportProgressStag
   }
 }
 
+ReportNativeProgress::ReportNativeProgress(bool guiAvailable, const std::string& description,
+  std::vector<ReportProgressStage> stages)
+  : ReportNativeProgress(guiAvailable)
+{
+  information = description;
+  phaseOrder = std::move(stages);
+}
+
 ReportNativeProgress::~ReportNativeProgress()
 {
   close();
@@ -49,7 +57,7 @@ void ReportNativeProgress::finish() noexcept
   {
     return;
   }
-  // No cancellation after the document and cache have been published.
+  // No cancellation after document/cache or export-file publication.
   try
   {
     tool->percent(1.0);
@@ -65,7 +73,7 @@ bool ReportNativeProgress::update(ReportProgressStage phase, const std::string& 
 {
   if (interrupted)
   {
-    error = "Report generation interrupted.";
+    error = "Report operation interrupted.";
     return false;
   }
   if (!tool)
@@ -83,10 +91,13 @@ bool ReportNativeProgress::update(ReportProgressStage phase, const std::string& 
   {
     if (!started)
     {
-      information = "Generating report and preparing preview";
-      if (firstStage == ReportProgressStage::PreviewContent)
+      if (information.empty())
       {
-        information = "Preparing report preview";
+        information = "Generating report and preparing preview";
+        if (firstStage == ReportProgressStage::PreviewContent)
+        {
+          information = "Preparing report preview";
+        }
       }
       started = true;
       tool->start(0, 100, "Report", information.c_str(), true);
@@ -96,7 +107,17 @@ bool ReportNativeProgress::update(ReportProgressStage phase, const std::string& 
       currentStage = stage;
       PRINT_INFO("Report: %s\n", stage.c_str());
     }
-    overall = (std::max)(overall, ReportProgress::fraction(phase, completed, total, firstStage));
+    double fraction = ReportProgress::fraction(phase, completed, total, firstStage);
+    if (!phaseOrder.empty())
+    {
+      if (std::find(phaseOrder.begin(), phaseOrder.end(), phase) == phaseOrder.end())
+      {
+        error = "Report progress phase is not part of this operation.";
+        return false;
+      }
+      fraction = ReportProgress::fraction(phase, completed, total, phaseOrder);
+    }
+    overall = (std::max)(overall, fraction);
     tool->percent(overall);
     tool->check_interrupt();
     if (auto* host = CubitInterface::app_util().get())
@@ -107,7 +128,7 @@ bool ReportNativeProgress::update(ReportProgressStage phase, const std::string& 
     {
       return true;
     }
-    error = "Report generation interrupted during: " + stage;
+    error = "Report operation interrupted during: " + stage;
   }
   catch (const std::exception& exception)
   {

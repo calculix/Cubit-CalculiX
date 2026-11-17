@@ -63,28 +63,8 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
     {
       return false;
     }
-    const bool useMagnitude = [&]() -> bool {
-      if (component.empty()) {
-        return group.field.vector_components.has_value();
-      } else {
-        return magnitude;
-      }
-    }();
-    field = FieldSelection{dataset,group.field.array_name,group.field.association,
-      [&]() -> std::common_type_t<decltype(std::string{}), std::common_type_t<decltype(group.field.components.front()), decltype(component)>> {
-        if (useMagnitude) {
-          return std::string{};
-        } else {
-          return [&]() -> std::common_type_t<decltype(group.field.components.front()), decltype(component)> {
-            if (component.empty() && !group.field.components.empty()) {
-              return group.field.components.front();
-            } else {
-              return component;
-            }
-          }();
-        }
-      }(),
-      useMagnitude,group.key};
+    field = preferred_field_selection(group.field, group.key);
+    field->dataset_id = dataset;
   }
   if (!field)
   {
@@ -148,7 +128,8 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
 bool PostprocessorApplicationInterface::add_plot_table(const std::string& plotName,const std::string& name,
   const std::string& sourceName,const std::string& tableName,const std::string& x,const std::string& y,
   const std::string& column,const std::string& value,std::string& error,
-  const Postprocessor::TableQualifiers& tableQualifiers,bool field,const Postprocessor::FieldQualifiers& fieldQualifiers)
+  const Postprocessor::TableQualifiers& tableQualifiers,bool field,const Postprocessor::FieldQualifiers& fieldQualifiers,
+  const std::vector<Postprocessor::TableFilter>& filters)
 {
   const auto source = [&]() -> std::common_type_t<decltype(core.session().active_source_id), decltype(core.source_id_from_name(sourceName))> {
     if (sourceName.empty()) {
@@ -189,7 +170,14 @@ bool PostprocessorApplicationInterface::add_plot_table(const std::string& plotNa
   }
   Postprocessor::PlotCurveDefinition curve;
   curve.name = name;
-  curve.input = Postprocessor::PlotTableReference{source,key,x,y,column,value,field};
+  Postprocessor::PlotTableReference reference{source,key,x,y,column,value,field};
+  reference.filters = filters;
+  const auto tableData = Postprocessor::result_table_data(core.result_data(source),Postprocessor::TableReference{source,key,field,0});
+  if (!Postprocessor::validate_table_filters(tableData,reference.filters,error))
+  {
+    return false;
+  }
+  curve.input = std::move(reference);
   return core.add_plot_curve(core.plot_id_from_name(plotName),curve,error);
 }
 bool PostprocessorApplicationInterface::change_plot(const std::string& name,const std::string& action,
@@ -221,4 +209,10 @@ bool PostprocessorApplicationInterface::export_plot(const std::string& name,cons
     return false;
   }
   return core.plot_data(id,data,error) && Postprocessor::export_plot_csv(found->second,data,path,error);
+}
+
+bool PostprocessorApplicationInterface::set_plot_label(const std::string& plot,const std::string& target,
+  const std::string& value,const std::string& curve,std::string& error)
+{
+  return core.set_plot_label(core.plot_id_from_name(plot),target,value,curve,error);
 }

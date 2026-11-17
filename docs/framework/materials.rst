@@ -18,6 +18,10 @@ has one selected model and Active or Inactive state. Deactivating a card keeps
 its values and excludes it from solver export. Changing its model replaces the
 previous model's values. Inactive cards may be saved before all required values
 are entered; activating or exporting a card validates its required values.
+Creating an empty material with ``ccx create material`` installs its supported
+cards in the Inactive state. Select the model, enter values and activate the
+required cards. Use ``add card`` when recreating a card that was removed, rather
+than adding a card already present.
 
 Units and values
 ----------------
@@ -26,6 +30,13 @@ Material values are stored in SI and displayed using workspace unit preferences.
 The default N-mm-s workspace displays stress in N/mm^2 and density in kg/m^3.
 Solver export converts values to the selected coherent solver unit system.
 Changing display units does not change the physical material values.
+
+Unit-bearing table headings use compact notation such as ``N/mm²`` and ``°C``.
+Their tooltips retain the original input unit expression. Cells display readable
+numbers such as ``0.3`` and ``273.15`` instead of exposing binary representation
+tails. An unedited cell retains its original stored precision when other cells
+are edited or Apply is used. An edited cell is parsed from the new input.
+See :doc:`units` for display preferences and command syntax.
 
 Optional temperature cells may be left blank. A zero is a real temperature value
 and is preserved. Expansion reference temperature is also optional. If units are
@@ -39,7 +50,7 @@ Commands use the active solver workspace prefix. For CalculiX, these commands
 create a material, assign an isotropic elastic model and activate its card::
 
   ccx create material "Steel"
-  ccx modify material 1 add card elastic model isotropic
+  ccx modify material 1 card elastic model isotropic
   ccx modify material 1 card elastic row 1 values 210000 0.3
   ccx modify material 1 activate card elastic
 

@@ -2,6 +2,7 @@
 #include "MaterialManagementItem.hpp"
 #include "CubitMessage.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include "Framework/Core/units/UnitLabelFormat.hpp"
 #include <QSignalBlocker>
 #include <cmath>
 #include "MaterialManagementTable.hpp"
@@ -77,7 +78,8 @@ void MaterialManagementExpansionCard::update(MaterialManagementItem *material) {
   std::string unit;
   std::string error;
   if (framework_units().display_unit(material->workspace, "temperature", unit, error)) {
-    label_zero->setText("Reference Temperature [" + QString::fromStdString(unit) + "]");
+    label_zero->setText("Reference Temperature [" + UnitLabelFormat::format(unit) + "]");
+    label_zero->setToolTip("Input unit: " + QString::fromStdString(unit));
   } else {
     PRINT_ERROR("%s\n", error.c_str());
   }

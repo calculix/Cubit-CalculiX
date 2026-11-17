@@ -8,6 +8,8 @@
 #include <QSize>
 #include <QTimer>
 #include <QString>
+#include "Postprocessor/Core/representations/Representation.hpp"
+#include <map>
 #include <functional>
 #include <memory>
 
@@ -47,6 +49,8 @@ private:
   };
   bool begin(Mode next, const QPointF& point);
   bool owns_camera() const;
+  void capture_scene_context();
+  bool scene_context_matches();
   bool send(const Postprocessor::CameraDefinition& camera, bool journal);
   void preview();
   void finish();
@@ -72,6 +76,12 @@ private:
   Postprocessor::CameraDefinition target;
   std::uint64_t cameraRevision = 0;
   std::uint64_t sceneRevision = 0;
+  // Borrow immutable snapshots and retain only view-local display settings.
+  // Frame indices and playback state deliberately do not invalidate navigation.
+  std::map<std::string,Postprocessor::Representation> navigationDisplays;
+  std::map<std::string,std::shared_ptr<const SimResults::VtkResultsData>> navigationSources;
+  std::map<std::string,std::uint64_t> navigationFilters;
+  std::string navigationSource, navigationDisplay, navigationSceneUnit;
   double wheelSteps = 0.0;
   bool pending = false;
   bool dragStarted = false;

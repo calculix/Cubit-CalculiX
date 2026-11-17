@@ -1,0 +1,18 @@
+date,platform,check,status,evidence,notes
+2026-11-16,Windows,calculix_domain_unit_tests,PASS,Native exit code 0,Run 20261116T132856Z_3f89f3cf; plugin revision not recorded
+2026-11-16,Windows,calculix_unit_boundary_tests,PASS,Native exit code 0,Run 20261116T132856Z_3f89f3cf; plugin revision not recorded
+2026-11-16,Windows,calculix_unit_presentation_tests,PASS,Native exit code 0,Run 20261116T132856Z_3f89f3cf; precedes Hz-default and compact-formatter assertion additions
+2026-11-16,Windows,Five-preset export and save/reopen,PASS,Automated journal,Run 20261116T132856Z_3f89f3cf; listed exported records compared
+2026-11-16,Windows,Rotation mapping and radians,PASS,Automated journal,Logical rotation 6 maps to ROT NODE DOF 3
+2026-11-16,Windows,Reject translational force on ROT NODE,PASS,Expected rejection,Negative-test Cubit errors were intentional
+2026-11-16,Windows,Three physical solves and projection,PASS,Automated journal,SI / N-mm-s / kN-m-s; Y displacement -0.0471096 mm; retained source units used after preset change
+2026-11-17,Windows,Manual 1 - unit labels and material values,PASS,User confirmation,No archived screenshot comparison or binary revision
+2026-11-17,Windows,Manual 2 - valid and invalid drafts,PASS,User confirmation,No partial conversion; Apply blocking and recovery
+2026-11-17,Windows,Manual 3 - inverse equation units,PASS,User confirmation,Ordinary-node length versus ROT NODE angle
+2026-11-17,Windows,Manual 4 - frequency and modal controls,PASS,User confirmation,Frequency presentation and modal time versus relative-error quantities
+2026-11-17,Windows,Manual 5 - centrifugal drawing,PASS,User confirmation,Metre geometry / millimetre display and reverse combination
+2026-11-17,Windows,Compact labels and headings,PASS,User confirmation,Presentation-only notation; no automated screenshot comparison
+2026-11-17,Windows,Hz-default and compact-formatter native extensions,NOT_RECORDED,No subsequent native execution supplied,Do not extend the 16 November binary result to later assertions
+2026-11-17,Windows,Other unit targets,NOT_RECORDED,Outside this campaign's recorded execution,No result established here for cubitsim_model_tests or calculix_result_unit_tests
+2026-11-17,Linux,Native and live unit campaign,PENDING,No Linux evidence supplied,Windows results do not establish Linux verification
+2026-11-17,Linux,Manual checks and compact presentation,PENDING,No Linux evidence supplied,Repeat checks 1-5 and labels/headings on Linux

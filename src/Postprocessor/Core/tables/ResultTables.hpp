@@ -6,6 +6,7 @@
 #include <vector>
 #include <optional>
 #include <array>
+#include "TableFilters.hpp"
 class vtkDataSet;
 namespace Postprocessor
 {
@@ -19,6 +20,7 @@ namespace Postprocessor
     std::string source_id, key;
     bool field = false;
     std::size_t frame = 0; // Zero-based active-frame marker; never a history filter.
+    std::vector<TableFilter> filters;
   };
   struct ResultTableDescriptor
   {
@@ -54,6 +56,7 @@ namespace Postprocessor
     std::vector<SimUnits::QuantityUnit> column_units;
     std::vector<bool> numeric;
     std::string title, status;
+    std::vector<TableFilter> filters;
     std::size_t rows = 0;
     bool frame_columns = false;
     std::optional<std::size_t> active_frame;
@@ -62,7 +65,7 @@ namespace Postprocessor
   ResultTableData result_table_data(std::shared_ptr<const SimResults::VtkResultsData> data, const TableReference& reference, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
   // Binary-search the frame owning a logical row. Globals have no frame.
   std::optional<std::size_t> result_table_row_frame(const ResultTableData& data, std::size_t row);
-  std::string result_table_cell(const ResultTableData& data, std::size_t row, std::size_t column);
+  std::string result_table_cell(const ResultTableData& data, std::size_t row, std::size_t column, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
   std::string result_table_column_unit(const ResultTableData& data, std::size_t column);
 }
 #endif

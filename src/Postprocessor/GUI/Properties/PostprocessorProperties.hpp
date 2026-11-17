@@ -2,6 +2,7 @@
 #define POSTPROCESSORPROPERTIES_HPP
 
 #include "Postprocessor/Core/sources/DataSource.hpp"
+#include "PostprocessorAppearanceControls.hpp"
 #include <QWidget>
 #include <memory>
 #include <functional>
@@ -14,8 +15,9 @@ class PostprocessorProperties : public QWidget
 {
 public:
   PostprocessorProperties(std::weak_ptr<PostprocessorApplicationInterface> application,
-    QWidget* parent = nullptr);
+    QWidget* parent = nullptr,PostprocessorAppearanceControls::Submit submit = {});
   void show_source(const Postprocessor::DataSource* source);
+  void set_appearance_targets(const std::vector<Postprocessor::AppearanceTarget>& targets);
 
 private:
   std::weak_ptr<PostprocessorApplicationInterface> application;
@@ -23,6 +25,7 @@ private:
   QLabel* origin;
 
   PostprocessorProbeProperties* probe;
+  PostprocessorAppearanceControls* appearance;
 };
 
 #endif // POSTPROCESSORPROPERTIES_HPP

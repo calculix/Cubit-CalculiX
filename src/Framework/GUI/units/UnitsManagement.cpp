@@ -1,5 +1,6 @@
 #include "UnitsManagement.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include "Framework/Core/units/UnitLabelFormat.hpp"
 #include "CubitMessage.hpp"
 #include <QComboBox>
 #include <QCloseEvent>
@@ -145,8 +146,12 @@ void UnitsManagement::refresh() {
       return;
     }
     table->setItem(static_cast<int>(index), 0, new QTableWidgetItem(QString::fromStdString(ids[index])));
-    table->setItem(static_cast<int>(index), 1, new QTableWidgetItem(QString::fromStdString(displayed)));
-    table->setItem(static_cast<int>(index), 2, new QTableWidgetItem(QString::fromStdString(coherent.unit)));
+    auto* displayItem = new QTableWidgetItem(UnitLabelFormat::format(displayed));
+    displayItem->setToolTip(QString::fromStdString(displayed));
+    table->setItem(static_cast<int>(index), 1, displayItem);
+    auto* solverItem = new QTableWidgetItem(UnitLabelFormat::format(coherent.unit));
+    solverItem->setToolTip(QString::fromStdString(coherent.unit));
+    table->setItem(static_cast<int>(index), 2, solverItem);
   }
   std::string displayed;
   if (framework_units().display_unit(workspace, quantities->currentText().toStdString(), displayed, error)) {

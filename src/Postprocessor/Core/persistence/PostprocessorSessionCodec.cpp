@@ -1,12 +1,15 @@
+#include "../tables/TableFilterCodec.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "../representations/ResultColoringUnits.hpp"
 #include <type_traits>
 #include "PostprocessorSessionCodec.hpp"
+#include "DatasetAppearanceCodec.hpp"
 #include "../filters/FilterCodec.hpp"
 #include "../plots/PlotCodec.hpp"
 #include "../annotations/AnnotationCodec.hpp"
 #include "../views/CameraOperations.hpp"
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QDir>
 #include <QFileInfo>
 #include <algorithm>
@@ -312,7 +315,7 @@ namespace Postprocessor
       if (view.table)
       {
         const auto found = project.table_frames.find(view.id);
-        table = Object{{"source",q(view.table->source_id)},{"key",q(view.table->key)},{"field",view.table->field},
+        table = Object{{"source",q(view.table->source_id)},{"key",q(view.table->key)},{"field",view.table->field},{"filters",table_filters_to_json(view.table->filters)},
           {"frame",frame_json([&]() -> std::common_type_t<decltype(SavedFrameReference{}), decltype(found->second)> {
             if (found == project.table_frames.end()) {
               return SavedFrameReference{};
@@ -338,6 +341,11 @@ namespace Postprocessor
       for (const auto& value : binding.hidden)
       {
         hidden.append(dataset_json(value));
+      }
+      Array appearance;
+      for (const auto& value : binding.appearance)
+      {
+        appearance.append(Object{{"dataset",dataset_json(value.dataset)},{"value",appearance_to_json(value.appearance)}});
       }
       const auto& color = display.coloring;
       const auto& deform = display.deformation;
@@ -374,7 +382,7 @@ namespace Postprocessor
             return QJsonValue(QJsonValue::Null);
           }
         }()},
-        {"coloring",coloring},{"deformation",deformation},{"fps",static_cast<int>(display.animation.frames_per_second)},{"loop",display.animation.loop}});
+        {"appearance",appearance},{"coloring",coloring},{"deformation",deformation},{"fps",static_cast<int>(display.animation.frames_per_second)},{"loop",display.animation.loop}});
     }
     for (const auto& item : state.layout.nodes)
     {
@@ -396,8 +404,13 @@ namespace Postprocessor
       Array datasets;
       for (const auto& data : item.second)
       {
-        datasets.append(Object{{"id",QString::number(static_cast<qulonglong>(data.id))},{"name",q(data.name)},
-          {"kind",q(data.kind)},{"model",data.model_id},{"element_type",q(data.element_type)}});
+        Object object{{"id",QString::number(static_cast<qulonglong>(data.id))},{"name",q(data.name)},
+          {"kind",q(data.kind)},{"model",data.model_id},{"element_type",q(data.element_type)}};
+        if (data.solid_color)
+        {
+          object.insert("solid_color",vector_json(*data.solid_color));
+        }
+        datasets.append(object);
       }
       catalogues.append(Object{{"source",q(item.first)},{"datasets",datasets}});
     }
@@ -594,7 +607,7 @@ namespace Postprocessor
         TableReference reference;
         SavedFrameReference frame;
         if (!text(table,"source",reference.source_id) || !text(table,"key",reference.key) || !boolean(table,"field",reference.field) ||
-            !frame_read(table.value("frame"),frame))
+            !frame_read(table.value("frame"),frame) || !table_filters_from_json(table.value("filters"),reference.filters))
         {
           return false;
         }
@@ -643,6 +656,33 @@ namespace Postprocessor
           return false;
         }
         binding.hidden.push_back(data);
+      }
+      if (object.contains("appearance"))
+      {
+        Array appearanceRecords;
+        if (!records(object,"appearance",appearanceRecords))
+        {
+          return false;
+        }
+        std::set<std::string> seenAppearance;
+        for (const auto& record : appearanceRecords)
+        {
+          SavedDatasetAppearance saved;
+          const auto item = record.toObject();
+          if (!record.isObject() || !dataset_read(item.value("dataset"),saved.dataset) ||
+              !appearance_from_json(item.value("value"),saved.appearance,error) ||
+              !seenAppearance.insert(QJsonDocument(dataset_json(saved.dataset)).toJson(QJsonDocument::Compact).toStdString()).second)
+          {
+            return false;
+          }
+          SimResults::Dataset metadata;
+          metadata.kind = saved.dataset.kind;
+          if (!valid_appearance(metadata,saved.appearance,error))
+          {
+            return false;
+          }
+          binding.appearance.push_back(saved);
+        }
       }
       for (const auto* key : {"color_dataset","deformation_dataset"})
       {
@@ -783,6 +823,19 @@ namespace Postprocessor
             !seen.insert(data.id).second)
         {
           return false;
+        }
+        if (object.contains("solid_color"))
+        {
+          std::array<double,3> color;
+          if (!vector_read(object.value("solid_color"),color) ||
+              !std::all_of(color.begin(),color.end(),[](double channel)
+              {
+                return channel >= 0 && channel <= 1;
+              }))
+          {
+            return false;
+          }
+          data.solid_color = color;
         }
         output.push_back(std::move(data));
       }

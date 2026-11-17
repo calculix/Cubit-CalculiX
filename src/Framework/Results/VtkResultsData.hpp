@@ -87,6 +87,8 @@ namespace SimResults
     std::string material_id_array;
     std::string material_workspace;
     std::string material_project;
+    // Native block RGB in [0,1], frozen with the result source, independent of fields.
+    std::optional<std::array<double,3>> solid_color;
   };
 
   struct Increment

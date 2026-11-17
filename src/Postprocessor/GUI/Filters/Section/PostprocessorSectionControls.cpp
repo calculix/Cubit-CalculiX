@@ -15,8 +15,14 @@
 #include <QTimer>
 #include <QMessageBox>
 #include <cmath>
-PostprocessorSectionControls::PostprocessorSectionControls(std::weak_ptr<PostprocessorApplicationInterface> value,std::function<void(const QString&)> dispatch,QWidget* parent)
-  : QWidget(parent),application(std::move(value)),submit(std::move(dispatch))
+#include <algorithm>
+#include <QSlider>
+#include <QScopedValueRollback>
+#include <QKeyEvent>
+#include <QHideEvent>
+PostprocessorSectionControls::PostprocessorSectionControls(std::weak_ptr<PostprocessorApplicationInterface> value,std::function<void(const QString&)> dispatch,QWidget* parent,
+  std::function<void(const QString&)> preview)
+  : QWidget(parent),application(std::move(value)),submit(std::move(dispatch)),silent(std::move(preview))
 {
   auto* form = new QFormLayout(this);
   filters = new QComboBox(this);
@@ -60,6 +66,71 @@ PostprocessorSectionControls::PostprocessorSectionControls(std::weak_ptr<Postpro
   side->addItems({tr("Positive"),tr("Negative")});
   side->hide();
 
+  enabled = new QCheckBox(tr("Enabled"),this);
+  enabled->setObjectName("Postprocessor.Section.Enabled");
+  form->addRow(enabled);
+  position = new QSlider(Qt::Horizontal,this);
+  position->setObjectName("Postprocessor.Section.Position");
+  position->setRange(0,Postprocessor::FilterDefaults::slider_steps);
+  position->setToolTip(tr("Move the plane along its normal across the input mesh. Escape cancels a drag."));
+  position->installEventFilter(this);
+  form->addRow(tr("Position"),position);
+  positionValue = new QLabel(this);
+  form->addRow(positionValue);
+  motionTimer = new QTimer(this);
+  motionTimer->setObjectName("Postprocessor.Section.MotionPreviewTimer");
+  motionTimer->setSingleShot(true);
+  motionTimer->setInterval(Postprocessor::FilterDefaults::plane_preview_delay_ms);
+  connect(motionTimer,&QTimer::timeout,this,[this]()
+  {
+    send_motion(false);
+  });
+  connect(position,&QSlider::sliderPressed,this,[this]()
+  {
+    begin_motion();
+  });
+  connect(position,&QSlider::valueChanged,this,[this](int value)
+  {
+    if (loading || !begin_motion())
+    {
+      return;
+    }
+    const double displacement = motionRange[0]+(motionRange[1]-motionRange[0])*
+      static_cast<double>(value)/Postprocessor::FilterDefaults::slider_steps;
+    motionTarget = motionStart->plane;
+    for (std::size_t axis = 0; axis < 3; ++axis)
+    {
+      motionTarget.origin[axis] += displacement*motionTarget.normal[axis];
+    }
+    if (position->isSliderDown())
+    {
+      if (!motionTimer->isActive())
+      {
+        motionTimer->start();
+      }
+    }
+    else
+    {
+      send_motion(true);
+    }
+  });
+  connect(position,&QSlider::sliderReleased,this,[this]()
+  {
+    send_motion(true);
+  });
+  connect(enabled,&QCheckBox::toggled,this,[this](bool checked)
+  {
+    if (!loading && !filters->currentData().toString().isEmpty())
+    {
+      cancel_motion();
+      QString action = "disable";
+      if (checked)
+      {
+        action = "enable";
+      }
+      send("post filter "+action+" "+Postprocessor::plot_quote(filters->currentText().toUtf8().toStdString()));
+    }
+  });
   visible = new QCheckBox(tr("Show in active view"),this);
   form->addRow(visible);
   auto* create = new QPushButton(tr("Create section"),this);
@@ -87,6 +158,7 @@ PostprocessorSectionControls::PostprocessorSectionControls(std::weak_ptr<Postpro
   });
   connect(filters,&QComboBox::activated,this,[this](int)
   {
+    cancel_motion();
     if (!filters->currentData().toString().isEmpty())
     {
       send("post filter show "+Postprocessor::plot_quote(filters->currentText().toUtf8().toStdString()));
@@ -205,7 +277,7 @@ void PostprocessorSectionControls::submit_plane(bool create)
 }
 void PostprocessorSectionControls::refresh()
 {
-  if (loading)
+  if (loading || motionDispatching)
   {
     return;
   }
@@ -214,6 +286,17 @@ void PostprocessorSectionControls::refresh()
   {
     setEnabled(false);
     return;
+  }
+  if (motionStart)
+  {
+    if (!owns_motion() || app->session().active_view_id != motionView)
+    {
+      cancel_motion();
+    }
+    else
+    {
+      return;
+    }
   }
   loading = true;
   auto selected = filters->currentData().toString();
@@ -284,6 +367,26 @@ void PostprocessorSectionControls::refresh()
   {
     originLabels[axis]->setText(tr("Origin %1 [%2]").arg(axes[axis]).arg(details));
   }
+  positionUnit = labelUnit;
+  enabled->setEnabled(found != app->session().filters.end());
+  enabled->setChecked(found != app->session().filters.end() && found->second.enabled);
+  position->setEnabled(false);
+  positionValue->clear();
+  std::array<double,2> range;
+  std::string rangeError;
+  if (found != app->session().filters.end() && found->second.enabled &&
+      app->filter_motion_range(found->second.name,range,rangeError))
+  {
+    const double fraction = std::clamp(-range[0]/(range[1]-range[0]),0.0,1.0);
+    position->setValue(static_cast<int>(std::lround(fraction*Postprocessor::FilterDefaults::slider_steps)));
+    position->setEnabled(true);
+    double distance = 0;
+    for (std::size_t axis = 0; axis < 3; ++axis)
+    {
+      distance += found->second.plane.origin[axis]*found->second.plane.normal[axis];
+    }
+    positionValue->setText(tr("Normal offset: %1 %2").arg(QString::number(distance,'g',8)).arg(QString::fromStdString(labelUnit)));
+  }
   visible->setEnabled(found != app->session().filters.end());
   if (found != app->session().filters.end())
   {
@@ -322,4 +425,143 @@ void PostprocessorSectionControls::refresh()
     visible->setChecked(false);
   }
   loading = false;
+}
+
+
+PostprocessorSectionControls::~PostprocessorSectionControls()
+{
+  cancel_motion();
+}
+bool PostprocessorSectionControls::owns_motion() const
+{
+  const auto app = application.lock();
+  if (!app || !motionStart)
+  {
+    return false;
+  }
+  const auto found = app->session().filters.find(motionStart->id);
+  return found != app->session().filters.end() && found->second.revision == motionRevision;
+}
+bool PostprocessorSectionControls::begin_motion()
+{
+  if (motionStart)
+  {
+    return owns_motion();
+  }
+  const auto app = application.lock();
+  if (!app || filters->currentData().toString().isEmpty())
+  {
+    return false;
+  }
+  const auto found = app->session().filters.find(filters->currentData().toString().toStdString());
+  std::string error;
+  if (found == app->session().filters.end() || !found->second.enabled ||
+      !app->filter_motion_range(found->second.name,motionRange,error))
+  {
+    return false;
+  }
+  motionStart = found->second;
+  motionTarget = motionStart->plane;
+  motionView = app->session().active_view_id;
+  motionRevision = motionStart->revision;
+  motionPreviewed = false;
+  return true;
+}
+void PostprocessorSectionControls::send_motion(bool journal)
+{
+  motionTimer->stop();
+  const auto app = application.lock();
+  if (!app || !owns_motion() || app->session().active_view_id != motionView)
+  {
+    cancel_motion();
+    return;
+  }
+  if (!journal && !silent)
+  {
+    return;
+  }
+  QScopedValueRollback<bool> guard(motionDispatching,true);
+  const QString command = QStringLiteral("post section plane ")+Postprocessor::plot_quote(motionStart->name)+
+    " "+Postprocessor::plane_command_text(motionTarget);
+  if (journal)
+  {
+    submit(command);
+  }
+  else
+  {
+    silent(command);
+  }
+  const auto found = app->session().filters.find(motionStart->id);
+  bool accepted = found != app->session().filters.end();
+  if (accepted)
+  {
+    for (std::size_t axis = 0; axis < 3; ++axis)
+    {
+      accepted = accepted && found->second.plane.origin[axis] == motionTarget.origin[axis] &&
+        std::abs(found->second.plane.normal[axis]-motionTarget.normal[axis]) <= 1e-12;
+    }
+  }
+  if (!accepted)
+  {
+    cancel_motion();
+    refresh();
+    return;
+  }
+  if (found != app->session().filters.end())
+  {
+    motionRevision = found->second.revision;
+    motionPreviewed = true;
+    double offset = 0;
+    for (std::size_t axis = 0; axis < 3; ++axis)
+    {
+      offset += found->second.plane.origin[axis]*found->second.plane.normal[axis];
+    }
+    positionValue->setText(tr("Normal offset: %1 %2").arg(QString::number(offset,'g',8)).arg(QString::fromStdString(positionUnit)));
+    for (std::size_t axis = 0; axis < 3; ++axis)
+    {
+      coordinates[axis]->setText(QString::number(found->second.plane.origin[axis],'g',17));
+    }
+  }
+  if (journal)
+  {
+    motionStart.reset();
+    motionPreviewed = false;
+    QTimer::singleShot(0,this,[this]()
+    {
+      refresh();
+    });
+  }
+}
+void PostprocessorSectionControls::cancel_motion()
+{
+  QScopedValueRollback<bool> guard(motionDispatching,true);
+  motionTimer->stop();
+  if (motionPreviewed && owns_motion() && silent)
+  {
+    const QString command = QStringLiteral("post section plane ")+Postprocessor::plot_quote(motionStart->name)+
+      " "+Postprocessor::plane_command_text(motionStart->plane);
+    silent(command);
+  }
+  motionStart.reset();
+  motionPreviewed = false;
+}
+bool PostprocessorSectionControls::eventFilter(QObject* watched,QEvent* event)
+{
+  if (watched == position && (event->type() == QEvent::KeyPress || event->type() == QEvent::ShortcutOverride) &&
+      static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape && motionStart)
+  {
+    if (event->type() == QEvent::KeyPress)
+    {
+      cancel_motion();
+      refresh();
+    }
+    event->accept();
+    return true;
+  }
+  return QWidget::eventFilter(watched,event);
+}
+void PostprocessorSectionControls::hideEvent(QHideEvent* event)
+{
+  cancel_motion();
+  QWidget::hideEvent(event);
 }

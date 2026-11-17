@@ -161,8 +161,11 @@ base name, lists the actual existing outputs in one replacement prompt, and
 submits overwrite only after approval. Cancellation is handled without dispatch.
 ReportApplicationInterface also checks existing paths for command-only callers:
 overwrite defaults to false and every destination is preflighted before any
-output. Direct PDF/ODT exporters retain QSaveFile staging; paired export is not a
-cross-file transaction and reports PDF success if ODT subsequently fails.
+output. PDF/ODT encoders write to caller-owned temporary devices. Application
+export stages and encodes both outputs before committing either. Cancellation
+before publication preserves both destinations. Final commits are non-cancellable
+and not jointly atomic; a second commit failure reports the already published
+PDF explicitly. Standalone filename writers also use QSaveFile staging.
 
 P02/O02 are deployed as Icons/ExportPdf.svg and Icons/ExportOdt.svg. Report's GUI
 now links the Claro GUI libraries for native action access. Added regression test
@@ -262,12 +265,17 @@ serializing or copying table contents. It retains page locations for the same
 immutable document across pre-layout refreshes. The diagnostics page is a
 layout-owned anchor, explicitly recognized by both navigation widgets.
 
-``ReportDocumentLayout::prepare`` accepts a borrowed progress sink. Temporary
-construction uses disabled layout and undo history, row-major cell insertion and
-128-row allocation batches, with cell checkpoints every 256 insertions. Section
-recursion propagates cancellation without replacing the old layout. TOC markers
-are integer positions and replaced in equal-width ranges after pagination, so
-live cursors cannot drift to the end of the document during construction.
+``ReportDocumentLayout::prepare`` accepts a borrowed progress sink and plans
+bounded ``ReportLayoutBatch`` documents. Core owns row/cell/text limits. Each
+batch uses disabled undo/layout while inserting cells, then paginates privately.
+Large tables continue with repeated headers; long textual cells can continue in
+additional display rows. Original semantic rows remain in the outer report for
+ODT and persistence. Planning copies table headers and selected rows only, never
+the full source table on each continuation. Page offsets map a global preview/PDF
+page to one batch and its local page. TOC markers are integer positions replaced
+in equal-width monospaced ranges after global page offsets are known. A page-count
+change during contents resolution fails preparation instead of publishing stale
+page references. All candidate batches remain private until preparation succeeds.
 
 Workspace refresh is guarded against reentry. The observer keeps its pending
 flag set throughout refresh, including native progress callbacks. Layout progress
@@ -294,12 +302,84 @@ cache miss; no timer/observer refresh initiates expensive layout. Project restor
 prepares a GUI layout from its staged session before activating that session.
 
 Preview-only operations normalize progress to the content/pagination/contents
-portion of the workflow. Content counts aggregate cells and images across all
-sections; model callbacks remain coarse because their local counts cannot
-establish total model completion. Final Qt pagination is still synchronous and
-cannot report per-page progress or poll cancellation internally. This change
-fixes progress lifetime and publication ordering, not pagination execution time.
+portion of the workflow. Preview counts describe completed bounded batches;
+model callbacks remain coarse because their local counts cannot establish total
+model completion. Each individual Qt pagination call remains synchronous, but
+native progress and cancellation checkpoints occur between batches. There is no
+final whole-report Qt pagination call or additional nested event loop.
 
 Regression sources additionally cover failed preparation and post-preparation
 cancellation before publication, successful callback ordering, headless content
 generation, read-only GUI refresh, explicit cache preparation and progress ranges.
+
+
+Postprocessor report collection
+------------------------------
+
+Frame policy is resolved from the workspace template and shared by result and
+image collection. ``last_per_step`` is the CalculiX default; ``envelope`` and
+``all_frames`` are alternatives in the content tree. Choices use stable values
+in readable settings commands. Boolean group operations skip choice editors.
+Detailed mesh/membership/nodal/element/source-table output is gated before its
+report rows are constructed. Historical input stays immutable and is not
+re-exported to resolve membership.
+
+Verified block metadata is matched by dataset ID and originating model ID.
+Unknown block mappings emit diagnostics. Cross-frame extrema compare Report-unit
+values and retain each winner's source frame and original sample location;
+incompatible value or coordinate units fail collection. The source buffers are
+never changed. Automatic captures use a detached snapshot with explicit
+source/frame/block/component selection and frozen Report presentation preferences.
+The existing named-view capture path and live Postprocessor state are preserved.
+
+``color_values_range`` resolves a VTK array once per bounded host-thread chunk.
+Up to four async workers reduce private 65536-sample buffers, with deterministic
+tie handling and no VTK/Cubit/GUI access. Cancellation signals workers and drains
+all futures before returning. Rendering and Qt batch layout remain on the host
+thread. These boundaries allow progress without unsafe concurrent rendering.
+
+
+Export progress and ODT packaging
+--------------------------------
+
+``ReportProgress`` includes PDF, ODT content, package and commit phases plus a
+non-cancellable ``finish`` notification. Native export progress uses an explicit
+phase order so omitted formats and cached preview preparation reserve no unused
+ranges. Generation retains its original phase denominator through Contents.
+Percentages describe work completion, not remaining wall-clock time. Only
+successful file publication finishes the native bar at 100 percent.
+
+``export_document`` retains an immutable report and holds the application busy
+guard throughout validation, optional PDF layout, encoding and commit. It never
+calls public ``layout`` under that guard: a missing PDF layout is prepared through
+the private service with the same sink. ODT consumes ``ReportDocument`` directly
+and never paginates a Qt preview. A borrowed progress sink supports non-GUI callers
+and cancellation regressions. Encoders neither close nor commit output devices.
+
+PDF checkpoints occur before and after each page. ODT checkpoints cover planning,
+256-cell content blocks, images, XML finalization and package I/O. Individual Qt
+page-paint/image-decode calls and final file commits remain synchronous. There is
+no additional Qt event loop or background SDK/render thread.
+
+``ReportOdtStyles`` separates heading, table, figure and caption styles. Cached
+contents recurse through section children and link to inline heading bookmarks;
+table titles and the contents title are not outline headings. Native ODT page
+numbers remain editor-generated. Shared point-based page geometry and the
+300-point figure-height limit preserve landscape and portrait aspect ratios in
+both preview and ODT. Semantic report rows and stored unit values are unchanged.
+
+``ReportOdtPackage`` writes uncompressed classic ZIP entries with mimetype first.
+Content, styles and manifest XML are seekable temporary files. Only one decoded
+image payload is held at a time, and only directory metadata accumulates in
+memory. Entries are read twice in 64-KiB chunks (CRC then copying), with a table
+based CRC-32 and cancellation checks in both passes. Directory copying also has
+checkpoints. Classic ZIP sentinel sizes/offsets and 65535 entries are rejected
+before narrowing; ZIP64 is unsupported. The final package is never published on
+encoding, size-limit or cancellation failure.
+
+``ReportExportTests`` covers cancellation in PDF/ODT/package/publication phases,
+paired destination preservation, no-preview ODT export, busy/reentrant guards,
+original report immutability, nested contents links, image proportions, numeric
+units, XML structure, package limits and the standard CRC-32 check vector. These
+regressions require the normal user-run build/test workflow; source checks do not
+substitute for native export and office-editor validation.

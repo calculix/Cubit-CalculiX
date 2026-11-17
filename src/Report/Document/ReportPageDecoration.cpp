@@ -85,6 +85,15 @@ QString ReportPageDecoration::expand(const QString& pattern, const ReportDocumen
   return result + pattern.mid(offset);
 }
 
+QSizeF ReportPageDecoration::paper_size(const ReportDocument& report)
+{
+  if (value(report, "page_size") == "Letter")
+  {
+    return QSizeF(612.0, 792.0);
+  }
+  return QSizeF(595.28, 841.89);
+}
+
 QRectF ReportPageDecoration::body_rect(const ReportDocument&, const QSizeF& paper)
 {
   const double band = 96;

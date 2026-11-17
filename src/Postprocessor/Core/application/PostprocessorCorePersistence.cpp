@@ -168,6 +168,26 @@ namespace Postprocessor
           const auto& data = *loaded->second.data;
           binding = {};
           binding.frame = frame_reference(data,display.increment_index);
+          if (previous != saved_bindings.end())
+          {
+            for (const auto& saved : previous->second.appearance)
+            {
+              if (!find_dataset(loaded->second.datasets,saved.dataset))
+              {
+                binding.appearance.push_back(saved);
+              }
+            }
+          }
+          for (const auto& appearance : display.dataset_appearance)
+          {
+            const auto reference = dataset_reference(loaded->second.datasets,appearance.first);
+            if (!reference)
+            {
+              error = "Appearance dataset identity is unavailable.";
+              return false;
+            }
+            binding.appearance.push_back({*reference,appearance.second});
+          }
           for (auto id : display.hidden_datasets)
           {
             const auto reference = dataset_reference(loaded->second.datasets,id);
@@ -258,7 +278,27 @@ namespace Postprocessor
       }
 
       display.hidden_datasets.clear();
+      display.dataset_appearance.clear();
       bool valid = true;
+      for (const auto& saved : binding.appearance)
+      {
+        const auto id = find_dataset(loaded.datasets,saved.dataset);
+        if (!id)
+        {
+          valid = false;
+          break;
+        }
+        const auto metadata = std::find_if(loaded.datasets.begin(),loaded.datasets.end(),[&](const auto& item)
+        {
+          return item.id == *id;
+        });
+        if (metadata == loaded.datasets.end() || !valid_appearance(*metadata,saved.appearance,error))
+        {
+          valid = false;
+          break;
+        }
+        display.dataset_appearance[*id] = saved.appearance;
+      }
       for (const auto& reference : binding.hidden)
       {
         const auto id = find_dataset(loaded.datasets,reference);

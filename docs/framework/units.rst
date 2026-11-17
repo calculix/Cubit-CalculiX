@@ -63,6 +63,12 @@ mass to ``kg``, density to ``kg/m^3`` and stress/pressure to ``N/mm^2``. These
 preferences do not change the coherent solver basis. Thus density entered as
 ``7850 kg/m^3`` is stored as 7850 in SI and exported as ``7.85e-9`` in N-mm-s.
 
+Frequency displays in ``Hz`` by default, independently of the solver time unit.
+An explicit frequency display preference takes priority. Resetting that
+preference restores ``Hz``; it does not change the coherent solver frequency
+unit. Frequency and time have independent display preferences. For example,
+``2 Hz`` displays as ``0.002`` when frequency is set to ``1/ms``.
+
 Solver temperature is K for all five presets. Input and display accept
 ``degC`` and ``degF`` for absolute temperature. A quantity explicitly declared
 as a temperature difference uses only the scale, never the absolute offset.
@@ -79,6 +85,7 @@ CalculiX exposes its own workspace commands::
    ccx units system "N-mm-s"
    ccx units display quantity "density" unit "kg/m^3"
    ccx units display quantity "stress" unit "N/mm^2"
+   ccx units display quantity "frequency" unit "Hz"
    ccx units display reset quantity "stress"
    ccx units geometry unit "mm"
    ccx units defaults save
@@ -99,6 +106,41 @@ back from Framework. It holds no Cubit host pointer. User-facing failures are
 reported through ``CubitMessage`` at the command or GUI boundary.
 Window-close and Escape actions submit the corresponding workspace close
 command, preserving the command-driven GUI workflow.
+
+Compact labels and headings
+---------------------------
+
+CalculiX command-panel labels, property titles, command and material table
+headings, and the shared unit editor's read-only unit cells use compact Unicode
+notation. Editable unit expressions and commands retain their original syntax.
+Tooltips on bound fields, table headings and unit-editor cells retain the input
+expression.
+
+.. list-table:: Input expressions and displayed units
+   :header-rows: 1
+
+   * - Input expression
+     - Display
+   * - ``N/mm^2``
+     - ``N/mm²``
+   * - ``kg/m^3``
+     - ``kg/m³``
+   * - ``N*m``
+     - ``N·m``
+   * - ``N^0.5*m^0.5*s^-1``
+     - ``√(N·m)/s``
+   * - ``N*m^-2*s^-1``
+     - ``N/(m²·s)``
+   * - ``degC``
+     - ``°C``
+
+The formatter supports flat products and quotients with integer or
+half-integer powers. Compound denominators are grouped explicitly. Other
+expressions retain their original spelling. Material creep headings also
+support the explicitly supplied symbolic powers ``-n`` and ``-(m+1)``.
+Formatted text is never passed back to the unit parser, used to generate
+commands, or persisted as a unit expression. Formatting does not convert
+numeric values or change their physical meaning.
 
 Persistence and API
 -------------------
@@ -130,7 +172,7 @@ The runtime generation counter invalidates display caches
 and is not stored as material revision history.
 
 CalculiX model boundaries
-------------------------
+-------------------------
 
 The nine static load types and displacement/temperature boundary conditions
 convert their input preferences to SI before storage. Their settings queries
@@ -159,6 +201,13 @@ orientation angles export in degrees. Section offsets and beam directions remain
 dimensionless. Step time/frequency fields, modal-force limits, contact penalties,
 thermal contact data, stress tensors, damping and physical constants have their
 own quantities. Empty optional values remain distinct from zero.
+
+Dimensional values converted to the solver string view use scientific notation
+with six digits after the decimal point. For example, a minimum step increment
+of ``1e-5`` is written as ``1.000000e-05`` rather than an expanded binary
+round-trip representation. Canonical storage and non-solver conversion views
+retain full precision; the detached export view receives the output formatting.
+Opaque custom solver text remains literal.
 
 All eleven HDF5 feature groups record ``value_units=SI`` through ``HDF5Tool``.
 Loading stages records before replacing live data. A missing marker can only be
@@ -210,11 +259,21 @@ output file.
 Verification status
 -------------------
 
-The implementation is being integrated with the material, export, Postprocessor
-and Report paths. No build or native Cubit execution has been performed for
-this change. A complete export requires dimension-aware handling at every
-participating model boundary; the unit service alone does not convert opaque
-custom solver text or establish units for arbitrary legacy numeric data.
+The recorded Windows campaign passed on 16 November 2026. Run
+``20261116T132856Z_3f89f3cf`` completed three native regression executables,
+export and save/reopen across five presets, rotation-node mapping and expected
+rejection checks, and three physical solves with displacement projection.
+The user subsequently confirmed manual checks 1--5 and the compact label and
+heading presentation on Windows.
+
+**Linux automated and manual verification remains PENDING.**
+The recorded automated run precedes the Hz-default and compact-formatter test
+extensions; a subsequent execution of those added assertions has not been
+recorded. The later presentation checks are user-confirmed manual evidence.
+See :doc:`../developer/units-verification` for coverage, provenance and limits.
+A complete export still requires dimensional handling at every participating
+boundary; opaque custom solver text and unspecified external source units are
+not covered by changing the workspace preset.
 
 The opt-in ``CUBITSIM_BUILD_MODEL_TESTS`` option is off by default. It adds
 ``cubitsim_model_tests`` and the ``framework_model_services`` CTest case. These
@@ -232,15 +291,18 @@ separate build directory::
    cmake --build build-model-checks --config Release --target cubitsim_model_tests
    ctest --test-dir build-model-checks/Framework/Core -C Release --output-on-failure
 
-These are instructions for subsequent validation. The regression target has
-been added without configuring, compiling or executing it for this change.
+These are reproduction instructions, not an execution record. The Windows
+campaign cited above does not establish a result for this separate target.
 
-The separate opt-in ``CUBITSIM_DOMAIN_UNIT_TESTS`` option adds
-``calculix_domain_unit_tests`` / ``calculix_domain_units``. Its source fixtures
-cover the eleven domains across all five presets, inverse equation coefficients,
+The separate opt-in ``CUBITSIM_DOMAIN_UNIT_TESTS`` option registers the CalculiX
+domain, boundary, result-metadata and GUI presentation regression targets.
+The recorded Windows campaign executed ``calculix_domain_unit_tests``,
+``calculix_unit_boundary_tests`` and ``calculix_unit_presentation_tests``.
+Their fixtures exercise domain conversions, inverse equation coefficients,
 independent Report conversion, geometry lengths/angles, failed-conversion and
-failed-read retention, SI HDF5 round trips, step backups and amplitude-axis
-cleanup. These tests have been added but have not been built or executed.
+failed-read retention, SI HDF5 round trips, step backups, amplitude-axis cleanup,
+result metadata and GUI draft conversion. Registration alone is not PASS
+evidence for additional targets such as ``calculix_result_unit_tests``.
 
 Persistence review
 ------------------
@@ -260,8 +322,10 @@ state. Trajectory step backups are temporary export-preparation data; they are
 preserved across unit changes and restored during cleanup, rather than stored
 as project history.
 
-This review used source inspection and whitespace checks. No build or executable
-test run was performed; native validation follows in the next stage.
+The original persistence review was source inspection. The later Windows
+campaign adds executable evidence for the listed fixtures; it does not turn
+every reviewed contract into a separately verified runtime case. Linux
+verification remains pending. See :doc:`../developer/units-verification`.
 
 
 Workspace toolbar actions
@@ -278,7 +342,7 @@ from the deployed component's ``Icons`` directory. The Framework build stages
 Missing resources report through CubitMessage.
 
 Mechanical components and result axes
-------------------------------------
+-------------------------------------
 
 Force/displacement components 1--3 retain their translational dimensions;
 moment/rotation components 4--6 retain moment/radian dimensions. On a rigid-body

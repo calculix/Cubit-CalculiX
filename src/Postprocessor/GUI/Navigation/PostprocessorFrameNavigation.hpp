@@ -22,7 +22,7 @@ class PostprocessorFrameNavigation : public QWidget
 {
 public:
   explicit PostprocessorFrameNavigation(std::function<void(std::size_t)> select, QWidget* parent = nullptr,
-    std::function<bool(std::size_t)> preview = {}, std::function<void(const QString&)> animation = {});
+    std::function<bool(std::size_t)> preview = {}, std::function<void(const QString&)> animation = {},std::function<bool()> ready = {});
   ~PostprocessorFrameNavigation() override;
   void stop_playback(bool commit = true);
   void refresh(const std::shared_ptr<const SimResults::VtkResultsData>& data,
@@ -47,6 +47,7 @@ private:
   std::function<void(std::size_t)> select;
   std::function<bool(std::size_t)> preview;
   std::function<void(const QString&)> animationCommand;
+  std::function<bool()> animationReady;
   Postprocessor::AnimationDefinition playback;
   bool running = false;
   bool playbackAllowed = true;

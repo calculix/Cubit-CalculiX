@@ -161,8 +161,12 @@ Result colors
 -------------
 
 The toolbar selects a field and component for the active source/view. Double-click
-a tree field to apply it: declared vectors initially use magnitude, other fields
-use their first published component. These actions submit explicit source/array
+a tree field to apply it: declared vectors initially use Magnitude, fields with
+an existing MISES/mises component use that component, and other fields use their
+first published component. The component menu lists Magnitude first for declared
+vectors and promotes MISES case-insensitively ahead of the other stored components.
+Array column order and explicitly selected components are preserved on refresh.
+These actions submit explicit source/array
 commands for the logical result group. Choosing Solid color disables contours while retaining palette,
 range and limit preferences. Geometry is not deformed by result coloring.
 
@@ -500,3 +504,70 @@ the focal plane. The scale button toggles a per-view ruler, initially off.
 Navigation occupies the row above Command Line in the middle column. Both the
 viewport/Command Line boundary and the left/right dock boundaries remain
 resizable. The deformation controls use their content width.
+
+
+Table column filters and plot labels
+-----------------------------------
+
+Right-click a table column header to filter it, clear its filter, or clear all
+filters. The value dropdown searches distinct values with case-sensitive text
+matching. It suggests at most 10001 distinct values; any exact value can be typed.
+Numeric value/frame columns also offer inclusive minimum/maximum ranges.
+Identifier columns use exact text matching to preserve 64-bit IDs. Multiple columns
+combine with AND. Filtering preserves source order and original row identities;
+active-frame highlighting and plot context actions still refer to the original
+source rows. Result arrays are borrowed, never duplicated.
+
+The Plot columns dialog has a separate list of column filters. Use table filters
+explicitly copies the current table filter definitions into this plot draft.
+Subsequent table-filter changes do not modify an existing curve. Exact filters
+compare complete cell text, preserving large identifiers. Physical filters retain
+the unit in which they were entered, including after display-unit changes.
+Unknown-unit columns continue to compare raw values.
+
+All mutations are journaled, for example::
+
+   post table filter column "ReportedNodeId" equals "17"
+   post table filter column "Frame" range 1 10
+   post table filter clear column "Frame"
+   post table filter clear all
+   post plot add table "Forces" x "Time" y "fx" where "NodeId" equals "17" where "Frame" range 1 10 source "Model" plot "History 1"
+   post plot title "Contact history" plot "History 1"
+   post plot xlabel "Time [s]" plot "History 1"
+   post plot ylabel "Contact force [N]" plot "History 1"
+   post plot curve label "Node 17" curve "curve_1" plot "History 1"
+   post plot labels auto plot "History 1"
+
+Filter commands accept an optional ``unit "kN"`` (for example) for physical
+columns. Plot predicates may be repeated; when units are supplied for predicates
+of one mode, supply one for every predicate of that mode, using ``unit ""`` for
+raw/identifier columns. The GUI emits these explicit bases automatically.
+
+Plot options -> Labels and title edits title, X/Y labels and curve legend
+captions. Empty text restores the automatic label. Plot/curve names remain the
+stable command targets. Automatic axis labels follow the selected quantities and
+units; custom labels never change conversion or plotted values. Label edits
+redraw the chart without rebuilding its result samples. Filters and labels are
+saved as settings, with backward-compatible defaults for older projects. PNG
+capture and Report plot images use the same stored presentation definitions.
+
+
+Camera navigation during animation
+----------------------------------
+
+Rotate, pan, spin and wheel zoom remain available during result playback.
+Frame-only updates retain an in-progress camera gesture. Source replacement,
+view changes, filter/deformation/visibility changes and competing camera updates
+still cancel that gesture. Camera recording retains its existing option: one
+final camera command per completed gesture when recording is enabled.
+
+Camera input uses the existing latest-position and presentation-paced redraw
+queue. Animation waits for outstanding presentation work; after a presented
+image, the latest pending camera input is consumed before the next result frame
+is prepared. Result playback remains active and does not queue catch-up frames.
+Camera-only redraws reuse the scene geometry cache. Heavy synchronous frame
+conversion or rendering may still reduce responsiveness; a fixed interactive
+frame rate is not guaranteed.
+
+Loop defaults to on for new representations. Saved projects retain their
+explicit Loop setting, and playback never starts automatically on project load.

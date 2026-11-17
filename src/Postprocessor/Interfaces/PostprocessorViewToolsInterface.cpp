@@ -12,7 +12,7 @@ bool PostprocessorApplicationInterface::show_properties(const std::string& page,
     error = "Properties require the Postprocessor GUI.";
     return false;
   }
-  if (page != "source" && page != "legend" && page != "clip" && page != "section" && page != "close")
+  if (page != "source" && page != "legend" && page != "clip" && page != "section" && page != "close" && page != "treeids-on" && page != "treeids-off")
   {
     error = "Unknown properties page.";
     return false;

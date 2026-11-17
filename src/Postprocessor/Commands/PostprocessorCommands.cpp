@@ -22,6 +22,7 @@
 #include "options/PostUserOptionsCommand.hpp"
 #include "display/PostShowCommand.hpp"
 #include "display/PostColorCommand.hpp"
+#include "display/PostDisplayCommand.hpp"
 #include "display/PostDeformCommand.hpp"
 #include "display/PostLegendCommand.hpp"
 #include "display/PostHideCommand.hpp"
@@ -39,7 +40,7 @@ PostprocessorCommands::PostprocessorCommands(std::weak_ptr<PostprocessorApplicat
 
 std::vector<std::string> PostprocessorCommands::command_keys() const
 {
-  return {"PostViewToolsCommand", "PostUnitsCommand", "PostClipCommand", "PostSectionCommand", "PostFilterCommand", "PostCaptureCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
+  return {"PostDisplayCommand", "PostViewToolsCommand", "PostUnitsCommand", "PostClipCommand", "PostSectionCommand", "PostFilterCommand", "PostCaptureCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
     "PostShowCommand", "PostHideCommand", "PostViewFitCommand", "PostViewCameraCommand",
     "PostViewRotateCommand", "PostViewPanCommand", "PostViewZoomCommand"};
 }
@@ -93,6 +94,10 @@ CubitCommand* PostprocessorCommands::create_command(const std::string& key) {
   }
   if (key == "PostAnimationCommand") {
     return new PostAnimationCommand(application);
+  }
+  if (key == "PostDisplayCommand")
+  {
+    return new PostDisplayCommand(application);
   }
   if (key == "PostColorCommand") {
     return new PostColorCommand(application);

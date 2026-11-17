@@ -13,6 +13,12 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QWidget>
+#include <QWheelEvent>
+#include "Framework/Interfaces/ResultSourceProviderInterface.hpp"
+#include <vtkUnstructuredGrid.h>
+#include <vtkPoints.h>
+#include <vtkSmartPointer.h>
+#include <vtkCellType.h>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -31,11 +37,60 @@ void check(bool value, const char* message)
   }
 }
 
+class CameraProvider : public ResultSourceProviderInterface
+{
+public:
+  std::string command_prefix() const override
+  {
+    return "camera";
+  }
+  bool open(const SimResults::ResultSourceReference& request,SimResults::PublishedResultSource& output,std::string& error) override
+  {
+    error.clear();
+    auto data = std::make_shared<SimResults::VtkResultsData>();
+    auto mesh = std::shared_ptr<vtkUnstructuredGrid>(vtkUnstructuredGrid::New(),[](auto* value)
+    {
+      value->Delete();
+    });
+    auto points = vtkSmartPointer<vtkPoints>::New();
+    points->InsertNextPoint(0,0,0);
+    points->InsertNextPoint(1,0,0);
+    mesh->SetPoints(points);
+    const vtkIdType vertices[] = {0,1};
+    mesh->InsertNextCell(VTK_LINE,2,vertices);
+    for (int frame = 0; frame < 2; ++frame)
+    {
+      SimResults::Increment increment;
+      increment.dataset = mesh;
+      increment.step = 1;
+      increment.increment = frame+1;
+      increment.time = frame;
+      data->increments.push_back(increment);
+    }
+    data->datasets.push_back({0,"Block_1","Blocks",1});
+    auto reference = std::get<SimResults::JobSourceReference>(request);
+    reference.run_identity = "camera-run";
+    data->run_identity = reference.run_identity;
+    data->job_id = reference.job_id;
+    output.reference = reference;
+    output.data = data;
+    output.suggested_name = "Motion";
+    return true;
+  }
+  bool refresh(const SimResults::ResultSourceReference& request,SimResults::PublishedResultSource& output,std::string& error) override
+  {
+    return open(request,output,error);
+  }
+};
 class Registry : public ResultSourceRegistryInterface
 {
-  bool resolve_result_provider(const std::string&, ResolvedResultSourceProvider&, std::string&) const override
+public:
+  ResultSourceProviderInterface* provider = nullptr;
+  bool resolve_result_provider(const std::string&, ResolvedResultSourceProvider& output,std::string&) const override
   {
-    return false;
+    output.provider = provider;
+    output.application_id = "camera";
+    return provider != nullptr;
   }
 };
 
@@ -415,6 +470,67 @@ int main(int argc, char** argv)
     summary->metrics[static_cast<std::size_t>(CameraTimingStage::CommandOutsideHandler)].count > 0 &&
     summary->unpairedDispatches == 0,
     "Controller dispatches must pair handler/Core timings with their originating gesture.");
+  CameraProvider motionProvider;
+  Registry motionRegistry;
+  motionRegistry.provider = &motionProvider;
+  Options motionOptions;
+  auto motion = std::make_shared<PostprocessorApplicationInterface>(motionRegistry);
+  check(motion->initialize_user_options(motionOptions,error),"Cannot initialize animated camera options");
+  check(motion->open_job("camera",1,std::nullopt,error) && motion->set_camera(base,error),"Cannot prepare animated camera fixture");
+  check(motion->apply_user_options({{"journal/camera",true}},error),"Cannot enable animation camera journaling");
+  auto animation = motion->animation("Motion",error);
+  check(animation.has_value(),"Animated camera source has no playback settings");
+  if (animation)
+  {
+    animation->playing = true;
+    check(motion->set_animation("Motion",*animation,error),"Cannot start camera fixture playback");
+  }
+  const auto motionView = motion->session().active_view_id;
+  int cameraCommits = 0;
+  CameraInteraction moving(&surface,motionView,motion,[&](const QString& text,std::string& issue)
+  {
+    ++cameraCommits;
+    CameraDefinition camera;
+    return parse(text,camera) && motion->set_camera(camera,issue);
+  },{},[]()
+  {
+  },[&](const std::string&)
+  {
+    ++failures;
+  });
+  QMouseEvent playbackPress(QEvent::MouseButtonPress,QPointF(400,300),QPointF(400,300),Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+  QMouseEvent playbackMove(QEvent::MouseMove,QPointF(460,330),QPointF(460,330),Qt::NoButton,Qt::LeftButton,Qt::NoModifier);
+  moving.handle(&playbackPress);
+  moving.handle(&playbackMove);
+  check(motion->set_frame("Motion",2,error),"Cannot advance frame during camera drag");
+  moving.synchronize();
+  moving.flush_preview();
+  check(!CameraOperations::equal(base,*motion->session().views.at(motionView).camera),"Frame advancement cancelled camera drag");
+  QMouseEvent playbackRelease(QEvent::MouseButtonRelease,QPointF(460,330),QPointF(460,330),Qt::LeftButton,Qt::NoButton,Qt::NoModifier);
+  moving.handle(&playbackRelease);
+  const auto afterDragAnimation = motion->animation("Motion",error);
+  check(cameraCommits == 1 && afterDragAnimation && afterDragAnimation->playing,"Camera drag stopped playback or journaled more than once");
+  const auto beforeWheel = *motion->session().views.at(motionView).camera;
+  QWheelEvent playbackWheel(QPointF(400,300),QPointF(400,300),QPoint(),QPoint(0,120),Qt::NoButton,Qt::NoModifier,Qt::NoScrollPhase,false);
+  moving.handle(&playbackWheel);
+  check(motion->set_frame("Motion",1,error),"Cannot advance frame during wheel zoom");
+  moving.synchronize();
+  moving.flush_preview();
+  check(!CameraOperations::equal(beforeWheel,*motion->session().views.at(motionView).camera),"Frame advancement cancelled wheel zoom");
+  QKeyEvent playbackEscape(QEvent::KeyPress,Qt::Key_Escape,Qt::NoModifier);
+  moving.handle(&playbackEscape);
+  moving.handle(&playbackPress);
+  moving.handle(&playbackMove);
+  ResultDeformation changedDeformation;
+  changedDeformation.scale = 2;
+  check(motion->set_deformation("Motion",changedDeformation,error),"Cannot change deformation context during gesture");
+  moving.synchronize();
+  check(!moving.preview_pending(),"Deformation change retained an obsolete camera gesture");
+  moving.handle(&playbackPress);
+  moving.handle(&playbackMove);
+  check(motion->refresh_source("Motion",error),"Cannot replace snapshot during camera gesture");
+  moving.synchronize();
+  check(!moving.preview_pending(),"Source replacement retained an obsolete camera gesture");
   if (failures == 0) {
     return 0;
   } else {

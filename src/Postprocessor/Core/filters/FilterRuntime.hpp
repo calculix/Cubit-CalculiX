@@ -12,6 +12,7 @@ namespace Postprocessor
   {
     std::size_t dataset = 0;
     std::shared_ptr<vtkDataSet> mesh;
+    std::shared_ptr<vtkDataSet> removed;
     std::shared_ptr<vtkPolyData> nodes, edges, reference_edges;
   };
   struct EvaluatedOutput

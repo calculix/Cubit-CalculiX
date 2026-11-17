@@ -1,11 +1,17 @@
 #include <type_traits>
 #include "PostprocessorResultsTree.hpp"
+#include "PostprocessorStyleDelegate.hpp"
+#include <QColorDialog>
+#include <QItemSelectionModel>
+#include "Postprocessor/GUI/Resources/PostprocessorIconLoader.hpp"
 #include <QSignalBlocker>
 #include <QMouseEvent>
 #include <QHeaderView>
 #include <QTreeWidgetItemIterator>
 #include <QSet>
 #include <QMenu>
+#include <QInputDialog>
+#include <QLineEdit>
 #include <QTimer>
 #include <QScopedValueRollback>
 #include "Postprocessor/Core/representations/ResultMesh.hpp"
@@ -13,6 +19,7 @@
 #include <map>
 #include <algorithm>
 #include <optional>
+#include <tuple>
 
 namespace
 {
@@ -24,7 +31,8 @@ namespace
     Index,
     Key,
     TableKey,
-    Category
+    Category,
+    FilterName
   };
 
   QString association(SimResults::Association value)
@@ -45,16 +53,128 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
   : QTreeWidget(parent)
 {
   setObjectName("Postprocessor.ResultsTree");
-  setHeaderLabels({tr("Sources / Results"),tr("ID")});
+  setIconSize(QSize(16,16));
+  treeIcons["blocks"] = QIcon(":/cubitgui/pblockset.svg");
+  treeIcons["nodesets"] = QIcon(":/cubitgui/nodeset.svg");
+  treeIcons["sidesets"] = QIcon(":/cubitgui/sideset.svg");
+  setHeaderLabels({tr("Sources / Results"),tr("ID"),tr("Style")});
   header()->setStretchLastSection(false);
   header()->setSectionResizeMode(0, QHeaderView::Stretch);
   header()->setSectionResizeMode(1, QHeaderView::Interactive);
   header()->resizeSection(1, 55);
-  setSelectionMode(QAbstractItemView::SingleSelection);
+  setSelectionMode(QAbstractItemView::ExtendedSelection);
+  setColumnHidden(1,true);
+  header()->setSectionResizeMode(2,QHeaderView::Fixed);
+  header()->resizeSection(2,46);
+  setEditTriggers(QAbstractItemView::NoEditTriggers);
+  setItemDelegateForColumn(2,new PostprocessorStyleDelegate([this](const QModelIndex& index,Postprocessor::DisplayStyle style)
+  {
+    auto* item = itemFromIndex(index);
+    auto targets = appearance_targets(item);
+    if (item && item->isSelected())
+    {
+      targets = appearance_targets();
+    }
+    if (appearance_action && !targets.empty())
+    {
+      Postprocessor::AppearancePatch patch;
+      patch.style = style;
+      const auto view = activeView;
+      const auto expected = snapshots;
+      QTimer::singleShot(0,this,[this,targets,patch,view,expected]()
+      {
+        if (activeView != view || !appearance_action)
+        {
+          return;
+        }
+        for (const auto& target : targets)
+        {
+          const auto before = expected.find(target.source_id);
+          const auto now = snapshots.find(target.source_id);
+          if (before == expected.end() || now == snapshots.end() || before->second != now->second)
+          {
+            return;
+          }
+        }
+        appearance_action(targets,patch);
+      });
+    }
+  },this));
+  connect(this,&QTreeWidget::itemClicked,this,[this](QTreeWidgetItem* item,int column)
+  {
+    if (column == 2 && item->data(2,PostprocessorTreeRoles::Style).isValid())
+    {
+      editItem(item,2);
+    }
+  });
+  connect(this,&QTreeWidget::itemSelectionChanged,this,[this]()
+  {
+    if (!refreshing)
+    {
+      QTimer::singleShot(0,this,[this]()
+      {
+        if (appearance_selection)
+        {
+          appearance_selection(appearance_targets());
+        }
+      });
+    }
+  });
+  header()->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(header(),&QWidget::customContextMenuRequested,this,[this](const QPoint& point)
+  {
+    QMenu menu(this);
+    auto* ids = menu.addAction(tr("Show IDs"));
+    ids->setCheckable(true);
+    ids->setChecked(!isColumnHidden(1));
+    if (menu.exec(header()->mapToGlobal(point)) == ids && ids_action)
+    {
+      ids_action(ids->isChecked());
+    }
+  });
   setContextMenuPolicy(Qt::CustomContextMenu);
   connect(this,&QWidget::customContextMenuRequested,this,[this](const QPoint& position)
   {
     auto* item = itemAt(position);
+    if (item && item->data(0,Kind).toInt() == static_cast<int>(ResultTreeItemKind::Filter))
+    {
+      const auto name = item->data(0,FilterName).toString();
+      QMenu menu(this);
+      auto* show = menu.addAction(tr("Show output"));
+      auto* hide = menu.addAction(tr("Hide output"));
+      auto* rename = menu.addAction(tr("Rename…"));
+      auto* remove = menu.addAction(tr("Remove"));
+      const auto* chosen = menu.exec(viewport()->mapToGlobal(position));
+      if (!chosen || !filter_action)
+      {
+        return;
+      }
+      QString action,replacement;
+      if (chosen == show)
+      {
+        action = "show";
+      }
+      else if (chosen == hide)
+      {
+        action = "hide";
+      }
+      else if (chosen == remove)
+      {
+        action = "remove";
+      }
+      else if (chosen == rename)
+      {
+        bool accepted = false;
+        replacement = QInputDialog::getText(this,tr("Rename filter"),tr("Name"),QLineEdit::Normal,name,&accepted);
+        if (!accepted || replacement.isEmpty())
+        {
+          return;
+        }
+        action = "rename";
+      }
+      filter_action(name,action,replacement);
+      return;
+    }
     if (!item || item->data(0,Kind).toInt() == static_cast<int>(ResultTreeItemKind::Source))
     {
       const auto sourceId = [&]() -> std::common_type_t<decltype(item->data(0,SourceId).toString().toStdString()), decltype(std::string{})> {
@@ -192,12 +312,97 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
       only = menu.addAction(tr("Show only"));
     }
     auto* all = menu.addAction(tr("Show all datasets"));
+    auto targets = appearance_targets(item);
+    if (item->isSelected())
+    {
+      targets = appearance_targets();
+    }
+    std::map<QAction*,Postprocessor::AppearancePatch> appearanceActions;
+    QAction* chooseColor = nullptr;
+    if (!targets.empty() && appearance_action)
+    {
+      auto* styles = menu.addMenu(tr("Display style"));
+      for (auto style : {Postprocessor::DisplayStyle::Wireframe,Postprocessor::DisplayStyle::HiddenLine,
+          Postprocessor::DisplayStyle::Shaded,Postprocessor::DisplayStyle::Transparent,
+          Postprocessor::DisplayStyle::Points,Postprocessor::DisplayStyle::RoundedPoints})
+      {
+        auto* action = styles->addAction(appearance_style_icon(style),appearance_style_label(style));
+        Postprocessor::AppearancePatch patch;
+        patch.style = style;
+        appearanceActions[action] = patch;
+        bool compatible = true;
+        for (const auto& target : targets)
+        {
+          const auto loaded = snapshots.find(target.source_id);
+          if (loaded != snapshots.end() && loaded->second)
+          {
+            for (const auto& metadata : loaded->second->datasets)
+            {
+              if (metadata.id == target.dataset_id)
+              {
+                compatible = compatible && Postprocessor::supports_style(metadata,style);
+              }
+            }
+          }
+        }
+        action->setEnabled(compatible);
+      }
+      chooseColor = menu.addAction(tr("Solid color…"));
+      Postprocessor::AppearancePatch nativeColor;
+      nativeColor.color_change = Postprocessor::ColorChange::Native;
+      appearanceActions[menu.addAction(tr("Use native color"))] = nativeColor;
+      auto* edges = menu.addMenu(tr("Element edges"));
+      Postprocessor::AppearancePatch on,off,reset;
+      on.edges = true;
+      off.edges = false;
+      reset.reset = true;
+      appearanceActions[edges->addAction(tr("On"))] = on;
+      appearanceActions[edges->addAction(tr("Off"))] = off;
+      appearanceActions[menu.addAction(tr("Reset appearance"))] = reset;
+    }
+    const auto expectedSnapshots = snapshots;
+    const auto targetsCurrent = [&]()
+    {
+      if (activeView != view)
+      {
+        return false;
+      }
+      for (const auto& target : targets)
+      {
+        const auto before = expectedSnapshots.find(target.source_id);
+        const auto now = snapshots.find(target.source_id);
+        if (before == expectedSnapshots.end() || now == snapshots.end() || before->second != now->second)
+        {
+          return false;
+        }
+      }
+      return true;
+    };
     const auto* chosen = menu.exec(viewport()->mapToGlobal(position));
     // A modal menu can outlive a tree rebuild. Never reuse item pointers or act
     // on a different snapshot/view after returning from its event loop.
     const auto current = snapshots.find(id);
     if (!chosen || !data || current == snapshots.end() || current->second != data || activeView != view)
     {
+      return;
+    }
+    const auto appearance = appearanceActions.find(const_cast<QAction*>(chosen));
+    if (appearance != appearanceActions.end() && targetsCurrent())
+    {
+      appearance_action(targets,appearance->second);
+      return;
+    }
+    if (chosen == chooseColor && appearance_action)
+    {
+      const auto color = QColorDialog::getColor(Qt::white,this,tr("Solid color"));
+      const auto currentData = snapshots.find(id);
+      if (color.isValid() && currentData != snapshots.end() && currentData->second == data && targetsCurrent())
+      {
+        Postprocessor::AppearancePatch patch;
+        patch.color_change = Postprocessor::ColorChange::Override;
+        patch.color = {color.redF(),color.greenF(),color.blueF()};
+        appearance_action(targets,patch);
+      }
       return;
     }
     using Action = Postprocessor::DatasetVisibilityAction;
@@ -265,6 +470,18 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
     }
     const auto kind = static_cast<ResultTreeItemKind>(current->data(0, Kind).toInt());
     const auto name = current->data(0, SourceName).toString();
+    if (kind == ResultTreeItemKind::Filter)
+    {
+      const auto filter = current->data(0,FilterName).toString();
+      QTimer::singleShot(0,this,[this,filter]()
+      {
+        if (filter_action)
+        {
+          filter_action(filter,"select",{});
+        }
+      });
+      return;
+    }
     if (inspect_source && !name.isEmpty())
     {
       // Dispatch after this signal returns: commands can rebuild the tree.
@@ -312,6 +529,23 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
       return;
     }
     const auto kind = static_cast<ResultTreeItemKind>(item->data(0,Kind).toInt());
+    if (kind == ResultTreeItemKind::Filter)
+    {
+      const auto filter = item->data(0,FilterName).toString();
+      QString action = "hide";
+      if (item->checkState(0) == Qt::Checked)
+      {
+        action = "show";
+      }
+      QTimer::singleShot(0,this,[this,filter,action]()
+      {
+        if (filter_action)
+        {
+          filter_action(filter,action,{});
+        }
+      });
+      return;
+    }
     const auto name = item->data(0,SourceName).toString();
     const auto id = item->data(0,SourceId).toString().toStdString();
     const auto dataset = static_cast<std::size_t>(item->data(0,Index).toULongLong());
@@ -355,6 +589,18 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
   });
 }
 
+void PostprocessorResultsTree::set_icons_directory(const std::string& directory)
+{
+  for (const auto& item : std::map<std::string,std::string>{
+      {"source","PostprocessorTreeSource"},{"integrationpoints","PostprocessorTreeIntegrationPoints"},
+      {"results","PostprocessorTreeResults"},{"field","PostprocessorTreeField"},
+      {"tables","PostprocessorTreeTables"},{"table","PostprocessorTreeTable"},
+      {"clip","PostprocessorClip"},{"section","PostprocessorSection"}})
+  {
+    treeIcons[item.first] = PostprocessorIconLoader::load(directory,item.second);
+  }
+}
+
 void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession& session,
   const Load& load, const HasMesh& has_mesh, const Groups& catalogue, const Datasets& datasets, const Tables& tables, const Availability& availability)
 {
@@ -367,6 +613,11 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
   activeView = session.active_view_id;
   activeSource = session.active_source_id;
   snapshots.clear();
+  QSet<QString> selectedKeys;
+  for (const auto* item : selectedItems())
+  {
+    selectedKeys.insert(item->data(0,Key).toString());
+  }
   QSet<QString> expanded;
   QSet<QString> known;
   QString selectedKey;
@@ -407,7 +658,37 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
       item->setData(0, SourceName, sourceName);
       item->setData(0, Index, QVariant::fromValue<qulonglong>(index));
       item->setData(0, Key, key);
-      if (kind == ResultTreeItemKind::MeshGroup || kind == ResultTreeItemKind::FieldsGroup || kind == ResultTreeItemKind::ResultGroup)
+      std::string icon = "field";
+      switch (kind)
+      {
+        case ResultTreeItemKind::Source:
+          icon = "source";
+          break;
+        case ResultTreeItemKind::FieldsGroup:
+        case ResultTreeItemKind::ResultGroup:
+          icon = "results";
+          break;
+        case ResultTreeItemKind::FiltersGroup:
+          icon = "clip";
+          break;
+        case ResultTreeItemKind::Table:
+          icon = "table";
+          break;
+        case ResultTreeItemKind::MeshGroup:
+          if (suffix == "tables")
+          {
+            icon = "tables";
+          }
+          else if (suffix == "integrationpoints")
+          {
+            icon = "integrationpoints";
+          }
+          break;
+        default:
+          break;
+      }
+      item->setIcon(0,treeIcons[icon]);
+      if (kind == ResultTreeItemKind::MeshGroup || kind == ResultTreeItemKind::FieldsGroup || kind == ResultTreeItemKind::ResultGroup || kind == ResultTreeItemKind::FiltersGroup)
       {
         item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
       }
@@ -449,18 +730,63 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
     bool visible = false;
     std::set<std::size_t> hidden;
     std::optional<Postprocessor::FieldSelection> coloringField;
-    for (const auto& display : session.representations)
+    // Same resolution priority as Core visibility commands: active visible,
+    // another visible output, active hidden, then the original source.
+    const auto belongs = [&](const Postprocessor::Representation& display)
     {
-      const auto& value = display.second;
-      if (value.input.owner == Postprocessor::OutputOwner::Source && value.input.object_id == source.id &&
-          value.input.port == 0 && value.view_id == session.active_view_id)
+      if (display.view_id != session.active_view_id || display.input.port != 0)
       {
-        current = value.increment_index;
-        visible = value.visible;
-        hidden = value.hidden_datasets;
-        coloringField = value.coloring.field;
-        break;
+        return false;
       }
+      if (display.input.owner == Postprocessor::OutputOwner::Source)
+      {
+        return display.input.object_id == source.id;
+      }
+      const auto filter = session.filters.find(display.input.object_id);
+      return filter != session.filters.end() && filter->second.input.object_id == source.id;
+    };
+    const Postprocessor::Representation* sourceDisplay = nullptr;
+    const Postprocessor::Representation* visibleDisplay = nullptr;
+    bool sourceVisible = false;
+    for (const auto& item : session.representations)
+    {
+      const auto& value = item.second;
+      if (!belongs(value))
+      {
+        continue;
+      }
+      if (value.input.owner == Postprocessor::OutputOwner::Source)
+      {
+        sourceDisplay = &value;
+      }
+      if (value.visible)
+      {
+        sourceVisible = true;
+        if (!visibleDisplay)
+        {
+          visibleDisplay = &value;
+        }
+      }
+    }
+    const auto activeDisplay = session.representations.find(session.active_representation_id);
+    if (activeDisplay != session.representations.end() && belongs(activeDisplay->second))
+    {
+      sourceDisplay = &activeDisplay->second;
+      if (sourceDisplay->visible)
+      {
+        visibleDisplay = sourceDisplay;
+      }
+    }
+    if (visibleDisplay)
+    {
+      sourceDisplay = visibleDisplay;
+    }
+    if (sourceDisplay)
+    {
+      current = sourceDisplay->increment_index;
+      visible = sourceDisplay->visible;
+      hidden = sourceDisplay->hidden_datasets;
+      coloringField = sourceDisplay->coloring.field;
     }
     if (!data)
     {
@@ -475,7 +801,7 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
     {
       root->setFlags(root->flags() | Qt::ItemIsUserCheckable);
       root->setCheckState(0, [&]() -> std::common_type_t<decltype(Qt::Checked), decltype(Qt::Unchecked)> {
-        if (visible) {
+        if (sourceVisible) {
           return Qt::Checked;
         } else {
           return Qt::Unchecked;
@@ -590,7 +916,52 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
             }
           }
         }
-        auto* item = make(parent,label,ResultTreeItemKind::Dataset,"dataset:"+QString::number(static_cast<qulonglong>(dataset.id)),dataset.id);
+        QString identity = QString::fromStdString(dataset.kind)+":name:"+QString::fromStdString(dataset.name);
+        if (dataset.model_id >= 0)
+        {
+          identity = QString::fromStdString(dataset.kind)+":model:"+QString::number(dataset.model_id)+":name:"+QString::fromStdString(dataset.name);
+        }
+        auto* item = make(parent,label,ResultTreeItemKind::Dataset,"dataset:"+identity,dataset.id);
+        Postprocessor::AppearanceTarget target{source.id,activeView,dataset.id};
+        auto appearance = Postprocessor::default_appearance(dataset);
+        if (appearance_value)
+        {
+          appearance = appearance_value(target);
+        }
+        item->setIcon(2,appearance_style_icon(appearance.style));
+        const bool editableAppearance = Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::Blocks) ||
+          Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::NodeSets) ||
+          Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::SideSets) ||
+          Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::IntegrationPoints);
+        if (editableAppearance)
+        {
+          item->setData(2,PostprocessorTreeRoles::Style,static_cast<int>(appearance.style));
+          item->setData(2,PostprocessorTreeRoles::DatasetKind,QString::fromStdString(dataset.kind));
+          item->setFlags(item->flags() | Qt::ItemIsEditable);
+        }
+        item->setToolTip(2,appearance_style_label(appearance.style));
+        std::string datasetIcon = "field";
+        if (Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::Blocks))
+        {
+          datasetIcon = "blocks";
+        }
+        else if (Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::NodeSets))
+        {
+          datasetIcon = "nodesets";
+        }
+        else if (Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::SideSets))
+        {
+          datasetIcon = "sidesets";
+        }
+        else if (Postprocessor::dataset_in_category(dataset,Postprocessor::DatasetCategory::IntegrationPoints))
+        {
+          datasetIcon = "integrationpoints";
+        }
+        item->setIcon(0,treeIcons[datasetIcon]);
+        if (parent)
+        {
+          parent->setIcon(0,treeIcons[datasetIcon]);
+        }
         if (dataset.model_id >= 0)
         {
           item->setText(1,QString::number(dataset.model_id));
@@ -615,6 +986,10 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
         if (!visible)
         {
           tooltip += tr(" — parent source is hidden");
+        }
+        if (dataset.model_id >= 0)
+        {
+          tooltip += tr(" — model ID %1").arg(dataset.model_id);
         }
         item->setToolTip(0,tooltip);
       }
@@ -731,6 +1106,46 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
         item->setToolTip(0,QString::fromStdString(table.category)+"\n"+QString::fromStdString(table.key));
       }
     }
+    QTreeWidgetItem* filterRoot = nullptr;
+    for (const auto& entry : session.filters)
+    {
+      const auto& filter = entry.second;
+      if (filter.input.object_id != source.id)
+      {
+        continue;
+      }
+      if (!filterRoot)
+      {
+        filterRoot = make(root,tr("Filters"),ResultTreeItemKind::FiltersGroup,"filters");
+      }
+      auto* item = make(filterRoot,QString::fromUtf8(filter.name.c_str()),ResultTreeItemKind::Filter,
+        "filter:"+QString::fromStdString(filter.id));
+      item->setData(0,FilterName,QString::fromUtf8(filter.name.c_str()));
+      item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+      item->setCheckState(0,Qt::Unchecked);
+      const bool outputVisible = std::any_of(session.representations.begin(),session.representations.end(),[&](const auto& display)
+      {
+        return display.second.view_id == session.active_view_id && display.second.visible &&
+          display.second.input.owner == Postprocessor::OutputOwner::Feature && display.second.input.object_id == filter.id;
+      });
+      if (outputVisible)
+      {
+        item->setCheckState(0,Qt::Checked);
+      }
+      std::string icon = "clip";
+      if (filter.kind == Postprocessor::FilterKind::Section)
+      {
+        icon = "section";
+      }
+      item->setIcon(0,treeIcons[icon]);
+      item->setToolTip(0,tr("Checked: show this output. Unchecked: hide it. Enable or bypass the filter in its properties."));
+      const auto active = session.representations.find(session.active_representation_id);
+      if (active != session.representations.end() && active->second.input.owner == Postprocessor::OutputOwner::Feature &&
+          active->second.input.object_id == filter.id && source.id == session.active_source_id)
+      {
+        selected = item;
+      }
+    }
   }
   // Restore expansion after children exist; initial empty branches may not yet
   // be expandable when their QTreeWidgetItem is first constructed.
@@ -743,7 +1158,7 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
     const auto key = (*item)->data(0,Key).toString();
     const auto kind = static_cast<ResultTreeItemKind>((*item)->data(0,Kind).toInt());
     const bool initiallyExpanded = !known.contains(key) && (kind == ResultTreeItemKind::Source ||
-      kind == ResultTreeItemKind::FieldsGroup || kind == ResultTreeItemKind::ResultGroup);
+      kind == ResultTreeItemKind::FieldsGroup || kind == ResultTreeItemKind::ResultGroup || kind == ResultTreeItemKind::FiltersGroup);
     (*item)->setExpanded(expanded.contains(key) || initiallyExpanded);
   }
   if (activeField && (!selected || selected->data(0,Kind).toInt() == static_cast<int>(ResultTreeItemKind::Field)))
@@ -756,7 +1171,20 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
     } else {
       return activeRoot;
     }
-  }());
+  }(),0,QItemSelectionModel::NoUpdate);
+  bool restored = false;
+  for (QTreeWidgetItemIterator item(this); *item; ++item)
+  {
+    if (selectedKeys.contains((*item)->data(0,Key).toString()))
+    {
+      (*item)->setSelected(true);
+      restored = true;
+    }
+  }
+  if (!restored && currentItem())
+  {
+    currentItem()->setSelected(true);
+  }
 }
 
 void PostprocessorResultsTree::mousePressEvent(QMouseEvent* event)
@@ -768,4 +1196,28 @@ void PostprocessorResultsTree::mousePressEvent(QMouseEvent* event)
     clearSelection();
     setCurrentItem(nullptr);
   }
+}
+
+std::vector<Postprocessor::AppearanceTarget> PostprocessorResultsTree::appearance_targets(QTreeWidgetItem* only) const
+{
+  auto items = selectedItems();
+  if (only)
+  {
+    items = {only};
+  }
+  std::vector<Postprocessor::AppearanceTarget> targets;
+  for (const auto* item : items)
+  {
+    if (item->data(0,Kind).toInt() == static_cast<int>(ResultTreeItemKind::Dataset) &&
+        item->data(2,PostprocessorTreeRoles::Style).isValid())
+    {
+      targets.push_back({item->data(0,SourceId).toString().toStdString(),activeView,
+        static_cast<std::size_t>(item->data(0,Index).toULongLong())});
+    }
+  }
+  std::sort(targets.begin(),targets.end(),[](const auto& a,const auto& b)
+  {
+    return std::tie(a.source_id,a.dataset_id) < std::tie(b.source_id,b.dataset_id);
+  });
+  return targets;
 }

@@ -78,9 +78,17 @@ void PostprocessorColorControls::choose_field(int index)
   {
     components->addItem(tr("Magnitude"),true);
   }
+  const auto preferred = Postprocessor::preferred_field_component(field);
+  if (!preferred.empty())
+  {
+    components->addItem(QString::fromUtf8(preferred.c_str()), false);
+  }
   for (const auto& name : field.components)
   {
-    components->addItem(QString::fromUtf8(name.c_str()),false);
+    if (name != preferred)
+    {
+      components->addItem(QString::fromUtf8(name.c_str()), false);
+    }
   }
   components->setEnabled(components->count() > 0);
 }
@@ -288,15 +296,7 @@ void PostprocessorColorControls::apply_field(const QString& name, std::size_t fi
       {
         return;
       }
-      const bool magnitude = field.vector_components.has_value();
-      Postprocessor::FieldSelection selected{std::nullopt,field.array_name,field.association,
-        [&]() -> std::common_type_t<decltype(std::string{}), decltype(field.components.front())> {
-          if (magnitude) {
-            return std::string{};
-          } else {
-            return field.components.front();
-          }
-        }(),magnitude,group.key};
+      const auto selected = Postprocessor::preferred_field_selection(field, group.key);
       Postprocessor::ResultFieldSelector selector;
       std::string error;
       if (!active->readable_field(entry.first,selected,selector,error))
@@ -307,13 +307,7 @@ void PostprocessorColorControls::apply_field(const QString& name, std::size_t fi
       }
       const auto fieldArg = Postprocessor::field_command_text(selector);
       const auto sourceArg = quote(entry.second.name);
-      const auto componentArg = [&]() -> std::common_type_t<decltype(QStringLiteral("magnitude")), decltype(quote(field.components.front()))> {
-        if (field.vector_components) {
-          return QStringLiteral("magnitude");
-        } else {
-          return quote(field.components.front());
-        }
-      }();
+      const auto componentArg = selected.magnitude ? QStringLiteral("magnitude") : quote(selected.component);
       if (fieldArg.isEmpty() || sourceArg.isEmpty() || componentArg.isEmpty())
       {
         PRINT_ERROR("The field/source/component cannot be represented as a quoted command argument.\n");

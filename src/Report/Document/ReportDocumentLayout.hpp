@@ -6,6 +6,7 @@
 #include <vector>
 
 class ReportProgress;
+class ReportLayoutBatch;
 class QPainter;
 class QTextDocument;
 
@@ -22,6 +23,13 @@ public:
   const ReportDocument& report() const noexcept;
 
 private:
+  friend class ReportLayoutBatch;
+  bool prepare_single(const ReportDocument& document, std::string& error,
+    ReportProgress* progress, bool contentsOnly);
+  bool resolve_contents(const std::vector<std::pair<std::string, int>>& pages, std::string& error);
+  std::vector<std::unique_ptr<ReportLayoutBatch>> batches;
+  std::vector<std::pair<int, std::string>> toc_fields;
+  int total_pages = 0;
   std::unique_ptr<QTextDocument> text;
   ReportDocument snapshot;
   QSizeF paper;

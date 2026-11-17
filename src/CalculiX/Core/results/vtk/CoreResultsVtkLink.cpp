@@ -197,6 +197,31 @@ namespace
       group.model_id = block;
       group.name = mesh_interface.get_block_name(block);
       group.ids = mesh_interface.get_block_element_ids(block);
+      // Resolve native assigned/default colors on the host thread before workers
+      // convert the plan. Missing graphics information must not invalidate mesh linking.
+      std::string nativeColor, colorError;
+      if (mesh_interface.get_block_capture_color(block,nativeColor,colorError) &&
+          nativeColor.size() == 7 && nativeColor.front() == '#')
+      {
+        std::array<double,3> rgb{};
+        bool valid = true;
+        for (std::size_t channel = 0; channel < rgb.size(); ++channel)
+        {
+          const char* first = nativeColor.data()+1+2*channel;
+          unsigned int value = 0;
+          const auto parsed = std::from_chars(first,first+2,value,16);
+          if (parsed.ec != std::errc{} || parsed.ptr != first+2 || value > 255)
+          {
+            valid = false;
+            break;
+          }
+          rgb[channel] = static_cast<double>(value)/255.0;
+        }
+        if (valid)
+        {
+          group.solid_color = rgb;
+        }
+      }
       const std::string type = mesh_interface.get_ccx_element_type(block);
       for (int id : group.ids) {
         const auto found = formulations.find(id);

@@ -168,6 +168,8 @@ void coloring_scene_checks()
   field.name = "Stress";
   field.array_name = "test_scalar";
   field.components = {"SXX"};
+  fixture->datasets.emplace_back();
+  fixture->datasets.front().solid_color = std::array<double,3>{0.1,0.8,0.3};
   fixture->increments[0].fields.push_back(field);
   auto missing = fixture->increments[0];
   missing.fields.clear();
@@ -218,6 +220,12 @@ void coloring_scene_checks()
   renderer->GetActors()->InitTraversal();
   actor = renderer->GetActors()->GetNextActor();
   check(actor && !actor->GetMapper()->GetScalarVisibility(),"Missing field left stale scalar colors");
+  if (actor)
+  {
+    const auto* rgb = actor->GetProperty()->GetColor();
+    check(std::abs(rgb[0]-0.1) < 1e-12 && std::abs(rgb[1]-0.8) < 1e-12 && std::abs(rgb[2]-0.3) < 1e-12,
+      "Solid fallback lost native block RGB after displaying result scalars");
+  }
   const auto retained = application.coloring("Mesh",error);
   check(retained && retained->field.has_value(),"Frame change discarded requested field identity");
   auto* original = vtkDataSet::SafeDownCast(fixture->increments[0].dataset.get());
@@ -503,7 +511,7 @@ void animation_checks()
   std::string error;
   check(application.open_job("fake",1,std::nullopt,error),"Cannot open animation fixture");
   auto settings = application.animation("Mesh",error);
-  check(settings && settings->frames_per_second == 10 && !settings->loop && !settings->playing,"Animation defaults differ from the agreed values");
+  check(settings && settings->frames_per_second == 10 && settings->loop && !settings->playing,"Animation defaults differ from the agreed values");
   if (!settings)
   {
     return;
@@ -523,7 +531,7 @@ void animation_checks()
   check(application.open_job("fake",1,std::string("Second"),error),"Cannot open a second animation source");
   const auto previous = application.animation("Mesh",error);
   const auto second = application.animation("Second",error);
-  check(previous && !previous->playing && second && !second->loop && second->frames_per_second == 10,
+  check(previous && !previous->playing && second && second->loop && second->frames_per_second == 10,
     "Source changes failed to stop playback or leaked settings into another representation");
   check(application.reset(error) && !application.animation("",error),"Reset retained animation state");
 }

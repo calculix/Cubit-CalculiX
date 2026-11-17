@@ -5,6 +5,7 @@
 #include "Framework/Results/VtkResultsData.hpp"
 #include "Postprocessor/Core/representations/ResultColoring.hpp"
 #include <QTreeWidget>
+#include <QIcon>
 #include "Postprocessor/Core/tables/ResultTables.hpp"
 #include <functional>
 #include "Framework/Results/ResultJobEntry.hpp"
@@ -19,7 +20,9 @@ enum class ResultTreeItemKind
   Field,
   ResultGroup,
   Table,
-  Category
+  Category,
+  FiltersGroup,
+  Filter
 };
 
 enum class SourceAction
@@ -35,6 +38,7 @@ public:
   std::function<void()> import_files;
   std::function<void(const QString&)> inspect_source;
   std::function<void()> selection_cleared;
+  std::function<void(const QString&,const QString&,const QString&)> filter_action;
   std::function<void(const QString&,SourceAction)> source_action;
   using Availability = std::function<std::string(const std::string&)>;
   using Tables = std::function<std::vector<Postprocessor::ResultTableDescriptor>(const std::string&)>;
@@ -44,6 +48,12 @@ public:
   using Datasets = std::function<std::vector<SimResults::Dataset>(const std::string&)>;
   PostprocessorResultsTree(std::function<void(const QString&)> select,
     std::function<void(const QString&, bool)> visibility, QWidget* parent = nullptr);
+  void set_icons_directory(const std::string& directory);
+  std::vector<Postprocessor::AppearanceTarget> appearance_targets(QTreeWidgetItem* only = nullptr) const;
+  std::function<Postprocessor::DatasetAppearance(const Postprocessor::AppearanceTarget&)> appearance_value;
+  std::function<void(const std::vector<Postprocessor::AppearanceTarget>&,const Postprocessor::AppearancePatch&)> appearance_action;
+  std::function<void(const std::vector<Postprocessor::AppearanceTarget>&)> appearance_selection;
+  std::function<void(bool)> ids_action;
   std::function<void(const QString&, std::size_t)> activate_field;
   std::function<void(const QString&,const QString&,bool)> open_table;
   std::function<void(const QString&,Postprocessor::DatasetVisibilityAction,std::optional<std::size_t>)> dataset_action;
@@ -53,6 +63,7 @@ public:
 protected:
   void mousePressEvent(QMouseEvent* event) override;
 private:
+  std::map<std::string,QIcon> treeIcons;
   std::string activeView;
   std::string activeSource;
   bool refreshing = false;

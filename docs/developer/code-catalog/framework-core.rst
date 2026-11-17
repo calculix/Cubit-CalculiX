@@ -138,6 +138,10 @@ file ownership; they do not establish compilation or runtime validation.
      - ``Implementation / integration``
    * - :download:`src/Framework/Core/units/SourceUnitContext.hpp <../../../src/Framework/Core/units/SourceUnitContext.hpp>`
      - ``SourceUnitContext``
+   * - :download:`UnitLabelFormat.hpp <../../../src/Framework/Core/units/UnitLabelFormat.hpp>`
+     - Display-only Unicode unit-formatting interface
+   * - :download:`UnitLabelFormat.cpp <../../../src/Framework/Core/units/UnitLabelFormat.cpp>`
+     - Superscripts, radicals, temperature symbols and safe fallback
    * - :download:`src/Framework/Core/units/UnitDefinition.cpp <../../../src/Framework/Core/units/UnitDefinition.cpp>`
      - ``Implementation / integration``
    * - :download:`src/Framework/Core/units/UnitDefinition.hpp <../../../src/Framework/Core/units/UnitDefinition.hpp>`

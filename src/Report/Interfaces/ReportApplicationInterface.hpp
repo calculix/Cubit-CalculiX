@@ -40,7 +40,8 @@ public:
   // Explicit command/service preparation. GUI refresh uses prepared_layout only.
   bool layout(std::shared_ptr<const ReportDocumentLayout>& output, std::string& error);
   std::shared_ptr<const ReportDocumentLayout> prepared_layout() const noexcept;
-  bool export_document(const std::string& format, const std::string& filename, std::string& error, bool overwrite = false);
+  bool export_document(const std::string& format, const std::string& filename,
+    std::string& error, bool overwrite = false, ReportProgress* progress = nullptr);
   bool prepare_project_read(const std::string& filename, std::string& error);
   bool commit_project_read(std::string& error);
   void discard_project_read() noexcept;

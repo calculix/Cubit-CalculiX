@@ -55,6 +55,7 @@ int main()
   dataset.material_id_array = "MaterialId";
   dataset.material_workspace = "calculix";
   dataset.material_project = "fixture-project";
+  dataset.solid_color = std::array<double,3>{0.1,0.8,0.3};
   source.datasets.push_back(dataset);
   SimResults::Increment frame;
   grid->Register(nullptr);
@@ -104,6 +105,11 @@ int main()
   if (!(SimResults::VtkResultsMetadataCodec::read(restored, error)))
   {
     std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  if (restored.datasets.front().solid_color != dataset.solid_color)
+  {
+    std::cerr << "VTK XML round-trip lost native block color\n";
     return EXIT_FAILURE;
   }
   if (!(restored.source_units.system == "N-mm-s"))
@@ -259,6 +265,13 @@ int main()
   if (!(restoredPartitions.increments.front().fields.size() == 1))
   {
     std::cerr << "Units metadata check failed at line " << __LINE__ << ": " << error << '\n';
+    return EXIT_FAILURE;
+  }
+  auto invalidColor = source;
+  invalidColor.datasets.front().solid_color = std::array<double,3>{1.1,0.0,0.0};
+  if (SimResults::VtkResultsMetadataCodec::write_frame(*grid,invalidColor,0,error))
+  {
+    std::cerr << "Out-of-range native block color was exported\n";
     return EXIT_FAILURE;
   }
   auto* metadata = vtkStringArray::SafeDownCast(reader->GetOutput()->GetFieldData()->GetAbstractArray("CubitSim.ResultsMetadata"));

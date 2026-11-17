@@ -17,3 +17,4 @@ See :doc:`code-framework` for the lifecycle/ownership contract and
    user-options
    resource-monitoring
    framework-api
+   units-verification

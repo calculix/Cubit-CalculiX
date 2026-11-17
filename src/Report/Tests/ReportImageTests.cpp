@@ -101,7 +101,7 @@ int reportImageTests(const QString& directory, ReportProfileStoreInterface& prof
   const auto pdfPath = directory + "/setup-images.pdf";
   const auto odtPath = directory + "/setup-images.odt";
   check(ReportPdfExporter().write(layout, pdfPath.toStdString(), error), "Export PDF containing setup image");
-  check(ReportOdtExporter().write(layout, odtPath.toStdString(), error), "Export ODT containing setup image");
+  check(ReportOdtExporter().write(layout.report(), odtPath.toStdString(), error), "Export ODT containing setup image");
   QFile pdf(pdfPath), odt(odtPath);
   check(pdf.open(QIODevice::ReadOnly) && pdf.readAll().contains("/Subtype /Image"), "PDF embeds the raster image");
   check(odt.open(QIODevice::ReadOnly) && odt.readAll().contains("Pictures/image1.png"), "ODT packages the embedded PNG");

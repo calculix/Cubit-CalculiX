@@ -2,6 +2,7 @@
 #define POSTPROCESSOR_PLOTDEFINITION_HPP
 #include "../selection/ResultProbe.hpp"
 #include <variant>
+#include "../tables/TableFilters.hpp"
 #include <map>
 namespace Postprocessor
 {
@@ -35,10 +36,12 @@ namespace Postprocessor
   {
     std::string source_id, key, x, y, filter_column, filter_value;
     bool field = false; // Spatial field rows; absent in legacy projects means native table.
+    std::vector<TableFilter> filters;
   };
   struct PlotCurveDefinition
   {
     std::string name;
+    std::optional<std::string> label;
     bool visible = true;
     std::array<unsigned char,3> color = PlotDefaults::colors[0];
     std::variant<PlotEntityReference,PlotTableReference> input;
@@ -56,6 +59,8 @@ namespace Postprocessor
   struct PlotDefinition
   {
     std::string id, name;
+    // Missing overrides follow automatic names/units; labels never alter samples.
+    std::optional<std::string> title, x_label, y_label;
     std::vector<PlotCurveDefinition> curves;
     PlotAxes axes;
     // Runtime cache token, never serialized.

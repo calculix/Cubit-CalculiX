@@ -18,6 +18,7 @@ std::vector<std::string> PostPlotCommand::get_syntax()
   const std::string name = " [name <string:type='quoted',number='1',label='curve_name'>]";
   const std::string id = "{<value:label='entity_id'>|<string:type='quoted',number='1',label='entity_text'>}";
   const std::string target = "<string:type='quoted',number='1',label='target'>";
+  const std::string filters = " [{where <string:type='quoted',number='1',label='filter_columns'> equals <string:type='quoted',number='1',label='filter_values'> [unit <string:type='quoted',number='1',label='exact_units'>]|where <string:type='quoted',number='1',label='range_columns'> range <value:label='range_minima'> <value:label='range_maxima'> [unit <string:type='quoted',number='1',label='range_units'>]}]...";
   const std::string tail = " [dataset {<value:label='dataset_id'>|<string:type='quoted',number='1',label='dataset_name'>}]"+source+
     " [field <string:type='quoted',number='1',label='field_name'>]"+Postprocessor::field_qualifier_syntax()+
     " [component {magnitude|<string:type='quoted',number='1',label='component_name'>}]"
@@ -28,11 +29,14 @@ std::vector<std::string> PostPlotCommand::get_syntax()
     "post plot add integrationpoint <value:label='ip'> element "+id+tail,
     "post plot add table <string:type='quoted',number='1',label='table_name'>"+Postprocessor::table_qualifier_syntax()+
     " x <string:type='quoted',number='1',label='x_column'> y <string:type='quoted',number='1',label='y_column'>"
-    " [where <string:type='quoted',number='1',label='filter_column'> equals <string:type='quoted',number='1',label='filter_value'>]"+source+name+plot,
+    +filters+source+name+plot,
     "post plot add field <string:type='quoted',number='1',label='table_name'>"+Postprocessor::field_qualifier_syntax()+
     " x <string:type='quoted',number='1',label='x_column'> y <string:type='quoted',number='1',label='y_column'>"
-    " [where <string:type='quoted',number='1',label='filter_column'> equals <string:type='quoted',number='1',label='filter_value'>]"+source+name+plot,
+    +filters+source+name+plot,
     "post plot curve {hide|show|remove} <string:type='quoted',number='1',label='curve_name'>"+plot,
+    "post plot {title|xlabel|ylabel} <string:type='quoted',number='1',label='label_text'>"+plot,
+    "post plot labels auto"+plot,
+    "post plot curve label <string:type='quoted',number='1',label='label_text'> curve <string:type='quoted',number='1',label='curve_name'>"+plot,
     "post plot axes auto"+plot,
     "post plot axes range x <value:label='xmin'> <value:label='xmax'> y <value:label='ymin'> <value:label='ymax'>"+plot,
     "post plot export csv <string:type='quoted',number='1',label='path'>"+plot};
@@ -42,9 +46,12 @@ std::vector<std::string> PostPlotCommand::get_syntax_help()
   return {"post plot create \"name\"","post plot {show|remove} \"name\"","post plot close",
     "post plot rename \"name\" \"replacement\"",
     "post plot add {node ID|element ID|integrationpoint N element ID} [dataset ID|\"name\"] [source \"name\"] [field \"name\"] [origin \"FRD\"] [association node|element|integrationpoint] [set \"name\"] [component magnitude|\"name\"] [reduction minimum|maximum] [name \"curve\"] [plot \"name\"]",
-    "post plot add table \"name\" [scope frame|global] [type \"type\"] [entry N] x \"column\" y \"column\" [where \"column\" equals \"exact value\"] [source \"name\"] [name \"curve\"] [plot \"name\"]",
-    "post plot add field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] [set \"name\"] x \"column\" y \"column\" [where \"column\" equals \"value\"] [source \"name\"] [name \"curve\"] [plot \"name\"]",
+    "post plot add table \"name\" [scope frame|global] [type \"type\"] [entry N] x \"column\" y \"column\" [where \"column\" {equals \"value\"|range MIN MAX} [unit \"unit\"]]... [source \"name\"] [name \"curve\"] [plot \"name\"]",
+    "post plot add field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] [set \"name\"] x \"column\" y \"column\" [where \"column\" {equals \"value\"|range MIN MAX} [unit \"unit\"]]... [source \"name\"] [name \"curve\"] [plot \"name\"]",
     "post plot curve {show|hide|remove} \"curve\" [plot \"name\"]",
+    "post plot {title|xlabel|ylabel} \"text\" [plot \"name\"]",
+    "post plot labels auto [plot \"name\"]",
+    "post plot curve label \"caption\" curve \"curve\" [plot \"name\"]",
     "post plot axes auto [plot \"name\"]","post plot axes range x MIN MAX y MIN MAX [plot \"name\"]",
     "post plot export csv \"new-file.csv\" [plot \"name\"]"};
 }
@@ -52,7 +59,7 @@ std::vector<std::string> PostPlotCommand::get_help()
 {
   return {"Plots store references and settings, never full result arrays. Entity histories preserve frame order and invalid-sample gaps.",
     "Elements with nodal values require minimum/maximum reduction. Quote IDs above 9007199254740991.",
-    "Table filters compare exact source cell text. CSV files are never overwritten. Closing a plot hides its pane without deleting it."};
+    "Table filters combine with AND; exact values retain identifier text and ranges are inclusive. Labels alter presentation only; an empty label restores automatic text. CSV files are never overwritten. Closing a plot hides its pane without deleting it."};
 }
 bool PostPlotCommand::execute(CubitCommandData& data)
 {
@@ -99,6 +106,29 @@ bool PostPlotCommand::execute(CubitCommandData& data)
       }
       accepted = active->set_plot_axes(plot,axes,error);
     }
+    else if (data.find_keyword("TITLE") || data.find_keyword("XLABEL") || data.find_keyword("YLABEL") || data.find_keyword("LABELS") || data.find_keyword("LABEL"))
+    {
+      std::string text;
+      data.get_string("label_text",text);
+      std::string labelTarget = "auto";
+      if (data.find_keyword("TITLE"))
+      {
+        labelTarget = "title";
+      }
+      else if (data.find_keyword("XLABEL"))
+      {
+        labelTarget = "xlabel";
+      }
+      else if (data.find_keyword("YLABEL"))
+      {
+        labelTarget = "ylabel";
+      }
+      else if (data.find_keyword("LABEL"))
+      {
+        labelTarget = "curve";
+      }
+      accepted = active->set_plot_label(plot,labelTarget,text,name,error);
+    }
     else if (data.find_keyword("CURVE"))
     {
       accepted = active->change_plot_curve(plot,name,[&]() -> std::common_type_t<decltype("remove"), const char*> {
@@ -121,8 +151,46 @@ bool PostPlotCommand::execute(CubitCommandData& data)
       data.get_string("table_name",table);
       data.get_string("x_column",x);
       data.get_string("y_column",y);
-      data.get_string("filter_column",column);
-      data.get_string("filter_value",value);
+      std::vector<std::string> columns, values, rangeColumns, exactUnits, rangeUnits;
+      std::vector<double> minima, maxima;
+      data.get_strings("filter_columns",columns);
+      data.get_strings("filter_values",values);
+      data.get_strings("range_columns",rangeColumns);
+      data.get_strings("exact_units",exactUnits);
+      data.get_strings("range_units",rangeUnits);
+      data.get_values("range_minima",minima);
+      data.get_values("range_maxima",maxima);
+      if (columns.size() != values.size() || rangeColumns.size() != minima.size() || minima.size() != maxima.size() ||
+          (!exactUnits.empty() && exactUnits.size() != columns.size()) || (!rangeUnits.empty() && rangeUnits.size() != rangeColumns.size()))
+      {
+        PRINT_ERROR("Each filter needs a column and matching value or range bounds.\n");
+        return false;
+      }
+      std::vector<Postprocessor::TableFilter> filters;
+      for (std::size_t i = 0; i < columns.size(); ++i)
+      {
+        Postprocessor::TableFilter filter;
+        filter.column = columns[i];
+        filter.value = values[i];
+        if (!exactUnits.empty())
+        {
+          filter.unit = exactUnits[i];
+        }
+        filters.push_back(filter);
+      }
+      for (std::size_t i = 0; i < rangeColumns.size(); ++i)
+      {
+        Postprocessor::TableFilter filter;
+        filter.column = rangeColumns[i];
+        filter.mode = Postprocessor::TableFilterMode::Range;
+        filter.minimum = minima[i];
+        filter.maximum = maxima[i];
+        if (!rangeUnits.empty())
+        {
+          filter.unit = rangeUnits[i];
+        }
+        filters.push_back(filter);
+      }
       const bool field = data.find_keyword("FIELD");
       Postprocessor::TableQualifiers tableQualifiers;
       Postprocessor::FieldQualifiers fieldQualifiers;
@@ -137,7 +205,7 @@ bool PostPlotCommand::execute(CubitCommandData& data)
         PRINT_ERROR("Cannot select table: %s\n",error.c_str());
         return false;
       }
-      accepted = active->add_plot_table(plot,name,source,table,x,y,column,value,error,tableQualifiers,field,fieldQualifiers);
+      accepted = active->add_plot_table(plot,name,source,table,x,y,column,value,error,tableQualifiers,field,fieldQualifiers,filters);
     }
     else if (data.find_keyword("ADD"))
     {

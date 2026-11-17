@@ -4,10 +4,14 @@
 ReportProgress::ReportProgress() = default;
 ReportProgress::~ReportProgress() = default;
 
+void ReportProgress::finish() noexcept
+{
+}
+
 bool ReportProgress::advance(ReportProgress* progress, ReportProgressStage phase, const std::string& stage,
   std::size_t completed, std::size_t total, std::string& error)
 {
-  if (static_cast<int>(phase) < 0 || phase > ReportProgressStage::Contents || (total > 0 && completed > total))
+  if (static_cast<int>(phase) < 0 || phase > ReportProgressStage::ExportCommit || (total > 0 && completed > total))
   {
     error = "Invalid Report progress phase or work count.";
     return false;
@@ -35,4 +39,21 @@ double ReportProgress::fraction(ReportProgressStage phase, std::size_t completed
     local = static_cast<double>((std::min)(completed, total)) / static_cast<double>(total);
   }
   return (std::min)(0.99, (static_cast<double>(index - start) + local) / static_cast<double>(count - start));
+}
+
+double ReportProgress::fraction(ReportProgressStage phase, std::size_t completed,
+  std::size_t total, const std::vector<ReportProgressStage>& order)
+{
+  const auto found = std::find(order.begin(), order.end(), phase);
+  if (found == order.end() || order.empty())
+  {
+    return 0.0;
+  }
+  double local = 0.0;
+  if (total > 0 && phase != ReportProgressStage::Model)
+  {
+    local = static_cast<double>((std::min)(completed, total)) / static_cast<double>(total);
+  }
+  return (std::min)(0.99, (static_cast<double>(found - order.begin()) + local) /
+    static_cast<double>(order.size()));
 }

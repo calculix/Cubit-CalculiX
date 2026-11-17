@@ -2,6 +2,8 @@
 #define POSTPROCESSOR_REPRESENTATION_HPP
 
 #include "ResultColoring.hpp"
+#include "DatasetAppearance.hpp"
+#include <map>
 #include "AnimationDefinition.hpp"
 #include "ResultDeformation.hpp"
 #include <string>
@@ -72,6 +74,7 @@ namespace Postprocessor
     // Per-view preferences, retained across frames. Empty means all datasets.
     // Source refresh clears these IDs because a new snapshot may reuse them.
     std::set<std::size_t> hidden_datasets;
+    std::map<std::size_t,DatasetAppearance> dataset_appearance;
     // Per-view frame selection; independent views may choose different frames.
     std::size_t increment_index = 0;
     ResultColoring coloring;

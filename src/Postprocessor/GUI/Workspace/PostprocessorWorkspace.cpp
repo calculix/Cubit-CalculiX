@@ -19,6 +19,7 @@
 #include "Postprocessor/GUI/Selection/PostprocessorPickControls.hpp"
 #include "Postprocessor/GUI/Annotations/PostprocessorAnnotationControls.hpp"
 #include "Postprocessor/GUI/Properties/PostprocessorProperties.hpp"
+#include "Postprocessor/Commands/display/AppearanceCommandText.hpp"
 #include "Postprocessor/GUI/Properties/PostprocessorColorControls.hpp"
 #include "Postprocessor/GUI/Resources/PostprocessorIconLoader.hpp"
 #include "Postprocessor/GUI/Options/PostprocessorOptionsPanel.hpp"
@@ -116,6 +117,10 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
         refresh();
       });
     }
+  },[this](const QString& command)
+  {
+    this->submit(command);
+    refresh();
   });
   tableView->setMinimumWidth(150);
   tableView->hide();
@@ -211,6 +216,9 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       panelRevision.reset();
       refresh();
     });
+  },[this]()
+  {
+    return viewport->prepare_animation_step();
   });
   navigationToolbar->addWidget(navigation);
   navigationDock = new QDockWidget(tr("Result navigation"), host);
@@ -288,6 +296,35 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       refresh();
     });
   }, resultsDock);
+  if (const auto active = this->application.lock())
+  {
+    tree->set_icons_directory(active->active_icons_path());
+  }
+  tree->filter_action = [this](const QString& name,const QString& action,const QString& replacement)
+  {
+    const auto quoted = Postprocessor::plot_quote(name.toUtf8().toStdString());
+    if (quoted.isEmpty())
+    {
+      return;
+    }
+    QString command = "post filter "+action+" "+quoted;
+    if (action == "rename")
+    {
+      const auto value = Postprocessor::plot_quote(replacement.toUtf8().toStdString());
+      if (value.isEmpty())
+      {
+        return;
+      }
+      command += " "+value;
+    }
+    this->submit(command);
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+      viewport->request_redraw();
+    });
+  };
   tree->inspect_source = [this](const QString& name)
   {
     const auto quoted = Postprocessor::plot_quote(name.toUtf8().toStdString());
@@ -367,8 +404,74 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   propertiesPages = new QStackedWidget(propertiesDock);
   emptyProperties = new QWidget(propertiesPages);
   propertiesPages->addWidget(emptyProperties);
-  properties = new PostprocessorProperties(this->application,propertiesPages);
+  properties = new PostprocessorProperties(this->application,propertiesPages,[this](const std::string& command,std::string& error)
+  {
+    if (!submitCommand || !submitCommand(command,error))
+    {
+      return false;
+    }
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+      viewport->request_redraw();
+    });
+    return true;
+  });
   propertiesPages->addWidget(properties);
+  tree->appearance_value = [this](const Postprocessor::AppearanceTarget& target)
+  {
+    if (const auto app = this->application.lock())
+    {
+      return app->dataset_appearance(target.source_id,target.view_id,target.dataset_id);
+    }
+    return Postprocessor::DatasetAppearance{};
+  };
+  tree->appearance_action = [this](const std::vector<Postprocessor::AppearanceTarget>& targets,const Postprocessor::AppearancePatch& patch)
+  {
+    const auto app = this->application.lock();
+    if (!app)
+    {
+      return;
+    }
+    std::string error;
+    if (!app->change_dataset_appearance(targets,patch,error,true))
+    {
+      PRINT_ERROR("Cannot change appearance: %s\n",error.c_str());
+      return;
+    }
+    const auto commands = Postprocessor::appearance_commands(*app,targets,patch,error);
+    for (const auto& command : commands)
+    {
+      if (!submitCommand || !submitCommand(command.toStdString(),error))
+      {
+        break;
+      }
+    }
+    if (!error.empty())
+    {
+      PRINT_ERROR("Cannot change appearance: %s\n",error.c_str());
+    }
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+      viewport->request_redraw();
+    });
+  };
+  tree->appearance_selection = [this](const std::vector<Postprocessor::AppearanceTarget>& targets)
+  {
+    properties->set_appearance_targets(targets);
+  };
+  tree->ids_action = [this](bool shown)
+  {
+    QString state = "off";
+    if (shown)
+    {
+      state = "on";
+    }
+    this->submit("post tree ids "+state);
+  };
   legendProperties = new PostprocessorDisplayProperties(this->application,submitCommand,propertiesPages);
   auto* legendScroll = new QScrollArea(propertiesPages);
   legendScroll->setWidgetResizable(true);
@@ -619,8 +722,22 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       viewport->request_redraw();
     });
   };
-  clipControls = new PostprocessorClipControls(this->application,dispatchFilter,propertiesPages);
-  sectionControls = new PostprocessorSectionControls(this->application,dispatchFilter,propertiesPages);
+  auto previewFilter = [this](const QString& command)
+  {
+    std::string error;
+    if (silentCommand && !silentCommand(command.toUtf8().toStdString(),error))
+    {
+      PRINT_ERROR("Cannot preview plane: %s\n",error.c_str());
+    }
+    QTimer::singleShot(0,this,[this]()
+    {
+      panelRevision.reset();
+      refresh();
+      viewport->request_redraw();
+    });
+  };
+  clipControls = new PostprocessorClipControls(this->application,dispatchFilter,propertiesPages,previewFilter);
+  sectionControls = new PostprocessorSectionControls(this->application,dispatchFilter,propertiesPages,previewFilter);
   auto* clipScroll = new QScrollArea(propertiesPages);
   clipScroll->setWidgetResizable(true);
   clipScroll->setFrameShape(QFrame::NoFrame);
@@ -1144,11 +1261,16 @@ void PostprocessorWorkspace::capture_dialog(bool report,bool quick) {
 bool PostprocessorWorkspace::show_properties(const std::string& page,const std::string& source,std::string& error)
 {
   error.clear();
-  const auto app = application.lock();
+  const auto app = this->application.lock();
   if (!app)
   {
     error = "The Postprocessor workspace is unavailable.";
     return false;
+  }
+  if (page == "treeids-on" || page == "treeids-off")
+  {
+    tree->setColumnHidden(1,page == "treeids-off");
+    return true;
   }
   QWidget* selected = emptyProperties;
   QString title = tr("Properties");
@@ -1199,6 +1321,7 @@ bool PostprocessorWorkspace::show_properties(const std::string& page,const std::
 }
 void PostprocessorWorkspace::refresh_properties(const std::shared_ptr<PostprocessorApplicationInterface>& app)
 {
+  properties->set_appearance_targets(tree->appearance_targets());
   if (propertiesPage == "source")
   {
     const auto source = app->session().sources.find(inspectedSource);
@@ -1220,7 +1343,7 @@ void PostprocessorWorkspace::refresh_properties(const std::shared_ptr<Postproces
 }
 void PostprocessorWorkspace::camera_tool(const QString& command)
 {
-  const auto app = application.lock();
+  const auto app = this->application.lock();
   if (!app)
   {
     return;

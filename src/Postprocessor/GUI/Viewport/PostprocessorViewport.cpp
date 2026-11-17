@@ -406,6 +406,7 @@ bool PostprocessorViewport::event(QEvent* event)
     timings.abandon_frames();
     queue_timing_report();
     awaitingPresentation = false;
+    animationPresentationCredit = false;
   }
   switch (event->type())
   {
@@ -433,6 +434,7 @@ void PostprocessorViewport::showEvent(QShowEvent* event)
   timings.abandon_frames();
   queue_timing_report();
   awaitingPresentation = false;
+  animationPresentationCredit = false;
   QVTKOpenGLNativeWidget::showEvent(event);
   queue_render();
 }
@@ -482,6 +484,28 @@ void PostprocessorViewport::synchronize(const std::shared_ptr<PostprocessorAppli
   {
     queue_render();
   }
+}
+
+bool PostprocessorViewport::prepare_animation_step()
+{
+  if (renderingFrame || awaitingPresentation || !isVisible() || !isValid())
+  {
+    return false;
+  }
+  const bool cameraPending = interaction->preview_pending();
+  if ((cameraPending || frameDirty || renderQueued) && !animationPresentationCredit)
+  {
+    request_frame();
+    return false;
+  }
+  // Once an image has been presented, consume the latest camera input before
+  // preparing another result frame. This avoids starving playback during drags.
+  if (cameraPending)
+  {
+    interaction->flush_preview();
+  }
+  animationPresentationCredit = false;
+  return true;
 }
 
 void PostprocessorViewport::queue_render()
@@ -535,6 +559,7 @@ void PostprocessorViewport::on_frame_presented()
   timings.presented();
   queue_timing_report();
   awaitingPresentation = false;
+  animationPresentationCredit = true;
   if (frameDirty || interaction->preview_pending() || annotationInteraction->preview_pending() || legendInteraction->preview_pending())
   {
     request_frame();

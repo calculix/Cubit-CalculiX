@@ -89,6 +89,22 @@ namespace Postprocessor
           }
         }
         const std::string action = [&]() -> std::string {
+          if (data.find_keyword("ENABLE"))
+          {
+            return "enable";
+          }
+          if (data.find_keyword("DISABLE"))
+          {
+            return "disable";
+          }
+          if (data.find_keyword("SELECT"))
+          {
+            return "select";
+          }
+          if (data.find_keyword("REFERENCE"))
+          {
+            return "reference";
+          }
           if (data.find_keyword("PLANE")) {
             return "plane";
           } else {
@@ -119,9 +135,33 @@ namespace Postprocessor
             value = "positive";
           }
         }
+        if (action == "reference")
+        {
+          value = "off";
+          if (data.find_keyword("ON"))
+          {
+            value = "on";
+          }
+        }
         if (error.empty())
         {
           accepted = application->change_filter(name,action,view,plane,value,error);
+          if (accepted && action == "select")
+          {
+            const auto selected = std::find_if(application->session().filters.begin(),application->session().filters.end(),[&](const auto& item)
+            {
+              return item.second.name == name;
+            });
+            if (selected != application->session().filters.end())
+            {
+              std::string page = "clip";
+              if (selected->second.kind == FilterKind::Section)
+              {
+                page = "section";
+              }
+              accepted = application->show_properties(page,"",error);
+            }
+          }
         }
       }
       if (accepted)

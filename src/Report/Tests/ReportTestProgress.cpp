@@ -7,6 +7,10 @@ bool ReportTestProgress::update(ReportProgressStage phase, const std::string& st
 {
   stages.push_back(stage);
   phases.push_back(phase);
+  if (onUpdate)
+  {
+    onUpdate();
+  }
   if (total > 0 && completed > total)
   {
     error = "Invalid progress count.";
@@ -18,4 +22,9 @@ bool ReportTestProgress::update(ReportProgressStage phase, const std::string& st
     return false;
   }
   return true;
+}
+
+void ReportTestProgress::finish() noexcept
+{
+  finished = true;
 }

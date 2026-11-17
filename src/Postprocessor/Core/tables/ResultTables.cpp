@@ -388,12 +388,17 @@ namespace Postprocessor
     }
     return std::nullopt;
   }
-  std::string result_table_cell(const ResultTableData& data,std::size_t row,std::size_t column) {
+  std::string result_table_cell(const ResultTableData& data,std::size_t row,std::size_t column,const SimUnits::WorkspaceUnitContext* presentation)
+  {
+    if (!presentation)
+    {
+      presentation = table_presentation(data);
+    }
     if (row >= data.rows || column >= data.columns.size()) {
       return {};
     }
     if (!data.frame_columns && data.table) {
-      return native_cell(data.table.get(), row, column, data.column_units, table_presentation(data));
+      return native_cell(data.table.get(), row, column, data.column_units, presentation);
     }
     const auto* matched = row_part(data,row);
     if (!matched) {
@@ -424,7 +429,7 @@ namespace Postprocessor
       std::string label;
       std::string error;
       const auto& time = frame.independent_variable;
-      if (!SimResults::ResultsUnits::display_value(frame.time, time, "postprocessor", converted, label, error, table_presentation(data))) {
+      if (!SimResults::ResultsUnits::display_value(frame.time, time, "postprocessor", converted, label, error, presentation)) {
         return "Unavailable";
       }
       value << std::setprecision(17) << converted;
@@ -442,7 +447,7 @@ namespace Postprocessor
     }
     column = static_cast<std::size_t>(part.column_map[payload]);
     if (part.table) {
-      return native_cell(part.table.get(), row - part.first_row, column, part.column_units, table_presentation(data));
+      return native_cell(part.table.get(), row - part.first_row, column, part.column_units, presentation);
     }
     const auto index = row-part.first_row;
     if (column == 0) {
@@ -479,7 +484,7 @@ namespace Postprocessor
     selection.component = part.field.components[component];
     double value = 0;
     std::string error;
-    if (!color_sample(part.mesh,part.field,selection,index,value,error,table_presentation(data)) || !std::isfinite(value)) {
+    if (!color_sample(part.mesh,part.field,selection,index,value,error,presentation) || !std::isfinite(value)) {
       return "Unavailable";
     }
     std::ostringstream text;

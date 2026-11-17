@@ -1,5 +1,6 @@
 #include <type_traits>
 #include "PostprocessorReportImageProvider.hpp"
+#include "PostprocessorReportResultImages.hpp"
 #include "PostprocessorApplicationInterface.hpp"
 #include "Framework/Reporting/ReportImageRequest.hpp"
 #include "Framework/Reporting/ReportImage.hpp"
@@ -8,11 +9,16 @@ PostprocessorReportImageProvider::PostprocessorReportImageProvider(std::weak_ptr
   : application(std::move(active))
 {
 }
-bool PostprocessorReportImageProvider::collect(const ReportImageRequest&,ReportDocument&,std::string& error)
+bool PostprocessorReportImageProvider::collect(const ReportImageRequest& request,
+  ReportDocument& output, std::string& error)
 {
-  // User snapshots are inserted explicitly and preserved by Report Core.
-  error.clear();
-  return true;
+  const auto active = application.lock();
+  if (!active)
+  {
+    error = "The Postprocessor report image provider is unavailable.";
+    return false;
+  }
+  return PostprocessorReportResultImages().collect(*active, request, output, error);
 }
 bool PostprocessorReportImageProvider::render(const ReportImageRequest& request,ReportImage& output,std::string& error)
 {

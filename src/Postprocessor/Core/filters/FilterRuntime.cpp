@@ -67,6 +67,10 @@ namespace Postprocessor
         if (filter.kind == FilterKind::Section) {
           keep = std::abs(d) <= tolerance;
         }
+        if (!filter.enabled)
+        {
+          keep = true;
+        }
         if (keep) {
           const auto id = points->InsertNextPoint(point.data());
           vertices->InsertNextCell(1,&id);
@@ -80,7 +84,21 @@ namespace Postprocessor
       result->SetVerts(vertices);
       return result;
     }
+    std::shared_ptr<vtkPolyData> all_edges(vtkDataSet* mesh)
+    {
+      vtkNew<vtkExtractEdges> edges;
+      edges->SetInputData(mesh);
+      edges->UseAllPointsOn();
+      edges->Update();
+      auto output = own(vtkPolyData::New());
+      output->ShallowCopy(edges->GetOutput());
+      return output;
+    }
     std::shared_ptr<vtkPolyData> clip_edges(vtkDataSet* mesh,const FilterDefinition& filter) {
+      if (!filter.enabled)
+      {
+        return all_edges(mesh);
+      }
       vtkNew<vtkExtractEdges> edges;
       edges->SetInputData(mesh);
       edges->UseAllPointsOn();
@@ -213,6 +231,10 @@ namespace Postprocessor
     extract->SetInputData(mesh);
     extract->SetCellList(ids);
     extract->Update();
+    if (!filter.enabled)
+    {
+      return all_edges(extract->GetOutput());
+    }
     if (filter.kind == FilterKind::Clip) {
       return clip_edges(extract->GetOutput(),filter);
     }
@@ -265,7 +287,16 @@ namespace Postprocessor
       }
       const bool ip = mesh->GetPointData()->HasArray("IntegrationPointId");
       part.nodes = original_points(mesh,filter);
-      if (ip) {
+      if (!filter.enabled)
+      {
+        part.mesh = prepare(mesh,frame,input.first);
+        part.edges = all_edges(mesh);
+        if (display.deformation.enabled && display.deformation.overlay)
+        {
+          part.reference_edges = all_edges(input.second);
+        }
+      }
+      else if (ip) {
         // Zero-dimensional IP data has no section surface and is never interpolated.
         if (filter.kind == FilterKind::Section) {
           part.nodes = own(vtkPolyData::New());
@@ -296,7 +327,20 @@ namespace Postprocessor
           }
         }
         if (filter.kind == FilterKind::Clip) {
-          part.edges = clip_edges(mesh, filter);
+          if (filter.reference_visible)
+          {
+            auto opposite = filter;
+            opposite.keep = ClipSide::Negative;
+            if (filter.keep == ClipSide::Negative)
+            {
+              opposite.keep = ClipSide::Positive;
+            }
+            if (!evaluate_clip(prepared.get(),opposite,part.removed,error))
+            {
+              return false;
+            }
+          }
+          part.edges = clip_edges(prepared.get(), filter);
         } else {
           part.edges = section_edges(part.mesh.get());
         }

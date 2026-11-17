@@ -15,6 +15,10 @@ namespace Postprocessor
     inline constexpr const char* clip_name_prefix = "Clip ";
     inline constexpr const char* section_name_prefix = "Section ";
     inline constexpr double relative_tolerance = 1e-12;
+    inline constexpr double removed_opacity = 0.15;
+    inline constexpr std::array<double,3> removed_color = {0.55,0.55,0.55};
+    inline constexpr int slider_steps = 1000;
+    inline constexpr int plane_preview_delay_ms = 40;
   }
   struct PlaneDefinition
   {
@@ -30,6 +34,8 @@ namespace Postprocessor
     PlaneDefinition plane;
     ClipSide keep = ClipSide::Positive;
     std::uint64_t revision = 1;
+    bool enabled = true;
+    bool reference_visible = false;
   };
   bool normalize_plane(PlaneDefinition& plane,std::string& error);
   bool valid_filter(const FilterDefinition& filter,std::string& error);

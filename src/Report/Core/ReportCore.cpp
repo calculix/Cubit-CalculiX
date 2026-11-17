@@ -305,6 +305,7 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
   if (request.kind == "job" && resultSelection != resolved.overrides.values.end() && resultSelection->second == "true") {
     if (auto* results = registry.report_results()) {
       ReportResultRequest resultRequest;
+      resultRequest.progress = progress;
       resultRequest.provider = resolved.provider;
       resultRequest.source = candidate->source;
       resultRequest.settings = resolved.overrides;
@@ -319,7 +320,7 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
       ReportDiagnostic issue;
       issue.section_id = "post.results";
       issue.severity = "unavailable";
-      issue.message = "Result tables, extrema and locations require the Postprocessor reporting provider (Batch B).";
+      issue.message = "Block summaries and optional detailed results require the Postprocessor reporting provider.";
       candidate->diagnostics.push_back(std::move(issue));
     }
   }
@@ -338,12 +339,28 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
       return false;
     }
   }
-  if (imageSelection != resolved.overrides.values.end() && imageSelection->second == "true") {
-    ReportDiagnostic issue;
-    issue.section_id = "post.images";
-    issue.severity = "unavailable";
-    issue.message = "Result images require the Postprocessor image provider; CalculiX setup images are collected separately.";
-    candidate->diagnostics.push_back(std::move(issue));
+  if (request.kind == "job" && imageSelection != resolved.overrides.values.end() && imageSelection->second == "true")
+  {
+    if (auto* images = registry.report_images("postprocessor"))
+    {
+      ReportImageRequest imageRequest;
+      imageRequest.progress = progress;
+      imageRequest.provider = "postprocessor";
+      imageRequest.source = candidate->source;
+      imageRequest.settings = resolved.overrides;
+      if (!images->collect(imageRequest, *candidate, error))
+      {
+        return false;
+      }
+    }
+    else
+    {
+      ReportDiagnostic issue;
+      issue.section_id = "post.images";
+      issue.severity = "unavailable";
+      issue.message = "Result images require the Postprocessor reporting image provider.";
+      candidate->diagnostics.push_back(std::move(issue));
+    }
   }
   if (!ReportProgress::advance(progress, ReportProgressStage::Validation, "Validating generated report", 0, 1, error))
   {

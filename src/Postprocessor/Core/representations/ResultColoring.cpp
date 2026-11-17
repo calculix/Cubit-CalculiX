@@ -9,6 +9,7 @@
 #include <cmath>
 #include <limits>
 #include <map>
+#include <utility>
 namespace
 {
   struct ColorArray
@@ -84,6 +85,41 @@ namespace
 
 namespace Postprocessor
 {
+  std::string preferred_field_component(const SimResults::Field& field)
+  {
+    const auto mises = std::find_if(field.components.begin(), field.components.end(), [](const std::string& name)
+    {
+      const std::string expected = "MISES";
+      return name.size() == expected.size() && std::equal(name.begin(), name.end(), expected.begin(), [](char value, char upper)
+      {
+        if (value >= 'a' && value <= 'z')
+        {
+          value = static_cast<char>(value - 'a' + 'A');
+        }
+        return value == upper;
+      });
+    });
+    if (mises != field.components.end())
+    {
+      return *mises;
+    }
+    return field.components.empty() ? std::string{} : field.components.front();
+  }
+
+  FieldSelection preferred_field_selection(const SimResults::Field& field, const std::string& group_key)
+  {
+    FieldSelection selection;
+    selection.array_name = field.array_name;
+    selection.association = field.association;
+    selection.group_key = group_key;
+    selection.magnitude = field.vector_components.has_value();
+    if (!selection.magnitude)
+    {
+      selection.component = preferred_field_component(field);
+    }
+    return selection;
+  }
+
   std::string field_selection_key(const FieldSelection& selection) {
     std::string key;
     auto append = [&key](const std::string& value) {
@@ -241,6 +277,31 @@ namespace Postprocessor
     }
     return nullptr;
   }
+  bool color_values_range(vtkDataSet* mesh, const SimResults::Field& field,
+    const FieldSelection& selection, std::size_t begin, std::size_t count,
+    std::vector<double>& output, std::string& error)
+  {
+    ColorArray input;
+    if (!selected_array(mesh, field, selection, input, error, nullptr))
+    {
+      return false;
+    }
+    const auto size = static_cast<std::size_t>(input.values->GetNumberOfTuples());
+    if (begin > size || count > size - begin)
+    {
+      error = "Result sample chunk is outside the retained array.";
+      return false;
+    }
+    std::vector<double> candidate(count);
+    for (std::size_t index = 0; index < count; ++index)
+    {
+      candidate[index] = sample(input, field, selection, static_cast<vtkIdType>(begin + index));
+    }
+    output = std::move(candidate);
+    error.clear();
+    return true;
+  }
+
   bool color_sample(vtkDataSet* mesh, const SimResults::Field& field, const FieldSelection& selection,
     std::size_t index, double& value, std::string& error, const SimUnits::WorkspaceUnitContext* presentation) {
     ColorArray input;

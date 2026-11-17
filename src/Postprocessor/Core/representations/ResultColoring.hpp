@@ -72,6 +72,11 @@ namespace Postprocessor
     std::string unit_issue;
   };
   std::string field_selection_key(const FieldSelection& selection);
+  // Presentation preference only: never reorder stored array components.
+  // Prefer an existing MISES component (ASCII case-insensitive), otherwise
+  // the first stored component. Declared vectors default to virtual magnitude.
+  std::string preferred_field_component(const SimResults::Field& field);
+  FieldSelection preferred_field_selection(const SimResults::Field& field, const std::string& group_key);
   std::string field_group_key(const SimResults::Field& field);
   // Group keys remain stable. Incompatible physical quantities invalidate the
   // group across frames; compatible known units use workspace presentation units.
@@ -85,6 +90,11 @@ namespace Postprocessor
   // produce NaN. Magnitude uses only explicitly declared spatial vector columns.
   bool color_values(vtkDataSet* mesh, const SimResults::Field& field, const FieldSelection& selection,
     std::vector<double>& values, std::string& error, const SimUnits::WorkspaceUnitContext* presentation = nullptr);
+  // Bounded host-thread extraction. The selected array is resolved once per
+  // chunk; output owns its values and can be reduced safely on worker threads.
+  bool color_values_range(vtkDataSet* mesh, const SimResults::Field& field,
+    const FieldSelection& selection, std::size_t begin, std::size_t count,
+    std::vector<double>& output, std::string& error);
   // A single original sample; invalid masks/nonfinite values produce NaN.
   bool color_sample(vtkDataSet* mesh, const SimResults::Field& field, const FieldSelection& selection,
     std::size_t index, double& value, std::string& error, const SimUnits::WorkspaceUnitContext* presentation = nullptr);

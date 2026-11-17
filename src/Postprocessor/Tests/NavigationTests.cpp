@@ -173,7 +173,10 @@ int main(int argc, char** argv)
     QCoreApplication::processEvents();
     check(frames == before+2 && !slider->isEnabled() && combo->count() == 0,"Reset retained a pending slider preview or commit");
   }
+  check(Postprocessor::AnimationDefinition{}.loop,"Loop should default on in Core");
   Postprocessor::AnimationDefinition playback;
+  playback.loop = false; // Explicitly test the non-loop path.
+  bool presentationReady = true;
   std::size_t shown = 0;
   int commits = 0;
   int ticks = 0;
@@ -210,6 +213,9 @@ int main(int argc, char** argv)
       playback.frames_per_second = operation.mid(4).toInt();
     }
     animatedPage->refresh(data,shown,mesh,"animation",playback);
+  },[&]()
+  {
+    return presentationReady;
   });
   animatedPage = &animated;
   animated.refresh(data,shown,mesh,"animation",playback);
@@ -232,6 +238,11 @@ int main(int argc, char** argv)
     check(playback.playing && timer->isActive() && timer->interval() == interval,"Unit text refresh restarted/stopped animation");
     check(framework_units().set_display_unit("postprocessor","time","s",unitError),"Cannot restore navigation time unit");
 
+    presentationReady = false;
+    QMetaObject::invokeMethod(timer,"timeout",Qt::DirectConnection);
+    check(shown == 0 && ticks == 0 && commits == 0 && playback.playing && timer->isActive(),
+      "Pending camera presentation stopped playback or advanced result geometry");
+    presentationReady = true;
     QMetaObject::invokeMethod(timer,"timeout",Qt::DirectConnection);
     animated.refresh(data,shown,mesh,"animation",playback);
     check(shown == 2 && ticks == 1 && commits == 0,"Animation must skip unavailable frames and avoid per-frame journal commits");

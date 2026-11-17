@@ -7,7 +7,8 @@ namespace Postprocessor
     inline constexpr int frames_per_second = 10;
     inline constexpr int minimum_fps = 1;
     inline constexpr int maximum_fps = 120;
-    inline constexpr bool loop = false;
+    inline constexpr bool loop = true;
+    inline constexpr int presentation_retry_ms = 8;
   }
   struct AnimationDefinition
   {

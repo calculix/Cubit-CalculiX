@@ -4,6 +4,7 @@
 #include "Framework/Results/VtkResultsData.hpp"
 #include "ElementIntegration.hpp"
 #include <string>
+#include <array>
 #include <optional>
 #include <vector>
 #include <map>
@@ -86,6 +87,8 @@ struct CoreResultsVtkGroup
   CoreResultsVtkGroupKind kind = CoreResultsVtkGroupKind::Block;
   std::vector<int> ids;
   std::vector<CoreResultsVtkSide> sides;
+  // Captured native RGB in [0,1]; absent when no trusted Cubit link exists.
+  std::optional<std::array<double,3>> solid_color;
 };
 
 struct CoreResultsVtkMesh

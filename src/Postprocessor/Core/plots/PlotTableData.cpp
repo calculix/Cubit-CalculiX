@@ -61,6 +61,14 @@ namespace Postprocessor
     if (!reference.filter_column.empty()) {
       filter = column(reference.filter_column);
     }
+    auto filters = reference.filters;
+    if (!validate_table_filters(table,filters,error))
+    {
+      output.status = error;
+      error.clear();
+      return true;
+    }
+    const auto preparedFilters = prepare_table_filters(table,filters);
     const auto valid = column("Valid");
     if (std::count(table.columns.begin(),table.columns.end(),"Valid") > 1) {
       output.status = "The row-validity column is ambiguous.";
@@ -111,6 +119,10 @@ namespace Postprocessor
       }
     }
     for (std::size_t row = 0; row < table.rows; ++row) {
+      if (!prepared_table_row_matches(table,row,preparedFilters))
+      {
+        continue;
+      }
       // Compare exact source cell text, never convert identifiers through double.
       if (filter && result_table_cell(table,row,*filter) != reference.filter_value) {
         continue;

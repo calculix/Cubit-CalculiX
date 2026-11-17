@@ -1,6 +1,7 @@
 #include <type_traits>
 #include "Postprocessor/Core/representations/ResultReferenceMesh.hpp"
 #include "PostprocessorScene.hpp"
+#include "PostprocessorDatasetAppearance.hpp"
 #include "PostprocessorScaleOverlay.hpp"
 #include "Postprocessor/GUI/Filters/PostprocessorPlaneOverlay.hpp"
 #include "Postprocessor/GUI/Selection/PostprocessorPicking.hpp"
@@ -154,6 +155,25 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
         return nullptr;
       }
     }();
+    if (derived && derived->removed && derived->removed->GetNumberOfCells() != 0)
+    {
+      auto referenceSurface = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
+      referenceSurface->SetInputData(derived->removed.get());
+      auto referenceMapper = vtkSmartPointer<vtkOpenGLPolyDataMapper>::New();
+      referenceMapper->SetInputConnection(referenceSurface->GetOutputPort());
+      referenceMapper->ScalarVisibilityOff();
+      auto referenceActor = vtkSmartPointer<vtkOpenGLActor>::New();
+      referenceActor->SetMapper(referenceMapper);
+      auto referenceProperty = vtkSmartPointer<vtkOpenGLProperty>::New();
+      const auto& removedColor = Postprocessor::FilterDefaults::removed_color;
+      referenceProperty->SetColor(removedColor[0],removedColor[1],removedColor[2]);
+      referenceProperty->SetOpacity(Postprocessor::FilterDefaults::removed_opacity);
+      referenceProperty->LightingOff();
+      referenceActor->SetProperty(referenceProperty);
+      referenceActor->PickableOff();
+      referenceActor->UseBoundsOff();
+      group->actors.push_back({part.first,referenceActor});
+    }
     if (mesh->GetNumberOfCells() == 0)
     {
       continue;
@@ -179,10 +199,22 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
     auto mapper = vtkSmartPointer<vtkOpenGLPolyDataMapper>::New();
     mapper->SetInputConnection(surface->GetOutputPort());
     mapper->ScalarVisibilityOff();
-    auto actor = vtkSmartPointer<vtkOpenGLActor>::New();
+    auto actor = vtkSmartPointer<PostprocessorDepthActor>::New();
     actor->SetMapper(mapper);
     auto property = vtkSmartPointer<vtkOpenGLProperty>::New();
-    const auto& color = Postprocessor::DisplayDefaults::surface_color;
+    auto color = Postprocessor::DisplayDefaults::surface_color;
+    const auto metadata = std::find_if(data->datasets.begin(),data->datasets.end(),[&](const SimResults::Dataset& dataset)
+    {
+      return dataset.id == part.first;
+    });
+    if (metadata != data->datasets.end() && metadata->solid_color &&
+        std::all_of(metadata->solid_color->begin(),metadata->solid_color->end(),[](double channel)
+        {
+          return std::isfinite(channel) && channel >= 0 && channel <= 1;
+        }))
+    {
+      color = *metadata->solid_color;
+    }
     property->SetColor(color[0], color[1], color[2]);
     property->SetEdgeColor(Postprocessor::DisplayDefaults::edge_color.data());
     property->SetLineWidth(Postprocessor::DisplayDefaults::edge_width);
@@ -244,6 +276,22 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
       group->surfaces.back().node_data = nodes;
     }
 
+    auto pointActor = vtkSmartPointer<vtkOpenGLActor>::New();
+    if (group->surfaces.back().nodes)
+    {
+      pointActor->SetMapper(group->surfaces.back().nodes->GetMapper());
+    }
+    else
+    {
+      pointActor->SetMapper(actor->GetMapper());
+    }
+    auto pointProperty = vtkSmartPointer<vtkOpenGLProperty>::New();
+    pointProperty->LightingOff();
+    pointActor->SetProperty(pointProperty);
+    pointActor->PickableOff();
+    pointActor->UseBoundsOff();
+    group->surfaces.back().points = pointActor;
+    group->actors.push_back({part.first,pointActor});
     std::vector<vtkDataSet*> edgeMeshes = {mesh};
     std::vector<std::shared_ptr<vtkDataSet>> referenceMeshes;
     if (display.deformation.enabled && display.deformation.overlay)
@@ -330,6 +378,10 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
         // Reference geometry follows its owning IP dataset, even when the
         // ordinary parent block representation is hidden. The mapper pipeline
         // retains its extracted input after referenceMeshes leaves this scope.
+        if (edgeMesh == mesh)
+        {
+          group->surfaces.back().edges.push_back(edgeActor);
+        }
         group->actors.push_back({part.first,edgeActor});
       }
     }
@@ -502,6 +554,10 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
             }())+display.name+": "+rangeError;
           }
         }
+        for (auto& surface : group->surfaces)
+        {
+          surface.style = application.dataset_appearance(evaluated->source_id,viewId,surface.dataset).style;
+        }
         group->coloring->apply(colorDisplay, *data, group->surfaces, legendSlot, allFrames, error, application.captured_units());
         if (colorDisplay.visible && colorDisplay.coloring.field && colorDisplay.coloring.legend_visible &&
             std::any_of(group->surfaces.begin(),group->surfaces.end(),[&](const PostprocessorColorSurface& surface)
@@ -515,6 +571,20 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
         for (const auto& actor : group->actors)
         {
           actor.actor->SetVisibility(Postprocessor::dataset_visible(display,actor.dataset));
+        }
+        for (auto& surface : group->surfaces)
+        {
+          const auto metadata = std::find_if(data->datasets.begin(),data->datasets.end(),[&](const auto& item)
+          {
+            return item.id == surface.dataset;
+          });
+          const SimResults::Dataset* item = nullptr;
+          if (metadata != data->datasets.end())
+          {
+            item = &*metadata;
+          }
+          apply_dataset_appearance(surface,application.dataset_appearance(evaluated->source_id,viewId,surface.dataset),
+            item,Postprocessor::dataset_visible(display,surface.dataset));
         }
         next.emplace(entry.first, group);
       }
@@ -538,11 +608,35 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
         {
           for (const auto& actor : entry.second->actors)
           {
-            renderer->AddActor(actor.actor);
+            const bool pointActor = std::any_of(entry.second->surfaces.begin(),entry.second->surfaces.end(),[&](const auto& surface)
+            {
+              return surface.points == actor.actor;
+            });
+            if (!pointActor)
+            {
+              renderer->AddActor(actor.actor);
+            }
           }
         }
       }
       displays.swap(next);
+      for (const auto& entry : displays)
+      {
+        for (const auto& surface : entry.second->surfaces)
+        {
+          if (surface.points && surface.points->GetVisibility())
+          {
+            if (!renderer->HasViewProp(surface.points))
+            {
+              renderer->AddActor(surface.points);
+            }
+          }
+          else if (surface.points)
+          {
+            renderer->RemoveActor(surface.points);
+          }
+        }
+      }
       displayWarning.clear();
       for (const auto& entry : displays)
       {

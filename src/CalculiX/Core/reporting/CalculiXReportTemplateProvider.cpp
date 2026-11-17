@@ -16,14 +16,17 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
   ReportTemplate candidate;
   candidate.id = "calculix.standard";
   candidate.workspace_id = "calculix";
-  candidate.revision = 3;
+  candidate.revision = 4;
   candidate.content_groups = {
     {"ccx.content.model", "Model"},
     {"ccx.content.steps", "Analysis steps", "", "ccx.steps"},
     {"ccx.content.outputs", "Requested outputs", "ccx.content.steps"},
     {"ccx.content.images", "Model and setup images"},
     {"ccx.content.step_images", "Per-step images", "ccx.content.images"},
-    {"ccx.content.post", "Postprocessor"}};
+    {"ccx.content.post", "Results", "", "post.results"},
+    {"ccx.content.set_details", "Detailed set membership", "ccx.content.model"},
+    {"ccx.content.mesh_details", "Detailed mesh listings", "ccx.content.model"},
+    {"ccx.content.result_details", "Detailed result listings", "ccx.content.post"}};
   const std::vector<std::pair<std::string, std::string>> categories =
   {
     {"ccx.model.overview", "Model overview"}, {"ccx.model.materials", "Materials"},
@@ -70,8 +73,46 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
   candidate.options.push_back(steps);
   candidate.defaults.values[steps.key] = steps.default_value;
   CalculiXReportImageSettings::add_options(candidate);
+  const auto addBoolean = [&](const std::string& key, const std::string& label,
+                              const std::string& group, bool enabled)
+  {
+    ReportOption option;
+    option.key = key;
+    option.label = label;
+    option.group_id = group;
+    option.kind = "boolean";
+    option.default_value = "false";
+    if (enabled)
+    {
+      option.default_value = "true";
+    }
+    candidate.defaults.values[key] = option.default_value;
+    candidate.options.push_back(std::move(option));
+  };
+  addBoolean("ccx.model.sets.nodes", "Node membership", "ccx.content.set_details", false);
+  addBoolean("ccx.model.sets.elements", "Element membership", "ccx.content.set_details", false);
+  addBoolean("ccx.model.sets.faces", "Face membership", "ccx.content.set_details", false);
+  addBoolean("ccx.model.mesh.nodes", "Node coordinates", "ccx.content.mesh_details", false);
+  addBoolean("ccx.model.mesh.elements", "Element connectivity", "ccx.content.mesh_details", false);
+  addBoolean("post.results.extrema", "Block minima and maxima", "ccx.content.post", true);
+  addBoolean("post.results.nodal_values", "Nodal values", "ccx.content.result_details", false);
+  addBoolean("post.results.element_values", "Element and integration-point values", "ccx.content.result_details", false);
+  addBoolean("post.results.tables", "Additional source tables", "ccx.content.result_details", false);
+  ReportOption frames;
+  frames.key = "post.results.frames";
+  frames.label = "Frame selection";
+  frames.group_id = "ccx.content.post";
+  frames.kind = "choice";
+  frames.default_value = "last_per_step";
+  frames.choices = {"last_per_step", "envelope", "all_frames"};
+  candidate.defaults.values[frames.key] = frames.default_value;
+  candidate.options.push_back(std::move(frames));
   for (auto& option : candidate.options)
   {
+    if (!option.group_id.empty())
+    {
+      continue;
+    }
     if (option.key.rfind("ccx.model.", 0) == 0 || option.key == "ccx.other")
     {
       option.group_id = "ccx.content.model";

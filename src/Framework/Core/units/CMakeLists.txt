@@ -8,4 +8,5 @@ target_sources(cubitsim_model PRIVATE
   WorkspaceUnitContext.cpp WorkspaceUnitContext.hpp
   SourceUnitContext.cpp SourceUnitContext.hpp
   UnitTypes.hpp
+  UnitLabelFormat.cpp UnitLabelFormat.hpp
 )

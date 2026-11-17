@@ -547,3 +547,8 @@ bool PostprocessorApplicationInterface::readable_field(const std::string& source
 {
   return Postprocessor::readable_result_field(core.field_groups(source_id,std::nullopt),field,output,error);
 }
+
+bool PostprocessorApplicationInterface::change_table_filter(const std::string& action,const Postprocessor::TableFilter& filter,std::string& error)
+{
+  return core.change_table_filter(core.session().active_view_id,action,filter,error);
+}

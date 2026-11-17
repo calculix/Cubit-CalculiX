@@ -18,7 +18,12 @@ void populate_plot_chart(vtkChartXY* chart,const Postprocessor::PlotDefinition& 
   const Postprocessor::PlotData& data,double scale)
 {
   chart->ClearPlots();
-  chart->SetTitle(definition.name);
+  std::string title = definition.name;
+  if (definition.title)
+  {
+    title = *definition.title;
+  }
+  chart->SetTitle(title);
   for (std::size_t index = 0; index < definition.curves.size() && index < data.curves.size(); ++index)
   {
     const auto& curve = definition.curves[index];
@@ -57,7 +62,12 @@ void populate_plot_chart(vtkChartXY* chart,const Postprocessor::PlotDefinition& 
     samples->AddColumn(y);
     auto* line = chart->AddPlot(vtkChart::LINE);
     line->SetInputData(samples,"X","Y");
-    line->SetLabel(curve.name);
+    std::string caption = curve.name;
+    if (curve.label)
+    {
+      caption = *curve.label;
+    }
+    line->SetLabel(caption);
     line->SetWidth(Postprocessor::PlotDefaults::line_width*scale);
     const auto& color = curve.color;
     line->SetColor(color[0],color[1],color[2],255);
@@ -113,6 +123,14 @@ void populate_plot_chart(vtkChartXY* chart,const Postprocessor::PlotDefinition& 
   if (yTitle.empty())
   {
     yTitle = "Value";
+  }
+  if (definition.x_label)
+  {
+    xTitle = *definition.x_label;
+  }
+  if (definition.y_label)
+  {
+    yTitle = *definition.y_label;
   }
   chart->GetAxis(vtkAxis::BOTTOM)->SetTitle(xTitle);
   chart->GetAxis(vtkAxis::LEFT)->SetTitle(yTitle);

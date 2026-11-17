@@ -57,23 +57,13 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
       {
         return false;
       }
-      const auto& value = group.field;
-      const bool useMagnitude = [&]() -> bool {
-        if (component.empty()) {
-          return value.vector_components.has_value();
-        } else {
-          return magnitude;
-        }
-      }();
-      field = Postprocessor::FieldSelection{dataset,value.array_name,value.association,
-        [&]() -> std::common_type_t<decltype(value.components.front()), decltype(component)> {
-          if (component.empty() && !useMagnitude && !value.components.empty()) {
-            return value.components.front();
-          } else {
-            return component;
-          }
-        }(),
-        useMagnitude,group.key};
+      field = Postprocessor::preferred_field_selection(group.field, group.key);
+      field->dataset_id = dataset;
+      if (!component.empty())
+      {
+        field->magnitude = magnitude;
+        field->component = magnitude ? std::string{} : component;
+      }
     }
     else if (field && !component.empty())
     {

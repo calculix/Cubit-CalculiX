@@ -34,7 +34,16 @@ void MaterialManagementTable::update(MaterialManagementItem* selected) {
     material->clearPropertyError(property);
   }
   setColumnCount(static_cast<int>(definition->columns.size()));
-  setHorizontalHeaderLabels(MaterialCardPresentation::columns(property, material->workspace));
+  QStringList unitTooltips;
+  setHorizontalHeaderLabels(MaterialCardPresentation::columns(property, material->workspace, &unitTooltips));
+  for (int column = 0; column < columnCount(); ++column)
+  {
+    auto* header = horizontalHeaderItem(column);
+    if (header != nullptr && column < unitTooltips.size())
+    {
+      header->setToolTip(unitTooltips.at(column));
+    }
+  }
   for (const auto& row : material->getMatrixPropertyGUI(property)) {
     insertNewRow(row);
   }

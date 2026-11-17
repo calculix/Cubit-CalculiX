@@ -54,7 +54,7 @@ bool PostprocessorScene::pick(double x, double y, Postprocessor::EntityKind kind
       }
       // Only surfaces with faces occlude point picks. Vertex clouds and the
       // mesh-node marker actor must not hide one another through pick tolerance.
-      if (surface.base->GetNumberOfPolys() > 0)
+      if (surface.occludes && surface.base->GetNumberOfPolys() > 0)
       {
         occluders->AddPickList(surface.actor);
         hasOccluders = true;

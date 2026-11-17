@@ -698,3 +698,128 @@ Positions are normalized bottom-left viewport coordinates, bounded to [0,1]. The
 rendered frame is clamped to the viewport. An omitted position uses automatic
 layout. Positions belong to each representation, persist with the project, and
 are included in the frozen viewport capture state and provenance.
+
+
+Filter tree, plane motion and removed-side reference
+----------------------------------------------------
+
+Each source with filters has a final, initially expanded ``Filters`` group after
+its mesh categories, results and tables. Clip/section rows use their toolbar
+icons. Their checkboxes enable or bypass the operation; a disabled filter passes
+through its complete displayed input, including deformation and original-node
+picking. Output Show/Hide remains a separate per-view context action. Selecting
+a row activates the filter representation and opens its properties through::
+
+  post filter select "Clip 1"
+  post filter disable "Clip 1"
+  post filter enable "Clip 1"
+
+Both Clip and Section properties provide an Enabled checkbox and a Position
+slider. For a normalized normal n, the slider projects all eight corners of each
+visible input dataset's deformed native-coordinate bounds onto the normal. If
+these signed distances from the starting origin are [a,b], position t in [0,1]
+uses origin(t) = origin(0) + (a + t*(b-a))*n. Tangential origin components and the
+normal stay fixed. The gesture freezes its initial range. Empty, degenerate or
+incompatible coordinate bases disable motion rather than invent a range.
+
+Motion previews use silent existing ``post clip plane`` / ``post section plane``
+commands. Release journals one final command; keyboard steps journal immediately.
+Escape, hiding the editor, or switching views cancels owned previews. Flags and
+plane coordinates persist; transient slider values do not.
+
+Clips with Show removed portion selected show the complementary removed half with neutral gray surfaces at
+15 percent opacity. These actors do not receive result scalars, a legend, picking
+or camera-fit bounds. The opaque retained output keeps complete retained cells
+and clipped intersecting cells. Clip properties can disable the reference::
+
+  post clip reference "Clip 1" off
+  post clip reference "Clip 1" on
+
+Disabled filters show neither removed-side reference nor plane overlay. Older
+saved definitions without the new flags default to enabled with reference off.
+
+
+Per-dataset appearance
+-----------------------
+
+Blocks, node sets and side sets have source-owned appearance in each view.
+Filter outputs inherit the source settings by original dataset identity.
+Source result arrays and captured native RGB remain immutable. Appearance
+changes leave cameras, frame choice and visibility untouched.
+
+The tree supports Ctrl/Shift selection, an icon dropdown in its narrow Style
+column, and context actions for style, solid color, native color, edges and
+reset. Native entity icons remain beside names. IDs are hidden by default and
+remain in tooltips and source appearance readouts. The header action journals::
+
+  post tree ids on
+  post tree ids off
+
+Source properties show an appearance draft for selected datasets. Mixed values
+remain unchanged unless edited; Apply validates every selected target before
+submitting explicit commands. Each command is atomic. Selections spanning sources
+or categories produce separate readable commands. Style dropdown commits are
+queued after editor signals return so synchronous refresh cannot destroy an
+editor while it is committing::
+
+  post display style wireframe source "Model" blocks "Block_1" "Block_2"
+  post display style hiddenline source "Model" sidesets "Contact"
+  post display style roundedpoints source "Model" nodesets "Support"
+  post display color "#40B878" source "Model" blocks "Block_1"
+  post display color native source "Model" blocks "Block_1"
+  post display edges off source "Model" blocks "Block_1"
+  post display opacity 0.35 source "Model" blocks "Block_1"
+  post display pointsize 6 source "Model" nodesets "Support"
+  post display reset source "Model" blocks "Block_1"
+
+Shaded surfaces retain black original element edges by default. Wireframe uses
+original edge geometry. Hidden-line surfaces write depth without color; the
+OpenGL color/depth masks are scoped and restored after each depth-only draw.
+Transparent surfaces use opacity in (0,1]. Point size is in display pixels in
+[1,100]. Node sets/IP clouds accept only Points or Rounded points. Point rendering
+uses original solver points, separate from the permanently available CPU picking
+proxy. Face visibility no longer implies surface occlusion for wire/point styles.
+
+Scalar coloring overrides solid RGB on surfaces, original points and compatible
+wireframe edge arrays. Element values are never averaged onto nodes for point
+styles; a legend is suppressed when that style cannot display its scalar samples.
+For clips, invalid nodal samples are converted to NaN before edge clipping too.
+
+Appearance is serialized against durable dataset references, not collection
+indices. Refresh/load rebinds unique matches; unresolved settings remain saved
+without applying them to a reused index. Explicit reset/native changes also
+remove obsolete saved overrides so a subsequent refresh cannot resurrect them.
+Capture snapshots carry the representation settings and source metadata.
+
+
+Filter output visibility
+------------------------
+
+Filter-tree checkboxes journal ``post filter show`` / ``post filter hide``.
+They represent output visibility in the active view, independently of Enabled
+in filter properties. Disabling a visible filter deliberately bypasses it;
+unchecking its tree row hides that output instead of displaying its full input.
+Creating or showing a filter hides the base mesh and sibling filter outputs of
+the same source in that view. Outputs of other sources and views are unchanged.
+An enabled section therefore shows only its cut surface when activated.
+Dataset/category checkboxes read the same active representation targeted by
+visibility commands, including its hidden-dataset set when a filter is active.
+
+
+Source master checkbox with filters
+----------------------------------
+
+The source checkbox is checked whenever any representation of that source is
+visible in the active view. It is independent of which hidden filter is selected
+for properties. Unchecking it hides both the original mesh and all filter
+outputs in that view. Checking it restores the selected output exclusively,
+falling back to the resolved source representation when needed. Dataset choices
+and appearance settings are retained.
+
+Hiding the currently visible filter restores the original source representation
+when no other output of that source remains visible. Hiding an already-hidden
+filter does not change the viewport or revive a source hidden by its master
+checkbox. For dataset/category visibility, Core and tree resolve the active
+visible output first, another visible output next, then the selected hidden
+output and finally the original source. Selecting a hidden filter therefore
+cannot redirect block visibility changes away from the visible mesh.

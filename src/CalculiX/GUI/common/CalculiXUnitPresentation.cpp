@@ -1,5 +1,6 @@
 #include "CalculiXUnitPresentation.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include "Framework/Core/units/UnitLabelFormat.hpp"
 #include "Core/interactions/CalculiXInteractionsInterface.hpp"
 #include "Core/units/CalculiXDofUnits.hpp"
 #include <QApplication>
@@ -341,7 +342,7 @@ bool CalculiXUnitPresentation::refresh(std::string& error)
   {
     auto& binding = bindings[index];
     binding.unit = units[index];
-    QString title = binding.title + " [" + QString::fromStdString(binding.unit) + "]";
+    QString title = binding.title + " [" + UnitLabelFormat::format(binding.unit) + "]";
     if (binding.equation_quantity)
     {
       title = binding.title + " [inverse DOF unit]";
@@ -397,7 +398,7 @@ QString CalculiXUnitPresentation::title(const QString& text, const std::string& 
   {
     return text + " [unknown unit]";
   }
-  return text + " [" + QString::fromStdString(unit) + "]";
+  return text + " [" + UnitLabelFormat::format(unit) + "]";
 }
 
 void CalculiXUnitPresentation::accept_loaded_values(QWidget& panel)

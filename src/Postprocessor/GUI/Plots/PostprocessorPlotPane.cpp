@@ -3,6 +3,7 @@
 #include "PostprocessorPlotPane.hpp"
 #include <utility>
 #include "PostprocessorPlotChart.hpp"
+#include "PostprocessorPlotLabels.hpp"
 #include "PostprocessorPlotRendering.hpp"
 #include "Postprocessor/Commands/plots/PlotCommandText.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
@@ -177,13 +178,14 @@ void PostprocessorPlotPane::synchronize()
         shown->curves[index].name != definition.curves[index].name;
     }
   }
-  bool redraw = extract || !shown || shown->name != definition.name || shown->curves.size() != definition.curves.size();
+  bool redraw = extract || !shown || shown->name != definition.name || shown->curves.size() != definition.curves.size() ||
+    shown->title != definition.title || shown->x_label != definition.x_label || shown->y_label != definition.y_label;
   if (!redraw && shown)
   {
     for (std::size_t index = 0; index < definition.curves.size(); ++index)
     {
       redraw = redraw || shown->curves[index].visible != definition.curves[index].visible ||
-        shown->curves[index].color != definition.curves[index].color;
+        shown->curves[index].color != definition.curves[index].color || shown->curves[index].label != definition.curves[index].label;
     }
   }
   if (extract)
@@ -254,6 +256,33 @@ void PostprocessorPlotPane::commands_menu()
     connect(ranges,&QAction::triggered,this,[this]()
     {
       axis_dialog();
+    });
+    auto* labels = menu.addAction(tr("Labels and title…"));
+    connect(labels,&QAction::triggered,&menu,[this,definition]()
+    {
+      edit_plot_labels(this,definition,[this,definition](const QString& command)
+      {
+        const auto app = application.lock();
+        if (!app)
+        {
+          return;
+        }
+        const auto current = app->session().plots.find(definition.id);
+        if (current != app->session().plots.end() && current->second.name == definition.name &&
+            current->second.curves.size() == definition.curves.size() &&
+            std::equal(current->second.curves.begin(),current->second.curves.end(),definition.curves.begin(),[](const auto& a,const auto& b)
+            {
+              return a.name == b.name;
+            }))
+        {
+          submit(command);
+        }
+      });
+    });
+    auto* automaticLabels = menu.addAction(tr("Reset labels to automatic"));
+    connect(automaticLabels,&QAction::triggered,&menu,[this,scope]()
+    {
+      submit("post plot labels auto"+scope);
     });
     auto* rename = menu.addAction(tr("Rename plot…"));
     connect(rename,&QAction::triggered,&menu,[this,definition]()

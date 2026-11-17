@@ -10,6 +10,10 @@ bool PostprocessorApplicationInterface::display_matches_source(const Postprocess
 {
   return core.display_matches_source(display,source,view);
 }
+bool PostprocessorApplicationInterface::filter_motion_range(const std::string& name,std::array<double,2>& range,std::string& error) const
+{
+  return core.filter_motion_range(name,core.session().active_view_id,range,error);
+}
 bool PostprocessorApplicationInterface::create_filter(Postprocessor::FilterDefinition requested,const std::string& sourceName,std::string& error)
 {
   requested.input = {Postprocessor::OutputOwner::Source,[&]() -> std::common_type_t<decltype(core.session().active_source_id), decltype(core.source_id_from_name(sourceName))> {

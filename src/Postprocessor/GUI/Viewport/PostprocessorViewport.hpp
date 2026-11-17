@@ -35,6 +35,7 @@ public:
   void request_redraw();
   void fit_view();
   bool camera_command_active() const noexcept;
+  bool prepare_animation_step();
 
 protected:
   void initializeGL() override;
@@ -86,6 +87,7 @@ private:
   bool frameDirty = false;
   bool awaitingPresentation = false;
   bool renderingFrame = false;
+  bool animationPresentationCredit = false;
 };
 
 #endif // POSTPROCESSORVIEWPORT_HPP

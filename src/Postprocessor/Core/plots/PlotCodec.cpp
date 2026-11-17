@@ -1,3 +1,4 @@
+#include "../tables/TableFilterCodec.hpp"
 #include "PlotCodec.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include <utility>
@@ -21,6 +22,29 @@ namespace
     }
     output = value.toString().toUtf8().toStdString();
     return output.find('\0') == std::string::npos;
+  }
+  bool optional_label(const QJsonObject& object,const char* key,std::optional<std::string>& label)
+  {
+    if (!object.contains(key) || object.value(key).isNull())
+    {
+      label.reset();
+      return true;
+    }
+    std::string value;
+    if (!text(object,key,value) || !Postprocessor::valid_plot_name(value))
+    {
+      return false;
+    }
+    label = value;
+    return true;
+  }
+  QJsonValue label_json(const std::optional<std::string>& label)
+  {
+    if (label)
+    {
+      return q(*label);
+    }
+    return QJsonValue(QJsonValue::Null);
   }
   bool integer(const QJsonObject& object,const char* key,int low,int high,int& output)
   {
@@ -140,7 +164,7 @@ namespace Postprocessor
       QJsonArray curves;
       for (const auto& curve : plot.curves)
       {
-        QJsonObject item{{"name",q(curve.name)},{"visible",curve.visible},
+        QJsonObject item{{"name",q(curve.name)},{"label",label_json(curve.label)},{"visible",curve.visible},
           {"color",QJsonArray{static_cast<int>(curve.color[0]),static_cast<int>(curve.color[1]),static_cast<int>(curve.color[2])}}};
         if (const auto* entity = std::get_if<PlotEntityReference>(&curve.input))
         {
@@ -162,11 +186,12 @@ namespace Postprocessor
         {
           const auto& table = std::get<PlotTableReference>(curve.input);
           item.insert("input",QJsonObject{{"type","table"},{"source",q(table.source_id)},{"key",q(table.key)},
-            {"x",q(table.x)},{"y",q(table.y)},{"filter_column",q(table.filter_column)},{"filter_value",q(table.filter_value)},{"field",table.field}});
+            {"x",q(table.x)},{"y",q(table.y)},{"filter_column",q(table.filter_column)},{"filter_value",q(table.filter_value)},{"field",table.field},{"filters",table_filters_to_json(table.filters)}});
         }
         curves.append(item);
       }
-      output.append(QJsonObject{{"id",q(plot.id)},{"name",q(plot.name)},{"x",range_json(plot.axes.x)},
+      output.append(QJsonObject{{"id",q(plot.id)},{"name",q(plot.name)},{"title",label_json(plot.title)},
+        {"xlabel",label_json(plot.x_label)},{"ylabel",label_json(plot.y_label)},{"x",range_json(plot.axes.x)},
         {"y",range_json(plot.axes.y)},{"x_basis",unit_json(plot.axes.x_unit,plot.axes.x_scope,plot.axes.x_frame_axis)},
         {"y_basis",unit_json(plot.axes.y_unit,plot.axes.y_scope,false)},{"curves",curves}});
     }
@@ -200,6 +225,11 @@ namespace Postprocessor
       {
         return false;
       }
+      if (!optional_label(object,"title",plot.title) || !optional_label(object,"xlabel",plot.x_label) ||
+          !optional_label(object,"ylabel",plot.y_label))
+      {
+        return false;
+      }
       bool yFrame = false;
       if (!unit_read(object.value("x_basis"),plot.axes.x_unit,plot.axes.x_scope,plot.axes.x_frame_axis) ||
           !unit_read(object.value("y_basis"),plot.axes.y_unit,plot.axes.y_scope,yFrame) || yFrame)
@@ -213,6 +243,10 @@ namespace Postprocessor
         PlotCurveDefinition curve;
         if (!entry.isObject() || !text(item,"name",curve.name) || !valid_plot_name(curve.name) ||
             !curveNames.insert(curve.name).second || !item.value("visible").isBool() || !item.value("input").isObject())
+        {
+          return false;
+        }
+        if (!optional_label(item,"label",curve.label))
         {
           return false;
         }
@@ -286,6 +320,10 @@ namespace Postprocessor
             return false;
           }
           if (input.contains("field") && !input.value("field").isBool())
+          {
+            return false;
+          }
+          if (!table_filters_from_json(input.value("filters"),reference.filters))
           {
             return false;
           }

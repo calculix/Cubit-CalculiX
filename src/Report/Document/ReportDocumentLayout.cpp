@@ -1,11 +1,13 @@
 #include <type_traits>
 #include "ReportDocumentLayout.hpp"
+#include "ReportLayoutBatch.hpp"
 #include "Framework/Reporting/ReportProgress.hpp"
 #include "CubitMessage.hpp"
 #include <QElapsedTimer>
 #include "ReportFigureCaption.hpp"
 #include "ReportPageDecoration.hpp"
 #include "Report/Core/ReportLogo.hpp"
+#include "Report/Core/ReportUserOptions.hpp"
 #include <utility>
 #include <QGuiApplication>
 #include <QThread>
@@ -24,11 +26,103 @@
 #include <cmath>
 #include <algorithm>
 #include <set>
+#include <iterator>
 
 ReportDocumentLayout::ReportDocumentLayout() = default;
 ReportDocumentLayout::~ReportDocumentLayout() = default;
 
 bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& error, ReportProgress* progress)
+{
+  auto* app = qobject_cast<QGuiApplication*>(QCoreApplication::instance());
+  if (!app || QThread::currentThread() != app->thread())
+  {
+    error = "Report layout requires the Cubit GUI application thread.";
+    return false;
+  }
+  if (!document.validate(error))
+  {
+    return false;
+  }
+  QElapsedTimer timer;
+  timer.start();
+  std::vector<std::unique_ptr<ReportLayoutBatch>> candidate;
+  if (!ReportLayoutBatch::plan(document, candidate, progress, error))
+  {
+    return false;
+  }
+  int pages = 0;
+  std::vector<std::pair<std::string, int>> headings;
+  std::set<std::string> seen;
+  for (std::size_t index = 0; index < candidate.size(); ++index)
+  {
+    const auto stage = "Preparing preview batch " + std::to_string(index + 1) + " of " + std::to_string(candidate.size());
+    if (!ReportProgress::advance(progress, ReportProgressStage::PreviewContent,
+          stage, index, candidate.size(), error) || !candidate[index]->prepare(error))
+    {
+      return false;
+    }
+    candidate[index]->first_page = pages;
+    for (const auto& heading : candidate[index]->layout().contents())
+    {
+      if (seen.insert(heading.first).second)
+      {
+        headings.emplace_back(heading.first, pages + heading.second);
+      }
+    }
+    pages += candidate[index]->layout().page_count();
+    if (pages > 9999)
+    {
+      error = "Report exceeds the supported preview size (9999 pages). Narrow the selected content.";
+      return false;
+    }
+    if (!ReportProgress::advance(progress, ReportProgressStage::PreviewContent,
+          stage, index + 1, candidate.size(), error))
+    {
+      return false;
+    }
+  }
+  if (!ReportProgress::advance(progress, ReportProgressStage::Pagination,
+        "Paginating report preview", candidate.size(), candidate.size(), error))
+  {
+    return false;
+  }
+  for (std::size_t index = 0; index < candidate.size(); ++index)
+  {
+    if (!ReportProgress::advance(progress, ReportProgressStage::Contents,
+          "Updating report contents", index, candidate.size(), error) ||
+        !candidate[index]->resolve_contents(headings, error))
+    {
+      return false;
+    }
+  }
+  if (!ReportProgress::advance(progress, ReportProgressStage::Contents,
+        "Report preview ready", candidate.size(), candidate.size(), error))
+  {
+    return false;
+  }
+  if (candidate.empty())
+  {
+    error = "Report preview contains no layout batches.";
+    return false;
+  }
+  const auto preparedPaper = candidate.front()->layout().page_size();
+  const auto preparedBody = ReportPageDecoration::body_rect(document, preparedPaper).size();
+  ReportDocument committed = document;
+  batches = std::move(candidate);
+  text.reset();
+  total_pages = pages;
+  paper = preparedPaper;
+  body = preparedBody;
+  snapshot = std::move(committed);
+  section_pages = std::move(headings);
+  PRINT_INFO("Report preview: %d pages prepared in %lld ms using bounded batches.\n",
+    pages, static_cast<long long>(timer.elapsed()));
+  error.clear();
+  return true;
+}
+
+bool ReportDocumentLayout::prepare_single(const ReportDocument& document, std::string& error,
+  ReportProgress* progress, bool contentsOnly)
 {
   auto* app = qobject_cast<QGuiApplication*>(QCoreApplication::instance());
   if (app == nullptr || QThread::currentThread() != app->thread())
@@ -40,16 +134,12 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   {
     return false;
   }
-  QElapsedTimer timer;
-  timer.start();
-  std::size_t totalCells = 0, totalImages = 0, totalRows = 0, totalTables = 0;
+  std::size_t totalCells = 0, totalImages = 0;
   std::function<void(const ReportSection&)> count = [&](const ReportSection& section)
   {
     for (const auto& table : section.tables)
     {
       totalCells += (table.rows.size() + 1) * table.columns.size();
-      totalRows += table.rows.size();
-      ++totalTables;
     }
     totalImages += section.images.size();
     for (const auto& child : section.children)
@@ -61,9 +151,6 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   {
     count(section);
   }
-  PRINT_INFO("Report preview: %llu tables, %llu rows, %llu cells, %llu images.\n",
-    static_cast<unsigned long long>(totalTables), static_cast<unsigned long long>(totalRows),
-    static_cast<unsigned long long>(totalCells), static_cast<unsigned long long>(totalImages));
   std::size_t completedCells = 0, completedImages = 0;
   auto candidate = std::make_unique<QTextDocument>();
   candidate->setUndoRedoEnabled(false);
@@ -80,13 +167,7 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
       return value->second;
     }
   };
-  const QSizeF page = [&]() -> QSizeF {
-    if (setting("page_size", "A4") == "Letter") {
-      return QSizeF(612, 792);
-    } else {
-      return QSizeF(595.28, 841.89);
-    }
-  }();
+  const QSizeF page = ReportPageDecoration::paper_size(document);
   if (!ReportPageDecoration::validate_templates(document.configuration, error) ||
       (document.configuration.company_logo && !ReportLogo::validate(*document.configuration.company_logo, error)))
   {
@@ -284,7 +365,7 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
       paragraph("", 0, false);
       QTextImageFormat format;
       format.setName(url.toString());
-      const double scale = std::min(content.width() / std::max(1, pixels.width()), 300.0 / std::max(1, pixels.height()));
+      const double scale = std::min(content.width() / std::max(1, pixels.width()), ReportUserOptions::figure_max_height() / std::max(1, pixels.height()));
       format.setWidth(pixels.width() * scale);
       format.setHeight(pixels.height() * scale);
       cursor.insertImage(format);
@@ -312,6 +393,10 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   };
   for (const auto& section : document.sections)
   {
+    if (contentsOnly)
+    {
+      break;
+    }
     if (!appendSection(section, 0))
     {
       return false;
@@ -325,34 +410,15 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
       paragraph(QString::fromStdString(note.second), 0, false);
     }
   }
-  paragraph("Sources and diagnostics", 1, cursor.position() != 0);
-  headings.push_back({"report.diagnostics", cursor.block().position()});
-  paragraph(QString::fromStdString(document.source.provenance), 0, false);
-  if (!document.source.snapshot_fingerprint.empty())
-  {
-    paragraph("Reporting snapshot SHA-256: " + QString::fromStdString(document.source.snapshot_fingerprint), 0, false);
-  }
-  for (std::size_t i = 0; i < document.source.input_files.size(); ++i)
-  {
-    paragraph(QString::fromStdString(document.source.input_files[i]), 0, false);
-    paragraph("SHA-256: " + QString::fromStdString(document.source.fingerprints[i]), 0, false);
-  }
-  for (const auto& issue : document.diagnostics)
-  {
-    paragraph(QString::fromStdString(issue.severity + " / " + issue.section_id + ": " + issue.message), 0, false);
-  }
   cursor.endEditBlock();
-  PRINT_INFO("Report preview content constructed in %lld ms.\n", static_cast<long long>(timer.elapsed()));
   std::vector<std::pair<std::string, int>> pages;
   if (!ReportProgress::advance(progress, ReportProgressStage::Pagination, "Paginating report preview", 0, 1, error))
   {
     return false;
   }
-  timer.restart();
   // Qt pagination is synchronous; progress cannot claim page-by-page completion.
   candidate->setLayoutEnabled(true);
   candidate->documentLayout()->documentSize();
-  PRINT_INFO("Report preview pagination: %d pages in %lld ms.\n", candidate->pageCount(), static_cast<long long>(timer.elapsed()));
   if (!ReportProgress::advance(progress, ReportProgressStage::Pagination, "Paginating report preview", 1, 1, error))
   {
     return false;
@@ -398,6 +464,7 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
   {
     return false;
   }
+  toc_fields = std::move(toc);
   text = std::move(candidate);
   paper = page;
   body = content;
@@ -409,6 +476,10 @@ bool ReportDocumentLayout::prepare(const ReportDocument& document, std::string& 
 
 int ReportDocumentLayout::page_count() const noexcept
 {
+  if (!batches.empty())
+  {
+    return total_pages;
+  }
   if (text == nullptr) {
     return 0;
   } else {
@@ -423,6 +494,34 @@ QSizeF ReportDocumentLayout::page_size() const noexcept
 
 bool ReportDocumentLayout::paint_page(QPainter& painter, int page, std::string& error) const
 {
+  if (!batches.empty())
+  {
+    if (page < 0 || page >= total_pages)
+    {
+      error = "Report preview page is unavailable.";
+      return false;
+    }
+    const auto found = std::upper_bound(batches.begin(), batches.end(), page,
+      [](int value, const std::unique_ptr<ReportLayoutBatch>& batch)
+      {
+        return value < batch->first_page;
+      });
+    const auto& batch = **std::prev(found);
+    const auto& leaf = batch.layout();
+    painter.save();
+    painter.fillRect(QRectF(QPointF(), paper), Qt::white);
+    ReportPageDecoration::paint(painter, snapshot, paper, page + 1, total_pages);
+    painter.translate(ReportPageDecoration::body_rect(snapshot, paper).topLeft());
+    painter.setClipRect(QRectF(0, 0, body.width(), body.height()));
+    const int local = page - batch.first_page;
+    painter.translate(0, -local * body.height());
+    QAbstractTextDocumentLayout::PaintContext context;
+    context.clip = QRectF(0, local * body.height(), body.width(), body.height());
+    leaf.text->documentLayout()->draw(&painter, context);
+    painter.restore();
+    error.clear();
+    return true;
+  }
   if (text == nullptr || page < 0 || page >= text->pageCount())
   {
     error = "Report preview page is unavailable.";
@@ -450,4 +549,44 @@ const std::vector<std::pair<std::string, int>>& ReportDocumentLayout::contents()
 const ReportDocument& ReportDocumentLayout::report() const noexcept
 {
   return snapshot;
+}
+
+bool ReportDocumentLayout::resolve_contents(const std::vector<std::pair<std::string, int>>& pages,
+  std::string& error)
+{
+  if (toc_fields.empty())
+  {
+    error.clear();
+    return true;
+  }
+  const int originalPages = text->pageCount();
+  text->setLayoutEnabled(false);
+  QTextCursor cursor(text.get());
+  cursor.beginEditBlock();
+  for (const auto& item : toc_fields)
+  {
+    const auto found = std::find_if(pages.begin(), pages.end(), [&](const auto& heading)
+    {
+      return heading.first == item.second;
+    });
+    if (found == pages.end())
+    {
+      cursor.endEditBlock();
+      text->setLayoutEnabled(true);
+      error = "Cannot resolve a report contents entry.";
+      return false;
+    }
+    cursor.setPosition(item.first);
+    cursor.setPosition(item.first + 4, QTextCursor::KeepAnchor);
+    cursor.insertText(QString::number(found->second + 1).rightJustified(4, '0'));
+  }
+  cursor.endEditBlock();
+  text->setLayoutEnabled(true);
+  if (text->pageCount() != originalPages)
+  {
+    error = "Report contents changed pagination unexpectedly.";
+    return false;
+  }
+  error.clear();
+  return true;
 }

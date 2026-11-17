@@ -9,7 +9,7 @@ std::vector<std::string> PostFilterCommand::get_syntax()
 {
   const std::string name = " <string:type='quoted',number='1',label='filter_name'>";
   const std::string view = " [view <string:type='quoted',number='1',label='view_id'>]";
-  return {"post filter {show|hide}"+name+view,"post filter rename"+name+" <string:type='quoted',number='1',label='replacement'>",
+  return {"post filter {show|hide|select|enable|disable}"+name+view,"post filter rename"+name+" <string:type='quoted',number='1',label='replacement'>",
     "post filter remove"+name,"post filter list"};
 }
 std::vector<std::string> PostFilterCommand::get_syntax_help()

@@ -1,5 +1,6 @@
 #include "../application/PostprocessorCore.hpp"
 #include <exception>
+#include <algorithm>
 #include <limits>
 namespace Postprocessor
 {
@@ -87,6 +88,46 @@ namespace Postprocessor
       return false;
     }
   }
+  bool PostprocessorCore::change_table_filter(const std::string& viewId,const std::string& action,const TableFilter& filter,std::string& error)
+  {
+    error.clear();
+    const auto view = state.views.find(viewId);
+    if (view == state.views.end() || !view->second.table || source_operation_active ||
+        scene_revision == std::numeric_limits<std::uint64_t>::max())
+    {
+      error = "Open a table before changing its column filters.";
+      return false;
+    }
+    auto reference = *view->second.table;
+    auto& filters = reference.filters;
+    if (action == "clearall")
+    {
+      filters.clear();
+    }
+    else if (action == "clear" || action == "set")
+    {
+      filters.erase(std::remove_if(filters.begin(),filters.end(),[&](const auto& item)
+      {
+        return item.column == filter.column;
+      }),filters.end());
+      if (action == "set")
+      {
+        filters.push_back(filter);
+      }
+    }
+    else
+    {
+      error = "Unknown table filter operation.";
+      return false;
+    }
+    if (action == "set" && !validate_table_filters(result_table_data(result_data(reference.source_id),reference),filters,error))
+    {
+      return false;
+    }
+    view->second.table = std::move(reference);
+    ++scene_revision;
+    return true;
+  }
   bool PostprocessorCore::show_3d(const std::string& view_id, std::string& error)
   {
     error.clear();
@@ -111,6 +152,7 @@ namespace Postprocessor
       return {};
     }
     auto table = result_table_data(result_data(view->second.table->source_id),*view->second.table);
+    table.filters = view->second.table->filters;
     // A legacy saved view may now exceed the limit when all frames are combined.
     // Show an unavailable status rather than silently truncating the history.
     if (table.rows > static_cast<std::size_t>(std::numeric_limits<int>::max()))

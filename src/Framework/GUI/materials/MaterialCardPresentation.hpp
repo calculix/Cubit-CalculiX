@@ -6,6 +6,6 @@
 class MaterialCardPresentation {
 public:
   static const MaterialModelDefinition* find(const std::string& property);
-  static QStringList columns(const std::string& property, const std::string& workspace = "calculix");
+  static QStringList columns(const std::string& property, const std::string& workspace = "calculix", QStringList* unitTooltips = nullptr);
   static bool enabled(const MaterialModelDefinition& definition, const MaterialData& material);
 };

@@ -1,4 +1,6 @@
 #include "PostprocessorReportResultProvider.hpp"
+#include "PostprocessorReportFrameSelection.hpp"
+#include "PostprocessorReportBlockSummary.hpp"
 #include "PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/Core/representations/ResultMesh.hpp"
 #include "Postprocessor/Core/representations/ResultColoring.hpp"
@@ -54,68 +56,6 @@ bool report_cell(vtkAbstractArray& array, vtkIdType row, const SimUnits::Quantit
   }
   output = "[" + text.join(", ") + "]";
   return true;
-}
-
-bool entity_position(vtkDataSet* mesh, const SimResults::Field& field, std::size_t sample, const SimUnits::QuantityUnit& quantity, std::array<QJsonValue, 3>& output, std::string& unit, std::string& error) {
-  output.fill(QStringLiteral("Unavailable"));
-  double unused = 0.0;
-  if (!SimResults::ResultsUnits::display_value(0.0, quantity, "report", unused, unit, error)) {
-    return false;
-  }
-  if (!mesh) {
-    return true;
-  }
-  double position[3] = {0.0, 0.0, 0.0};
-  if (field.association == SimResults::Association::Element) {
-    if (sample >= static_cast<std::size_t>(mesh->GetNumberOfCells())) {
-      return true;
-    }
-    auto* cell = mesh->GetCell(static_cast<vtkIdType>(sample));
-    if (!cell || cell->GetNumberOfPoints() == 0) {
-      return true;
-    }
-    double coordinates[3] = {0.0, 0.0, 0.0};
-    int subId = cell->GetParametricCenter(coordinates);
-    std::vector<double> weights(static_cast<std::size_t>(cell->GetNumberOfPoints()));
-    cell->EvaluateLocation(subId, coordinates, position, weights.data());
-  } else {
-    if (sample >= static_cast<std::size_t>(mesh->GetNumberOfPoints())) {
-      return true;
-    }
-    mesh->GetPoint(static_cast<vtkIdType>(sample), position);
-  }
-  for (std::size_t axis = 0; axis < output.size(); ++axis) {
-    double converted = 0.0;
-    if (!SimResults::ResultsUnits::display_value(position[axis], quantity, "report", converted, unit, error)) {
-      return false;
-    }
-    if (std::isfinite(converted)) {
-      output[axis] = converted;
-    }
-  }
-  return true;
-}
-
-std::string entity_id(vtkDataSet& mesh, const SimResults::Field& field, std::size_t sample) {
-  vtkDataArray* ids = nullptr;
-  if (field.association == SimResults::Association::Element) {
-    ids = mesh.GetCellData()->GetArray("OriginalElementId");
-  } else if (field.association == SimResults::Association::Node) {
-    ids = mesh.GetPointData()->GetArray("OriginalNodeId");
-  } else {
-    ids = mesh.GetPointData()->GetArray("OriginalElementId");
-  }
-  if (!ids || sample >= static_cast<std::size_t>(ids->GetNumberOfTuples())) {
-    return "unavailable";
-  }
-  std::string result = ids->GetVariantValue(static_cast<vtkIdType>(sample)).ToString();
-  if (field.association == SimResults::Association::IntegrationPoint) {
-    auto* ip = mesh.GetPointData()->GetArray("IntegrationPointId");
-    if (ip && sample < static_cast<std::size_t>(ip->GetNumberOfTuples())) {
-      result += " / IP " + std::string(ip->GetVariantValue(static_cast<vtkIdType>(sample)).ToString());
-    }
-  }
-  return result;
 }
 
 void unavailable(ReportDocument& document, const std::string& message) {
@@ -185,19 +125,9 @@ bool PostprocessorReportResultProvider::collect(const ReportResultRequest& reque
   }
   ReportDocument candidate = output;
   std::shared_ptr<const SimResults::VtkResultsData> source;
-  for (const auto& entry : active->session().sources) {
-    const auto data = active->result_data(entry.first);
-    if (!data || data->job_id != request.source.job_id || data->source_workspace != request.source.workspace_id) {
-      continue;
-    }
-    if (request.source.solver_launch_id.empty() || data->solver_launch_id != request.source.solver_launch_id) {
-      continue;
-    }
-    if (source && source->result_identity != data->result_identity) {
-      error = "Several retained result sources match this solver launch; close the ambiguous source before reporting.";
-      return false;
-    }
-    source = data;
+  if (!PostprocessorReportBlockSummary::source(*active, request.source, source, error))
+  {
+    return false;
   }
   if (!source) {
     unavailable(candidate, "Open results for this exact solver launch in Postprocessor to include result tables and extrema. Unverified or different runs are not substituted.");
@@ -205,95 +135,142 @@ bool PostprocessorReportResultProvider::collect(const ReportResultRequest& reque
     error.clear();
     return true;
   }
+  std::vector<std::size_t> frames;
+  if (!PostprocessorReportFrameSelection().select(*source, request.settings, frames, error))
+  {
+    return false;
+  }
+  const auto enabled = [&](const std::string& key)
+  {
+    const auto found = request.settings.values.find(key);
+    return found != request.settings.values.end() && found->second == "true";
+  };
   ReportSection section;
   section.id = "post.results";
-  section.title = "Result tables and extrema";
-  section.paragraphs.push_back("Result source: " + source->result_identity + ". Numeric source arrays remain unchanged; values use Report presentation units. Extrema positions are undeformed node or integration-point coordinates; element values use the element parametric center.");
-  std::map<std::string, ReportTable> extrema;
-  for (const auto& frame : source->increments) {
-    SimUnits::QuantityUnit coordinates("length", frame.coordinate_unit, SimUnits::Length);
-    if (coordinates.unit.empty()) {
-      coordinates.unit = source->source_units.coordinate_unit;
+  section.title = "Block results";
+  section.paragraphs.push_back("Result source: " + source->result_identity + ". Frame policy: " + request.settings.values.at("post.results.frames") + ". Missing fields are not taken from earlier frames.");
+  if (enabled("post.results.extrema"))
+  {
+    std::vector<PostprocessorReportBlockSummary> summaries;
+    if (!PostprocessorReportBlockSummary::collect(request, *source, summaries, error, &candidate.diagnostics))
+    {
+      return false;
     }
-    for (const auto& field : frame.fields) {
-      if (field.categorical || field.association == SimResults::Association::Table) {
-        continue;
+    for (const auto& summary : summaries)
+    {
+      auto child = summary.section(true);
+      if (summary.available)
+      {
+        const auto& minimum = source->increments[summary.minimum_frame];
+        const auto& maximum = source->increments[summary.maximum_frame];
+        child.paragraphs.push_back("Minimum: step " + std::to_string(minimum.step) + " / increment " + std::to_string(minimum.increment) +
+          "; maximum: step " + std::to_string(maximum.step) + " / increment " + std::to_string(maximum.increment) + ".");
       }
-      for (std::size_t component = 0; component < field.components.size(); ++component) {
-        auto raw = field;
-        raw.component_units.clear();
-        Postprocessor::FieldSelection selection;
-        selection.component = field.components[component];
-        double minimum = std::numeric_limits<double>::infinity();
-        double maximum = -std::numeric_limits<double>::infinity();
-        std::string minimumId;
-        std::string maximumId;
-        vtkDataSet* minimumMesh = nullptr;
-        vtkDataSet* maximumMesh = nullptr;
-        std::size_t minimumSample = 0;
-        std::size_t maximumSample = 0;
-        for (const auto& part : Postprocessor::result_mesh_parts(frame.dataset.get())) {
-          if (part.first != field.dataset_id) {
-            continue;
-          }
-          std::vector<double> values;
-          if (!Postprocessor::color_values(part.second, raw, selection, values, error)) {
-            return false;
-          }
-          for (std::size_t sample = 0; sample < values.size(); ++sample) {
-            const double value = values[sample];
-            if (!std::isfinite(value)) {
-              continue;
-            }
-            if (value < minimum) {
-              minimum = value;
-              minimumId = entity_id(*part.second, field, sample);
-              minimumMesh = part.second;
-              minimumSample = sample;
-            }
-            if (value > maximum) {
-              maximum = value;
-              maximumId = entity_id(*part.second, field, sample);
-              maximumMesh = part.second;
-              maximumSample = sample;
-            }
-          }
-        }
-        if (!std::isfinite(minimum)) {
-          continue;
-        }
-        std::string unit;
-        if (!SimResults::ResultsUnits::field_value(minimum, field, selection.component, false, "report", minimum, unit, error) || !SimResults::ResultsUnits::field_value(maximum, field, selection.component, false, "report", maximum, unit, error)) {
-          return false;
-        }
-        double parameter = frame.time;
-        std::string parameterUnit;
-        if (!SimResults::ResultsUnits::display_value(frame.time, frame.independent_variable, "report", parameter, parameterUnit, error)) {
-          return false;
-        }
-        std::array<QJsonValue, 3> minimumPosition;
-        std::array<QJsonValue, 3> maximumPosition;
-        std::string coordinateUnit;
-        if (!entity_position(minimumMesh, field, minimumSample, coordinates, minimumPosition, coordinateUnit, error) || !entity_position(maximumMesh, field, maximumSample, coordinates, maximumPosition, coordinateUnit, error)) {
-          return false;
-        }
-        const auto key = Postprocessor::field_group_key(field) + "/" + std::to_string(field.dataset_id) + "/" + std::to_string(component) + "/" + frame.independent_variable.quantity + "/" + frame.independent_variable.unit;
-        auto& table = extrema[key];
-        table.title = field.name + " / " + selection.component + " / Dataset " + std::to_string(field.dataset_id);
-        table.columns = {"Step", "Increment", "Analysis parameter", "Minimum", "Minimum entity", "Minimum X", "Minimum Y", "Minimum Z", "Maximum", "Maximum entity", "Maximum X", "Maximum Y", "Maximum Z"};
-        table.units = {"", "", parameterUnit, unit, "", coordinateUnit, coordinateUnit, coordinateUnit, unit, "", coordinateUnit, coordinateUnit, coordinateUnit};
-        table.rows.push_back({frame.step, frame.increment, parameter, minimum, QString::fromUtf8(minimumId.c_str()), minimumPosition[0], minimumPosition[1], minimumPosition[2], maximum, QString::fromUtf8(maximumId.c_str()), maximumPosition[0], maximumPosition[1], maximumPosition[2]});
+      section.children.push_back(std::move(child));
+    }
+    if (summaries.empty())
+    {
+      unavailable(candidate, "No verified block/result component mapping exists for the selected frames.");
+    }
+  }
+  if (enabled("post.results.tables"))
+  {
+    for (auto index : frames)
+    {
+      const auto& frame = source->increments[index];
+      if (!collect_tables(frame.tables, frame.table_metadata, section, candidate, error))
+      {
+        return false;
       }
     }
-    if (!collect_tables(frame.tables, frame.table_metadata, section, candidate, error)) {
+    if (!collect_tables(source->tables, source->table_metadata, section, candidate, error))
+    {
       return false;
     }
   }
-  for (auto& entry : extrema) {
-    section.tables.push_back(std::move(entry.second));
-  }
-  if (!collect_tables(source->tables, source->table_metadata, section, candidate, error)) {
-    return false;
+  if (enabled("post.results.nodal_values") || enabled("post.results.element_values"))
+  {
+    for (auto index : frames)
+    {
+      const auto& frame = source->increments[index];
+      for (const auto& field : frame.fields)
+      {
+        if (field.categorical || field.association == SimResults::Association::Table ||
+            (field.association == SimResults::Association::Node && !enabled("post.results.nodal_values")) ||
+            (field.association != SimResults::Association::Node && !enabled("post.results.element_values")))
+        {
+          continue;
+        }
+        for (const auto& part : Postprocessor::result_mesh_parts(frame.dataset.get()))
+        {
+          if (part.first != field.dataset_id)
+          {
+            continue;
+          }
+          for (const auto& component : field.components)
+          {
+            ReportTable table;
+            table.title = field.name + " / dataset " + std::to_string(part.first) + " / source frame " + std::to_string(index + 1);
+            table.columns = {"Original entity", "Component", "Value"};
+            table.units = {"", "", ""};
+            Postprocessor::FieldSelection selection;
+            selection.component = component;
+            auto raw = field;
+            raw.component_units.clear();
+            std::vector<double> values;
+            if (!Postprocessor::color_values(part.second, raw, selection, values, error))
+            {
+              return false;
+            }
+            std::string unit;
+            for (std::size_t sample = 0; sample < values.size(); ++sample)
+            {
+              double value = 0.0;
+              if (!SimResults::ResultsUnits::field_value(values[sample], field, component, false,
+                    "report", value, unit, error))
+              {
+                return false;
+              }
+              if (!std::isfinite(value))
+              {
+                continue;
+              }
+              vtkDataArray* ids = part.second->GetPointData()->GetArray("OriginalNodeId");
+              if (field.association == SimResults::Association::Element)
+              {
+                ids = part.second->GetCellData()->GetArray("OriginalElementId");
+              }
+              else if (field.association == SimResults::Association::IntegrationPoint)
+              {
+                ids = part.second->GetPointData()->GetArray("OriginalElementId");
+              }
+              QString entity = "Unavailable";
+              if (ids && sample < static_cast<std::size_t>(ids->GetNumberOfTuples()))
+              {
+                entity = QString::fromStdString(ids->GetVariantValue(static_cast<vtkIdType>(sample)).ToString());
+              }
+              if (field.association == SimResults::Association::IntegrationPoint)
+              {
+                auto* points = part.second->GetPointData()->GetArray("IntegrationPointId");
+                if (points && sample < static_cast<std::size_t>(points->GetNumberOfTuples()))
+                {
+                  entity += " / IP " + QString::fromStdString(points->GetVariantValue(static_cast<vtkIdType>(sample)).ToString());
+                }
+              }
+              table.rows.push_back({entity, QString::fromStdString(component), value});
+              if (sample % 1024 == 0 && !ReportProgress::advance(request.progress, ReportProgressStage::Results,
+                    "Collecting detailed result rows", 0, 0, error))
+              {
+                return false;
+              }
+            }
+            table.units[2] = unit;
+            table.title += " / " + component;
+            section.tables.push_back(std::move(table));
+          }
+        }
+      }
+    }
   }
   candidate.sections.push_back(std::move(section));
   output = std::move(candidate);

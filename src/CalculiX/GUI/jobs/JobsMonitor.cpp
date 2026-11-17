@@ -3,7 +3,6 @@
 #include <vector>
 #include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "Core/results/CalculiXResultsInterface.hpp"
-#include "Core/application/CalculiXApplicationInterface.hpp"
 #include "GUI/application/GuiTimer.hpp"
 #include "JobsMonitorLiveMonitor.hpp"
 #include "JobsMonitorProgressTables.hpp"
@@ -249,12 +248,8 @@ void JobsMonitor::on_pushButton_kill_clicked(bool)
 
 void JobsMonitor::on_pushButton_result_load_clicked(bool)
 {
-  const std::string job = std::to_string(current_job_id);
-  CalculiXApplicationInterface application;
-  if (application.cmd("ccx result load job " + job))
-  {
-    application.cmd("ccx result convert job " + job);
-  }
+  const QString command = "ccx result load job "+QString::number(current_job_id)+" convert";
+  GuiSendCmd::gui_cmd(command);
   update();
 }
 

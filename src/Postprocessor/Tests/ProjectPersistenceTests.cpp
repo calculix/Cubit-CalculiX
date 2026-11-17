@@ -108,6 +108,7 @@ int main(int argc, char** argv)
   PostprocessorProjectState archive;
   check(core.capture_project(archive,error),"Cannot capture project definitions");
   auto& representation = archive.session.representations.begin()->second;
+  archive.catalogues.at(source).front().solid_color = std::array<double,3>{0.1,0.8,0.3};
   representation.coloring.maximum = {true,250,{1,0,1}};
   representation.coloring.legend_position = std::array<double,2>{0.8,0.06};
   representation.deformation.scale = 10;
@@ -116,6 +117,8 @@ int main(int argc, char** argv)
   const auto json = project_to_json(archive,directory.path().toUtf8().toStdString());
   PostprocessorProjectState decoded;
   check(project_from_json(json,directory.path().toUtf8().toStdString(),decoded,error),"Project codec round-trip failed");
+  check(decoded.catalogues.at(source).front().solid_color == archive.catalogues.at(source).front().solid_color,
+    "Project catalogue lost native block color");
   check(decoded.session.views.at("view1").camera && CameraOperations::equal(*decoded.session.views.at("view1").camera,camera),"Codec changed camera pose");
   check(!decoded.session.representations.begin()->second.animation.playing &&
     decoded.session.representations.begin()->second.coloring.maximum.enabled,"Playback/limit persistence is incorrect");

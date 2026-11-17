@@ -34,6 +34,7 @@
 #include <exception>
 #include <limits>
 #include <map>
+#include <optional>
 #include <set>
 #include <utility>
 
@@ -228,6 +229,7 @@ namespace
     domain.metadata.name = group.name;
     domain.metadata.kind = kind_name(group.kind);
     domain.metadata.model_id = group.model_id;
+    domain.metadata.solid_color = group.solid_color;
     if (group.kind == Kind::Block || group.kind == Kind::DatElements) {
       std::set<std::string> types;
       for (int id : group.ids) {
@@ -573,11 +575,96 @@ namespace
         || (field.field.association == Association::IntegrationPoint && domain.kind == Kind::DatIntegrationPoints);
   }
 
+  std::string vector_name(const std::string& name)
+  {
+    std::string normalized;
+    for (char value : name)
+    {
+      if (value == ' ' || value == '\t' || value == '\r' || value == '\n')
+      {
+        continue;
+      }
+      if (value >= 'a' && value <= 'z')
+      {
+        value = static_cast<char>(value - 'a' + 'A');
+      }
+      normalized.push_back(value);
+    }
+    return normalized;
+  }
+
+  std::optional<std::array<std::size_t, 3>> spatial_vector_components(const SimResults::Field& field)
+  {
+    // CCX 2.23 frd.c and the DAT field formats establish physical directions.
+    // Three arbitrary columns (e.g. principal stresses or SDVs) are not a vector.
+    // Generalized F4/F5/F6 DOFs and derived columns do not enter the XYZ norm.
+    const auto name = vector_name(field.name);
+    std::vector<std::array<std::string, 3>> layouts;
+    if (field.source == "FRD")
+    {
+      if (name == "FORC" || name == "FORCI" || name == "FLUX")
+      {
+        layouts.push_back({"F1", "F2", "F3"});
+      }
+      else if (name == "VELO")
+      {
+        layouts.push_back({"V1", "V2", "V3"});
+      }
+      else if (name == "DISPI")
+      {
+        layouts.push_back({"D1", "D2", "D3"});
+      }
+    }
+    else if (field.source == "DAT")
+    {
+      if (name == "FORCES" || name == "RF")
+      {
+        layouts.push_back({"FX", "FY", "FZ"});
+        layouts.push_back({"F1", "F2", "F3"});
+      }
+      else if (name == "DISPLACEMENTS" || name == "U" || name == "VELOCITIES" || name == "V" || name == "VF")
+      {
+        layouts.push_back({"VX", "VY", "VZ"});
+      }
+      else if (name == "HEATFLUX" || name == "HFL")
+      {
+        layouts.push_back({"QX", "QY", "QZ"});
+      }
+    }
+    for (const auto& layout : layouts)
+    {
+      std::array<std::size_t, 3> indices{};
+      bool complete = true;
+      for (std::size_t axis = 0; axis < layout.size(); ++axis)
+      {
+        std::size_t matches = 0;
+        for (std::size_t i = 0; i < field.components.size(); ++i)
+        {
+          if (vector_name(field.components[i]) == layout[axis])
+          {
+            indices[axis] = i;
+            ++matches;
+          }
+        }
+        complete = complete && matches == 1;
+      }
+      if (complete)
+      {
+        return indices;
+      }
+    }
+    return std::nullopt;
+  }
+
   bool attach(const Domain& domain, vtkUnstructuredGrid* grid, SimResults::Field metadata, vtkSmartPointer<vtkDoubleArray> array, vtkSmartPointer<vtkUnsignedCharArray> mask, bool any_invalid, GridValidity& validity, SimResults::Increment& increment, std::string& error) {
     if ((metadata.source == "FRD" && metadata.name == "DISP" && metadata.components.size() >= 3) ||
         (metadata.name == "IntegrationPointDisplacement" && metadata.components.size() == 3)) {
       metadata.vector_components = std::array<std::size_t, 3>{0, 1, 2};
       metadata.role = SimResults::FieldRole::Displacement;
+    }
+    else if (!metadata.vector_components)
+    {
+      metadata.vector_components = spatial_vector_components(metadata);
     }
     metadata.dataset_id = domain.metadata.id;
     metadata.array_name = array_name(metadata);

@@ -68,3 +68,48 @@ int ReportUserOptions::preview_gap()
 {
   return 16;
 }
+
+int ReportUserOptions::preview_batch_rows()
+{
+  return 128;
+}
+
+int ReportUserOptions::preview_batch_characters()
+{
+  return 32768;
+}
+
+int ReportUserOptions::preview_batch_cells()
+{
+  return 2048;
+}
+
+int ReportUserOptions::export_checkpoint_cells()
+{
+  return 256;
+}
+
+int ReportUserOptions::export_chunk_bytes()
+{
+  return 65536;
+}
+
+double ReportUserOptions::figure_max_height()
+{
+  return 300.0;
+}
+
+int ReportUserOptions::export_image_max_bytes()
+{
+  return 32 * 1024 * 1024;
+}
+
+int ReportUserOptions::export_image_max_side()
+{
+  return 8192;
+}
+
+int ReportUserOptions::export_image_max_pixels()
+{
+  return 32000000;
+}

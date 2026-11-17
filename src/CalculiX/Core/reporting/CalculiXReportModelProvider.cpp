@@ -288,6 +288,46 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
         block.first = parameter(header, "TYPE");
         block.second += count;
       }
+      if (sections.count("ccx.model.mesh") != 0)
+      {
+        std::string detail = "ccx.model.mesh.elements";
+        if (keyword == "NODE")
+        {
+          detail = "ccx.model.mesh.nodes";
+        }
+        if (enabled(request, detail))
+        {
+          sections["ccx.model.mesh"].tables.push_back(recordTable(record, candidate.source));
+        }
+      }
+      material = false;
+      continue;
+    }
+    if (keyword == "NSET" || keyword == "ELSET" || keyword == "SURFACE")
+    {
+      if (sections.count("ccx.model.sets") != 0)
+      {
+        ReportTable summary;
+        summary.title = header.toStdString();
+        summary.columns = {"Definition", "Input records", "Membership count"};
+        // Input records are not expanded member counts: GENERATE, named sets
+        // and overlapping declarations require solver-specific resolution.
+        summary.rows.push_back({header, record.value("data").toArray().size(), "Not expanded"});
+        sections["ccx.model.sets"].tables.push_back(std::move(summary));
+        std::string detail = "ccx.model.sets.elements";
+        if (keyword == "NSET")
+        {
+          detail = "ccx.model.sets.nodes";
+        }
+        else if (keyword == "SURFACE")
+        {
+          detail = "ccx.model.sets.faces";
+        }
+        if (enabled(request, detail))
+        {
+          sections["ccx.model.sets"].tables.push_back(recordTable(record, candidate.source));
+        }
+      }
       material = false;
       continue;
     }
@@ -360,7 +400,7 @@ bool CalculiXReportModelProvider::collect(const ReportRequest& request, const Re
   if (sections.count("ccx.model.mesh") != 0)
   {
     sections["ccx.model.mesh"].tables.push_back(summary);
-    sections["ccx.model.mesh"].paragraphs.push_back("Mesh inventory counts explicit NODE/ELEMENT records; generated, external mesh or continuation conventions may require additional provider support. Full connectivity is not printed.");
+    sections["ccx.model.mesh"].paragraphs.push_back("Mesh inventory counts explicit NODE/ELEMENT records; generated, external mesh or continuation conventions may require additional provider support. Connectivity and node coordinates are optional detailed listings.");
   }
   if (sections.count("ccx.model.blocks") != 0)
   {

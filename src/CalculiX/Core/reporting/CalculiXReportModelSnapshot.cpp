@@ -205,6 +205,11 @@ CalculiXReportModelSnapshot::CalculiXReportModelSnapshot() = default;
 bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const ReportSource& source,
   ReportDocument& output, std::string& error) const
 {
+  const auto enabled = [&](const std::string& key)
+  {
+    const auto found = request.overrides.values.find(key);
+    return found != request.overrides.values.end() && found->second == "true";
+  };
   std::size_t processedTables = 0;
   CalculiXReportDomainSettings domainSettings;
   CalculiXMeshInterface mesh;
@@ -1130,8 +1135,125 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.other"].tables.push_back(std::move(table));
   }
 
-  groups["ccx.model.sets"].tables.push_back(listing("Node sets", mesh.get_nodeset_tree_data()));
-  groups["ccx.model.sets"].tables.push_back(listing("Side sets", mesh.get_sideset_tree_data()));
+  if (enabled("ccx.model.sets"))
+  {
+    ReportTable summary;
+    summary.title = "Sets and surfaces";
+    summary.columns = {"Kind", "ID", "Name", "Members"};
+    for (const auto& row : mesh.get_nodeset_tree_data())
+    {
+      const int id = rowId(row);
+      MeshProperties properties;
+      if (!mesh.get_nodeset_properties(id, properties, error))
+      {
+        return false;
+      }
+      summary.rows.push_back({"Node set", id, QString::fromStdString(properties.name), static_cast<double>(properties.nodeCount)});
+      if (enabled("ccx.model.sets.nodes"))
+      {
+        ReportTable members;
+        members.title = "Node set " + std::to_string(id) + " / membership";
+        members.columns = {"Node"};
+        for (int node : mesh.get_nodeset_node_ids(id))
+        {
+          members.rows.push_back({node});
+        }
+        groups["ccx.model.sets"].tables.push_back(std::move(members));
+      }
+    }
+    for (const auto& row : mesh.get_sideset_tree_data())
+    {
+      const int id = rowId(row);
+      MeshProperties properties;
+      if (!mesh.get_sideset_properties(id, properties, error))
+      {
+        return false;
+      }
+      summary.rows.push_back({"Side set", id, QString::fromStdString(properties.name), static_cast<double>(properties.sideCount)});
+      if (enabled("ccx.model.sets.faces") || enabled("ccx.model.sets.elements"))
+      {
+        std::vector<std::pair<int, int>> sides;
+        if (!mesh.get_sideset_members(id, sides, error))
+        {
+          return false;
+        }
+        ReportTable members;
+        members.title = "Side set " + std::to_string(id) + " / membership (native Cubit sides)";
+        members.columns = {"Element", "Native side"};
+        std::set<int> elements;
+        for (const auto& side : sides)
+        {
+          if (enabled("ccx.model.sets.faces"))
+          {
+            members.rows.push_back({side.first, side.second});
+          }
+          else if (elements.insert(side.first).second)
+          {
+            members.rows.push_back({side.first, ""});
+          }
+        }
+        groups["ccx.model.sets"].tables.push_back(std::move(members));
+      }
+    }
+    groups["ccx.model.sets"].tables.insert(groups["ccx.model.sets"].tables.begin(), std::move(summary));
+  }
+  if (enabled("ccx.model.mesh") && enabled("ccx.model.mesh.nodes"))
+  {
+    std::set<int> ids;
+    for (int block : blocks)
+    {
+      const auto nodes = mesh.get_block_node_ids(block);
+      ids.insert(nodes.begin(), nodes.end());
+    }
+    const std::vector<int> ordered(ids.begin(), ids.end());
+    ReportTable nodes;
+    nodes.title = "Node coordinates";
+    nodes.columns = {"Node", "X", "Y", "Z"};
+    std::string unit;
+    if (!framework_units().display_unit("report", "length", unit, error))
+    {
+      return false;
+    }
+    nodes.units = {"", unit, unit, unit};
+    const SimUnits::QuantityUnit coordinates("length", unit, SimUnits::Length);
+    nodes.column_quantities = {std::nullopt, ReportQuantity(coordinates), ReportQuantity(coordinates), ReportQuantity(coordinates)};
+    for (const auto& row : mesh.get_node_coordinates(ordered))
+    {
+      std::vector<QJsonValue> values = {row[0]};
+      for (std::size_t axis = 1; axis < 4; ++axis)
+      {
+        double si = 0.0, converted = 0.0;
+        if (!framework_units().geometry_to_si(row[axis], si, error) ||
+            !framework_units().from_si(si, unit, SimUnits::Length, SimUnits::UnitRole::Linear, converted, error))
+        {
+          return false;
+        }
+        values.push_back(converted);
+      }
+      nodes.rows.push_back(std::move(values));
+    }
+    meshSection.tables.push_back(std::move(nodes));
+  }
+  if (enabled("ccx.model.mesh") && enabled("ccx.model.mesh.elements"))
+  {
+    ReportTable elements;
+    elements.title = "Element connectivity";
+    elements.columns = {"Element", "Native type", "Connectivity"};
+    for (const auto& row : mesh.get_element_id_type_connectivity())
+    {
+      if (row.size() < 2)
+      {
+        continue;
+      }
+      QStringList nodes;
+      for (std::size_t index = 2; index < row.size(); ++index)
+      {
+        nodes.push_back(QString::number(row[index]));
+      }
+      elements.rows.push_back({row[0], row[1], nodes.join(", ")});
+    }
+    meshSection.tables.push_back(std::move(elements));
+  }
   int stepOrdinal = 0;
   for (int id : steps.get_steps_ids()) {
     ++stepOrdinal;
@@ -1227,17 +1349,13 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
   groups["ccx.model.overview"].paragraphs.push_back("Current model captured from CalculiX Core. Physical model values use Report presentation units. Amplitude ordinates and normalized offsets are dimensionless. Custom solver text retains its literal representation. Historical jobs retain their original source units.");
   ReportDocument candidate = output;
   candidate.source = source;
-  // Hash the entire captured report content before display selection is applied.
-  // This identifies this reporting snapshot, not an unrecorded solver run.
+  // Hash collected report content, including requested detail. This identifies
+  // a reporting snapshot, not an unrecorded solver run or full model archive.
   QJsonArray captured;
   for (const auto& item : groups) {
     captured.append(item.second.to_json());
   }
   candidate.source.snapshot_fingerprint = QCryptographicHash::hash(QJsonDocument(captured).toJson(QJsonDocument::Compact), QCryptographicHash::Sha256).toHex().toStdString();
-  const auto enabled = [&](const std::string& key) {
-    const auto found = request.overrides.values.find(key);
-    return found != request.overrides.values.end() && found->second == "true";
-  };
   std::set<int> selected;
   const auto selection = request.overrides.values.find("steps");
   std::vector<int> selectedIds;

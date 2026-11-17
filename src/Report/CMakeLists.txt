@@ -22,7 +22,10 @@ add_library(report_module SHARED
   Core/ReportProjectPersistence.cpp
   Core/ReportSession.cpp
   Core/ReportUserOptions.cpp
+  Document/ReportLayoutBatch.cpp Document/ReportLayoutBatch.hpp
   Document/ReportDocumentLayout.cpp
+  Document/ReportOdtPackage.cpp Document/ReportOdtPackage.hpp
+  Document/ReportOdtStyles.cpp Document/ReportOdtStyles.hpp
   Document/ReportOdtExporter.cpp
   Document/ReportPdfExporter.cpp
   EventObservers/ReportModelObserver.cpp

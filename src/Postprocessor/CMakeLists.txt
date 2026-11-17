@@ -1,4 +1,8 @@
+find_package(Threads REQUIRED)
 add_library(postprocessor_core STATIC
+  Core/representations/DatasetAppearance.cpp
+  Core/representations/PostprocessorCoreAppearance.cpp
+  Core/persistence/DatasetAppearanceCodec.cpp
   Core/application/PostprocessorCoreUnits.cpp
   Core/representations/ResultColoringUnits.cpp
   Core/filters/PlaneOperations.cpp
@@ -18,10 +22,12 @@ add_library(postprocessor_core STATIC
   Core/plots/PlotTableData.cpp
   Core/plots/PostprocessorCorePlots.cpp
   Core/plots/PlotCodec.cpp
+  Core/plots/PostprocessorCorePlotLabels.cpp
   Core/plots/PlotCsvExport.cpp
   Core/annotations/PostprocessorCoreAnnotations.cpp
   Core/annotations/AnnotationCodec.cpp
   Core/tables/ResultTables.cpp
+  Core/tables/TableFilters.cpp
   Core/tables/PostprocessorCoreTables.cpp
   Core/persistence/PostprocessorSessionCodec.cpp
   Core/application/PostprocessorCorePersistence.cpp
@@ -71,6 +77,14 @@ target_compile_features(postprocessor_core PUBLIC cxx_std_17)
 set_target_properties(postprocessor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(postprocessor_module SHARED
+  Interfaces/PostprocessorReportFrameSelection.hpp
+  Interfaces/PostprocessorReportFrameSelection.cpp
+  Interfaces/PostprocessorReportExtrema.hpp
+  Interfaces/PostprocessorReportExtrema.cpp
+  Interfaces/PostprocessorReportBlockSummary.hpp
+  Interfaces/PostprocessorReportBlockSummary.cpp
+  Interfaces/PostprocessorReportResultImages.hpp
+  Interfaces/PostprocessorReportResultImages.cpp
   Commands/units/PostUnitsCommand.cpp
   Commands/units/PostUnitsCommand.hpp
   Interfaces/PostprocessorReportResultProvider.cpp
@@ -102,12 +116,21 @@ add_library(postprocessor_module SHARED
   GUI/Plots/PostprocessorPlotChart.cpp
   GUI/Plots/PostprocessorPlotPane.cpp
   GUI/Plots/PostprocessorPlotControls.cpp
+  GUI/Plots/PostprocessorPlotLabels.cpp
   GUI/Plots/PostprocessorPlotInteraction.cpp
   Icons/Postprocessor.svg
   Icons/PostprocessorMinMax.svg
   Icons/PostprocessorAddResultLabel.svg
   Icons/PostprocessorShowLabels.svg
   Icons/PostprocessorIntegrationPoint.svg
+  Icons/PostprocessorDeform.svg
+  Icons/PostprocessorUndeformed.svg
+  Icons/PostprocessorTreeSource.svg
+  Icons/PostprocessorTreeIntegrationPoints.svg
+  Icons/PostprocessorTreeResults.svg
+  Icons/PostprocessorTreeField.svg
+  Icons/PostprocessorTreeTables.svg
+  Icons/PostprocessorTreeTable.svg
   Core/sources/VtkFileSourceProvider.cpp
   Commands/tables/PostTableCommand.cpp
   Commands/tables/PostViewTypeCommand.cpp
@@ -116,6 +139,7 @@ add_library(postprocessor_module SHARED
   GUI/Sources/PostprocessorImportDialog.cpp
   GUI/Tables/PostprocessorTableModel.cpp
   GUI/Tables/PostprocessorTableView.cpp
+  GUI/Tables/PostprocessorTableFilters.cpp
   Core/persistence/PostprocessorProjectPersistence.cpp
   Interfaces/PostprocessorProjectInterface.cpp
   PostprocessorModule.cpp
@@ -147,6 +171,12 @@ add_library(postprocessor_module SHARED
   Commands/display/PostColorCommand.hpp
   Commands/display/PostDeformCommand.cpp
   Commands/display/PostDeformCommand.hpp
+  Interfaces/PostprocessorAppearanceInterface.cpp
+  GUI/Properties/PostprocessorAppearanceControls.cpp
+  GUI/ResultsTree/PostprocessorStyleDelegate.cpp
+  GUI/Viewport/PostprocessorDatasetAppearance.cpp
+  Commands/display/AppearanceCommandText.cpp
+  Commands/display/PostDisplayCommand.cpp
   Commands/display/PostLegendCommand.cpp
   Commands/display/PostLegendCommand.hpp
   Commands/display/PostShowCommand.cpp
@@ -230,7 +260,7 @@ add_library(postprocessor_module SHARED
   GUI/Observers/PostprocessorGuiObserver.hpp
 )
 
-target_link_libraries(postprocessor_module PRIVATE VTK::ChartsCore VTK::ViewsContext2D VTK::RenderingContext2D VTK::RenderingContextOpenGL2 postprocessor_core cubitsim_storage cubitsim_reporting cubiti cubit_util clarogui clarofw
+target_link_libraries(postprocessor_module PRIVATE Threads::Threads VTK::ChartsCore VTK::ViewsContext2D VTK::RenderingContext2D VTK::RenderingContextOpenGL2 postprocessor_core cubitsim_storage cubitsim_reporting cubiti cubit_util clarogui clarofw
   Qt6::Widgets Qt6::OpenGLWidgets VTK::IOXML VTK::GUISupportQt VTK::RenderingCore VTK::RenderingAnnotation VTK::RenderingOpenGL2 VTK::FiltersCore VTK::FiltersGeometry)
 target_compile_features(postprocessor_module PUBLIC cxx_std_17)
 target_include_directories(postprocessor_module PUBLIC "${CUBITSIM_SOURCE_ROOT}")
@@ -311,6 +341,30 @@ add_custom_target(postprocessor_icons ALL
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorViewPerspective.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorViewPerspective.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorTreeSource.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorTreeSource.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorTreeIntegrationPoints.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorTreeIntegrationPoints.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorTreeResults.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorTreeResults.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorTreeField.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorTreeField.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorTreeTables.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorTreeTables.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorTreeTable.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorTreeTable.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorDeform.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorDeform.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorUndeformed.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorUndeformed.svg"
   VERBATIM
 )
 add_dependencies(postprocessor_module postprocessor_icons)

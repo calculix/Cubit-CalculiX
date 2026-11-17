@@ -82,6 +82,21 @@ Field metadata identifies the dataset, source, scope, component labels, unique
 array name and validity-mask array. The length-prefixed array names avoid
 collisions between FRD/DAT fields and user set names.
 
+Known spatial-vector layouts publish explicit XYZ component indices. These
+include FRD FORC/FORCI (F1/F2/F3), VELO (V1/V2/V3), FLUX (F1/F2/F3), DISPI
+(D1/D2/D3), and global DAT forces, displacements, velocities and heat flux.
+All three named directions must be present and unambiguous. Extra generalized
+DOFs and derived columns are excluded from the physical vector norm. Unknown
+three-column fields and incomplete triplets do not acquire vector semantics.
+The existing DISP and interpolated integration-point displacement roles remain
+unchanged; declaring a force vector does not make it a displacement field.
+
+Magnitude is computed by existing Postprocessor consumers from these declared
+columns, without adding or reordering numeric arrays. The component menu and
+initial coloring prefer Magnitude for declared vectors, otherwise an existing
+MISES component (case-insensitive), then the first published component. Reconvert
+reader data to add the new vector metadata to previously converted snapshots.
+
 Missing tuples are represented by NaN and a zero validity mask. Reported
 non-finite values retain their components with zero tuple validity. Fields and
 table rows are always retained. ``Partial`` cell arrays summarize invalid
@@ -368,3 +383,23 @@ source. Already converted VTK datasets are not rewritten automatically.
 classification, aliases, forward references, includes, continued headers, mixed
 declarations, and validation of helpers that are omitted from published groups.
 The option defaults to OFF.
+
+
+Native block solid colors
+-------------------------
+
+Current-model linking captures each block's assigned or resolved native Cubit
+color through ``CalculiXMeshInterface::get_block_capture_color`` on the host
+thread. Normalized RGB is copied into the conversion plan and dataset metadata;
+conversion workers and Postprocessor rendering never query live Cubit graphics.
+Unavailable colors remain absent and use the standard gray solid fallback.
+
+The optional ``solid_color`` RGB metadata survives VTK XML export/import and
+Postprocessor project catalogues. Imported channels must be finite and in [0,1];
+colors for the same dataset must agree across declared frames/partitions. Older
+files without this metadata retain the gray fallback. No block is matched by an
+unverified name or ID. Refresh/reconvert linked results to capture native colors.
+
+Result scalar coloring overrides solid RGB. Returning to solid coloring, or a
+frame without the selected field, uses the stored native color. Element edges
+remain black. Lighting can shade the displayed RGB.

@@ -141,15 +141,7 @@ namespace
       {
         continue;
       }
-      Postprocessor::FieldSelection selection;
-      selection.array_name = field.array_name;
-      selection.association = field.association;
-      selection.group_key = group.key;
-      selection.magnitude = field.vector_components.has_value();
-      if (!selection.magnitude)
-      {
-        selection.component = field.components.front();
-      }
+      auto selection = Postprocessor::preferred_field_selection(field, group.key);
       std::optional<std::array<double,2>> range;
       for (const auto& current : frame.fields)
       {
@@ -538,6 +530,7 @@ namespace Postprocessor
 
       const auto mesh_increment = first_mesh_increment(*published.data);
       auto staged_state = state;
+      auto stagedAppearanceBindings = saved_bindings;
       if (loaded->second.data)
       {
         for (auto& item : staged_state.filters)
@@ -574,6 +567,96 @@ namespace Postprocessor
         {
           definition.animation.playing = false;
           definition.hidden_datasets.clear();
+          std::map<std::size_t,DatasetAppearance> reboundAppearance;
+          for (const auto& appearance : definition.dataset_appearance)
+          {
+            const auto old = std::find_if(loaded->second.datasets.begin(),loaded->second.datasets.end(),[&](const auto& item)
+            {
+              return item.id == appearance.first;
+            });
+            if (old == loaded->second.datasets.end())
+            {
+              error = "Appearance has no durable dataset identity during refresh.";
+              return false;
+            }
+            std::optional<std::size_t> match;
+            bool ambiguous = false;
+            for (const auto& item : published.data->datasets)
+            {
+              bool identity = item.name == old->name;
+              if (old->model_id >= 0)
+              {
+                identity = item.model_id == old->model_id;
+              }
+              if (item.kind == old->kind && identity)
+              {
+                if (match)
+                {
+                  ambiguous = true;
+                  break;
+                }
+                match = item.id;
+              }
+            }
+            if (match && !ambiguous)
+            {
+              reboundAppearance[*match] = appearance.second;
+            }
+            else
+            {
+              auto& saved = stagedAppearanceBindings[display->first].appearance;
+              const auto existing = std::find_if(saved.begin(),saved.end(),[&](const auto& item)
+              {
+                return item.dataset.kind == old->kind && item.dataset.name == old->name && item.dataset.model_id == old->model_id;
+              });
+              SavedDatasetAppearance unresolved{{old->kind,old->name,old->model_id},appearance.second};
+              if (existing == saved.end())
+              {
+                saved.push_back(unresolved);
+              }
+              else
+              {
+                *existing = unresolved;
+              }
+            }
+          }
+          auto& pendingAppearance = stagedAppearanceBindings[display->first].appearance;
+          for (auto saved = pendingAppearance.begin(); saved != pendingAppearance.end();)
+          {
+            const SimResults::Dataset* match = nullptr;
+            bool ambiguous = false;
+            for (const auto& item : published.data->datasets)
+            {
+              bool identity = saved->dataset.name == item.name;
+              if (saved->dataset.model_id >= 0)
+              {
+                identity = saved->dataset.model_id == item.model_id;
+              }
+              if (saved->dataset.kind == item.kind && identity)
+              {
+                if (match)
+                {
+                  ambiguous = true;
+                  break;
+                }
+                match = &item;
+              }
+            }
+            std::string appearanceError;
+            if (match && !ambiguous && valid_appearance(*match,saved->appearance,appearanceError))
+            {
+              if (reboundAppearance.count(match->id) == 0)
+              {
+                reboundAppearance[match->id] = saved->appearance;
+              }
+              saved = pendingAppearance.erase(saved);
+            }
+            else
+            {
+              ++saved;
+            }
+          }
+          definition.dataset_appearance.swap(reboundAppearance);
           if (!mesh_increment)
           {
             if (staged_state.active_representation_id == display->first)
@@ -594,6 +677,7 @@ namespace Postprocessor
       filter_cache.clear();
       state.swap(staged_state);
       runtime.swap(staged_runtime);
+      saved_bindings.swap(stagedAppearanceBindings);
       ++scene_revision;
       error.clear();
       return true;

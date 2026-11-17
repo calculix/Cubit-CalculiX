@@ -166,6 +166,37 @@ int main(int argc,char** argv)
   check(fallbackDisplay.hidden_datasets == std::set<std::size_t>{1},"No-block opening did not show the first available category only");
   check(fallbackDisplay.coloring.field && !fallbackDisplay.coloring.field->magnitude &&
     fallbackDisplay.coloring.field->component == "Value","Scalar default did not choose the first component");
+  Provider strain(true);
+  auto& strain_field = strain.data->increments.front().fields[1];
+  strain_field.name = "TOSTRAIN";
+  strain_field.vector_components.reset();
+  strain_field.components = {"EXX", "EYY", "EZZ", "EXY", "EYZ", "EZX", "MISES"};
+  auto* collection = vtkPartitionedDataSetCollection::SafeDownCast(strain.data->increments.front().dataset.get());
+  auto* mesh = vtkUnstructuredGrid::SafeDownCast(collection->GetPartition(1, 0));
+  auto* values = mesh->GetPointData()->GetArray(strain_field.array_name.c_str());
+  values->SetNumberOfComponents(7);
+  values->SetNumberOfTuples(2);
+  values->Fill(1.0);
+  values->SetComponent(0, 6, 123.0);
+  values->SetComponent(1, 6, 123.0);
+  PostprocessorCore strain_core;
+  check(strain_core.open_result(strain, request, std::nullopt, error), "Cannot open strain defaults fixture");
+  const auto strain_source = strain_core.session().active_source_id;
+  const auto& strain_display = strain_core.session().representations.at(strain_core.session().active_representation_id);
+  check(strain_display.coloring.field && !strain_display.coloring.field->magnitude && strain_display.coloring.field->component == "MISES",
+    "Opening a strain source did not select its published MISES component");
+  auto explicit_coloring = strain_display.coloring;
+  if (explicit_coloring.field)
+  {
+    explicit_coloring.field->component = "EYY";
+    check(strain_core.set_coloring(strain_source, "view1", explicit_coloring, error), "Cannot select an explicit strain component");
+    check(strain_core.open_result(strain, request, std::nullopt, error), "Cannot reopen strain source");
+    const auto& reopened = strain_core.session().representations.at(strain_core.session().active_representation_id);
+    check(reopened.coloring.field && reopened.coloring.field->component == "EYY",
+      "Reopening overwrote an explicit component with the preferred default");
+  }
+  check(strain_field.components.front() == "EXX" && strain_field.components.back() == "MISES" && values->GetComponent(0, 6) == 123.0,
+    "Preferred-component selection reordered or changed the stored strain values");
   if (failures) {
     return 1;
   } else {

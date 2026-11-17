@@ -1,4 +1,5 @@
 #include "ReportTestProgress.hpp"
+#include "Framework/Reporting/ReportResultRequest.hpp"
 #include "ReportTestProviders.hpp"
 #include "Report/Core/ReportCore.hpp"
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
@@ -96,6 +97,15 @@ int reportProgressTests(const QString& directory)
   ReportRequest decoded;
   check(ReportRequest::from_json(request.to_json(), decoded, error) && decoded.progress == nullptr,
     "Progress is excluded from persisted requests");
+
+  ReportResultRequest resultRequest;
+  resultRequest.provider = "test";
+  resultRequest.source.workspace_id = "test";
+  resultRequest.source.job_id = 1;
+  resultRequest.progress = &progress;
+  ReportResultRequest decodedResult;
+  check(ReportResultRequest::from_json(resultRequest.to_json(), decodedResult, error) &&
+    decodedResult.progress == nullptr, "Result collection progress is never persisted");
 
   const auto filename = directory + "/report-progress.inp";
   QFile file(filename);

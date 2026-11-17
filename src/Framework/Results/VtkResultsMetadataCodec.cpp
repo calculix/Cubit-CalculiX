@@ -349,6 +349,20 @@ bool SimResults::VtkResultsMetadataCodec::write_frame(vtkDataObject& target, con
       return value.id == id;
     });
     if (dataset != result.datasets.end()) {
+      if (dataset->solid_color)
+      {
+        QJsonArray rgb;
+        for (double channel : *dataset->solid_color)
+        {
+          if (!std::isfinite(channel) || channel < 0 || channel > 1)
+          {
+            error = "VTK solid color requires finite RGB channels in [0,1].";
+            return false;
+          }
+          rgb.append(channel);
+        }
+        metadata.insert("solid_color",rgb);
+      }
       QJsonObject material;
       material.insert("array", text(dataset->material_id_array));
       material.insert("workspace", text(dataset->material_workspace));
@@ -412,6 +426,7 @@ bool SimResults::VtkResultsMetadataCodec::read(VtkResultsData& result, std::stri
   VtkResultsData candidate = result;
   std::optional<QJsonObject> source;
   std::map<std::size_t, QJsonObject> materialsSeen;
+  std::map<std::size_t,std::optional<std::array<double,3>>> colorsSeen;
   bool missingMeshMetadata = false;
   const auto acceptSource = [&](const QJsonObject& metadata) {
     const auto value = metadata.value("source").toObject();
@@ -528,6 +543,35 @@ bool SimResults::VtkResultsMetadataCodec::read(VtkResultsData& result, std::stri
           *existing = std::move(field);
         }
       }
+      std::optional<std::array<double,3>> solidColor;
+      if (metadata.contains("solid_color"))
+      {
+        const auto rgb = metadata.value("solid_color").toArray();
+        if (!metadata.value("solid_color").isArray() || rgb.size() != 3)
+        {
+          error = "VTK solid color requires three RGB channels.";
+          return false;
+        }
+        std::array<double,3> channels{};
+        for (int channel = 0; channel < 3; ++channel)
+        {
+          const auto value = rgb[channel];
+          if (!value.isDouble() || !std::isfinite(value.toDouble()) || value.toDouble() < 0 || value.toDouble() > 1)
+          {
+            error = "VTK solid color requires finite RGB channels in [0,1].";
+            return false;
+          }
+          channels[static_cast<std::size_t>(channel)] = value.toDouble();
+        }
+        solidColor = channels;
+      }
+      const auto priorColor = colorsSeen.find(id);
+      if (priorColor != colorsSeen.end() && priorColor->second != solidColor)
+      {
+        error = "VTK frames/partitions contain inconsistent solid colors for a dataset.";
+        return false;
+      }
+      colorsSeen[id] = solidColor;
       const auto material = metadata.value("materials").toObject();
       const auto priorMaterial = materialsSeen.find(id);
       if (priorMaterial != materialsSeen.end() && priorMaterial->second != material) {
@@ -539,6 +583,7 @@ bool SimResults::VtkResultsMetadataCodec::read(VtkResultsData& result, std::stri
         if (dataset.id != id) {
           continue;
         }
+        dataset.solid_color = solidColor;
         dataset.material_id_array = material.value("array").toString().toUtf8().toStdString();
         dataset.material_workspace = material.value("workspace").toString().toUtf8().toStdString();
         dataset.material_project = material.value("project").toString().toUtf8().toStdString();

@@ -44,6 +44,10 @@ public:
   bool check_curve_exists(int curve_id);
   bool check_surface_exists(int surface_id);
   bool check_vertex_in_nodeset_exists(int vertex_id,int nodeset_id); // checks if the vertex exists in the nodeset
+  // Read-only report queries. Coordinates use the declared native geometry basis.
+  std::vector<int> get_nodeset_node_ids(int id);
+  std::vector<std::vector<double>> get_node_coordinates(const std::vector<int>& ids);
+  bool get_sideset_members(int id, std::vector<std::pair<int, int>>& output, std::string& error);
   std::vector<int> get_blocks(); // gets the block ids from core blocks
   int get_ccx_element_side(int element_type,int side); // gets the ccx element side for the given cubit element side
   bool add_sideset_face(std::string sideset_id, std::string sideset_name, std::string face, std::string element_type); // gets the sideset/elset name and face

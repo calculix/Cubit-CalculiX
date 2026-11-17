@@ -4,6 +4,7 @@
 #include "Postprocessor/Core/plots/PlotCodec.hpp"
 #include "Postprocessor/Core/tables/ResultTables.hpp"
 #include "Postprocessor/GUI/Plots/PostprocessorPlotInteraction.hpp"
+#include "Postprocessor/GUI/Plots/PostprocessorPlotLabels.hpp"
 #include "Postprocessor/Commands/plots/PlotCommandText.hpp"
 #include <QTemporaryDir>
 #include <QFile>
@@ -69,12 +70,25 @@ int plot_cases(const std::shared_ptr<PostprocessorApplicationInterface>& app)
     data.curves[0].samples[0].y == 100 && !data.curves[0].samples[1].valid,
     "IP history did not preserve element/IP identity across frames");
   check(app->change_plot(name,"show","",error),"Cannot return to the nodal history plot");
+  const auto labelRevision = app->session().plots.at(id).data_revision;
+  check(app->set_plot_label(name,"title","Contact history","",error) &&
+    app->set_plot_label(name,"xlabel","Time [s]","",error) && app->set_plot_label(name,"ylabel","Stress [MPa]","",error) &&
+    app->set_plot_label(name,"curve","Selected node","large node",error),"Cannot edit plot presentation labels");
+  check(app->session().plots.at(id).data_revision == labelRevision,"Label edits invalidated result samples");
+  check(plot_label_command(name,"curve","Selected node","large node") ==
+    QStringLiteral("post plot curve label \"Selected node\" curve \"large node\" plot ")+plot_quote(name),"Curve-label journal is not readable");
+  check(!app->set_plot_label(name,"title",std::string(257,'x'),"",error),"Oversized plot label was accepted");
   const auto json = plots_to_json(app->session().plots);
   std::map<std::string,PlotDefinition> restored;
   check(plots_from_json(json,restored) &&
     std::get<PlotEntityReference>(restored.at(id).curves[0].input).entity.entity_id == large,
     "Plot persistence rounded a 64-bit ID");
   check(restored.at(id).curves[0].color == app->session().plots.at(id).curves[0].color,"Plot persistence lost curve color");
+  check(restored.at(id).title == std::optional<std::string>("Contact history") &&
+    restored.at(id).x_label == std::optional<std::string>("Time [s]") &&
+    restored.at(id).curves[0].label == std::optional<std::string>("Selected node"),"Plot label persistence lost overrides");
+  check(app->set_plot_label(name,"auto","","",error) && !app->session().plots.at(id).title &&
+    !app->session().plots.at(id).curves[0].label,"Automatic labels did not reset overrides");
   auto duplicate = json;
   duplicate.append(json[0]);
   check(!plots_from_json(duplicate,restored),"Duplicate saved plots were accepted");
@@ -133,6 +147,28 @@ int plot_cases(const std::shared_ptr<PostprocessorApplicationInterface>& app)
   PlotCurveData mixed;
   check(!plot_table_data(tables,reference,mixed,error),"Global table silently connected different entity histories");
 
+  TableFilter exactNode;
+  exactNode.column = "NodeId";
+  exactNode.value = std::to_string(large);
+  TableFilter forceRange;
+  forceRange.column = "Force";
+  forceRange.mode = TableFilterMode::Range;
+  forceRange.minimum = 7;
+  forceRange.maximum = 7;
+  reference.filters = {exactNode,forceRange};
+  check(plot_table_data(tables,reference,filtered,error) && filtered.samples.size() == 1 && filtered.samples[0].y == 7,
+    "Plot AND filters rounded identifiers or ignored inclusive bounds");
+  PlotDefinition tablePlot;
+  tablePlot.id = "filtered";
+  tablePlot.name = "Filtered table";
+  PlotCurveDefinition tableCurve;
+  tableCurve.name = "History";
+  tableCurve.input = reference;
+  tablePlot.curves.push_back(tableCurve);
+  std::map<std::string,PlotDefinition> roundTrip;
+  check(plots_from_json(plots_to_json({{tablePlot.id,tablePlot}}),roundTrip) &&
+    same_table_filters(std::get<PlotTableReference>(roundTrip.at("filtered").curves[0].input).filters,reference.filters),
+    "Plot persistence lost multiple column filters");
   PlotAxes stateAxes, actual;
   actual.x = std::array<double,2>{0,10};
   actual.y = std::array<double,2>{0,100};

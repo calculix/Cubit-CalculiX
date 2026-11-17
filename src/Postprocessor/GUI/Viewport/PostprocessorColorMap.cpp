@@ -78,6 +78,14 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
       for (auto& surface : surfaces) {
         surface.scalars = nullptr;
         surface.range.reset();
+        surface.edge_scalars = false;
+        for (const auto& edge : surface.edges)
+        {
+          edge->GetMapper()->ScalarVisibilityOff();
+          auto* lines = vtkPolyDataMapper::SafeDownCast(edge->GetMapper())->GetInput();
+          lines->GetPointData()->RemoveArray(scalarName);
+          lines->GetCellData()->RemoveArray(scalarName);
+        }
         if (surface.nodes) {
           surface.nodes->GetMapper()->ScalarVisibilityOff();
           surface.node_data->GetPointData()->RemoveArray(scalarName);
@@ -259,6 +267,40 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
       mapper->UseLookupTableScalarRangeOn();
       mapper->InterpolateScalarsBeforeMappingOn();
       mapper->ScalarVisibilityOn();
+      for (const auto& edge : surface.edges)
+      {
+        auto* edgeMapper = vtkPolyDataMapper::SafeDownCast(edge->GetMapper());
+        auto* lines = edgeMapper->GetInput();
+        std::vector<double> edgeValues;
+        std::string edgeError;
+        auto edgeSelection = *c.field;
+        edgeSelection.dataset_id = surface.dataset;
+        const auto* edgeField = find_field(data.increments[display.increment_index],edgeSelection);
+        if (lines && edgeField && color_values(lines,*edgeField,edgeSelection,edgeValues,edgeError,presentation))
+        {
+          auto values = vtkSmartPointer<vtkDoubleArray>::New();
+          values->SetName(scalarName);
+          for (double value : edgeValues)
+          {
+            values->InsertNextValue(value);
+          }
+          if (cell)
+          {
+            lines->GetCellData()->AddArray(values);
+            edgeMapper->SetScalarModeToUseCellFieldData();
+          }
+          else
+          {
+            lines->GetPointData()->AddArray(values);
+            edgeMapper->SetScalarModeToUsePointFieldData();
+          }
+          edgeMapper->SelectColorArray(scalarName);
+          edgeMapper->SetColorModeToMapScalars();
+          edgeMapper->SetLookupTable(mapping);
+          edgeMapper->UseLookupTableScalarRangeOn();
+          surface.edge_scalars = true;
+        }
+      }
       if (surface.nodes && !cell) {
         auto* nodeMapper = vtkPolyDataMapper::SafeDownCast(surface.nodes->GetMapper());
         nodeMapper->SetScalarModeToUsePointFieldData();
@@ -334,6 +376,16 @@ void PostprocessorColorMap::apply(const Postprocessor::Representation& display, 
   update_appearance();
   const bool visible = display.visible && c.field && c.legend_visible &&
     std::any_of(surfaces.begin(),surfaces.end(),[&](const PostprocessorColorSurface& surface) {
+      const bool points = surface.style == DisplayStyle::Points || surface.style == DisplayStyle::RoundedPoints;
+      if (points && c.field->association == SimResults::Association::Element)
+      {
+        return false;
+      }
+      const bool wire = surface.style == DisplayStyle::Wireframe || surface.style == DisplayStyle::HiddenLine;
+      if (wire && actualRange && !surface.edge_scalars)
+      {
+        return false;
+      }
       return dataset_visible(display,surface.dataset) && (!c.field->dataset_id || *c.field->dataset_id == surface.dataset);
     });
   legend->SetVisibility(visible);

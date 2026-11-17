@@ -40,7 +40,7 @@ namespace Postprocessor
     const auto& left = std::get<PlotTableReference>(a.input);
     const auto& right = std::get<PlotTableReference>(b.input);
     return left.source_id == right.source_id && left.key == right.key && left.x == right.x && left.y == right.y &&
-      left.filter_column == right.filter_column && left.filter_value == right.filter_value && left.field == right.field;
+      left.filter_column == right.filter_column && left.filter_value == right.filter_value && left.field == right.field && same_table_filters(left.filters,right.filters);
   }
   const std::string& plot_curve_source(const PlotCurveDefinition& curve)
   {

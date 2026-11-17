@@ -23,6 +23,24 @@ namespace
 int main()
 {
   using namespace Postprocessor;
+  SimResults::Field tensor;
+  tensor.array_name = "strain";
+  tensor.components = {"EXX", "EYY", "EZZ", "MISES", "PS1"};
+  const auto stored_components = tensor.components;
+  auto preferred = preferred_field_selection(tensor, "tensor-group");
+  check(!preferred.magnitude && preferred.component == "MISES" && preferred.group_key == "tensor-group",
+    "Tensor defaults did not prefer MISES");
+  tensor.components[3] = "mIsEs";
+  check(preferred_field_component(tensor) == "mIsEs", "MISES preference must be case-insensitive and preserve its published name");
+  tensor.components = stored_components;
+  check(tensor.components == stored_components && preferred_field_component(tensor) == "MISES",
+    "Component preference changed the stored layout");
+  SimResults::Field scalar;
+  scalar.components = {"Temperature"};
+  check(preferred_field_selection(scalar, "").component == "Temperature", "Scalar preference changed");
+  SimResults::Field arbitrary;
+  arbitrary.components = {"PS1", "PS2", "PS3"};
+  check(!preferred_field_selection(arbitrary, "").magnitude, "Three scalar components were guessed to be a vector");
   ResultColoring c;
   check(c.bands == ColoringDefaults::default_bands,"New representations must default to banded coloring");
   auto positioned = c;
@@ -85,6 +103,8 @@ int main()
   field.validity_array = "valid";
   field.components = {"X","Y","Z","Derived"};
   field.vector_components = std::array<std::size_t,3>{0,1,2};
+  preferred = preferred_field_selection(field, "vector-group");
+  check(preferred.magnitude && preferred.component.empty(), "Declared vectors must default to magnitude");
   FieldSelection selected{0,"vector",SimResults::Association::Node,"",true};
   std::vector<double> values;
   check(color_values(grid,field,selected,values,error) && values.size() == 2 && values[0] == 5 && std::isnan(values[1]),

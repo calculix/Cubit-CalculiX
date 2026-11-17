@@ -5,6 +5,7 @@
 #include <QTreeWidgetItemIterator>
 #include <QScrollBar>
 #include <QTimer>
+#include <QComboBox>
 #include <map>
 #include <set>
 #include <utility>
@@ -14,6 +15,7 @@ namespace
 {
 constexpr int groupRole = Qt::UserRole + 1;
 constexpr int gateRole = Qt::UserRole + 2;
+constexpr int choiceRole = Qt::UserRole + 3;
 
 QString identity(QTreeWidgetItem* item)
 {
@@ -30,7 +32,8 @@ ReportContentTree::ReportContentTree(QWidget* parent, std::function<bool(const s
   : QTreeWidget(parent), submit(std::move(submit))
 {
   setObjectName("ReportContentTree");
-  setHeaderLabel(tr("Report content"));
+  setColumnCount(2);
+  setHeaderLabels({tr("Report content"), tr("Selection")});
   connect(this, &QTreeWidget::itemChanged, this, [this](QTreeWidgetItem* item, int)
   {
     change(item);
@@ -55,6 +58,10 @@ void ReportContentTree::schedule_refresh()
 
 void ReportContentTree::collect(QTreeWidgetItem* item, bool checked, ReportConfiguration& patch) const
 {
+  if (item->data(0, choiceRole).toBool())
+  {
+    return;
+  }
   std::string value = "false";
   if (checked)
   {
@@ -78,6 +85,10 @@ void ReportContentTree::collect(QTreeWidgetItem* item, bool checked, ReportConfi
 
 void ReportContentTree::change(QTreeWidgetItem* item)
 {
+  if (item->data(0, choiceRole).toBool())
+  {
+    return;
+  }
   ReportConfiguration patch;
   const bool checked = item->checkState(0) != Qt::Unchecked;
   collect(item, checked, patch);
@@ -92,6 +103,11 @@ void ReportContentTree::change(QTreeWidgetItem* item)
       }
     }
   }
+  submit_patch(patch);
+}
+
+void ReportContentTree::submit_patch(const ReportConfiguration& patch)
+{
   if (patch.values.empty())
   {
     return;
@@ -167,7 +183,7 @@ void ReportContentTree::refresh(const ReportTemplate& nextDefinition, const Repo
   }
   for (const auto& option : definition.options)
   {
-    if (option.kind != "boolean" || gates.count(option.key) != 0)
+    if ((option.kind != "boolean" && option.kind != "choice") || gates.count(option.key) != 0)
     {
       continue;
     }
@@ -183,6 +199,45 @@ void ReportContentTree::refresh(const ReportTemplate& nextDefinition, const Repo
     }
     item->setText(0, QString::fromStdString(option.label));
     item->setData(0, Qt::UserRole, QString::fromStdString(option.key));
+    if (option.kind == "choice")
+    {
+      item->setData(0, choiceRole, true);
+      item->setFlags(item->flags() & ~Qt::ItemIsUserCheckable);
+      auto* editor = new QComboBox(this);
+      for (const auto& value : option.choices)
+      {
+        QString label = QString::fromStdString(value);
+        if (value == "last_per_step")
+        {
+          label = tr("Last frame of each step");
+        }
+        else if (value == "envelope")
+        {
+          label = tr("Envelope across selected frames");
+        }
+        else if (value == "all_frames")
+        {
+          label = tr("Every selected frame");
+        }
+        editor->addItem(label, QString::fromStdString(value));
+      }
+      std::string value = option.default_value;
+      const auto found = configuration.values.find(option.key);
+      if (found != configuration.values.end())
+      {
+        value = found->second;
+      }
+      editor->setCurrentIndex(editor->findData(QString::fromStdString(value)));
+      setItemWidget(item, 1, editor);
+      connect(editor, QOverload<int>::of(&QComboBox::activated), this,
+        [this, editor, key = option.key](int index)
+        {
+          ReportConfiguration patch;
+          patch.values[key] = editor->itemData(index).toString().toStdString();
+          submit_patch(patch);
+        });
+      continue;
+    }
     item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
     std::string value = option.default_value;
     const auto found = configuration.values.find(option.key);
@@ -227,15 +282,21 @@ void ReportContentTree::refresh(const ReportTemplate& nextDefinition, const Repo
       return;
     }
     bool any = false;
-    bool all = item->childCount() > 0;
+    bool all = true;
+    bool hasChecks = false;
     for (int i = 0; i < item->childCount(); ++i)
     {
+      if (item->child(i)->data(0, choiceRole).toBool())
+      {
+        continue;
+      }
+      hasChecks = true;
       const auto state = item->child(i)->checkState(0);
       any = any || state != Qt::Unchecked;
       all = all && state == Qt::Checked;
     }
     Qt::CheckState state = Qt::Unchecked;
-    if (open && all)
+    if (open && all && hasChecks)
     {
       state = Qt::Checked;
     }

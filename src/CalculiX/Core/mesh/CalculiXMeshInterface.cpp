@@ -374,3 +374,68 @@ bool CalculiXMeshInterface::get_sideset_element_sides(int id,
   output = std::move(candidate);
   return true;
 }
+
+std::vector<int> CalculiXMeshInterface::get_nodeset_node_ids(int id)
+{
+  return CubitInterface::get_nodeset_nodes_inclusive(id);
+}
+
+std::vector<std::vector<double>> CalculiXMeshInterface::get_node_coordinates(const std::vector<int>& ids)
+{
+  std::vector<std::vector<double>> result;
+  result.reserve(ids.size());
+  for (int id : ids)
+  {
+    const auto xyz = CubitInterface::get_nodal_coordinates(id);
+    result.push_back({static_cast<double>(id), xyz[0], xyz[1], xyz[2]});
+  }
+  return result;
+}
+
+bool CalculiXMeshInterface::get_sideset_members(int id,
+  std::vector<std::pair<int, int>>& output, std::string& error)
+{
+  SidesetHandle handle = nullptr;
+  if (!ccx_core.me_iface || !ccx_core.me_iface->get_sideset_handle(id, handle) || !handle)
+  {
+    error = "The report sideset is unavailable.";
+    return false;
+  }
+  constexpr int batchSize = 512;
+  std::vector<ElementHandle> handles(batchSize);
+  std::vector<ElementType> types(batchSize);
+  std::vector<int> sides(batchSize);
+  std::vector<std::pair<int, int>> candidate;
+  int offset = 0;
+  int count = 0;
+  while ((count = ccx_core.me_iface->get_sideset_sides(handle, offset, batchSize, handles, types, sides)) > 0)
+  {
+    if (count > batchSize || offset > (std::numeric_limits<int>::max)() - count)
+    {
+      error = "Report sideset exceeds the supported SDK range.";
+      return false;
+    }
+    for (int index = 0; index < count; ++index)
+    {
+      int localId = 0;
+      ccx_core.me_iface->get_element_id(handles[index], localId);
+      const auto entity = get_cubit_element_type_entity(ccx_core.me_iface->get_element_type_name(types[index]));
+      const int globalId = CubitInterface::get_global_element_id(entity, localId);
+      if (globalId <= 0)
+      {
+        error = "Cannot resolve a report sideset element.";
+        return false;
+      }
+      candidate.emplace_back(globalId, sides[index]);
+    }
+    offset += count;
+  }
+  if (count < 0)
+  {
+    error = "Cannot read report sideset members.";
+    return false;
+  }
+  output = std::move(candidate);
+  error.clear();
+  return true;
+}

@@ -1,23 +1,29 @@
-#include <type_traits>
 #include "ReportOdtExporter.hpp"
+#include "ReportOdtPackage.hpp"
+#include "ReportOdtStyles.hpp"
 #include "ReportFigureCaption.hpp"
-#include "ReportDocumentLayout.hpp"
 #include "ReportPageDecoration.hpp"
+#include "Report/Core/ReportUserOptions.hpp"
+#include "Report/Core/ReportUnitValidation.hpp"
+#include "Report/Core/ReportLogo.hpp"
+#include "Framework/Reporting/ReportProgress.hpp"
 #include <QXmlStreamWriter>
-#include <QDataStream>
 #include <QSaveFile>
-#include <QDateTime>
+#include <QTemporaryFile>
+#include <QBuffer>
+#include <QImageReader>
+#include <QCryptographicHash>
+#include <QStringList>
 #include <functional>
 #include <set>
-#include <QImage>
 #include <algorithm>
+#include <limits>
 
 namespace
 {
 const QString office = "urn:oasis:names:tc:opendocument:xmlns:office:1.0";
 const QString text = "urn:oasis:names:tc:opendocument:xmlns:text:1.0";
 const QString style = "urn:oasis:names:tc:opendocument:xmlns:style:1.0";
-
 void namespaces(QXmlStreamWriter& xml)
 {
   xml.writeNamespace(office, "office");
@@ -31,124 +37,196 @@ void namespaces(QXmlStreamWriter& xml)
   xml.writeAttribute("office:version", "1.2");
 }
 
-void paragraph(QXmlStreamWriter& xml, const QString& value)
-{
-  xml.writeTextElement("text:p", value);
-}
 
-quint32 crc32(const QByteArray& bytes)
+void paragraph(QXmlStreamWriter& xml, const QString& value, const QString& name = QString())
 {
-  quint32 crc = 0xffffffffu;
-  for (unsigned char byte : bytes)
+  xml.writeStartElement("text:p");
+  if (!name.isEmpty())
   {
-    crc ^= byte;
-    for (int bit = 0; bit < 8; ++bit)
+    xml.writeAttribute("text:style-name", name);
+  }
+  const auto lines = value.split('\n');
+  for (qsizetype index = 0; index < lines.size(); ++index)
+  {
+    if (index > 0)
     {
-      crc = (crc >> 1) ^ (0xedb88320u & (0u - (crc & 1u)));
+      xml.writeEmptyElement("text:line-break");
     }
+    xml.writeCharacters(lines[index]);
   }
-  return crc ^ 0xffffffffu;
+  xml.writeEndElement();
 }
 
-// ODF requires mimetype to be the first, uncompressed ZIP member. Store all
-// entries without compression to avoid private Qt ZIP APIs or external tools.
-bool package(QIODevice& output, const std::vector<std::pair<QByteArray, QByteArray>>& entries)
+QString bookmark(const std::string& id)
 {
-  QDataStream stream(&output);
-  stream.setByteOrder(QDataStream::LittleEndian);
-  QByteArray central;
-  QDataStream directory(&central, QIODevice::WriteOnly);
-  directory.setByteOrder(QDataStream::LittleEndian);
-  for (const auto& entry : entries)
+  return "Section_" + QString::fromLatin1(QCryptographicHash::hash(
+    QByteArray::fromStdString(id), QCryptographicHash::Sha256).toHex());
+}
+
+bool image_payload(const ReportImage& image, QByteArray& bytes, QSize& pixels, std::string& error)
+{
+  const auto maximum = static_cast<std::size_t>(ReportUserOptions::export_image_max_bytes());
+  if (image.base64_data.size() > ((maximum + 2) / 3) * 4)
   {
-    const quint32 offset = static_cast<quint32>(output.pos());
-    const quint32 size = static_cast<quint32>(entry.second.size());
-    const quint32 crc = crc32(entry.second);
-    const quint16 nameSize = static_cast<quint16>(entry.first.size());
-    stream << quint32(0x04034b50) << quint16(20) << quint16(0) << quint16(0) << quint16(0) << quint16(0)
-      << crc << size << size << nameSize << quint16(0);
-    stream.writeRawData(entry.first.constData(), entry.first.size());
-    stream.writeRawData(entry.second.constData(), entry.second.size());
-    directory << quint32(0x02014b50) << quint16(20) << quint16(20) << quint16(0) << quint16(0)
-      << quint16(0) << quint16(0) << crc << size << size << nameSize << quint16(0) << quint16(0)
-      << quint16(0) << quint16(0) << quint32(0) << offset;
-    directory.writeRawData(entry.first.constData(), entry.first.size());
+    error = "ODT encoded image exceeds the image limit: " + image.id;
+    return false;
   }
-  const quint32 start = static_cast<quint32>(output.pos());
-  stream.writeRawData(central.constData(), central.size());
-  stream << quint32(0x06054b50) << quint16(0) << quint16(0) << quint16(entries.size()) << quint16(entries.size())
-    << quint32(central.size()) << start << quint16(0);
-  return stream.status() == QDataStream::Ok && directory.status() == QDataStream::Ok;
+  bytes = QByteArray::fromBase64(QByteArray::fromStdString(image.base64_data), QByteArray::AbortOnBase64DecodingErrors);
+  if (bytes.isEmpty() || bytes.size() > ReportUserOptions::export_image_max_bytes())
+  {
+    error = "ODT image payload is invalid or exceeds the image limit: " + image.id;
+    return false;
+  }
+  QBuffer buffer(&bytes);
+  if (!buffer.open(QIODevice::ReadOnly))
+  {
+    error = "Cannot inspect ODT image: " + image.id;
+    return false;
+  }
+  QImageReader reader(&buffer);
+  pixels = reader.size();
+  const auto format = reader.format();
+  if ((image.media_type == "image/png" && format != "png") ||
+      (image.media_type == "image/jpeg" && format != "jpeg" && format != "jpg") ||
+      pixels.width() <= 0 || pixels.height() <= 0 ||
+      pixels.width() > ReportUserOptions::export_image_max_side() ||
+      pixels.height() > ReportUserOptions::export_image_max_side() ||
+      static_cast<qint64>(pixels.width()) * pixels.height() > ReportUserOptions::export_image_max_pixels() ||
+      reader.read().isNull())
+  {
+    error = "ODT image is invalid or oversized: " + image.id;
+    return false;
+  }
+  return true;
 }
 }
 
 ReportOdtExporter::ReportOdtExporter() = default;
 
-bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::string& filename, std::string& error) const
+bool ReportOdtExporter::encode(const ReportDocument& report, QIODevice& output,
+  std::string& error, ReportProgress* progress) const
 {
-  const auto& report = layout.report();
-  if (!report.validate(error))
+  if (!output.isWritable() || output.pos() != 0 || !ReportUnitValidation::document(report, error) ||
+      !ReportPageDecoration::validate_templates(report.configuration, error))
   {
+    if (error.empty())
+    {
+      error = "ODT export requires a valid report and writable output.";
+    }
     return false;
   }
-  std::vector<std::pair<QByteArray, QByteArray>> files;
-  files.push_back({"mimetype", "application/vnd.oasis.opendocument.text"});
+  std::size_t totalWork = 0, completedWork = 0, lastCheckpoint = 0;
+  const auto add = [&](std::size_t amount)
+  {
+    if (amount > (std::numeric_limits<std::size_t>::max)() - totalWork)
+    {
+      error = "ODT content exceeds the supported work count.";
+      return false;
+    }
+    totalWork += amount;
+    return true;
+  };
+  std::function<bool(const ReportSection&)> count = [&](const ReportSection& item)
+  {
+    if (!ReportProgress::advance(progress, ReportProgressStage::ExportOdt,
+          "Planning ODT content", 0, 0, error) || !add(1) ||
+        !add(item.paragraphs.size()) || !add(item.images.size()))
+    {
+      return false;
+    }
+    for (const auto& table : item.tables)
+    {
+      const auto columns = table.columns.size();
+      if (table.rows.size() == (std::numeric_limits<std::size_t>::max)() ||
+          columns > (std::numeric_limits<std::size_t>::max)() / (table.rows.size() + 1) ||
+          !add((table.rows.size() + 1) * columns))
+      {
+        error = "ODT table exceeds the supported work count.";
+        return false;
+      }
+    }
+    for (const auto& child : item.children)
+    {
+      if (!count(child))
+      {
+        return false;
+      }
+    }
+    return true;
+  };
+  for (const auto& item : report.sections)
+  {
+    if (!count(item))
+    {
+      return false;
+    }
+  }
+  QTemporaryFile content;
+  QTemporaryFile styles;
+  QTemporaryFile manifest;
+  if (!content.open() || !styles.open() || !manifest.open())
+  {
+    error = "Cannot stage ODT XML files.";
+    return false;
+  }
+  std::vector<std::pair<QByteArray, const std::string*>> assets;
+  quint64 assetBytes = 0;
   if (report.configuration.company_logo)
   {
-    files.push_back({"Pictures/company-logo.png", QByteArray::fromBase64(QByteArray::fromStdString(report.configuration.company_logo->base64_data))});
+    const auto& logo = *report.configuration.company_logo;
+    if (!ReportLogo::validate(logo, error))
+    {
+      return false;
+    }
+    const auto bytes = QByteArray::fromBase64(QByteArray::fromStdString(logo.base64_data), QByteArray::AbortOnBase64DecodingErrors);
+    assets.push_back({"Pictures/company-logo.png", &logo.base64_data});
+    assetBytes += static_cast<quint64>(bytes.size());
   }
-  QByteArray content;
   QXmlStreamWriter xml(&content);
+  const auto tick = [&](std::size_t amount, const std::string& stage, bool force)
+  {
+    if (amount > totalWork - completedWork)
+    {
+      error = "ODT content work count changed unexpectedly.";
+      return false;
+    }
+    completedWork += amount;
+    if (xml.hasError() || static_cast<quint64>(content.size()) >= 0xffffffffull)
+    {
+      error = "ODT content write failed or exceeds classic ZIP limits.";
+      return false;
+    }
+    if (force || completedWork == totalWork ||
+        completedWork - lastCheckpoint >= static_cast<std::size_t>(ReportUserOptions::export_checkpoint_cells()))
+    {
+      lastCheckpoint = completedWork;
+      return ReportProgress::advance(progress, ReportProgressStage::ExportOdt,
+        stage, completedWork, totalWork, error);
+    }
+    return true;
+  };
   xml.writeStartDocument();
   xml.writeStartElement("office:document-content");
   namespaces(xml);
-  xml.writeStartElement("office:automatic-styles");
-  for (int level = 1; level <= 2; ++level)
-  {
-    xml.writeStartElement("style:style");
-    xml.writeAttribute("style:name", "Heading" + QString::number(level));
-    xml.writeAttribute("style:family", "paragraph");
-    xml.writeAttribute("style:master-page-name", "Standard");
-    xml.writeStartElement("style:paragraph-properties");
-    xml.writeAttribute("fo:keep-with-next", "always");
-    xml.writeAttribute("fo:margin-top", "0.4cm");
-    if (level == 1)
-    {
-      xml.writeAttribute("fo:break-before", "page");
-    }
-    xml.writeEndElement();
-    xml.writeStartElement("style:text-properties");
-    xml.writeAttribute("fo:font-size", [&]() -> const char* {
-      if (level == 1) {
-        return "20pt";
-      } else {
-        return "13pt";
-      }
-    }());
-    xml.writeAttribute("fo:font-weight", "bold");
-    xml.writeAttribute("fo:color", "#18334c");
-    xml.writeEndElement();
-    xml.writeEndElement();
-  }
-  xml.writeEndElement();
+  ReportOdtStyles::write_content(xml);
   xml.writeStartElement("office:body");
   xml.writeStartElement("office:text");
-  auto heading = [&](const QString& value, int level)
+  auto heading = [&](const QString& value, int level, const QString& anchor = QString())
   {
     xml.writeStartElement("text:h");
     xml.writeAttribute("text:outline-level", QString::number(level));
     xml.writeAttribute("text:style-name", "Heading" + QString::number(level));
+    if (!anchor.isEmpty())
+    {
+      xml.writeEmptyElement("text:bookmark");
+      xml.writeAttribute("text:name", anchor);
+    }
     xml.writeCharacters(value);
     xml.writeEndElement();
   };
   const auto value = [&](const std::string& key)
   {
-    const auto found = report.configuration.values.find(key);
-    if (found == report.configuration.values.end()) {
-      return std::string();
-    } else {
-      return found->second;
-    }
+    return ReportPageDecoration::value(report, key).toStdString();
   };
   if (value("cover") == "true")
   {
@@ -161,10 +239,14 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
     paragraph(xml, "Author: " + QString::fromStdString(value("author")));
     paragraph(xml, "Revision: " + QString::fromStdString(value("revision")));
     paragraph(xml, "Generated: " + QString::fromStdString(report.generated_at));
-    paragraph(xml, "Source: " + QString::fromStdString(report.source.workspace_id) + ([&]() -> QString {
-      if (report.source.kind == "model") {
+    paragraph(xml, "Source: " + QString::fromStdString(report.source.workspace_id) + ([&]() -> QString
+    {
+      if (report.source.kind == "model")
+      {
         return " / current model";
-      } else {
+      }
+      else
+      {
         return " / job " + QString::number(report.source.job_id);
       }
     }()));
@@ -172,18 +254,51 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
   }
   if (value("contents") == "true")
   {
-    heading("Contents", 1);
+    paragraph(xml, "Contents", "ContentsTitle");
     // A native index is regenerated by the editor; cached entries deliberately
     // omit PDF page numbers because ODT pagination is editor-dependent.
     xml.writeStartElement("text:table-of-content");
     xml.writeAttribute("text:name", "Contents");
     xml.writeStartElement("text:table-of-content-source");
-    xml.writeAttribute("text:outline-level", "2");
+    xml.writeAttribute("text:outline-level", "10");
     xml.writeEndElement();
     xml.writeStartElement("text:index-body");
-    for (const auto& section : report.sections)
+    std::function<bool(const ReportSection&, int)> entry = [&](const ReportSection& item, int level)
     {
-      paragraph(xml, QString::fromStdString(section.title));
+      if (!tick(0, "Writing ODT contents", true))
+      {
+        return false;
+      }
+      xml.writeStartElement("text:p");
+      xml.writeAttribute("text:style-name", "Contents" + QString::number(std::clamp(level, 1, 10)));
+      xml.writeStartElement("text:a");
+      xml.writeAttribute("xlink:href", "#" + bookmark(item.id));
+      xml.writeAttribute("xlink:type", "simple");
+      xml.writeCharacters(QString::fromStdString(item.title));
+      xml.writeEndElement();
+      xml.writeEndElement();
+      for (const auto& child : item.children)
+      {
+        if (!entry(child, level + 1))
+        {
+          return false;
+        }
+      }
+      return true;
+    };
+    for (const auto& item : report.sections)
+    {
+      if (!entry(item, 1))
+      {
+        return false;
+      }
+    }
+    ReportSection diagnosticsEntry;
+    diagnosticsEntry.id = "report.diagnostics";
+    diagnosticsEntry.title = "Sources and diagnostics";
+    if (!entry(diagnosticsEntry, 1))
+    {
+      return false;
     }
     xml.writeEndElement();
     xml.writeEndElement();
@@ -191,34 +306,50 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
   int imageNumber = 0, tableNumber = 0;
   std::set<std::string> renderedNotes;
   const int precision = QString::fromStdString(value("precision")).toInt();
-  std::function<void(const ReportSection&, int)> section = [&](const ReportSection& item, int level)
+  std::function<bool(const ReportSection&, int)> section = [&](const ReportSection& item, int level)
   {
-    heading(QString::fromStdString(item.title), [&]() -> int {
-      if (level == 0) {
-        return 1;
-      } else {
-        return 2;
-      }
-    }());
+    if (!tick(1, "Writing ODT sections", true))
+    {
+      return false;
+    }
+    heading(QString::fromStdString(item.title), std::clamp(level + 1, 1, 10), bookmark(item.id));
     for (const auto& line : item.paragraphs)
     {
       paragraph(xml, QString::fromStdString(line));
+      if (!tick(1, "Writing ODT paragraphs", false))
+      {
+        return false;
+      }
     }
     for (const auto& table : item.tables)
     {
-      heading(QString::fromStdString(table.title), 2);
+      paragraph(xml, QString::fromStdString(table.title), "TableTitle");
       xml.writeStartElement("table:table");
       xml.writeAttribute("table:name", "Table" + QString::number(++tableNumber));
-      auto row = [&](const std::vector<QJsonValue>& cells)
+      xml.writeAttribute("table:style-name", "ReportTable");
+      xml.writeEmptyElement("table:table-column");
+      xml.writeAttribute("table:number-columns-repeated", QString::number(table.columns.size()));
+      xml.writeAttribute("table:style-name", "ReportColumn");
+      auto row = [&](const std::vector<QJsonValue>& cells, bool header)
       {
         xml.writeStartElement("table:table-row");
         for (const auto& cell : cells)
         {
           xml.writeStartElement("table:table-cell");
-          xml.writeAttribute("office:value-type", [&]() -> const char* {
-            if (cell.isDouble()) {
+          QString cellStyle = "ReportCell";
+          if (header)
+          {
+            cellStyle = "ReportHeaderCell";
+          }
+          xml.writeAttribute("table:style-name", cellStyle);
+          xml.writeAttribute("office:value-type", [&]() -> const char*
+          {
+            if (cell.isDouble())
+            {
               return "float";
-            } else {
+            }
+            else
+            {
               return "string";
             }
           }());
@@ -226,16 +357,27 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
           {
             xml.writeAttribute("office:value", QString::number(cell.toDouble(), 'g', 17));
           }
-          paragraph(xml, [&]() -> std::common_type_t<decltype(QString::number(cell.toDouble(), 'g', precision)), decltype(cell.toString())> {
-            if (cell.isDouble()) {
-              return QString::number(cell.toDouble(), 'g', precision);
-            } else {
-              return cell.toString();
-            }
-          }());
+          QString display = cell.toString();
+          QString paragraphStyle;
+          if (cell.isDouble())
+          {
+            display = QString::number(cell.toDouble(), 'g', precision);
+            paragraphStyle = "Number";
+          }
+          paragraph(xml, display, paragraphStyle);
           xml.writeEndElement();
+          if (!tick(1, "Writing ODT tables", false))
+          {
+            return false;
+          }
         }
         xml.writeEndElement();
+        if (xml.hasError())
+        {
+          error = "Cannot write ODT content XML.";
+          return false;
+        }
+        return true;
       };
       std::vector<QJsonValue> labels;
       for (std::size_t i = 0; i < table.columns.size(); ++i)
@@ -248,46 +390,64 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
         labels.push_back(label);
       }
       xml.writeStartElement("table:table-header-rows");
-      row(labels);
+      if (!row(labels, true))
+      {
+        return false;
+      }
       xml.writeEndElement();
       for (const auto& cells : table.rows)
       {
-        row(cells);
+        if (!row(cells, false))
+        {
+          return false;
+        }
       }
       xml.writeEndElement();
     }
     for (const auto& image : item.images)
     {
-      const QByteArray path = "Pictures/image" + QByteArray::number(++imageNumber) + ([&]() -> const char* {
-        if (image.media_type == "image/png") {
+      const QByteArray path = "Pictures/image" + QByteArray::number(++imageNumber) + ([&]() -> const char*
+      {
+        if (image.media_type == "image/png")
+        {
           return ".png";
-        } else {
+        }
+        else
+        {
           return ".jpg";
         }
       }());
-      const auto bytes = QByteArray::fromBase64(QByteArray::fromStdString(image.base64_data));
-      const auto pixels = QImage::fromData(bytes);
-      files.push_back({path, bytes});
+      if (!tick(0, "Preparing ODT image " + std::to_string(imageNumber), true))
+      {
+        return false;
+      }
+      QByteArray bytes;
+      QSize pixels;
+      if (!image_payload(image, bytes, pixels, error))
+      {
+        return false;
+      }
+      assets.push_back({path, &image.base64_data});
+      assetBytes += static_cast<quint64>(bytes.size());
       xml.writeStartElement("text:p");
+      xml.writeAttribute("text:style-name", "Figure");
       xml.writeStartElement("draw:frame");
       xml.writeAttribute("draw:name", "Image" + QString::number(imageNumber));
       xml.writeAttribute("text:anchor-type", "as-char");
-      xml.writeAttribute("svg:width", "16cm");
-      const double height = [&]() -> double {
-        if (pixels.width() > 0) {
-          return std::min(20.0, 16.0 * pixels.height() / pixels.width());
-        } else {
-          return 9.0;
-        }
-      }();
-      xml.writeAttribute("svg:height", QString::number(height) + "cm");
+      const auto size = ReportOdtStyles::figure_size(report, pixels);
+      xml.writeAttribute("svg:width", QString::number(size.width(), 'g', 12) + "pt");
+      xml.writeAttribute("svg:height", QString::number(size.height(), 'g', 12) + "pt");
       xml.writeStartElement("draw:image");
       xml.writeAttribute("xlink:href", QString::fromUtf8(path));
       xml.writeAttribute("xlink:type", "simple");
       xml.writeEndElement();
       xml.writeEndElement();
       xml.writeEndElement();
-      paragraph(xml, ReportFigureCaption::text(image, report.configuration));
+      paragraph(xml, ReportFigureCaption::text(image, report.configuration), "FigureCaption");
+      if (!tick(1, "Writing ODT images", true))
+      {
+        return false;
+      }
     }
     const auto note = report.notes.find(item.id);
     if (note != report.notes.end())
@@ -298,12 +458,24 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
     }
     for (const auto& child : item.children)
     {
-      section(child, level + 1);
+      if (!section(child, level + 1))
+      {
+        return false;
+      }
     }
+    if (xml.hasError())
+    {
+      error = "Cannot write ODT content XML.";
+      return false;
+    }
+    return true;
   };
   for (const auto& item : report.sections)
   {
-    section(item, 0);
+    if (!section(item, 0))
+    {
+      return false;
+    }
   }
   for (const auto& note : report.notes)
   {
@@ -313,7 +485,7 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
       paragraph(xml, QString::fromStdString(note.second));
     }
   }
-  heading("Sources and diagnostics", 1);
+  heading("Sources and diagnostics", 1, bookmark("report.diagnostics"));
   paragraph(xml, QString::fromStdString(report.source.provenance));
   if (!report.source.snapshot_fingerprint.empty())
   {
@@ -332,168 +504,22 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
   xml.writeEndElement();
   xml.writeEndElement();
   xml.writeEndDocument();
-  files.push_back({"content.xml", content});
-
-  QByteArray styles;
-  QXmlStreamWriter sx(&styles);
-  sx.writeStartDocument();
-  sx.writeStartElement("office:document-styles");
-  namespaces(sx);
-  sx.writeStartElement("office:styles");
-  sx.writeStartElement("style:default-style");
-  sx.writeAttribute("style:family", "paragraph");
-  sx.writeStartElement("style:text-properties");
-  sx.writeAttribute("fo:font-size", "9pt");
-  sx.writeAttribute("fo:font-family", "Arial");
-  sx.writeEndElement();
-  sx.writeEndElement();
-  sx.writeStartElement("style:style");
-  sx.writeAttribute("style:name", "CoverText");
-  sx.writeAttribute("style:family", "paragraph");
-  sx.writeAttribute("style:master-page-name", [&]() -> const char* {
-    if (ReportPageDecoration::value(report, "decoration_cover") == "false") {
-      return "Cover";
-    } else {
-      return "Standard";
-    }
-  }());
-  sx.writeEndElement();
-  for (const QString position : {QString("left"), QString("center"), QString("right")})
+  if (xml.hasError() || !content.flush() ||
+      !tick(0, "Writing ODT styles", true) ||
+      !ReportOdtStyles::write_document(styles, report, error) || !styles.flush())
   {
-    sx.writeStartElement("style:style");
-    sx.writeAttribute("style:name", "Decoration_" + position);
-    sx.writeAttribute("style:family", "paragraph");
-    sx.writeStartElement("style:paragraph-properties");
-    sx.writeAttribute("fo:text-align", position);
-    sx.writeAttribute("fo:margin", "0pt");
-    sx.writeEndElement();
-    sx.writeStartElement("style:text-properties");
-    sx.writeAttribute("fo:font-size", "8pt");
-    sx.writeAttribute("fo:color", "#18334c");
-    sx.writeEndElement();
-    sx.writeEndElement();
-  }
-  sx.writeStartElement("style:style");
-  sx.writeAttribute("style:name", "DecorationTable");
-  sx.writeAttribute("style:family", "table");
-  sx.writeStartElement("style:table-properties");
-  sx.writeAttribute("table:align", "margins");
-  sx.writeEndElement();
-  sx.writeEndElement();
-  sx.writeStartElement("style:style");
-  sx.writeAttribute("style:name", "DecorationColumn");
-  sx.writeAttribute("style:family", "table-column");
-  sx.writeStartElement("style:table-column-properties");
-  sx.writeAttribute("style:rel-column-width", "1*");
-  sx.writeEndElement();
-  sx.writeEndElement();
-  sx.writeStartElement("style:style");
-  sx.writeAttribute("style:name", "DecorationCell");
-  sx.writeAttribute("style:family", "table-cell");
-  sx.writeStartElement("style:table-cell-properties");
-  sx.writeAttribute("fo:padding", "4pt");
-  sx.writeAttribute("fo:border", "none");
-  sx.writeAttribute("style:vertical-align", "top");
-  sx.writeEndElement();
-  sx.writeEndElement();
-  sx.writeEndElement();
-  sx.writeStartElement("office:automatic-styles");
-  sx.writeStartElement("style:page-layout");
-  sx.writeAttribute("style:name", "ReportPage");
-  sx.writeStartElement("style:page-layout-properties");
-  sx.writeAttribute("fo:page-width", [&]() -> const char* {
-    if (value("page_size") == "Letter") {
-      return "21.59cm";
-    } else {
-      return "21cm";
-    }
-  }());
-  sx.writeAttribute("fo:page-height", [&]() -> const char* {
-    if (value("page_size") == "Letter") {
-      return "27.94cm";
-    } else {
-      return "29.7cm";
-    }
-  }());
-  sx.writeAttribute("fo:margin-left", "44pt");
-  sx.writeAttribute("fo:margin-right", "44pt");
-  sx.writeAttribute("fo:margin-top", "20pt");
-  sx.writeAttribute("fo:margin-bottom", "20pt");
-  sx.writeEndElement();
-  for (const std::string band : {"header", "footer"})
-  {
-    sx.writeStartElement(QString::fromStdString("style:" + band + "-style"));
-    sx.writeStartElement("style:header-footer-properties");
-    sx.writeAttribute("fo:min-height", "60pt");
-    sx.writeAttribute([&]() -> const char* {
-      if (band == "header") {
-        return "fo:margin-bottom";
-      } else {
-        return "fo:margin-top";
-      }
-    }(), "16pt");
-    if (ReportPageDecoration::value(report, band + "_line") == "true")
+    if (error.empty())
     {
-      sx.writeAttribute([&]() -> const char* {
-        if (band == "header") {
-          return "fo:border-bottom";
-        } else {
-          return "fo:border-top";
-        }
-      }(), "0.5pt solid #18334c");
+      error = "Cannot finalize ODT content or styles.";
     }
-    sx.writeEndElement();
-    sx.writeEndElement();
+    return false;
   }
-  sx.writeEndElement();
-  sx.writeStartElement("style:page-layout");
-  sx.writeAttribute("style:name", "CoverPage");
-  sx.writeStartElement("style:page-layout-properties");
-  sx.writeAttribute("fo:page-width", [&]() -> const char* {
-    if (value("page_size") == "Letter") {
-      return "21.59cm";
-    } else {
-      return "21cm";
-    }
-  }());
-  sx.writeAttribute("fo:page-height", [&]() -> const char* {
-    if (value("page_size") == "Letter") {
-      return "27.94cm";
-    } else {
-      return "29.7cm";
-    }
-  }());
-  sx.writeAttribute("fo:margin-left", "44pt");
-  sx.writeAttribute("fo:margin-right", "44pt");
-  sx.writeAttribute("fo:margin-top", "96pt");
-  sx.writeAttribute("fo:margin-bottom", "96pt");
-  sx.writeEndElement();
-  sx.writeEndElement();
-  sx.writeEndElement();
-  sx.writeStartElement("office:master-styles");
-  sx.writeStartElement("style:master-page");
-  sx.writeAttribute("style:name", "Standard");
-  sx.writeAttribute("style:page-layout-name", "ReportPage");
-  ReportPageDecoration::write_odt(sx, report, true);
-  ReportPageDecoration::write_odt(sx, report, false);
-  sx.writeEndElement();
-  sx.writeStartElement("style:master-page");
-  sx.writeAttribute("style:name", "Cover");
-  sx.writeAttribute("style:page-layout-name", "CoverPage");
-  sx.writeAttribute("style:next-style-name", "Standard");
-  sx.writeEndElement();
-  sx.writeEndElement();
-  sx.writeEndElement();
-  sx.writeEndDocument();
-  files.push_back({"styles.xml", styles});
-
-  QByteArray manifest;
   QXmlStreamWriter mx(&manifest);
   mx.writeStartDocument();
   mx.writeStartElement("manifest:manifest");
   mx.writeNamespace("urn:oasis:names:tc:opendocument:xmlns:manifest:1.0", "manifest");
   mx.writeAttribute("manifest:version", "1.2");
-  auto entry = [&](const QString& path, const QString& type)
+  const auto entry = [&](const QString& path, const QString& type)
   {
     mx.writeStartElement("manifest:file-entry");
     mx.writeAttribute("manifest:full-path", path);
@@ -501,34 +527,106 @@ bool ReportOdtExporter::write(const ReportDocumentLayout& layout, const std::str
     mx.writeEndElement();
   };
   entry("/", "application/vnd.oasis.opendocument.text");
-  for (const auto& file : files)
+  for (const QString name : {QString("content.xml"), QString("styles.xml")})
   {
-    if (file.first != "mimetype")
+    entry(name, "text/xml");
+  }
+  for (const auto& asset : assets)
+  {
+    if (!tick(0, "Writing ODT manifest", true))
     {
-      entry(QString::fromUtf8(file.first), [&]() -> std::common_type_t<decltype("image/png"), const char*> {
-        if (file.first.endsWith(".png")) {
-          return "image/png";
-        } else {
-          return [&]() -> const char* {
-            if (file.first.endsWith(".jpg")) {
-              return "image/jpeg";
-            } else {
-              return "text/xml";
-            }
-          }();
-        }
-      }());
+      return false;
     }
+    QString type = "image/png";
+    if (asset.first.endsWith(".jpg"))
+    {
+      type = "image/jpeg";
+    }
+    entry(QString::fromUtf8(asset.first), type);
   }
   mx.writeEndElement();
   mx.writeEndDocument();
-  files.push_back({"META-INF/manifest.xml", manifest});
+  if (mx.hasError() || !manifest.flush() || completedWork != totalWork)
+  {
+    error = "Cannot finalize the ODT manifest or content work count.";
+    return false;
+  }
+  const QByteArray mime = "application/vnd.oasis.opendocument.text";
+  const std::vector<QByteArray> names = {"mimetype", "content.xml", "styles.xml", "META-INF/manifest.xml"};
+  quint64 directoryBytes = 0;
+  for (const auto& name : names)
+  {
+    directoryBytes += 46 + static_cast<quint64>(name.size());
+  }
+  for (const auto& asset : assets)
+  {
+    directoryBytes += 46 + static_cast<quint64>(asset.first.size());
+  }
+  const auto payloadBytes = assetBytes + static_cast<quint64>(mime.size()) +
+    static_cast<quint64>(content.size()) + static_cast<quint64>(styles.size()) + static_cast<quint64>(manifest.size());
+  ReportOdtPackage package(output);
+  if (!package.begin(payloadBytes, directoryBytes, error))
+  {
+    return false;
+  }
+  QBuffer mimeInput;
+  mimeInput.setData(mime);
+  if (!mimeInput.open(QIODevice::ReadOnly) || !package.add_file("mimetype", mimeInput, progress, error) ||
+      !package.add_file("content.xml", content, progress, error) ||
+      !package.add_file("styles.xml", styles, progress, error))
+  {
+    return false;
+  }
+  for (const auto& asset : assets)
+  {
+    if (!ReportProgress::advance(progress, ReportProgressStage::ExportPackage,
+          "Preparing ODT image payload", 0, 0, error))
+    {
+      return false;
+    }
+    const auto bytes = QByteArray::fromBase64(QByteArray::fromStdString(*asset.second), QByteArray::AbortOnBase64DecodingErrors);
+    QBuffer input;
+    input.setData(bytes);
+    if (bytes.isEmpty() || !input.open(QIODevice::ReadOnly) || !package.add_file(asset.first, input, progress, error))
+    {
+      if (error.empty())
+      {
+        error = "Cannot package ODT image: " + asset.first.toStdString();
+      }
+      return false;
+    }
+  }
+  if (!package.add_file("META-INF/manifest.xml", manifest, progress, error) || !package.finish(progress, error))
+  {
+    return false;
+  }
+  error.clear();
+  return true;
+}
+
+bool ReportOdtExporter::write(const ReportDocument& report, const std::string& filename,
+  std::string& error, ReportProgress* progress) const
+{
   QSaveFile output(QString::fromStdString(filename));
   output.setDirectWriteFallback(false);
-  if (xml.hasError() || sx.hasError() || mx.hasError() || !output.open(QIODevice::WriteOnly) || !package(output, files) || !output.commit())
+  if (!output.open(QIODevice::WriteOnly))
   {
-    error = "Cannot create or commit the ODT document.";
+    error = "Cannot open ODT output: " + output.errorString().toStdString();
     return false;
+  }
+  if (!encode(report, output, error, progress) ||
+      !ReportProgress::advance(progress, ReportProgressStage::ExportCommit, "Publishing ODT", 0, 1, error))
+  {
+    return false;
+  }
+  if (!output.commit())
+  {
+    error = "Cannot commit ODT output: " + output.errorString().toStdString();
+    return false;
+  }
+  if (progress)
+  {
+    progress->finish();
   }
   error.clear();
   return true;

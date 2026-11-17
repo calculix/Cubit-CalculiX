@@ -1,7 +1,8 @@
 #include <type_traits>
 #include "PostprocessorDeformationControls.hpp"
 #include "Postprocessor/Commands/FieldCommandText.hpp"
-#include <QCheckBox>
+#include <QToolButton>
+#include "Postprocessor/GUI/Resources/PostprocessorIconLoader.hpp"
 #include <QComboBox>
 #include <QDoubleValidator>
 #include <QHBoxLayout>
@@ -64,8 +65,19 @@ PostprocessorDeformationControls::PostprocessorDeformationControls(
   layout->setSpacing(4);
   layout->setAlignment(Qt::AlignLeft);
   layout->setSizeConstraint(QLayout::SetFixedSize);
-  enabled = new QCheckBox(tr("Deform"),this);
+  const auto activeApplication = application.lock();
+  enabled = new QToolButton(this);
   enabled->setObjectName("Postprocessor.Deformation.Enabled");
+  enabled->setText(tr("Deform"));
+  enabled->setAccessibleName(tr("Deform"));
+  enabled->setCheckable(true);
+  enabled->setAutoRaise(true);
+  enabled->setToolButtonStyle(Qt::ToolButtonIconOnly);
+  enabled->setIconSize(QSize(20,20));
+  if (activeApplication)
+  {
+    enabled->setIcon(PostprocessorIconLoader::load(activeApplication->active_icons_path(),"PostprocessorDeform"));
+  }
   enabled->setToolTip(tr("Immediately enable or disable deformation of the selected source in the active view."));
   layout->addWidget(enabled);
   fields = new QComboBox(this);
@@ -90,10 +102,20 @@ PostprocessorDeformationControls::PostprocessorDeformationControls(
   validator->setLocale(locale);
   scale->setValidator(validator);
   layout->addWidget(scale);
-  overlay = new QCheckBox(tr("Undeformed"),this);
+  overlay = new QToolButton(this);
   overlay->setObjectName("Postprocessor.Deformation.Overlay");
+  overlay->setText(tr("Undeformed"));
+  overlay->setAccessibleName(tr("Undeformed"));
+  overlay->setCheckable(true);
+  overlay->setAutoRaise(true);
+  overlay->setToolButtonStyle(Qt::ToolButtonIconOnly);
+  overlay->setIconSize(QSize(20,20));
+  if (activeApplication)
+  {
+    overlay->setIcon(PostprocessorIconLoader::load(activeApplication->active_icons_path(),"PostprocessorUndeformed"));
+  }
   overlay->setToolTip(tr("Show the original mesh as neutral wireframe while deformation is enabled."));
-  layout->addWidget(overlay);
+  layout->insertWidget(1,overlay);
   scaleTimer = new QTimer(this);
   scaleTimer->setObjectName("Postprocessor.Deformation.ScalePreviewTimer");
   scaleTimer->setSingleShot(true);
@@ -102,11 +124,11 @@ PostprocessorDeformationControls::PostprocessorDeformationControls(
   errorLabel = new QLabel(this);
   errorLabel->setObjectName("Postprocessor.Deformation.Error");
   layout->addWidget(errorLabel);
-  connect(enabled,&QCheckBox::toggled,this,[this](bool value)
+  connect(enabled,&QToolButton::toggled,this,[this](bool value)
   {
     change_flag(true,value);
   });
-  connect(overlay,&QCheckBox::toggled,this,[this](bool value)
+  connect(overlay,&QToolButton::toggled,this,[this](bool value)
   {
     change_flag(false,value);
   });
