@@ -121,8 +121,11 @@ path seamlessly, encode two passes (180 degrees + 180 degrees). A file player
 always restarts a finite file at its first image; encoded passes themselves do
 not reset the camera phase. Standard MP4 has no automatic loop attribute.
 
-MP4 requires an open-source FFmpeg build with libx264, either found on PATH or
-selected by CUBITSIM_FFMPEG. Capability checking runs before frame rendering.
+MP4 requires a separately supplied open-source FFmpeg build with libx264. Set
+``CUBITSIM_FFMPEG`` to the executable, add it to ``PATH``, or place it manually
+in ``tools/ffmpeg`` beside the loaded media library. The exporter checks the
+override first, the manual drop-in second, and ``PATH`` last. Capability checking
+runs before frame rendering.
 The exporter rejects --enable-nonfree builds and never selects proprietary OS or
 hardware encoders. No executable is downloaded automatically. GIF uses the
 bundled public-domain gif-h encoder; PNG uses Qt's PNG implementation.
@@ -149,4 +152,5 @@ For export-only axis settings, provide all axes together::
 
    post capture animation view "view1" format gif file "turn.gif" rotatex off anglex 180 rotatey off angley 180 rotatez on anglez 360
 
-No build, encoder process or native capture verification was run for this change.
+The bundled Windows encoder was checked for libx264. No build or native Cubit
+capture verification was run; Linux execution still requires a Linux machine.

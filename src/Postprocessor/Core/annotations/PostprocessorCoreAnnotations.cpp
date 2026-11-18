@@ -397,7 +397,7 @@ namespace Postprocessor
           {
             display.coloring.field = label.field;
             auto result = annotation_probe(*data,display,label.entity,captured_units());
-            if (display.input.owner == OutputOwner::Feature)
+            if (display.input.owner == OutputOwner::Feature || explosion_active(display))
             {
               result.displayed_position = filtered_entity_position(display,label.entity);
               if (!result.displayed_position)
@@ -466,7 +466,7 @@ namespace Postprocessor
       return output;
     }
     const auto& display = active->second;
-    if (display.input.owner == OutputOwner::Feature)
+    if (display.input.owner == OutputOwner::Feature || explosion_active(display))
     {
       if (!display.visible)
       {

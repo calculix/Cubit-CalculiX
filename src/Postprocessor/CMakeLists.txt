@@ -1,5 +1,10 @@
 find_package(Threads REQUIRED)
 add_library(postprocessor_core STATIC
+  Core/explosion/ExplosionLayout.cpp
+  Core/explosion/ExplosionPulse.cpp
+  Core/explosion/ExplosionRuntime.cpp
+  Core/explosion/ExplosionCodec.cpp
+  Core/explosion/PostprocessorCoreExplosion.cpp
   Core/representations/VectorPlotDefinition.cpp
   Core/representations/ResultVectors.cpp
   Core/representations/VectorPlotRuntime.cpp
@@ -92,8 +97,17 @@ target_compile_features(postprocessor_core PUBLIC cxx_std_17)
 set_target_properties(postprocessor_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(postprocessor_module SHARED
+  Interfaces/PostprocessorExplosionInterface.cpp
+  Commands/explosion/PostExplodeCommand.cpp
+  GUI/Explosion/PostprocessorExplosionControls.cpp
+  GUI/Explosion/PostprocessorExplosionPlayback.cpp
+  Icons/PostprocessorVectors.svg
+  Icons/PostprocessorExplode.svg
+  Icons/PostprocessorExplodeMesh.svg
   Interfaces/PostprocessorVectorPlotInterface.cpp
   Commands/results/PostVectorCommand.cpp
+  Commands/results/PostVectorLegendCommand.cpp
+  GUI/VectorPlot/PostprocessorVectorLegendProperties.cpp
   Commands/results/VectorCommandText.cpp
   GUI/VectorPlot/PostprocessorVectorControls.cpp
   GUI/VectorPlot/PostprocessorVectorActors.cpp
@@ -109,7 +123,10 @@ add_library(postprocessor_module SHARED
   Interfaces/PostprocessorReportBlockSummary.hpp
   Interfaces/PostprocessorReportBlockSummary.cpp
   Interfaces/PostprocessorReportResultImages.hpp
+  Interfaces/PostprocessorReportMeshQualityImages.cpp Interfaces/PostprocessorReportMeshQualityImages.hpp
   Interfaces/PostprocessorReportResultImages.cpp
+  Interfaces/PostprocessorReportCapturePlan.hpp
+  Interfaces/PostprocessorReportCapturePlan.cpp
   Commands/units/PostUnitsCommand.cpp
   Commands/units/PostUnitsCommand.hpp
   Interfaces/PostprocessorReportResultProvider.cpp
@@ -351,6 +368,15 @@ add_custom_target(postprocessor_icons ALL
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorThreshold.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorThreshold.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorVectors.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorVectors.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorExplode.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorExplode.svg"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorExplodeMesh.svg"
+    "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorExplodeMesh.svg"
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different
     "${CMAKE_CURRENT_SOURCE_DIR}/Icons/PostprocessorClip.svg"
     "${CUBITSIM_DEPLOY_DIRECTORY}/Icons/PostprocessorClip.svg"

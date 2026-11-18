@@ -8,6 +8,7 @@ class ReportDiagnostic
 {
 public:
   ReportDiagnostic();
+  ReportDiagnostic(std::string section, std::string level, std::string text);
   std::string section_id;
   std::string message;
   std::string severity;

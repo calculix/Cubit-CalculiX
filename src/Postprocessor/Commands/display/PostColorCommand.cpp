@@ -19,6 +19,10 @@ std::vector<std::string> PostColorCommand::get_syntax()
     field + "magnitude" + dataset + source,
     field + "<string:type='quoted',number='1',label='component_name'>" + dataset + source,
     "post color solid" + source,
+    "post color defaults" + source,
+    "post color palette reset"+source,
+    "post color palette {low|high} color <value:label='red'> <value:label='green'> <value:label='blue'>"+source,
+    "post color palette stop <value:label='stop'> color <value:label='red'> <value:label='green'> <value:label='blue'>"+source,
     "post color palette {viridis|bluewhitered|turbo|rainbow|grayscale}" + source,
     "post color reverse {on|off}" + source,
     "post color bands continuous" + source,
@@ -33,7 +37,11 @@ std::vector<std::string> PostColorCommand::get_syntax_help()
 {
   return {"post color field \"name\" [origin \"FRD\"] [association node|element|integrationpoint] [set \"name\"] component {magnitude|\"component\"} [dataset N] [source \"name\"]",
     "post color {solid|palette NAME|reverse on/off|bands continuous/N|range auto/allframes/symmetric/MIN MAX} [source \"name\"]",
-    "post color limit minimum/maximum {on|off|VALUE color R G B} [source \"name\"]"};
+    "post color limit minimum/maximum {on|off|VALUE color R G B} [source \"name\"]",
+    "post color defaults [source \"name\"]",
+    "post color palette low|high color R G B [source \"name\"]",
+    "post color palette stop N color R G B [source \"name\"]",
+    "post color palette reset [source \"name\"]"};
 }
 std::vector<std::string> PostColorCommand::get_help()
 {
@@ -89,7 +97,13 @@ bool PostColorCommand::execute(CubitCommandData& data)
     }
     auto& c = *settings;
     using namespace Postprocessor;
-    if (data.find_keyword("SOLID"))
+    if (data.find_keyword("DEFAULTS"))
+    {
+      const auto field = c.field;
+      c = ResultColoring{};
+      c.field = field;
+    }
+    else if (data.find_keyword("SOLID"))
     {
       c.field.reset();
     }
@@ -117,8 +131,39 @@ bool PostColorCommand::execute(CubitCommandData& data)
         return false;
       }
     }
+    else if (data.find_keyword("PALETTE") && (data.find_keyword("LOW") || data.find_keyword("HIGH")))
+    {
+      std::array<double,3> rgb;
+      if (!data.get_value("red",rgb[0]) || !data.get_value("green",rgb[1]) || !data.get_value("blue",rgb[2]))
+      {
+        PRINT_ERROR("Palette endpoint requires three RGB channels.\n");
+        return false;
+      }
+      if (!set_palette_endpoint(c,data.find_keyword("HIGH"),rgb,error))
+      {
+        PRINT_ERROR("Cannot edit palette endpoint: %s\n",error.c_str());
+        return false;
+      }
+    }
+    else if (data.find_keyword("STOP"))
+    {
+      double stop = 0;
+      std::array<double,3> rgb;
+      if (!data.get_value("stop",stop) || !std::isfinite(stop) || stop < 1 || stop > ColoringDefaults::maximum_bands || stop != std::floor(stop) ||
+          !data.get_value("red",rgb[0]) || !data.get_value("green",rgb[1]) || !data.get_value("blue",rgb[2]) ||
+          !set_palette_stop(c,static_cast<std::size_t>(stop),rgb,error))
+      {
+        PRINT_ERROR("Cannot edit palette stop: %s\n",error.c_str());
+        return false;
+      }
+    }
+    else if (data.find_keyword("RESET"))
+    {
+      reset_custom_palette(c);
+    }
     else if (data.find_keyword("PALETTE"))
     {
+      reset_custom_palette(c);
       if (data.find_keyword("VIRIDIS"))
       {
         c.palette = ColorPalette::Viridis;

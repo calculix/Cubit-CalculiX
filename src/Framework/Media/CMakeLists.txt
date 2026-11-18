@@ -11,7 +11,7 @@ add_library(cubitsim_media SHARED
 target_compile_features(cubitsim_media PUBLIC cxx_std_17)
 target_compile_definitions(cubitsim_media PRIVATE CUBITSIM_MEDIA_BUILD)
 target_include_directories(cubitsim_media PUBLIC "${CUBITSIM_SOURCE_ROOT}")
-target_link_libraries(cubitsim_media PUBLIC Qt6::Core Qt6::Gui PRIVATE Threads::Threads)
+target_link_libraries(cubitsim_media PUBLIC Qt6::Core Qt6::Gui PRIVATE Threads::Threads ${CMAKE_DL_LIBS})
 set_target_properties(cubitsim_media PROPERTIES
   WINDOWS_EXPORT_ALL_SYMBOLS OFF
   RUNTIME_OUTPUT_DIRECTORY "${CUBITSIM_DEPLOY_DIRECTORY}"

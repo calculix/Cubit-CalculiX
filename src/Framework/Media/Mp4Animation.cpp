@@ -6,6 +6,8 @@
 #include <QElapsedTimer>
 #include <QRegularExpression>
 #include <algorithm>
+#include "Framework/Utility/LoadedLibraryDirectory.hpp"
+#include <exception>
 namespace
 {
   QString encoder(QString& error)
@@ -13,11 +15,33 @@ namespace
     auto path = qEnvironmentVariable("CUBITSIM_FFMPEG");
     if (path.isEmpty())
     {
-      path = QStandardPaths::findExecutable("ffmpeg");
+      // Locate this plugin library, not Cubit's executable or working directory.
+      // An explicit override is authoritative, including when it is invalid.
+      try
+      {
+        const auto directory = LoadedLibraryDirectory::from_address(reinterpret_cast<const void*>(&encoder));
+        QString filename = "tools/ffmpeg/ffmpeg";
+#ifdef _WIN32
+        filename += ".exe";
+#endif
+        const auto bundled = QDir(QString::fromUtf8(directory.c_str())).filePath(filename);
+        if (QFileInfo(bundled).isFile() && QFileInfo(bundled).isExecutable())
+        {
+          path = bundled;
+        }
+      }
+      catch (const std::exception&)
+      {
+        // Hosts that cannot locate a module may still provide an encoder on PATH.
+      }
+      if (path.isEmpty())
+      {
+        path = QStandardPaths::findExecutable("ffmpeg");
+      }
     }
-    if (path.isEmpty() || !QFileInfo(path).isExecutable())
+    if (path.isEmpty() || (!QFileInfo(path).isFile() || !QFileInfo(path).isExecutable()))
     {
-      error = "MP4 requires FFmpeg with libx264. Set CUBITSIM_FFMPEG to its executable or add it to PATH.";
+      error = "MP4 requires FFmpeg with libx264. Deploy tools/ffmpeg beside cubitsim_media, set CUBITSIM_FFMPEG, or add it to PATH.";
       return {};
     }
     return path;

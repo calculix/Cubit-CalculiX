@@ -17,6 +17,14 @@ namespace Postprocessor
       error = "Vector display requires a spatial XYZ field selection using its physical magnitude.";
       return false;
     }
+    if (value.legend.field || !valid_coloring(value.legend,error))
+    {
+      if (error.empty())
+      {
+        error = "Vector legend appearance cannot select a separate result field.";
+      }
+      return false;
+    }
     for (double channel : value.color)
     {
       if (!std::isfinite(channel) || channel < 0 || channel > 1)
@@ -31,6 +39,6 @@ namespace Postprocessor
   {
     return a.enabled == b.enabled && same_field(a.field,b.field) && a.proportional == b.proportional &&
       a.surface_only == b.surface_only && a.magnitude_color == b.magnitude_color && a.scale == b.scale &&
-      a.maximum == b.maximum && a.stride == b.stride && a.color == b.color;
+      a.maximum == b.maximum && a.stride == b.stride && a.color == b.color && same_coloring(a.legend,b.legend);
   }
 }

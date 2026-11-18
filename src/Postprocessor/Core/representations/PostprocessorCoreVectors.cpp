@@ -1,15 +1,12 @@
 #include "../application/PostprocessorCore.hpp"
 #include "ResultVectors.hpp"
+#include "ResultColoringUnits.hpp"
 #include <limits>
 namespace Postprocessor
 {
   bool PostprocessorCore::set_vector_plot(const std::string& source_id,const std::string& view_id,
     const VectorPlotDefinition& value,std::string& error)
   {
-    if (!valid_vector_plot(value,error))
-    {
-      return false;
-    }
     if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max())
     {
       error = "Cannot change vectors during the current operation.";
@@ -22,11 +19,34 @@ namespace Postprocessor
       {
         continue;
       }
-      if (same_vector_plot(display.vectors,value))
+      auto candidate = value;
+      if (candidate.enabled && !candidate.field)
+      {
+        const auto groups = field_groups(source_id,std::nullopt);
+        for (const auto& group : groups)
+        {
+          ResultFieldSelector selector;
+          if (vector_field_choice(groups,group,selector))
+          {
+            candidate.field = preferred_field_selection(group.field,group.key);
+            break;
+          }
+        }
+        if (!candidate.field)
+        {
+          error = "The source has no eligible vector fields.";
+          return false;
+        }
+      }
+      if (!valid_vector_plot(candidate,error))
+      {
+        return false;
+      }
+      if (same_vector_plot(display.vectors,candidate))
       {
         return true;
       }
-      if ((value.enabled && !display.vectors.enabled) || !same_field(display.vectors.field,value.field))
+      if (candidate.field && ((candidate.enabled && !display.vectors.enabled) || !same_field(display.vectors.field,candidate.field)))
       {
         std::shared_ptr<const EvaluatedOutput> evaluated;
         if (!evaluate_output(display,evaluated,error))
@@ -34,12 +54,12 @@ namespace Postprocessor
           return false;
         }
         bool found = false;
-        if (value.field && display.increment_index < evaluated->data->increments.size())
+        if (candidate.field && display.increment_index < evaluated->data->increments.size())
         {
           const auto& frame = evaluated->data->increments[display.increment_index];
           for (const auto& field : frame.fields)
           {
-            auto selection = *value.field;
+            auto selection = *candidate.field;
             if (selection.dataset_id && *selection.dataset_id != field.dataset_id)
             {
               continue;
@@ -54,8 +74,30 @@ namespace Postprocessor
           return false;
         }
       }
+      if (candidate.field)
+      {
+        const auto source = result_data(source_id);
+        if (source)
+        {
+          for (const auto& frame : source->increments)
+          {
+            const auto* field = find_field(frame,*candidate.field);
+            if (field)
+            {
+              auto bound = candidate.legend;
+              bound.field = candidate.field;
+              if (!bind_coloring_units(bound,*field,error))
+              {
+                return false;
+              }
+              candidate.legend.bounds_unit = bound.bounds_unit;
+              break;
+            }
+          }
+        }
+      }
       auto staged = state;
-      staged.representations.at(entry.first).vectors = value;
+      staged.representations.at(entry.first).vectors = candidate;
       state.swap(staged);
       ++scene_revision;
       return true;

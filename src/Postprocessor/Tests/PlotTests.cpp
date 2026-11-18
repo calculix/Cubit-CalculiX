@@ -7,6 +7,7 @@
 #include "Postprocessor/GUI/Plots/PostprocessorPlotLabels.hpp"
 #include "Postprocessor/Commands/plots/PlotCommandText.hpp"
 #include <QTemporaryDir>
+#include <QDir>
 #include <QFile>
 #include <QMouseEvent>
 #include <QKeyEvent>
@@ -110,6 +111,18 @@ int plot_cases(const std::shared_ptr<PostprocessorApplicationInterface>& app)
   check(bytes.contains("9007199254740993") && bytes.contains("\"History, \"\"A\"\"\""),
     "CSV lost exact IDs or RFC4180 quote escaping");
   check(!app->export_plot(name,path.toStdString(),error),"CSV export overwrote an existing file");
+  check(QDir(directory.path()).entryList({".cubitsim-plot-*.tmp"},QDir::Files|QDir::Hidden).isEmpty(),
+    "CSV export left a temporary staging file");
+  const auto fresh = directory.filePath(QString::fromUtf8("Desktop export ä"));
+  check(QDir().mkpath(fresh),"Cannot create fresh CSV destination fixture");
+  const auto freshPath = QDir(fresh).filePath("new plot.csv");
+  check(app->export_plot(name,freshPath.toUtf8().toStdString(),error) && QFile::exists(freshPath),
+    "CSV publication failed in a fresh directory with spaces/non-ASCII characters");
+  check(QDir(fresh).entryList({".cubitsim-plot-*.tmp"},QDir::Files|QDir::Hidden).isEmpty(),
+    "Fresh-directory CSV publication left temporary files");
+  QFile unchanged(path);
+  check(unchanged.open(QIODevice::ReadOnly) && unchanged.readAll() == bytes,
+    "A rejected overwrite changed the existing CSV");
   check(app->change_plot_curve(name,"maximum","hide",error) &&
     app->session().plots.at(id).curves[1].visible == false,"Cannot hide a curve");
   check(app->change_plot(name,"close","",error) && !app->session().views.at(view).plot_id &&

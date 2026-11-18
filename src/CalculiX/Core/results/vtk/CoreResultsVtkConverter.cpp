@@ -1091,7 +1091,149 @@ namespace
     return true;
   }
 
-  bool contact_tables(const CoreResultsFrd& frd, const CoreResultsVtkPlan& plan,
+  // DAT nodal histories retain one row per source record. The XYZ norm uses
+  // only a recognized physical vector triplet; no averaging is performed.
+  bool nodal_history_table(const CoreResultsDat& dat, const CoreResultsVtkPlan& plan,
+    const CoreResultsVtkFieldPlan& field, SimResults::Increment& increment,
+    CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
+  {
+    if (field.field.source != "DAT" || field.field.association != Association::Node ||
+        field.component_offset != 0 || field.source_data < 0 || field.source_block < 0 ||
+        static_cast<std::size_t>(field.source_block) >= dat.result_blocks.size() ||
+        static_cast<std::size_t>(field.source_data) >= dat.result_block_data.size() ||
+        static_cast<std::size_t>(field.source_data) >= dat.result_block_c1_data.size())
+    {
+      error = "Stale DAT nodal history plan.";
+      return false;
+    }
+    const auto& block = dat.result_blocks[field.source_block];
+    if (block.size() < 7 || block[4] != field.source_data)
+    {
+      error = "DAT nodal history source block does not match its plan.";
+      return false;
+    }
+    const auto& mapping = dat.result_block_c1_data[field.source_data];
+    const auto& values = dat.result_block_data[field.source_data];
+    const auto count = mapping.size();
+    const auto vector = spatial_vector_components(field.field);
+    if (!fits(count, field.field.components.size() + 4, error))
+    {
+      return false;
+    }
+    auto table = vtkSmartPointer<vtkTable>::New();
+    auto records = vtkSmartPointer<vtkTypeInt64Array>::New();
+    auto nodes = vtkSmartPointer<vtkTypeInt64Array>::New();
+    auto validity = vtkSmartPointer<vtkUnsignedCharArray>::New();
+    records->SetName("RecordIndex");
+    nodes->SetName("NodeId");
+    validity->SetName("Valid");
+    records->SetNumberOfTuples(static_cast<vtkIdType>(count));
+    nodes->SetNumberOfTuples(static_cast<vtkIdType>(count));
+    validity->SetNumberOfTuples(static_cast<vtkIdType>(count));
+    table->AddColumn(records);
+    table->AddColumn(nodes);
+    std::vector<double*> output;
+    vtkSmartPointer<vtkDoubleArray> magnitude;
+    double* norms = nullptr;
+    if (vector)
+    {
+      magnitude = vtkSmartPointer<vtkDoubleArray>::New();
+      magnitude->SetName("Magnitude");
+      magnitude->SetNumberOfTuples(static_cast<vtkIdType>(count));
+      norms = magnitude->GetPointer(0);
+      table->AddColumn(magnitude);
+    }
+    for (const auto& name : field.field.components)
+    {
+      if (name == "RecordIndex" || name == "NodeId" || name == "Valid" ||
+          (vector && name == "Magnitude") || table->GetColumnByName(name.c_str()))
+      {
+        error = "DAT nodal history has a duplicate or reserved component name.";
+        return false;
+      }
+      auto column = vtkSmartPointer<vtkDoubleArray>::New();
+      column->SetName(name.c_str());
+      column->SetNumberOfTuples(static_cast<vtkIdType>(count));
+      output.push_back(column->GetPointer(0));
+      table->AddColumn(column);
+    }
+    table->AddColumn(validity);
+    auto* record_ids = records->GetPointer(0);
+    auto* node_ids = nodes->GetPointer(0);
+    auto* valid = validity->GetPointer(0);
+    if (!pipeline.run(count, 2 * sizeof(vtkTypeInt64) + (output.size() + 1) * sizeof(double) + 1,
+      [&](std::size_t begin, std::size_t end, const std::atomic<bool>& cancelled, std::string& failure)
+      {
+        for (std::size_t i = begin; i < end; ++i)
+        {
+          if (cancelled.load(std::memory_order_relaxed))
+          {
+            return true;
+          }
+          const auto& row = mapping[i];
+          if (row.size() < 3 || row[0] <= 0 || row[2] != 1 || row[1] < 0 ||
+              static_cast<std::size_t>(row[1]) >= values.size() || values[row[1]].size() != output.size())
+          {
+            failure = "Invalid DAT nodal history source record.";
+            return false;
+          }
+          const auto& source = values[row[1]];
+          record_ids[i] = static_cast<vtkTypeInt64>(i);
+          node_ids[i] = row[0];
+          valid[i] = 1;
+          for (std::size_t component = 0; component < output.size(); ++component)
+          {
+            output[component][i] = source[component];
+            valid[i] = valid[i] && std::isfinite(source[component]);
+          }
+          if (vector)
+          {
+            norms[i] = std::hypot(source[(*vector)[0]], source[(*vector)[1]], source[(*vector)[2]]);
+            if (!std::isfinite(norms[i]))
+            {
+              valid[i] = 0;
+            }
+          }
+        }
+        return true;
+      }, poll, error))
+    {
+      return false;
+    }
+    for (vtkIdType column = 0; column < table->GetNumberOfColumns(); ++column)
+    {
+      table->GetColumn(column)->Modified();
+    }
+    auto* metadata = table->GetFieldData();
+    text(metadata, "TableName", field.field.name);
+    text(metadata, "TableType", "NodalHistory");
+    text(metadata, "TableScope", "Increment");
+    text(metadata, "ResultKind", "NodalHistory");
+    text(metadata, "Source", "DAT");
+    text(metadata, "Field", field.field.name);
+    text(metadata, "SetName", field.field.set_name);
+    text(metadata, "Association", "Node");
+    text(metadata, "CoordinateSystem", "Global");
+    text(metadata, "Reduction", "None");
+    text(metadata, "JobId", std::to_string(plan.job_id));
+    text(metadata, "RunIdentity", plan.run_identity);
+    text(metadata, "SourceFile", dat.filepath);
+    text(metadata, "SourceBlockIndex", std::to_string(field.source_block));
+    text(metadata, "SourceDataIndex", std::to_string(field.source_data));
+    text(metadata, "RecordIndexRole", "ZeroBasedSourceMappingRowWithinBlock");
+    text(metadata, "Step", std::to_string(increment.step));
+    text(metadata, "Increment", std::to_string(increment.increment));
+    text(metadata, "TotalIncrement", std::to_string(increment.total_increment));
+    text(metadata, "AnalysisType", std::to_string(increment.analysis_type));
+    text(metadata, "Mode", std::to_string(increment.mode));
+    text(metadata, "NodalDiameter", std::to_string(increment.nodal_diameter));
+    text(metadata, "Subcase", std::to_string(increment.subcase));
+    timestamp(table, increment.time);
+    increment.tables.push_back(own(table));
+    return true;
+  }
+
+  bool field_tables(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan,
     SimResults::VtkResultsData& result, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error) {
     std::size_t count = 0;
     for (const auto& increment : plan.increments) {
@@ -1103,7 +1245,11 @@ namespace
         const auto progress = [&](double fraction) {
           return !poll || poll(0.95 + 0.015 * (completed + fraction) / std::max<std::size_t>(1, count));
         };
-        if (!contact_table(frd, plan, field, result.increments[i], pipeline, progress, error)) {
+        const bool converted = field.field.source == "DAT"
+          ? nodal_history_table(dat, plan, field, result.increments[i], pipeline, progress, error)
+          : contact_table(frd, plan, field, result.increments[i], pipeline, progress, error);
+        if (!converted)
+        {
           return false;
         }
         ++completed;
@@ -1375,9 +1521,16 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
     result->input_files = plan.input_files;
     result->link_source = plan.link_source;
     result->diagnostics = plan.diagnostics;
-    const bool tablesOnly = plan.external_source && !plan.tables.empty() &&
+    const bool hasTableFields = std::any_of(plan.increments.begin(), plan.increments.end(), [](const auto& increment)
+    {
+      return !increment.table_fields.empty();
+    });
+    const bool tablesOnly = plan.external_source && (!plan.tables.empty() || hasTableFields) &&
       std::all_of(plan.increments.begin(),plan.increments.end(),[](const auto& increment) {
-        return increment.fields.empty() && increment.table_fields.empty();
+        return increment.fields.empty() && std::all_of(increment.table_fields.begin(), increment.table_fields.end(), [](const auto& field)
+        {
+          return field.field.source == "DAT" && field.field.association == Association::Node;
+        });
       });
     if ((!plan.external_source && plan.job_id <= 0) || plan.job_id < 0 ||
         (!tablesOnly && (plan.mesh.nodes.empty() || plan.mesh.elements.empty()))) {
@@ -1601,7 +1754,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
     }
     measured.ip_displacement_ms = milliseconds_since(phase_begin);
     phase_begin = Clock::now();
-    if (!contact_tables(frd, plan, *result, pipeline, observe, error) || !tables(dat, plan, *result, pipeline, observe, error)) {
+    if (!field_tables(frd, dat, plan, *result, pipeline, observe, error) || !tables(dat, plan, *result, pipeline, observe, error)) {
       return false;
     }
     measured.tables_ms = milliseconds_since(phase_begin);

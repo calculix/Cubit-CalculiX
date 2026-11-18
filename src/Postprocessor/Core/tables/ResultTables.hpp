@@ -28,6 +28,8 @@ namespace Postprocessor
     bool global = false;
     std::string type;
     std::size_t entry = 1;
+    bool field = false;
+    std::string set_name, output_name;
   };
   struct ResultTablePart
   {
@@ -41,6 +43,9 @@ namespace Postprocessor
     // unavailable. Segment metadata references immutable inputs, not copied rows.
     std::vector<int> column_map;
     std::vector<SimUnits::QuantityUnit> column_units;
+    // Presentation component -> stored component; -1 is the XYZ magnitude.
+    std::vector<int> components;
+    bool coordinates = false;
   };
   // Read-only borrowed VTK access, retained by the immutable owner snapshot.
   // Frame histories prepend Frame (1-based), Step, Increment and Time. Global

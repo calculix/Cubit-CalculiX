@@ -1,4 +1,5 @@
 #include "ReportTestProviders.hpp"
+#include "ReportMeshQualityTests.hpp"
 #include "Report/Core/ReportCore.hpp"
 #include "Report/Core/ReportProjectPersistence.hpp"
 #include "Report/Document/ReportDocumentLayout.hpp"
@@ -631,6 +632,7 @@ int main(int argc, char** argv)
   failures += reportUnitsTests(directory.path());
   failures += reportProgressTests(directory.path());
   failures += reportTreeTests();
+  failures += reportMeshQualityTests();
   failures += reportExportTests(directory.path());
   std::cout << failures << " report test failures\n";
   if (failures == 0) {

@@ -181,7 +181,7 @@ frame.
 Set **Default result palette** in **Cubit-Sim - Postprocessor** options to choose
 the palette for newly created result displays. Save persists this preference;
 Reset to defaults stages Classic rainbow until Save. Existing displays retain
-their palette, which can be changed separately using Properties -> Palette -> Apply.
+their palette, which can be changed separately using Legend properties -> Palette.
 Classic rainbow uses blue-to-cyan-to-green-to-yellow-to-red RGB stops with dark
 blue and dark red endpoints.
 
@@ -285,24 +285,35 @@ settings, not computed extrema. Choose All frames to keep colors and the legend
 on a common scale throughout playback. Each limit's value/color
 controls are enabled by its checkbox. Disabled limits retain their saved values.
 
-Changes are staged until Apply. A valid draft is applied through existing
-source-qualified color/legend commands. Animation and frame updates preserve
-unsaved edits while the representation, published result and committed coloring
-stay the same. A source/view/result replacement or an external coloring change
-reloads the committed settings. No selected representation disables the editor.
+Selections and checkboxes apply automatically; numeric edits apply on Enter or
+focus loss. Commands are source-qualified and only changed settings are sent.
+Animation and frame updates preserve incomplete numeric edits while the source,
+representation, published result and committed coloring agree. An external change
+reloads the committed state. No selected representation disables the editor.
 
-Apply validates the complete draft before submitting anything. Limit updates
-may temporarily disable/configure/re-enable endpoints so intermediate command
-states remain valid. If submission or a handler fails, remaining commands stop
-and the panel reloads the state that actually committed, with an inline error.
-Successful earlier commands remain applied; Apply is not a multi-command undo
-transaction. Closing a color dialog after its owning context changes does not
-apply that color to the newly selected representation.
+The complete edit is validated before commands are submitted. Limit updates may
+temporarily disable/configure/re-enable endpoints so intermediate command states
+remain valid. A handler failure stops remaining commands and displays the state
+that actually committed. This is not a multi-command undo transaction. A color
+picker cannot apply its result to a different source/view after selection changes.
+
+Defaults restores Core color and legend defaults, including automatic placement,
+while retaining the selected field/component. Low color and High color use the
+same picker as limit colors. Editing either endpoint creates a custom gradient
+interpolated in HSV color space. Bands controls how many steps sample that gradient.
+Choosing a built-in palette or Reset palette colors restores the preset. Custom
+colors persist and are used by viewport, legend, image capture and report rendering.
+
+Commands::
+
+   post color defaults source "first_run"
+   post color palette low color 0 0.2 1 source "first_run"
+   post color palette reset source "first_run"
 
 All-frame legend range
 -----------------------
 
-In Properties > Range, choose All frames and Apply, or run
+In Legend properties > Range, choose All frames, or run
 ``post color range allframes source "first_run"``. The legend then spans the
 selected field/component's valid minimum and maximum over every compatible
 dataset and frame. Missing, masked and nonfinite values are excluded. Limit

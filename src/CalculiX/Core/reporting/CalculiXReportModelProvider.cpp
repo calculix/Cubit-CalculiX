@@ -1,5 +1,6 @@
 #include <type_traits>
 #include "CalculiXReportModelProvider.hpp"
+#include "CalculiXReportMeshQuality.hpp"
 #include "CalculiX/Core/jobs/CalculiXJobRunRecord.hpp"
 #include "CalculiXReportModelSnapshot.hpp"
 #include "Framework/Reporting/ReportSourceEntry.hpp"
@@ -464,4 +465,10 @@ bool CalculiXReportModelProvider::available_sources(std::vector<ReportSourceEntr
   output = std::move(entries);
   error.clear();
   return true;
+}
+
+bool CalculiXReportModelProvider::mesh_quality(const ReportRequest& request, const ReportSource& source,
+  std::shared_ptr<const MeshQualitySnapshot>& output, std::string& error) const
+{
+  return CalculiXReportMeshQuality::collect(request, source, output, error);
 }

@@ -1,4 +1,5 @@
 #include "CalculiXReportTemplateProvider.hpp"
+#include "Framework/MeshQuality/MeshQualityDefaults.hpp"
 #include "CalculiXReportImageSettings.hpp"
 #include <utility>
 #include "Framework/Reporting/ReportTemplate.hpp"
@@ -16,7 +17,7 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
   ReportTemplate candidate;
   candidate.id = "calculix.standard";
   candidate.workspace_id = "calculix";
-  candidate.revision = 4;
+  candidate.revision = 6;
   candidate.content_groups = {
     {"ccx.content.model", "Model"},
     {"ccx.content.steps", "Analysis steps", "", "ccx.steps"},
@@ -24,6 +25,7 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
     {"ccx.content.images", "Model and setup images"},
     {"ccx.content.step_images", "Per-step images", "ccx.content.images"},
     {"ccx.content.post", "Results", "", "post.results"},
+    {"ccx.content.post_images", "Result images", "ccx.content.post", "post.images"},
     {"ccx.content.set_details", "Detailed set membership", "ccx.content.model"},
     {"ccx.content.mesh_details", "Detailed mesh listings", "ccx.content.model"},
     {"ccx.content.result_details", "Detailed result listings", "ccx.content.post"}};
@@ -107,6 +109,29 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
   frames.choices = {"last_per_step", "envelope", "all_frames"};
   candidate.defaults.values[frames.key] = frames.default_value;
   candidate.options.push_back(std::move(frames));
+  const auto addChoice = [&](const std::string& key, const std::string& label,
+                             const std::string& initial, const std::vector<std::string>& choices)
+  {
+    ReportOption option;
+    option.key = key;
+    option.label = label;
+    option.group_id = "ccx.content.post_images";
+    option.kind = "choice";
+    option.default_value = initial;
+    option.choices = choices;
+    candidate.defaults.values[key] = initial;
+    candidate.options.push_back(std::move(option));
+  };
+  addChoice("post.images.presentation", "Presentation", "inherited", {"inherited", "default"});
+  addChoice("post.images.camera", "Camera", "preserve", {"preserve", "fit"});
+  addChoice("post.images.background", "Background", "current", {"current", "white", "transparent"});
+  ReportOption view;
+  view.key = "post.images.view";
+  view.label = "Postprocessor view (empty uses active view)";
+  view.group_id = "ccx.content.post_images";
+  view.kind = "text";
+  candidate.defaults.values[view.key] = "";
+  candidate.options.push_back(std::move(view));
   for (auto& option : candidate.options)
   {
     if (!option.group_id.empty())
@@ -138,6 +163,7 @@ bool CalculiXReportTemplateProvider::describe(ReportTemplate& output, std::strin
       option.group_id = "ccx.content.post";
     }
   }
+  MeshQualityDefaults::add_options(candidate);
   output = std::move(candidate);
   error.clear();
   return true;

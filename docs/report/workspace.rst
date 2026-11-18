@@ -353,6 +353,45 @@ ties by original sample order. All workers join before cancellation returns.
 Automatic report images render a detached source/frame/block/component snapshot
 at the existing Full HD capture default without changing live view settings.
 
+Inherited result-image presentation
+-----------------------------------
+
+Result image collection freezes the Postprocessor presentation once. By default,
+it inherits the active view's camera and scene coordinate basis, background,
+per-item styles and colors, scalar palette, vectors, deformation and upstream
+clip/section/threshold filters. Existing explosion settings are retained too.
+The report selects the block, scalar component and frame; those selections do
+not modify the live Postprocessor. Output remains Full HD by default.
+
+The active matching representation is preferred. Otherwise a unique visible
+representation of the exact result source in the capture view is accepted.
+Ambiguous presentations produce a diagnostic. When none exists, a default
+presentation is used and identified in the caption. Unrelated sources and
+filters are excluded from rendering.
+
+The Results / Result images content tree offers Presentation, Camera and
+Background choices. Report settings / Images also accepts a Postprocessor view
+name; empty uses the active view. These settings are saved with profiles::
+
+   report configure settings option "post.images.presentation" value "inherited"
+   report configure settings option "post.images.camera" value "preserve"
+   report configure settings option "post.images.background" value "current"
+   report configure settings option "post.images.view" value "3D View 1"
+
+Alternative values are ``default`` presentation, ``fit`` camera, and ``white``
+or ``transparent`` background. Preserved cameras retain their projection and
+vertical framing; changing viewport aspect ratio can change horizontal coverage.
+
+Compatible fixed scalar bounds are converted to frozen Report display units.
+Bounds for a different or unresolved physical quantity are replaced with an
+automatic range and disclosed in the caption. Threshold fields, native plane
+units and threshold bound units retain their original meaning.
+
+Filtered images are identified explicitly: numerical minima and maxima still
+describe the complete original block, not only its filtered or deformed display.
+Image provenance retains the original presentation separately from the adapted
+report frame/component, appearance, vector and filter records.
+
 
 Export progress and cancellation
 --------------------------------

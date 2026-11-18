@@ -167,6 +167,7 @@ bool PostprocessorApplicationInterface::add_plot_table(const std::string& plotNa
       return false;
     }
     key = selected.key;
+    field = selected.field;
   }
   Postprocessor::PlotCurveDefinition curve;
   curve.name = name;

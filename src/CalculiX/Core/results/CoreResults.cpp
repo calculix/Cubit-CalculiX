@@ -25,6 +25,78 @@
 #include "AppUtil.hpp"
 #include "loadUserOptions.hpp"
 
+namespace
+{
+  CoreResultsSourceMetadata companion_input_metadata(const CoreResultsFrd& frd, const CoreResultsDat& dat)
+  {
+    namespace fs = std::filesystem;
+    const auto frdPath = fs::u8path(frd.filepath);
+    const auto datPath = fs::u8path(dat.filepath);
+    auto inputPath = frdPath;
+    inputPath.replace_extension(".inp");
+    auto expectedDatPath = inputPath;
+    expectedDatPath.replace_extension(".dat");
+    std::error_code fileError;
+    if (datPath.lexically_normal() != expectedDatPath.lexically_normal() ||
+        !fs::is_regular_file(inputPath, fileError))
+    {
+      return {};
+    }
+
+    CalculiXJobRunRecord inputMetadata;
+    std::string error;
+    if (!inputMetadata.read_input_units(inputPath.u8string(), error))
+    {
+      PRINT_WARNING("Cannot read result unit metadata from the companion INP: %s\n", error.c_str());
+      return {};
+    }
+    if (inputMetadata.unitSystem.empty() && inputMetadata.step_axis_quantities.empty())
+    {
+      return {};
+    }
+
+    const auto frdTime = fs::last_write_time(frdPath, fileError);
+    if (fileError)
+    {
+      return {};
+    }
+    const auto datTime = fs::last_write_time(datPath, fileError);
+    if (fileError)
+    {
+      return {};
+    }
+    const auto predatesResults = [&](const fs::path& path)
+    {
+      std::error_code timeError;
+      const auto inputTime = fs::last_write_time(path, timeError);
+      return !timeError && inputTime <= frdTime && inputTime <= datTime;
+    };
+    std::vector<std::string> inputFiles;
+    if (!predatesResults(inputPath) ||
+        !CoreResultsVtkLink::match_input_mesh(frd, inputPath.u8string(), inputFiles, error))
+    {
+      PRINT_WARNING("Result units remain unknown: the companion INP must predate the outputs and match the FRD mesh. %s\n", error.c_str());
+      return {};
+    }
+    for (const auto& file : inputFiles)
+    {
+      if (!predatesResults(fs::path(file)))
+      {
+        PRINT_WARNING("Result units remain unknown: an input file is newer than the outputs or its timestamp could not be read: %s\n", file.c_str());
+        return {};
+      }
+    }
+
+    // The companion deck supplies units and axes only. A mesh and timestamp
+    // match cannot establish an archived launch or project material identity.
+    CoreResultsSourceMetadata metadata;
+    metadata.unitSystem = std::move(inputMetadata.unitSystem);
+    metadata.step_axis_quantities = std::move(inputMetadata.step_axis_quantities);
+    PRINT_INFO("Loaded result unit and step-axis metadata from companion INP: %s\n", inputPath.u8string().c_str());
+    return metadata;
+  }
+}
+
 CoreResults::CoreResults()
 {}
 
@@ -172,6 +244,14 @@ bool CoreResults::load_result(int job_id) {
     std::string metadataError;
     if (CalculiXJobsInterface().get_run_record(job_id, loadedRun, metadataError) && loadedRun) {
       source_metadata.emplace(job_id, CoreResultsSourceMetadata(*loadedRun));
+    }
+    else
+    {
+      auto metadata = companion_input_metadata(frd_data[frd_data_id], dat_data[dat_data_id]);
+      if (!metadata.unitSystem.empty() || !metadata.step_axis_quantities.empty())
+      {
+        source_metadata.emplace(job_id, std::move(metadata));
+      }
     }
     return true;
   }

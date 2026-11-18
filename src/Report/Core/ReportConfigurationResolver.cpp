@@ -1,4 +1,7 @@
 #include "ReportConfigurationResolver.hpp"
+#include "Framework/MeshQuality/MeshQualitySettings.hpp"
+#include <QLocale>
+#include <cmath>
 #include "ReportUnitValidation.hpp"
 #include <utility>
 #include "ReportUserOptions.hpp"
@@ -123,9 +126,15 @@ bool ReportConfigurationResolver::resolve(const ReportTemplate& definition, cons
     }
     const QString value = QString::fromStdString(entry.second);
     bool valid = value.size() <= 4096 && !value.contains(QChar('\0'));
-    if (found->kind == "boolean")
+    if (found->kind == "boolean" || found->kind == "quality_boolean")
     {
       valid = valid && (value == "true" || value == "false");
+    }
+    else if (found->kind == "quality_limit")
+    {
+      bool parsed = false;
+      const double number = QLocale::c().toDouble(value, &parsed);
+      valid = valid && (value.isEmpty() || (parsed && std::isfinite(number)));
     }
     else if (found->kind == "precision")
     {
@@ -165,7 +174,7 @@ bool ReportConfigurationResolver::resolve(const ReportTemplate& definition, cons
       const int width = value.toInt(&ok);
       valid = valid && ok && width >= 5 && width <= 60;
     }
-    else if (found->kind != "text")
+    else if (found->kind != "text" && found->kind != "quality_unit")
     {
       valid = false;
     }
@@ -185,6 +194,11 @@ bool ReportConfigurationResolver::resolve(const ReportTemplate& definition, cons
   }
   if (!ReportPageDecoration::validate_templates(candidate, error) ||
       (candidate.company_logo && !ReportLogo::validate(*candidate.company_logo, error)))
+  {
+    return false;
+  }
+  MeshQualitySettings quality;
+  if (!MeshQualitySettings::decode(candidate, quality, error))
   {
     return false;
   }

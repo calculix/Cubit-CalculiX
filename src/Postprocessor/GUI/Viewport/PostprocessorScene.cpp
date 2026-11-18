@@ -11,6 +11,9 @@
 #include "Postprocessor/Core/representations/ResultMesh.hpp"
 #include "Postprocessor/Core/views/CameraOperations.hpp"
 #include <vtkActor.h>
+#include <vtkMapper.h>
+#include "Postprocessor/Core/explosion/ExplosionRuntime.hpp"
+#include "Postprocessor/Core/selection/SelectionState.hpp"
 #include <vtkCamera.h>
 #include <vtkCellArray.h>
 #include <vtkPointData.h>
@@ -36,6 +39,10 @@ std::optional<PostprocessorScene::LegendHit> PostprocessorScene::legend_at(doubl
   // Reverse drawing order selects the topmost legend when two frames overlap.
   for (auto entry = displays.rbegin(); entry != displays.rend(); ++entry)
   {
+    if (entry->second->vectors && entry->second->vectors->legend_contains(x,y))
+    {
+      return LegendHit{entry->first,entry->second->source_id,entry->second->vectors->legend_frame(),true};
+    }
     if (entry->second->coloring->legend_contains(x,y))
     {
       return LegendHit{entry->first,entry->second->source_id,entry->second->coloring->legend_frame()};
@@ -76,6 +83,7 @@ void PostprocessorScene::clear()
   renderer->RemoveAllViewProps();
   displays.clear();
   geometryRevision.reset();
+  pulseElapsed.reset();
   visibleBounds.reset();
   appliedCamera.reset();
   displayWarning.clear();
@@ -142,12 +150,17 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
     {
       group->transformed.push_back(transformed);
     }
-    const std::vector<Postprocessor::FilteredPart>::const_iterator filtered = [&]() -> std::vector<Postprocessor::FilteredPart>::const_iterator {
-      if (evaluated) {
-        return std::find_if(evaluated->parts.begin(), evaluated->parts.end(), [&](const auto& value) {
+    const std::vector<Postprocessor::FilteredPart>::const_iterator filtered = [&]() -> std::vector<Postprocessor::FilteredPart>::const_iterator
+    {
+      if (evaluated)
+      {
+        return std::find_if(evaluated->parts.begin(), evaluated->parts.end(), [&](const auto& value)
+        {
           return value.dataset == part.first;
         });
       }
+      // No evaluated output: the guarded lookup below never uses this iterator.
+      return std::vector<Postprocessor::FilteredPart>::const_iterator{};
     }();
     const auto* derived = [&]() -> std::common_type_t<decltype(&*filtered), decltype(nullptr)> {
       if (evaluated && filtered != evaluated->parts.end()) {
@@ -161,7 +174,15 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
       auto referenceSurface = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
       referenceSurface->SetInputData(derived->removed.get());
       auto referenceMapper = vtkSmartPointer<vtkOpenGLPolyDataMapper>::New();
-      referenceMapper->SetInputConnection(referenceSurface->GetOutputPort());
+      if (evaluated && evaluated->exploded)
+      {
+        referenceSurface->Update();
+        referenceMapper->SetInputData(referenceSurface->GetOutput());
+      }
+      else
+      {
+        referenceMapper->SetInputConnection(referenceSurface->GetOutputPort());
+      }
       referenceMapper->ScalarVisibilityOff();
       auto referenceActor = vtkSmartPointer<vtkOpenGLActor>::New();
       referenceActor->SetMapper(referenceMapper);
@@ -198,7 +219,16 @@ std::shared_ptr<PostprocessorScene::RepresentationActors> PostprocessorScene::bu
       return {};
     }
     auto mapper = vtkSmartPointer<vtkOpenGLPolyDataMapper>::New();
-    mapper->SetInputConnection(surface->GetOutputPort());
+    if (evaluated && evaluated->exploded)
+    {
+      // Topology has already been extracted. Pulse edits only its cached
+      // points, so retaining a live surface filter would repeat extraction.
+      mapper->SetInputData(surface->GetOutput());
+    }
+    else
+    {
+      mapper->SetInputConnection(surface->GetOutputPort());
+    }
     mapper->ScalarVisibilityOff();
     auto actor = vtkSmartPointer<PostprocessorDepthActor>::New();
     actor->SetMapper(mapper);
@@ -422,7 +452,8 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
       error = "The viewport's view definition is unavailable.";
       return false;
     }
-    if (!geometryRevision || *geometryRevision != revision)
+    const bool geometryChanged = !geometryRevision || *geometryRevision != revision;
+    if (geometryChanged)
     {
       clear_hover();
       std::map<std::string, std::shared_ptr<RepresentationActors>> next;
@@ -455,7 +486,7 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
           continue;
         }
         const auto data = evaluated->data;
-        const bool feature = display.input.owner == Postprocessor::OutputOwner::Feature;
+        const bool feature = display.input.owner == Postprocessor::OutputOwner::Feature || evaluated->exploded;
         const auto existing = displays.find(entry.first);
         std::shared_ptr<RepresentationActors> group;
         if (existing != displays.end() && existing->second->data == data && existing->second->increment == display.increment_index &&
@@ -598,9 +629,14 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
           {
             maximum = (*range)[1];
           }
-          if (vectorError.empty() && Postprocessor::prepare_vector_plot(*evaluated->source,*data,display,maximum,arrows,vectorError,application.captured_units()))
+          auto vectorDisplay = display;
+          if (evaluated->exploded)
           {
-            group->vectors = std::make_unique<PostprocessorVectorActors>(renderer,arrows,display.vectors,factor,legendSlot++,display.coloring.legend_visible);
+            vectorDisplay.deformation.enabled = false;
+          }
+          if (vectorError.empty() && Postprocessor::prepare_vector_plot(*evaluated->source,*data,vectorDisplay,maximum,arrows,vectorError,application.captured_units()))
+          {
+            group->vectors = std::make_unique<PostprocessorVectorActors>(renderer,arrows,display.vectors,factor,legendSlot++,display.vectors.legend.legend_visible);
             if (!arrows.warning.empty())
             {
               group->warnings[display.vectors.field->dataset_id.value_or(0)] = arrows.warning;
@@ -703,6 +739,59 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
         geometryRevision = revision;
       }
     }
+    const auto& pulse = view->second.explosion.pulse;
+    if (geometryChanged || !pulseElapsed || *pulseElapsed != pulse.elapsed_seconds
+        || pulseSettingsRevision != pulse.settings_revision)
+    {
+      Postprocessor::ExplosionPointBuffers updated;
+      for (const auto& entry : displays)
+      {
+        const auto& evaluated = entry.second->evaluated;
+        if (evaluated && evaluated->exploded)
+        {
+          Postprocessor::remember_explosion_pulse_buffers(*evaluated,updated);
+        }
+      }
+      for (const auto& entry : displays)
+      {
+        auto& group = *entry.second;
+        if (!group.evaluated || !group.evaluated->exploded)
+        {
+          continue;
+        }
+        for (auto& surface : group.surfaces)
+        {
+          Postprocessor::apply_explosion_pulse_mesh(surface.input,pulse,updated);
+          Postprocessor::apply_explosion_pulse_mesh(surface.base,pulse,updated);
+          Postprocessor::apply_explosion_pulse_mesh(surface.scalars,pulse,updated);
+          Postprocessor::apply_explosion_pulse_mesh(surface.node_data,pulse,updated);
+        }
+        for (auto& item : group.actors)
+        {
+          if (item.actor->GetMapper())
+          {
+            Postprocessor::apply_explosion_pulse_mesh(item.actor->GetMapper()->GetInputAsDataSet(),pulse,updated);
+          }
+        }
+        if (group.vectors)
+        {
+          group.vectors->apply_pulse(view->second.explosion);
+        }
+      }
+      pulseElapsed = pulse.elapsed_seconds;
+      pulseSettingsRevision = pulse.settings_revision;
+      if (!geometryChanged)
+      {
+        if (view->second.selection.entity)
+        {
+          build_highlight(*view->second.selection.entity,application,highlight,Postprocessor::SelectionDefaults::highlight_color);
+        }
+        if (hoveredEntity)
+        {
+          build_highlight(*hoveredEntity,application,hoverHighlight,Postprocessor::SelectionDefaults::hover_color);
+        }
+      }
+    }
     if (view->second.camera)
     {
       apply_camera(*view->second.camera);
@@ -757,7 +846,7 @@ bool PostprocessorScene::synchronize(const PostprocessorApplicationInterface& ap
       }();
       Postprocessor::FilterDefinition transformedPlane;
       const Postprocessor::FilterDefinition* shownPlane = nullptr;
-      if (found != state.filters.end())
+      if (found != state.filters.end() && !application.explosion_active(active->second))
       {
         transformedPlane = found->second;
         double factor = 1;
@@ -854,6 +943,10 @@ void PostprocessorScene::apply_appearance(const std::array<double, 3>& top, cons
   for (const auto& display : displays)
   {
     display.second->coloring->update_appearance();
+    if (display.second->vectors)
+    {
+      display.second->vectors->update_appearance();
+    }
   }
 }
 

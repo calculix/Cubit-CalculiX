@@ -2,6 +2,7 @@
 #include "CaptureDefinition.hpp"
 #include "../representations/VectorPlotCodec.hpp"
 #include "../filters/FilterCodec.hpp"
+#include "../explosion/ExplosionCodec.hpp"
 #include "../application/PostprocessorCore.hpp"
 #include "../plots/PlotCodec.hpp"
 #include "../representations/ResultMesh.hpp"
@@ -98,6 +99,7 @@ namespace Postprocessor
       }
       snapshot.session.active_view_id = snapshot.target_id;
       auto& view = snapshot.session.views.at(snapshot.target_id);
+      snapshot.provenance.insert("explosion",explosion_to_json(view.explosion));
       view.selection.entity.reset();
       view.fit_pending = false;
       if (request.labels)
@@ -129,6 +131,7 @@ namespace Postprocessor
       if (request.legend)
       {
         display.coloring.legend_visible = *request.legend;
+        display.vectors.legend.legend_visible = *request.legend;
       }
       QJsonArray hidden;
       for (auto id : display.hidden_datasets)
@@ -149,6 +152,13 @@ namespace Postprocessor
         item.insert("magnitude",field.magnitude);
         item.insert("association",static_cast<int>(field.association));
       }
+      QJsonArray paletteColors;
+      for (const auto& rgb : display.coloring.custom_palette)
+      {
+        paletteColors.append(QJsonArray{rgb[0],rgb[1],rgb[2]});
+      }
+      item.insert("custom_palette",paletteColors);
+      item.insert("palette_hsv",display.coloring.palette_hsv);
       item.insert("vectors",vector_plot_to_json(display.vectors));
       if (display.deformation.field)
       {
@@ -237,6 +247,8 @@ namespace Postprocessor
     state = snapshot.session;
     runtime.clear();
     filter_cache.clear();
+    explosion_cache.clear();
+    explosion_references.clear();
     animation_rotation.clear();
     for (const auto& source : snapshot.sources)
     {

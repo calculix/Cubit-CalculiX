@@ -27,6 +27,11 @@ public:
     const std::string& input_path, const CoreResultsVtkOptions& options,
     CoreResultsVtkPlan& output, std::string& error) const;
 
+  // Check the deck against the loaded FRD mesh before borrowing its unit tags.
+  // On success, input_files contains the root deck and the includes read.
+  static bool match_input_mesh(const CoreResultsFrd& frd, const std::string& input_path,
+    std::vector<std::string>& input_files, std::string& error);
+
   // Pure snapshot comparison. Both snapshots must use unique sorted IDs and
   // CalculiX connectivity. Extra candidate nodes (e.g. unused reference nodes)
   // are permitted; analysis element IDs/connectivity must match exactly.

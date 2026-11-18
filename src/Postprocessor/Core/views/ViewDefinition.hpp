@@ -7,6 +7,7 @@
 #include <cstdint>
 #include "../selection/SelectionState.hpp"
 #include "ScaleDefinition.hpp"
+#include "../explosion/ExplosionDefinition.hpp"
 #include "../tables/ResultTables.hpp"
 #include "../annotations/AnnotationDefinition.hpp"
 
@@ -51,6 +52,7 @@ namespace Postprocessor
     // Unknown sources remain explicitly uncalibrated rather than guessed.
     std::string scene_unit;
     bool scale_visible = ScaleDefaults::visible;
+    ExplosionState explosion;
   };
 }
 

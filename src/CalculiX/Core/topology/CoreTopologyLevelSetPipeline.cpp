@@ -41,7 +41,7 @@ void CoreTopologyLevelSetPipeline::integrate_element(Element& element, const Top
   try
   {
     element.success = CoreTopologyLevelSetGeometry::evaluate_element(element.calculix_type, element.cubit_type,
-      element.coordinates, element.values, element.volume, element.preserved, settings, element.geometry, poll, &quadrature, &element.error);
+      element.coordinates, element.values, element.volume, element.preserved, settings, element.geometry, poll, &quadrature, &element.error, &element.diagnostics);
   }
   catch (const std::exception& failure)
   {
@@ -127,6 +127,7 @@ bool CoreTopologyLevelSetPipeline::integrate(std::vector<Element>& elements, con
     element.success = false;
     element.integration_ms = 0.0;
     element.error.clear();
+    element.diagnostics = {};
     if (element.id < 1 || element.nodes.empty() || element.nodes.size() > 20 ||
         element.coordinates.size() != element.nodes.size() || element.values.size() != element.nodes.size())
     {
@@ -275,6 +276,18 @@ bool CoreTopologyLevelSetPipeline::integrate(std::vector<Element>& elements, con
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
   wall_ms += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
+  // A sibling interrupted by cancellation must not hide the numerical cause.
+  if (error.empty())
+  {
+    for (const auto& element : elements)
+    {
+      if (element.diagnostics.refinement_limit_reached && !element.error.empty())
+      {
+        error = "Element " + std::to_string(element.id) + ": " + element.error;
+        break;
+      }
+    }
+  }
   for (const auto& element : elements)
   {
     worker_ms += element.integration_ms;

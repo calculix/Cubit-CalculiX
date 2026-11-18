@@ -1,4 +1,5 @@
 #include "CoreJobSnapshotBuilder.hpp"
+#include "CalculiX/Core/reporting/CalculiXReportMeshQuality.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
 #include "Core/export/CalculiXExportInterface.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
@@ -488,6 +489,11 @@ bool CoreJobSnapshotBuilder::prepare(int jobId, const std::string& filename,
     }
     setup->fingerprint = setupFingerprint(*setup);
     candidate.setup = std::move(setup);
+    std::string qualityError;
+    if (!CalculiXReportMeshQuality::freeze_job(candidate, qualityError))
+    {
+      candidate.qualityUnavailableReason = qualityError;
+    }
     output = std::move(candidate);
     error.clear();
     return true;
@@ -505,6 +511,16 @@ bool CoreJobSnapshotBuilder::validate(const CalculiXJobRunRecord& record, std::s
   };
   if (record.jobId <= 0 || record.launchId.empty() || !QDateTime::fromString(QString::fromStdString(record.launchedAt), Qt::ISODate).isValid()) {
     return fail("Invalid job launch identity or timestamp.");
+  }
+  if (record.quality && (!record.quality->validate(error) ||
+      record.quality->input_fingerprint != record.input.manifestFingerprint ||
+      record.quality->coordinate_unit != record.geometryLengthUnit || !record.qualityUnavailableReason.empty()))
+  {
+    if (error.empty())
+    {
+      error = "Invalid quality archive binding.";
+    }
+    return false;
   }
   const auto& input = record.input;
   if (input.files.empty()) {

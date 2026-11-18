@@ -50,6 +50,10 @@ namespace Postprocessor
   {
     std::optional<FieldSelection> field;
     ColorPalette palette = ColoringDefaults::palette;
+    // Uniform control stops from palette-low to palette-high, before reversal.
+    // Empty uses the built-in palette. Banded edits resample to the band count.
+    std::vector<std::array<double,3>> custom_palette;
+    bool palette_hsv = false; // HSV ramps require exactly two stops.
     ColorRangeMode range_mode = ColorRangeMode::AllFrames;
     std::array<double, 2> fixed_range = {0.0, 1.0};
     // Stored bounds use this presentation unit, independent of resident arrays.
@@ -104,6 +108,14 @@ namespace Postprocessor
   // Stable preference names; independent of translated GUI labels.
   const char* color_palette_name(ColorPalette palette);
   bool parse_color_palette(const std::string& name, ColorPalette& palette);
+  // Sampling assumes valid_coloring; stops are uniform and before reversal.
+  // set_palette_stop validates inputs and uses one-based indices.
+  std::array<double,3> coloring_palette_color(const ResultColoring& coloring,double t);
+  std::vector<std::array<double,3>> palette_endpoints(const ResultColoring& coloring);
+  bool set_palette_endpoint(ResultColoring& coloring,bool high,const std::array<double,3>& rgb,std::string& error);
+  void reset_custom_palette(ResultColoring& coloring);
+  std::vector<std::array<double,3>> palette_samples(const ResultColoring& coloring);
+  bool set_palette_stop(ResultColoring& coloring,std::size_t stop,const std::array<double,3>& rgb,std::string& error);
   std::array<double, 3> palette_color(ColorPalette palette, double position);
   std::array<double, 3> result_color(double value, const ResultColoring& coloring, const std::array<double, 2>& range);
 }

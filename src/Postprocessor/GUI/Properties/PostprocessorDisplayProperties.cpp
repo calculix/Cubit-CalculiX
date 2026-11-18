@@ -3,11 +3,14 @@
 #include "PostprocessorDisplayProperties.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include <QCheckBox>
+#include <QTimer>
+#include "Postprocessor/Commands/plots/PlotCommandText.hpp"
 #include <QColorDialog>
 #include <QComboBox>
 #include <QDoubleValidator>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -109,10 +112,21 @@ PostprocessorDisplayProperties::PostprocessorDisplayProperties(
   bands = new QSpinBox(colors);
   bands->setObjectName("Postprocessor.Display.Bands");
   bands->setRange(2,static_cast<int>(ColoringDefaults::maximum_bands));
+  bands->setKeyboardTracking(false);
   colorsForm->addRow(tr("Palette"),palette);
   colorsForm->addRow(reversed);
   colorsForm->addRow(tr("Contours"),contours);
   colorsForm->addRow(tr("Bands"),bands);
+  auto* swatchPanel = new QWidget(colors);
+  paletteColors = new QGridLayout(swatchPanel);
+  paletteColors->setContentsMargins(0,0,0,0);
+  colorsForm->addRow(tr("Palette colors"),swatchPanel);
+  auto* resetColors = new QPushButton(tr("Reset palette colors"),colors);
+  colorsForm->addRow(resetColors);
+  connect(resetColors,&QPushButton::clicked,this,[this]()
+  {
+    send_palette("palette reset");
+  });
   layout->addWidget(colors);
 
   auto numeric = [this](const char* name, QWidget* owner)
@@ -127,6 +141,10 @@ PostprocessorDisplayProperties::PostprocessorDisplayProperties(
     input->setValidator(validator);
     input->setToolTip(tr("Finite result value; scientific notation is accepted. Uses the result's units."));
     connect(input,&QLineEdit::textChanged,this,[this]()
+    {
+      changed(false);
+    });
+    connect(input,&QLineEdit::editingFinished,this,[this]()
     {
       changed();
     });
@@ -182,11 +200,19 @@ PostprocessorDisplayProperties::PostprocessorDisplayProperties(
   errorMessage->setTextFormat(Qt::PlainText);
   errorMessage->setWordWrap(true);
   layout->addWidget(errorMessage);
-  applyButton = new QPushButton(tr("Apply"),this);
-  applyButton->setObjectName("Postprocessor.Display.Apply");
-  applyButton->setToolTip(tr("Validate and apply display edits through journaled commands"));
-  layout->addWidget(applyButton,0,Qt::AlignRight);
+  defaultsButton = new QPushButton(tr("Defaults"),this);
+  defaultsButton->setObjectName("Postprocessor.Display.Defaults");
+  defaultsButton->setToolTip(tr("Restore default coloring and legend settings; retain the selected field"));
+  layout->addWidget(defaultsButton,0,Qt::AlignRight);
 
+  connect(palette,&QComboBox::activated,this,[this](int)
+  {
+    if (!loading)
+    {
+      paletteReset = true;
+      changed();
+    }
+  });
   for (auto* combo : {palette,contours,range})
   {
     connect(combo,&QComboBox::currentIndexChanged,this,[this]()
@@ -212,13 +238,23 @@ PostprocessorDisplayProperties::PostprocessorDisplayProperties(
       choose_color(button);
     });
   }
-  connect(applyButton,&QPushButton::clicked,this,[this]()
+  connect(defaultsButton,&QPushButton::clicked,this,[this]()
   {
+    Context current;
+    if (!current_context(current) || !same_context(current) || applying)
+    {
+      refresh();
+      return;
+    }
+    const auto source = Postprocessor::plot_quote(current.source_name);
     std::string error;
-    if (!apply(error))
+    if (source.isEmpty() || !submit || !submit(("post color defaults source "+source).toStdString(),error))
     {
       errorMessage->setText(QString::fromStdString(error));
+      return;
     }
+    available = false;
+    refresh();
   });
   refresh();
 }
@@ -374,11 +410,13 @@ void PostprocessorDisplayProperties::load(const Postprocessor::ResultColoring& c
   set_color(minimumColor,coloring.minimum.color);
   set_color(maximumColor,coloring.maximum.color);
   legend->setChecked(coloring.legend_visible);
+  rebuild_colors(coloring);
   dirty = false;
+  paletteReset = false;
   update_enabled();
 }
 
-void PostprocessorDisplayProperties::changed()
+void PostprocessorDisplayProperties::changed(bool commit)
 {
   if (loading)
   {
@@ -387,6 +425,22 @@ void PostprocessorDisplayProperties::changed()
   dirty = true;
   errorMessage->clear();
   update_enabled();
+  if (commit && !applying && !applyQueued)
+  {
+    applyQueued = true;
+    QTimer::singleShot(0,this,[this]()
+    {
+      applyQueued = false;
+      if (dirty && available && !loading && !applying)
+      {
+        std::string error;
+        if (!apply(error))
+        {
+          errorMessage->setText(QString::fromStdString(error));
+        }
+      }
+    });
+  }
 }
 
 void PostprocessorDisplayProperties::update_enabled()
@@ -399,7 +453,7 @@ void PostprocessorDisplayProperties::update_enabled()
   minimumColor->setEnabled(available && minimumEnabled->isChecked());
   maximumValue->setEnabled(available && maximumEnabled->isChecked());
   maximumColor->setEnabled(available && maximumEnabled->isChecked());
-  applyButton->setEnabled(available && dirty && !applying);
+  defaultsButton->setEnabled(available && !applying);
 }
 
 void PostprocessorDisplayProperties::choose_color(QPushButton* button)
@@ -425,6 +479,10 @@ void PostprocessorDisplayProperties::choose_color(QPushButton* button)
 bool PostprocessorDisplayProperties::draft(Postprocessor::ResultColoring& result,std::string& error) const
 {
   result = baseline.coloring;
+  if (paletteReset)
+  {
+    Postprocessor::reset_custom_palette(result);
+  }
   result.palette = static_cast<Postprocessor::ColorPalette>(palette->currentData().toInt());
   result.reversed = reversed->isChecked();
   if (contours->currentData().toBool()) {
@@ -502,7 +560,7 @@ bool PostprocessorDisplayProperties::commands(const Postprocessor::ResultColorin
     plan.push_back({"post "+operation+" source "+source,staged});
     return true;
   };
-  if (staged.palette != target.palette)
+  if (staged.palette != target.palette || (paletteReset && !staged.custom_palette.empty()))
   {
     const char* value = nullptr;
     switch (target.palette)
@@ -516,6 +574,7 @@ bool PostprocessorDisplayProperties::commands(const Postprocessor::ResultColorin
     if (value == nullptr || !append(std::string("color palette ")+value,[&](ResultColoring& c)
       {
         c.palette = target.palette;
+        Postprocessor::reset_custom_palette(c);
       }))
     {
       return false;
@@ -762,7 +821,7 @@ bool PostprocessorDisplayProperties::apply(std::string& error)
       {
         if (!current_context(current) || !same_context(current) || !Postprocessor::same_coloring(current.coloring,expected))
         {
-          error = "Display settings changed during Apply. Remaining commands were cancelled.";
+          error = "Display settings changed during the edit. Remaining commands were cancelled.";
           accepted = false;
           break;
         }
@@ -811,4 +870,77 @@ bool PostprocessorDisplayProperties::apply(std::string& error)
   {
   }
   return false;
+}
+
+void PostprocessorDisplayProperties::send_palette(const QString& operation)
+{
+  Context current;
+  if (!available || applying || !current_context(current) || !same_context(current) ||
+      !Postprocessor::same_coloring(current.coloring,baseline.coloring))
+  {
+    refresh();
+    return;
+  }
+  const auto source = Postprocessor::plot_quote(current.source_name);
+  std::string error;
+  if (source.isEmpty() || !submit || !submit(("post color "+operation+" source "+source).toStdString(),error))
+  {
+    errorMessage->setText(QString::fromStdString(error));
+    return;
+  }
+  available = false;
+  refresh();
+}
+void PostprocessorDisplayProperties::rebuild_colors(const Postprocessor::ResultColoring& coloring)
+{
+  const auto colors = Postprocessor::palette_endpoints(coloring);
+  if (colors == swatches)
+  {
+    return;
+  }
+  swatches = colors;
+  while (auto* item = paletteColors->takeAt(0))
+  {
+    item->widget()->hide();
+    item->widget()->deleteLater();
+    delete item;
+  }
+  for (std::size_t i = 0; i < colors.size(); ++i)
+  {
+    const auto rgb = colors[i];
+    const auto color = QColor::fromRgbF(rgb[0],rgb[1],rgb[2]);
+    auto* button = new QPushButton(this);
+    const bool high = i != 0;
+    QString label = tr("Low color");
+    QString endpoint = "low";
+    if (high)
+    {
+      label = tr("High color");
+      endpoint = "high";
+    }
+    QString textColor = "#000000";
+    if (.2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2] < .5)
+    {
+      textColor = "#FFFFFF";
+    }
+    button->setText(label);
+    button->setStyleSheet("background-color:"+color.name()+";color:"+textColor+";");
+    button->setToolTip(color.name());
+    paletteColors->addWidget(button,0,static_cast<int>(i));
+    connect(button,&QPushButton::clicked,this,[this,endpoint,color]()
+    {
+      const auto owner = baseline;
+      const auto chosen = QColorDialog::getColor(color,this,tr("Result palette color"));
+      Context current;
+      if (!chosen.isValid() || !current_context(current) || owner.source_id != current.source_id ||
+          owner.view_id != current.view_id || owner.representation_id != current.representation_id || owner.data != current.data ||
+          !Postprocessor::same_coloring(owner.coloring,current.coloring))
+      {
+        return;
+      }
+      const QString operation = "palette "+endpoint+" color "+QString::number(chosen.redF(),'g',17)+
+        " "+QString::number(chosen.greenF(),'g',17)+" "+QString::number(chosen.blueF(),'g',17);
+      send_palette(operation);
+    });
+  }
 }

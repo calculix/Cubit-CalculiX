@@ -12,13 +12,13 @@ bool PostprocessorApplicationInterface::show_properties(const std::string& page,
     error = "Properties require the Postprocessor GUI.";
     return false;
   }
-  if (page != "source" && page != "legend" && page != "clip" && page != "section" && page != "threshold" && page != "close" && page != "treeids-on" && page != "treeids-off")
+  if (page != "source" && page != "legend" && page != "vectors" && page != "vectorlegend" && page != "clip" && page != "section" && page != "threshold" && page != "explosion" && page != "close" && page != "treeids-on" && page != "treeids-off")
   {
     error = "Unknown properties page.";
     return false;
   }
   std::string id;
-  if (page == "source" || (page == "legend" && !source.empty()))
+  if (page == "source" || ((page == "legend" || page == "vectors" || page == "vectorlegend") && !source.empty()))
   {
     id = core.source_id_from_name(source);
     if (id.empty())
@@ -27,7 +27,7 @@ bool PostprocessorApplicationInterface::show_properties(const std::string& page,
       return false;
     }
   }
-  if (page == "legend" && !id.empty() && core.session().active_source_id != id && !core.select_source(id,error))
+  if ((page == "legend" || page == "vectors" || page == "vectorlegend") && !id.empty() && core.session().active_source_id != id && !core.select_source(id,error))
   {
     return false;
   }

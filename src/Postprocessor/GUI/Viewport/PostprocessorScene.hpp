@@ -32,6 +32,7 @@ public:
     std::string representation_id;
     std::string source_id;
     std::array<double,4> frame;
+    bool vector = false;
   };
   // x/y are normalized bottom-left viewport coordinates.
   std::optional<LegendHit> legend_at(double x,double y) const;
@@ -71,6 +72,8 @@ private:
   std::unique_ptr<PostprocessorScaleOverlay> scaleOverlay;
   std::string viewId;
   std::optional<std::uint64_t> geometryRevision;
+  std::optional<double> pulseElapsed;
+  std::uint64_t pulseSettingsRevision = 0;
   std::optional<std::array<double, 6>> visibleBounds;
   std::optional<Postprocessor::CameraDefinition> appliedCamera;
   std::map<std::string, std::shared_ptr<RepresentationActors>> displays;

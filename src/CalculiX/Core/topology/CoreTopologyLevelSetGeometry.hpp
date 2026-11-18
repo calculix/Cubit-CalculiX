@@ -2,6 +2,7 @@
 #define CORETOPOLOGYLEVELSETGEOMETRY_HPP
 
 #include "CoreTopologyLevelSetStructs.hpp"
+#include "CoreTopologyLevelSetIntegrationDiagnostics.hpp"
 #include <array>
 #include <functional>
 #include <string>
@@ -41,6 +42,8 @@ public:
    * @param error Optional error destination. Non-null suppresses Cubit messages
    * throughout numerical settings/interpolation/quadrature calls. The caller
    * clears it before a request and reports failures on the calling thread.
+   * @param diagnostics Optional refinement comparisons, cleared on entry. Only
+   * exhausting valid integration estimates sets refinement_limit_reached.
    * @return False with cleared geometry on invalid data, unresolved integration or interruption.
    * @note Positive phi is solid; phi=0 is the interface. Uses a compact C1
    * Heaviside with dimensionless half-width settings.interface_width. Higher-order
@@ -53,7 +56,7 @@ public:
    * This is an error estimate, not a certified integration or element-validity
    * bound. It does not split/remesh Cubit elements or store a mesh snapshot.
    */
-  static bool evaluate_element(const std::string& calculix_type, int cubit_type, const std::vector<std::array<double, 3>>& node_coordinates, const std::vector<double>& node_values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll = {}, CoreTopologyLevelSetQuadrature* quadrature = nullptr, std::string* error = nullptr);
+  static bool evaluate_element(const std::string& calculix_type, int cubit_type, const std::vector<std::array<double, 3>>& node_coordinates, const std::vector<double>& node_values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll = {}, CoreTopologyLevelSetQuadrature* quadrature = nullptr, std::string* error = nullptr, CoreTopologyLevelSetIntegrationDiagnostics::Result* diagnostics = nullptr);
 };
 
 #endif

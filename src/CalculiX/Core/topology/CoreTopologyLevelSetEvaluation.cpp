@@ -9,6 +9,7 @@
 #include "CoreTopologyStructs.hpp"
 #include "CubitMessage.hpp"
 #include <QScopeGuard>
+#include <QByteArray>
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -77,9 +78,61 @@ bool valid_domain(const std::map<int, bool>& preserved, const std::map<int, doub
   return true;
 }
 
+void capture_integration_failure(const TopologyLevelSetDesign& design, const char* phase,
+  const std::vector<CoreTopologyLevelSetPipeline::Element>& batch)
+{
+  const auto directory = qgetenv("CUBITSIM_TOPOLOGY_FAILURE_DIRECTORY");
+  if (directory.isEmpty())
+  {
+    return;
+  }
+  // integrate() drained all workers before exposing the bounded batch here.
+  // Only a genuine exhausted refinement is captured, not a cancellation.
+  try
+  {
+    for (const auto& input : batch)
+    {
+      if (!input.diagnostics.refinement_limit_reached)
+      {
+        continue;
+      }
+      CoreTopologyLevelSetIntegrationDiagnostics::Capture capture;
+      capture.iteration_id = design.iteration_id;
+      capture.source_iteration = design.source_iteration;
+      capture.phase = phase;
+      capture.element_id = input.id;
+      capture.calculix_type = input.calculix_type;
+      capture.cubit_type = input.cubit_type;
+      capture.nodes = input.nodes;
+      capture.coordinates = input.coordinates;
+      capture.values = input.values;
+      capture.volume = input.volume;
+      capture.preserved = input.preserved;
+      capture.settings = design.settings;
+      capture.diagnostics = input.diagnostics;
+      capture.error = input.error;
+      std::string path;
+      std::string error;
+      if (CoreTopologyLevelSetIntegrationDiagnostics::write_capture(directory.toStdString(), capture, path, error))
+      {
+        PRINT_INFO("Level-set integration failure captured: %s\n", path.c_str());
+      }
+      else
+      {
+        PRINT_WARNING("Unable to capture integration failure: %s\n", error.c_str());
+      }
+      break;
+    }
+  }
+  catch (...)
+  {
+    PRINT_WARNING("Unable to capture integration failure; original integration error retained.\n");
+  }
+}
+
 // Only this coordinator accesses Cubit and the transient source cache. A batch
 // owns its queried inputs until all numerical workers have completed.
-bool evaluate_elements(const TopologyLevelSetDesign& design, const std::map<int, bool>& preserved,
+bool evaluate_elements(const TopologyLevelSetDesign& design, const char* phase, const std::map<int, bool>& preserved,
   const std::map<int, double>& volumes, CoreTopologyLevelSetGeometryCache* cache,
   CoreTopologyProgress& progress, CoreTopologyLevelSetPipeline& pipeline, double& query_ms, double& cache_ms,
   const std::function<bool(const CoreTopologyLevelSetPipeline::Element&)>& append)
@@ -151,6 +204,7 @@ bool evaluate_elements(const TopologyLevelSetDesign& design, const std::map<int,
       std::string error;
       if (!pipeline.integrate(batch, design.settings, poll, error))
       {
+        capture_integration_failure(design, phase, batch);
         PRINT_ERROR("Level-set integration failed: %s\n", error.c_str());
         return false;
       }
@@ -338,7 +392,7 @@ bool CoreTopologyLevelSetEvaluation::build_geometry(TopologyLevelSetDesign& desi
     current_element = -1;
     return true;
   };
-  if (!evaluate_elements(design, preserved, element_volumes, cache, progress, pipeline, query_ms, cache_ms, append))
+  if (!evaluate_elements(design, "geometry", preserved, element_volumes, cache, progress, pipeline, query_ms, cache_ms, append))
   {
     return false;
   }
@@ -558,7 +612,7 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
     current_element = -1;
     return true;
   };
-  if (!evaluate_elements(design, preserved, element_volumes, cache, progress, pipeline, query_ms, cache_ms, append))
+  if (!evaluate_elements(design, "sensitivities", preserved, element_volumes, cache, progress, pipeline, query_ms, cache_ms, append))
   {
     return false;
   }

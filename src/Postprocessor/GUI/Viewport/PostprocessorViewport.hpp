@@ -37,6 +37,9 @@ public:
   bool camera_command_active() const noexcept;
   bool prepare_animation_step();
   bool animation_rotation_ready() const;
+  bool explosion_pulse_ready() const;
+  void request_explosion_pulse();
+  void set_explosion_pulse_step(std::function<void()> step);
   void prepare_model_reset();
 
 protected:
@@ -48,6 +51,7 @@ protected:
 private:
   void queue_render();
   void request_frame();
+  void schedule_frame();
   void render_frame();
   void on_frame_presented();
   void render_scene();
@@ -81,12 +85,16 @@ private:
   std::string lastError;
   std::string lastWarning;
   std::optional<std::uint64_t> renderedGeometry;
+  std::optional<std::uint64_t> renderedPulseSettings;
   std::optional<std::uint64_t> renderedCamera;
   std::optional<std::uint64_t> renderedSelection;
   Postprocessor::UserOptions renderedOptions;
   bool timingReportQueued = false;
   bool renderQueued = false;
   bool frameDirty = false;
+  bool pulseFramePending = false;
+  bool presentingPulseOnly = false;
+  std::function<void()> explosionPulseStep;
   bool awaitingPresentation = false;
   bool renderingFrame = false;
   bool modelResetPending = false;

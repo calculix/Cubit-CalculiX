@@ -54,14 +54,14 @@ std::optional<Postprocessor::ProbeResult> PostprocessorApplicationInterface::pro
 }
 
 bool PostprocessorApplicationInterface::pick_entity(const std::string& name, const DatasetSelector& selector,
-  Postprocessor::EntityKind kind, std::int64_t id, std::optional<std::int64_t> ip, std::string& error) {
+  Postprocessor::EntityKind kind, std::int64_t id, std::optional<std::int64_t> ip, std::string& error, std::optional<std::int64_t> owner) {
   std::string source = core.session().active_source_id;
   if (!name.empty()) {
     source = core.source_id_from_name(name);
   }
   const auto dataset = resolve_dataset(source,selector,error);
   return dataset && core.pick_entity(core.session().active_view_id,
-    Postprocessor::EntityReference{source,*dataset,kind,id,ip},error);
+    Postprocessor::EntityReference{source,*dataset,kind,id,ip,owner},error);
 }
 
 std::optional<std::size_t> PostprocessorApplicationInterface::resolve_dataset(const std::string& source,

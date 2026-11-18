@@ -2,6 +2,7 @@
 #include "CalculiXJobInputBundle.hpp"
 #include "CalculiXJobSetupSnapshot.hpp"
 #include <memory>
+#include "Framework/MeshQuality/MeshQualitySnapshot.hpp"
 #include <map>
 
 class CalculiXJobRunRecord
@@ -27,4 +28,6 @@ public:
   CalculiXJobInputBundle input;
   std::shared_ptr<const CalculiXJobSetupSnapshot> setup;
   std::string setupUnavailableReason;
+  std::shared_ptr<const MeshQualitySnapshot> quality;
+  std::string qualityUnavailableReason;
 };

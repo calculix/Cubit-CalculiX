@@ -10,6 +10,7 @@
 #include "../plots/PlotCodec.hpp"
 #include "../annotations/AnnotationCodec.hpp"
 #include "../views/CameraOperations.hpp"
+#include "../explosion/ExplosionCodec.hpp"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QDir>
@@ -298,6 +299,7 @@ namespace Postprocessor
       const auto& view = item.second;
       Object object{{"id",q(view.id)},{"name",q(view.name)},{"scene_unit",q(view.scene_unit)},{"scale_visible",view.scale_visible},{"pick_mode",static_cast<int>(view.selection.mode)}};
       object.insert("annotations",annotations_to_json(view.annotations));
+      object.insert("explosion",explosion_to_json(view.explosion));
       object.insert("plot",[&]() -> QJsonValue {
         if (view.plot_id) {
           return QJsonValue(q(*view.plot_id));
@@ -362,6 +364,13 @@ namespace Postprocessor
           }
         }()},
         {"minimum",limit_json(color.minimum)},{"maximum",limit_json(color.maximum)}};
+      Array paletteStops;
+      for (const auto& rgb : color.custom_palette)
+      {
+        paletteStops.append(vector_json(rgb));
+      }
+      coloring.insert("custom_palette",paletteStops);
+      coloring.insert("palette_hsv",color.palette_hsv);
       if (color.legend_position)
       {
         coloring.insert("legend_position",vector_json(*color.legend_position));
@@ -562,6 +571,11 @@ namespace Postprocessor
       {
         return false;
       }
+      std::string explosionError;
+      if (!explosion_from_json(object.value("explosion"),view.explosion,explosionError))
+      {
+        return false;
+      }
       int mode = -1;
       if (!text(object,"id",view.id) || !text(object,"name",view.name) || !integer(object,"pick_mode",mode) || mode < 0 || mode > 2)
       {
@@ -727,6 +741,28 @@ namespace Postprocessor
           !limit_read(color.value("minimum"),display.coloring.minimum) || !limit_read(color.value("maximum"),display.coloring.maximum))
       {
         return false;
+      }
+      if (color.contains("palette_hsv") && !color.value("palette_hsv").isBool())
+      {
+        return false;
+      }
+      display.coloring.palette_hsv = color.value("palette_hsv").toBool();
+      if (color.contains("custom_palette"))
+      {
+        const auto stops = color.value("custom_palette").toArray();
+        if (!color.value("custom_palette").isArray() || stops.size() > static_cast<int>(ColoringDefaults::maximum_bands))
+        {
+          return false;
+        }
+        for (const auto& stop : stops)
+        {
+          std::array<double,3> rgb;
+          if (!vector_read(stop,rgb))
+          {
+            return false;
+          }
+          display.coloring.custom_palette.push_back(rgb);
+        }
       }
       display.coloring.palette = static_cast<ColorPalette>(palette); display.coloring.range_mode = static_cast<ColorRangeMode>(range);
       // A saved null explicitly means continuous, independent of new defaults.
@@ -924,6 +960,36 @@ namespace Postprocessor
         if (!framework_units().to_si(1,item.second.scene_unit,SimUnits::Length,SimUnits::UnitRole::Linear,ignored,error) ||
             !std::isfinite(ignored) || ignored <= 0)
         {
+          return false;
+        }
+      }
+      const auto& explosion = item.second.explosion;
+      if (!valid_explosion(explosion,error) || (!explosion.coordinate_unit.empty() && explosion.coordinate_unit != item.second.scene_unit))
+      {
+        error = "Invalid explosion settings or scene length basis.";
+        return false;
+      }
+      for (const auto& source : explosion.sources)
+      {
+        if (state.sources.count(source) == 0)
+        {
+          error = "An explosion source is missing.";
+          return false;
+        }
+      }
+      for (const auto& piece : explosion.placements)
+      {
+        if (state.sources.count(piece.source_id) == 0)
+        {
+          error = "An exploded piece source is missing.";
+          return false;
+        }
+      }
+      for (const auto& mesh : explosion.meshes)
+      {
+        if (state.sources.count(mesh.first) == 0)
+        {
+          error = "A mesh explosion source is missing.";
           return false;
         }
       }

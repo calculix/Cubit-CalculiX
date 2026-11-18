@@ -434,7 +434,7 @@ namespace Postprocessor
   {
     return change_filter(name,"threshold",state.active_view_id,{},"",error,&requested);
   }
-  bool PostprocessorCore::evaluate_output(const Representation& display,std::shared_ptr<const EvaluatedOutput>& output,std::string& error) const
+  bool PostprocessorCore::evaluate_unexploded_output(const Representation& display,std::shared_ptr<const EvaluatedOutput>& output,std::string& error) const
   {
     error.clear();
     const auto source = result_data(output_source(display.input));
@@ -543,6 +543,25 @@ namespace Postprocessor
 
   std::shared_ptr<vtkPolyData> PostprocessorCore::filtered_entity_edges(const Representation& display,const EntityReference& entity,std::string& error) const
   {
+    if (explosion_active(display))
+    {
+      std::shared_ptr<const EvaluatedOutput> output;
+      if (!evaluate_output(display,output,error))
+      {
+        return {};
+      }
+      for (const auto& part : output->parts)
+      {
+        if (part.dataset == entity.dataset_id)
+        {
+          const auto indices = entity_indices(part.mesh.get(),entity,error);
+          FilterDefinition bypass;
+          bypass.enabled = false;
+          return filter_parent_edges(part.mesh.get(),bypass,output->data->increments[display.increment_index],part.dataset,indices,error);
+        }
+      }
+      return {};
+    }
     const auto filter = state.filters.find(display.input.object_id);
     const auto data = result_data(entity.source_id);
     if (filter == state.filters.end() || !data || display.increment_index >= data->increments.size())

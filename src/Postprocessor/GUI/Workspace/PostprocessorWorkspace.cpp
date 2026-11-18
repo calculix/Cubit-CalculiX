@@ -3,6 +3,9 @@
 #include <cctype>
 #include "Postprocessor/GUI/Properties/PostprocessorDisplayProperties.hpp"
 #include "PostprocessorWorkspace.hpp"
+#include "Postprocessor/GUI/VectorPlot/PostprocessorVectorLegendProperties.hpp"
+#include "Postprocessor/GUI/Explosion/PostprocessorExplosionControls.hpp"
+#include "Postprocessor/GUI/Explosion/PostprocessorExplosionPlayback.hpp"
 #include "Postprocessor/GUI/VectorPlot/PostprocessorVectorControls.hpp"
 #include "Postprocessor/GUI/Filters/Clip/PostprocessorClipControls.hpp"
 #include "Postprocessor/GUI/Filters/Section/PostprocessorSectionControls.hpp"
@@ -177,6 +180,7 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       if (active && active->user_options().journalNavigation) {
         this->submit(command);
       } else if (active) {
+        const QScopedValueRollback<bool> guard(foregroundCommand,true);
         viewport->cancel_interaction();
         std::string error;
         if (!dispatch || !dispatch(command.toUtf8().toStdString(),error)) {
@@ -189,6 +193,7 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       refresh();
     });
   }, navigationToolbar, [this,dispatch = silent](std::size_t frame) {
+    const QScopedValueRollback<bool> guard(foregroundCommand,true);
     const auto command = frame_command(frame);
     std::string error;
     const bool accepted = !command.isEmpty() && dispatch && dispatch(command.toUtf8().toStdString(),error);
@@ -307,8 +312,8 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
         refresh();
       });
       return accepted;
-    },deformationToolbar);
-  deformationToolbar->addWidget(vectorControls);
+    },this);
+  vectorControls->hide();
 
   auto* navigationRow = new QWidget(navigationDock);
   navigationRow->setObjectName("Postprocessor.NavigationRow");
@@ -446,6 +451,10 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
       colorControls->apply_field(source,index);
     });
   };
+  tree->activate_component = [this](const QString& source, std::size_t index, const QString& component, bool magnitude)
+  {
+    colorControls->apply_field(source,index,component.toUtf8().toStdString(),magnitude);
+  };
   resultsDock->setWidget(tree);
   resultsDock->hide();
 
@@ -529,6 +538,19 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   legendScroll->setWidget(legendProperties);
   legendEditorPage = legendScroll;
   propertiesPages->addWidget(legendEditorPage);
+  auto* vectorScroll = new QScrollArea(propertiesPages);
+  vectorScroll->setWidgetResizable(true);
+  vectorScroll->setFrameShape(QFrame::NoFrame);
+  vectorScroll->setWidget(vectorControls);
+  vectorEditorPage = vectorScroll;
+  propertiesPages->addWidget(vectorEditorPage);
+  vectorLegendProperties = new PostprocessorVectorLegendProperties(this->application,submitCommand,propertiesPages);
+  auto* vectorLegendScroll = new QScrollArea(propertiesPages);
+  vectorLegendScroll->setWidgetResizable(true);
+  vectorLegendScroll->setFrameShape(QFrame::NoFrame);
+  vectorLegendScroll->setWidget(vectorLegendProperties);
+  vectorLegendEditorPage = vectorLegendScroll;
+  propertiesPages->addWidget(vectorLegendEditorPage);
   propertiesDock->setWidget(propertiesPages);
   propertiesDock->hide();
 
@@ -757,6 +779,38 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     });
   },fieldToolbar);
   fieldToolbar->addWidget(colorControls);
+  QIcon vectorIcon;
+  if (const auto app = this->application.lock())
+  {
+    vectorIcon = PostprocessorIconLoader::load(app->active_icons_path(),"PostprocessorVectors");
+  }
+  vectorAction = fieldToolbar->addAction(vectorIcon,tr("Vectors"));
+  vectorAction->setCheckable(true);
+  vectorAction->setToolTip(tr("Toggle vectors and open vector settings"));
+  connect(vectorAction,&QAction::triggered,this,[this](bool on)
+  {
+    std::string error;
+    if (const auto app = this->application.lock())
+    {
+      const auto settings = app->vector_plot({},error);
+      if (settings)
+      {
+        if (on)
+        {
+          this->submit("post vector on");
+        }
+        else
+        {
+          this->submit("post vector off");
+        }
+      }
+    }
+    if (!show_properties("vectors",{},error))
+    {
+      PRINT_ERROR("Cannot open vector settings: %s\n",error.c_str());
+    }
+    refresh();
+  });
   fieldToolbar->hide();
 
   auto* view = new QMenu(tr("View"), this);
@@ -814,6 +868,73 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
   thresholdScroll->setWidget(thresholdControls);
   thresholdEditorPage = thresholdScroll;
   propertiesPages->addWidget(thresholdEditorPage);
+  const auto queueExplosionEdit = [this](const QString& command,bool preview)
+  {
+    ++pendingExplosionEdits;
+    if (explosionPlayback)
+    {
+      explosionPlayback->pause_clock();
+    }
+    const auto generation = explosionEditGeneration;
+    QTimer::singleShot(0,this,[this,command,preview,generation]()
+    {
+      if (generation != explosionEditGeneration)
+      {
+        --pendingExplosionEdits;
+        return;
+      }
+      if (preview)
+      {
+        std::string error;
+        if (silentCommand && !silentCommand(command.toUtf8().toStdString(),error))
+        {
+          PRINT_ERROR("Cannot preview explosion: %s\n",error.c_str());
+        }
+      }
+      else
+      {
+        this->submit(command);
+      }
+      refresh();
+      viewport->request_redraw();
+      --pendingExplosionEdits;
+    });
+  };
+  explosionControls = new PostprocessorExplosionControls(this->application,
+    [queueExplosionEdit](const QString& command)
+    {
+      queueExplosionEdit(command,false);
+    },
+    [queueExplosionEdit](const QString& command)
+    {
+      queueExplosionEdit(command,true);
+    },propertiesPages);
+  explosionPlayback = new PostprocessorExplosionPlayback(this->application,[this](const std::string& command,std::string& error)
+  {
+    // Suppress command-completion panel/tree refreshes for runtime-only ticks,
+    // using the same guard as continuous camera rotation.
+    const QScopedValueRollback<bool> guard(animationCameraCommand,true);
+    return silentCommand && silentCommand(command,error);
+  },[this]()
+  {
+    return viewport->explosion_pulse_ready();
+  },[this]()
+  {
+    return foregroundCommand || refreshingWorkspace || pendingExplosionEdits != 0 || animationCameraCommand;
+  },[this]()
+  {
+    viewport->request_explosion_pulse();
+  },this);
+  viewport->set_explosion_pulse_step([this]()
+  {
+    explosionPlayback->advance_for_render();
+  });
+  auto* explosionScroll = new QScrollArea(propertiesPages);
+  explosionScroll->setWidgetResizable(true);
+  explosionScroll->setFrameShape(QFrame::NoFrame);
+  explosionScroll->setWidget(explosionControls);
+  explosionEditorPage = explosionScroll;
+  propertiesPages->addWidget(explosionEditorPage);
   if (const auto app = this->application.lock())
   {
     app->set_properties_handler([this](const std::string& page,const std::string& source,std::string& error)
@@ -838,6 +959,53 @@ PostprocessorWorkspace::PostprocessorWorkspace(QMainWindow* host,
     connect(action,&QAction::triggered,this,[this,page]()
     {
       this->submit(QString::fromStdString("post properties "+page));
+    });
+  }
+  for (bool mesh : {false,true})
+  {
+    QString title = tr("Explode components");
+    std::string file = "PostprocessorExplode";
+    if (mesh)
+    {
+      title = tr("Explode mesh");
+      file = "PostprocessorExplodeMesh";
+    }
+    QIcon icon;
+    if (const auto app = this->application.lock())
+    {
+      icon = PostprocessorIconLoader::load(app->active_icons_path(),file);
+    }
+    auto* action = toolbar->addAction(icon,title);
+    action->setCheckable(true);
+    action->setToolTip(tr("Toggle explosion and open its properties"));
+    if (mesh)
+    {
+      explodeMeshAction = action;
+    }
+    else
+    {
+      explodeAction = action;
+    }
+    connect(action,&QAction::triggered,this,[this,mesh](bool on)
+    {
+      QString command = "post explode components ";
+      if (mesh)
+      {
+        command = "post explode mesh ";
+      }
+      QString state = "off";
+      if (on)
+      {
+        state = "on";
+      }
+      this->submit(command+state);
+      std::string error;
+      if (!show_properties("explosion",{},error))
+      {
+        PRINT_ERROR("Cannot open explosion properties: %s\n",error.c_str());
+      }
+      panelRevision.reset();
+      refresh();
     });
   }
   const char* viewNames[] = {"Front","Back","Top","Bottom","Left","Right","Iso","Ortho","Perspective"};
@@ -905,6 +1073,11 @@ PostprocessorWorkspace::~PostprocessorWorkspace() {
 }
 
 void PostprocessorWorkspace::submit(const QString& command) {
+  const QScopedValueRollback<bool> guard(foregroundCommand,true);
+  if (explosionPlayback)
+  {
+    explosionPlayback->pause_clock();
+  }
   viewport->cancel_interaction();
   plotPane->cancel();
   std::string error;
@@ -1046,20 +1219,47 @@ bool PostprocessorWorkspace::camera_command_active() const noexcept
 
 void PostprocessorWorkspace::prepare_model_reset()
 {
+  ++explosionEditGeneration;
   // Model notifications must not submit nested Cubit commands or restore previews.
   navigation->reset_navigation();
   deformationControls->discard_pending();
   clipControls->discard_pending();
   sectionControls->discard_pending();
+  explosionControls->discard_pending();
   viewport->prepare_model_reset();
   panelRevision.reset();
 }
 
 void PostprocessorWorkspace::refresh() {
+  const QScopedValueRollback<bool> guard(refreshingWorkspace,true);
   annotationControls->refresh();
   clipControls->refresh();
   sectionControls->refresh();
   thresholdControls->refresh();
+  explosionControls->refresh();
+  vectorLegendProperties->refresh();
+  bool vectorsEnabled = false;
+  if (const auto app = application.lock())
+  {
+    std::string vectorError;
+    const auto vectors = app->vector_plot({},vectorError);
+    vectorsEnabled = vectors && vectors->enabled;
+    const auto view = app->session().views.find(app->session().active_view_id);
+    if (view != app->session().views.end())
+    {
+      const QSignalBlocker components(explodeAction);
+      const QSignalBlocker mesh(explodeMeshAction);
+      explodeAction->setChecked(view->second.explosion.enabled);
+      explodeMeshAction->setChecked(std::any_of(view->second.explosion.meshes.begin(),view->second.explosion.meshes.end(),[](const auto& entry)
+      {
+        return entry.second.enabled;
+      }));
+    }
+  }
+  {
+    const QSignalBlocker blocker(vectorAction);
+    vectorAction->setChecked(vectorsEnabled);
+  }
   try {
     const auto active = application.lock();
 
@@ -1369,6 +1569,18 @@ bool PostprocessorWorkspace::show_properties(const std::string& page,const std::
     selected = properties;
     title = tr("Source properties");
   }
+  else if (page == "vectors")
+  {
+    selected = vectorEditorPage;
+    vectorControls->refresh();
+    title = tr("Vector settings");
+  }
+  else if (page == "vectorlegend")
+  {
+    selected = vectorLegendEditorPage;
+    vectorLegendProperties->refresh();
+    title = tr("Vector legend properties");
+  }
   else if (page == "legend")
   {
     selected = legendEditorPage;
@@ -1386,6 +1598,12 @@ bool PostprocessorWorkspace::show_properties(const std::string& page,const std::
     selected = thresholdEditorPage;
     thresholdControls->refresh();
     title = tr("Threshold properties");
+  }
+  else if (page == "explosion")
+  {
+    selected = explosionEditorPage;
+    explosionControls->refresh();
+    title = tr("Explosion properties");
   }
   else if (page == "section")
   {

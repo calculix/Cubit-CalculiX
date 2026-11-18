@@ -28,7 +28,7 @@ std::vector<std::string> PostVectorCommand::get_syntax_help()
 }
 std::vector<std::string> PostVectorCommand::get_help()
 {
-  return {"Draw declared spatial XYZ vectors in the active view. Select a field before enabling; off retains settings.",
+  return {"Draw declared spatial XYZ vectors in the active view. Enabling uses the first eligible field when none is selected. Turning vectors off retains settings.",
     "Arrow tails follow displayed geometry, including deformation and filters. Components remain in global directions.",
     "Automatic length is 5% of the source diagonal. Proportional lengths use the all-frame maximum magnitude.",
     "Default: off, proportional, surface samples, at most 2000 arrows, magnitude colors. Maximum zero selects all; every N uses stable identity sampling."};

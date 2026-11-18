@@ -18,6 +18,7 @@ std::vector<std::string> PostLabelCommand::get_syntax()
   const std::string view = " [view <string:type='quoted',number='1',label='view_id'>]";
   const std::string tail = " [dataset {<value:label='dataset_id'>|<string:type='quoted',number='1',label='dataset_name'>}]"
     " [source <string:type='quoted',number='1',label='source_name'>]"
+    " [owner <string:type='quoted',number='1',label='owner_element'>]"
     " [field <string:type='quoted',number='1',label='field_name'>]"+Postprocessor::field_qualifier_syntax()+
     " [component {magnitude|<string:type='quoted',number='1',label='component_name'>}]"+view;
   return {"post label add ["+name+"] node "+id+tail,
@@ -129,7 +130,19 @@ bool PostLabelCommand::execute(CubitCommandData& data)
       {
         component = "magnitude";
       }
-      accepted = active->add_label(view,name,source,dataset,kind,id,ip,field,component,magnitude,assigned,error,qualifiers);
+      std::optional<std::int64_t> owner;
+      if (data.get_string("owner_element",exact))
+      {
+        std::int64_t value = -1;
+        const auto parsed = std::from_chars(exact.data(),exact.data()+exact.size(),value);
+        if (parsed.ec != std::errc{} || parsed.ptr != exact.data()+exact.size() || value < 0)
+        {
+          PRINT_ERROR("Display owner requires a nonnegative decimal element ID.\n");
+          return false;
+        }
+        owner = value;
+      }
+      accepted = active->add_label(view,name,source,dataset,kind,id,ip,field,component,magnitude,assigned,error,qualifiers,owner);
     }
     else
     {

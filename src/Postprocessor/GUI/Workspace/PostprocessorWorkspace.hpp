@@ -16,6 +16,8 @@ class PostprocessorApplicationInterface;
 class PostprocessorClipControls;
 class PostprocessorSectionControls;
 class PostprocessorThresholdControls;
+class PostprocessorExplosionControls;
+class PostprocessorExplosionPlayback;
 class PostprocessorAnnotationControls;
 class PostprocessorResultsTree;
 class PostprocessorProperties;
@@ -33,6 +35,7 @@ class PostprocessorFrameNavigation;
 class PostprocessorColorControls;
 class PostprocessorDeformationControls;
 class PostprocessorVectorControls;
+class PostprocessorVectorLegendProperties;
 class PostprocessorPickControls;
 class PostprocessorToolbar;
 class PostprocessorSourceControls;
@@ -62,6 +65,10 @@ public:
 
 private:
   bool animationCameraCommand = false;
+  bool foregroundCommand = false;
+  bool refreshingWorkspace = false;
+  unsigned int pendingExplosionEdits = 0;
+  std::uint64_t explosionEditGeneration = 0;
   QPointer<QProgressDialog> animationProgress;
   void animation_capture_dialog();
   void show_animation_progress();
@@ -71,9 +78,18 @@ private:
   QStackedWidget* propertiesPages = nullptr;
   QWidget* emptyProperties = nullptr;
   QWidget* legendEditorPage = nullptr;
+  QWidget* vectorEditorPage = nullptr;
+  QWidget* vectorLegendEditorPage = nullptr;
+  PostprocessorVectorLegendProperties* vectorLegendProperties = nullptr;
+  QAction* explodeAction = nullptr;
+  QAction* vectorAction = nullptr;
+  QAction* explodeMeshAction = nullptr;
   QWidget* clipEditorPage = nullptr;
   QWidget* sectionEditorPage = nullptr;
   QWidget* thresholdEditorPage = nullptr;
+  QWidget* explosionEditorPage = nullptr;
+  PostprocessorExplosionControls* explosionControls = nullptr;
+  PostprocessorExplosionPlayback* explosionPlayback = nullptr;
   PostprocessorDisplayProperties* legendProperties = nullptr;
   std::string propertiesPage;
   std::string inspectedSource;

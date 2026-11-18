@@ -59,6 +59,11 @@ namespace Postprocessor
       integrationPoint = ip;
     }
     entity = EntityReference{source_id, dataset, kind, id, integrationPoint};
+    std::int64_t owner = -1;
+    if (original_id(attributes->GetArray("PostprocessorExplosionElement"),index,owner))
+    {
+      entity.display_element = owner;
+    }
     return true;
   }
 
@@ -92,6 +97,14 @@ namespace Postprocessor
       if (!original_id(ids,static_cast<std::size_t>(i),id) || id != entity.entity_id ||
           (entity.kind == EntityKind::IntegrationPoint && (!entity.integration_point ||
             !original_id(ipIds,static_cast<std::size_t>(i),ip) || ip != *entity.integration_point))) {
+        continue;
+      }
+      // Ignore display ownership when looking up the original solver dataset.
+      auto* owners = attributes->GetArray("PostprocessorExplosionElement");
+      std::int64_t owner = -1;
+      if (entity.display_element && owners &&
+          (!original_id(owners,static_cast<std::size_t>(i),owner) || owner != *entity.display_element))
+      {
         continue;
       }
       result.push_back(static_cast<std::size_t>(i));

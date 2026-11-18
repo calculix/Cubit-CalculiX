@@ -8,6 +8,7 @@
 #include "../plots/PlotData.hpp"
 #include "../capture/CaptureDefinition.hpp"
 #include "../filters/FilterRuntime.hpp"
+#include "../explosion/ExplosionRuntime.hpp"
 #include "../tables/ResultTableSelector.hpp"
 #include "../representations/ResultFieldSelector.hpp"
 #include "../representations/AnimationRotationRuntime.hpp"
@@ -36,6 +37,11 @@ namespace Postprocessor
   {
   public:
     PostprocessorCore() = default;
+    bool change_explosion(const std::string& view,const std::vector<std::string>& sources,const std::string& action,
+      double value,const std::string& option,const std::string& block,const std::array<double,3>& offset,
+      const std::string& unit,std::string& error);
+    bool explosion_active(const Representation& display) const;
+
     // Null for a live workspace; private capture applications carry an immutable
     // presentation override. Source units and geometry remain untouched.
     const SimUnits::WorkspaceUnitContext* captured_units() const noexcept;
@@ -177,6 +183,10 @@ namespace Postprocessor
     bool close_all_sources(std::string& error);
 
   private:
+    std::shared_ptr<const ExplosionReference> explosion_reference(const std::string& source,std::string& error) const;
+    bool evaluate_unexploded_output(const Representation& display,std::shared_ptr<const EvaluatedOutput>& output,std::string& error) const;
+    mutable std::map<std::string,std::shared_ptr<ExplosionReference>> explosion_references;
+    mutable std::map<std::string,CachedExplosionOutput> explosion_cache;
     std::vector<EvaluatedAnnotation> native_annotations(const std::string& view_id) const;
     bool evaluate_plot(const PlotDefinition& definition, PlotData& output, std::string& error) const;
     std::optional<SimUnits::WorkspaceUnitContext> captureUnits;

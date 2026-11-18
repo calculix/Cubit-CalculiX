@@ -4,7 +4,7 @@
 #include <memory>
 #include "Postprocessor/Core/representations/ResultFieldSelector.hpp"
 class PostprocessorApplicationInterface;
-class QToolButton;
+class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
 class QSpinBox;
@@ -21,7 +21,7 @@ private:
   bool refreshing = false;
   std::string source;
   std::vector<Postprocessor::ResultFieldSelector> selectors;
-  QToolButton* enabled = nullptr;
+  QCheckBox* enabled = nullptr;
   QComboBox *fields = nullptr,*length = nullptr,*samples = nullptr,*color = nullptr;
   QDoubleSpinBox* scale = nullptr;
   QSpinBox *maximum = nullptr,*stride = nullptr;

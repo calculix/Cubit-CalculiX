@@ -1,5 +1,6 @@
 #include "views/PostViewToolsCommand.hpp"
 #include "PostprocessorCommands.hpp"
+#include "explosion/PostExplodeCommand.hpp"
 #include "units/PostUnitsCommand.hpp"
 #include "filters/PostClipCommand.hpp"
 #include "filters/PostThresholdCommand.hpp"
@@ -19,6 +20,7 @@
 #include "results/PostFrameCommand.hpp"
 #include "results/PostAnimationCommand.hpp"
 #include "results/PostVectorCommand.hpp"
+#include "results/PostVectorLegendCommand.hpp"
 #include "sources/PostListCommand.hpp"
 #include "sources/PostSelectCommand.hpp"
 #include "sources/PostCloseCommand.hpp"
@@ -43,12 +45,20 @@ PostprocessorCommands::PostprocessorCommands(std::weak_ptr<PostprocessorApplicat
 
 std::vector<std::string> PostprocessorCommands::command_keys() const
 {
-  return {"PostDisplayCommand", "PostViewToolsCommand", "PostUnitsCommand", "PostClipCommand", "PostSectionCommand", "PostThresholdCommand", "PostFilterCommand", "PostCaptureCommand", "PostCaptureAnimationCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostVectorCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
+  return {"PostVectorLegendCommand", "PostExplodeCommand", "PostDisplayCommand", "PostViewToolsCommand", "PostUnitsCommand", "PostClipCommand", "PostSectionCommand", "PostThresholdCommand", "PostFilterCommand", "PostCaptureCommand", "PostCaptureAnimationCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostVectorCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
     "PostShowCommand", "PostHideCommand", "PostViewFitCommand", "PostViewCameraCommand",
     "PostViewRotateCommand", "PostViewPanCommand", "PostViewZoomCommand"};
 }
 
 CubitCommand* PostprocessorCommands::create_command(const std::string& key) {
+  if (key == "PostVectorLegendCommand")
+  {
+    return new PostVectorLegendCommand(application);
+  }
+  if (key == "PostExplodeCommand")
+  {
+    return new PostExplodeCommand(application);
+  }
   if (key == "PostUnitsCommand") {
     return new PostUnitsCommand(application);
   }

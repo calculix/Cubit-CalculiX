@@ -149,18 +149,21 @@ namespace Postprocessor
       struct Edge
       {
         vtkIdType parent = -1;
+        vtkIdType sourceCell = -1;
         unsigned int uses = 0;
         bool boundary = false;
       };
       std::map<std::pair<vtkIdType,vtkIdType>,Edge> edges;
       auto* parents = vtkIdTypeArray::SafeDownCast(mesh->GetCellData()->GetArray(parentName));
-      const auto add = [&](vtkIdType a,vtkIdType b,vtkIdType parent) {
+      const auto add = [&](vtkIdType a,vtkIdType b,vtkIdType parent,vtkIdType sourceCell)
+      {
         if (a > b) {
           std::swap(a,b);
         }
         auto& edge = edges[{a,b}];
         edge.boundary = edge.boundary || (edge.uses != 0 && edge.parent != parent);
         edge.parent = parent;
+        edge.sourceCell = sourceCell;
         ++edge.uses;
       };
       for (vtkIdType i = 0; i < mesh->GetNumberOfCells(); ++i) {
@@ -171,13 +174,13 @@ namespace Postprocessor
         }
         if (cell->GetCellDimension() == 1) {
           for (vtkIdType j = 1; j < cell->GetNumberOfPoints(); ++j) {
-            add(cell->GetPointId(j-1),cell->GetPointId(j),parent);
+            add(cell->GetPointId(j-1),cell->GetPointId(j),parent,i);
           }
         }
         else {
           for (int j = 0; j < cell->GetNumberOfEdges(); ++j) {
             auto* edge = cell->GetEdge(j);
-            add(edge->GetPointId(0),edge->GetPointId(1),parent);
+            add(edge->GetPointId(0),edge->GetPointId(1),parent,i);
           }
         }
       }
@@ -191,10 +194,13 @@ namespace Postprocessor
         points->SetPoint(i,point);
       }
       vtkNew<vtkCellArray> lines;
+      result->GetPointData()->ShallowCopy(mesh->GetPointData());
+      result->GetCellData()->CopyAllocate(mesh->GetCellData());
       for (const auto& entry : edges) {
         if (entry.second.uses == 1 || entry.second.boundary) {
           const vtkIdType ids[] = {entry.first.first,entry.first.second};
-          lines->InsertNextCell(2,ids);
+          const auto line = lines->InsertNextCell(2,ids);
+          result->GetCellData()->CopyData(mesh->GetCellData(),entry.second.sourceCell,line);
         }
       }
       result->SetPoints(points);

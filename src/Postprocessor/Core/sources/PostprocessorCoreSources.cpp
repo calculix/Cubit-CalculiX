@@ -712,6 +712,8 @@ namespace Postprocessor
         ++display;
       }
       filter_cache.clear();
+      explosion_cache.clear();
+      explosion_references.clear();
       animation_rotation.clear();
       state.swap(staged_state);
       runtime.swap(staged_runtime);
@@ -824,6 +826,8 @@ namespace Postprocessor
         }
       }
       filter_cache.clear();
+      explosion_cache.clear();
+      explosion_references.clear();
       animation_rotation.clear();
 
 
@@ -851,6 +855,17 @@ namespace Postprocessor
 
       for (auto& view : staged_state.views)
       {
+        auto& explosion = view.second.explosion;
+        explosion.sources.erase(std::remove(explosion.sources.begin(),explosion.sources.end(),source_id),explosion.sources.end());
+        explosion.meshes.erase(source_id);
+        explosion.placements.erase(std::remove_if(explosion.placements.begin(),explosion.placements.end(),[&](const auto& piece)
+        {
+          return piece.source_id == source_id;
+        }),explosion.placements.end());
+        if (explosion.sources.empty())
+        {
+          explosion.enabled = false;
+        }
         auto& labels = view.second.annotations.labels;
         for (auto label = labels.begin(); label != labels.end();)
         {
@@ -904,6 +919,8 @@ namespace Postprocessor
     try
     {
       filter_cache.clear();
+      explosion_cache.clear();
+      explosion_references.clear();
       animation_rotation.clear();
       PostprocessorSession staged;
       staged.plot_revision = state.plot_revision+1;
@@ -969,12 +986,15 @@ namespace Postprocessor
     }
     state.filters.clear();
     filter_cache.clear();
+    explosion_cache.clear();
+    explosion_references.clear();
       animation_rotation.clear();
     state.representations.clear();
     state.sources.clear();
     for (auto& view : state.views)
     {
       view.second.annotations.labels.clear();
+      view.second.explosion = ExplosionState{};
     }
     runtime.clear();
     saved_bindings.clear();

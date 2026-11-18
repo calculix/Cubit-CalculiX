@@ -27,14 +27,16 @@ void PostprocessorAnnotationDisplay::synchronize(const PostprocessorApplicationI
   bool changed = !geometryRevision || *geometryRevision != application.display_revision() ||
     activeRepresentation != application.session().active_representation_id ||
     activeSource != application.session().active_source_id ||
-    previous.labels.size() != state.labels.size() || previous.extrema_visible != state.extrema_visible || previous.visible != state.visible;
+    previous.labels.size() != state.labels.size() || previous.extrema_visible != state.extrema_visible || previous.visible != state.visible ||
+    view->second.explosion.pulse.enabled || pulseWasEnabled;
+  pulseWasEnabled = view->second.explosion.pulse.enabled;
   if (!changed)
   {
     for (const auto& entry : state.labels)
     {
       const auto found = previous.labels.find(entry.first);
       if (found == previous.labels.end() || found->second.visible != entry.second.visible ||
-          !Postprocessor::same_entity(found->second.entity,entry.second.entity) ||
+          !Postprocessor::same_display_entity(found->second.entity,entry.second.entity) ||
           !Postprocessor::same_field(found->second.field,entry.second.field))
       {
         changed = true;

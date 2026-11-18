@@ -140,13 +140,18 @@ bool PostprocessorCaptureRenderer::render_image(const Postprocessor::CaptureSnap
     }
     const auto& view = frozen->session().views.at(snapshot.target_id);
     std::array<double,6> bounds;
-    if (!view.camera && !frozen->visible_bounds(snapshot.target_id,bounds,error))
+    const bool reportCapture = snapshot.provenance.contains("report_capture");
+    if ((!view.camera || reportCapture) && !frozen->visible_bounds(snapshot.target_id,bounds,error))
     {
       if (error.empty())
       {
         error = "The view contains no visible mesh to capture.";
       }
       return false;
+    }
+    if (reportCapture && !scene->warning().empty())
+    {
+      manifest.insert("presentation_warning", QString::fromStdString(scene->warning()));
     }
     CameraDefinition camera;
     if (view.camera)

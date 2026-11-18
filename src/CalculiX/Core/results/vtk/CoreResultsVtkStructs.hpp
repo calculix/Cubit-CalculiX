@@ -121,7 +121,8 @@ struct CoreResultsVtkIncrementPlan
   int subcase = -1;
   std::vector<std::string> source_parameters;
   std::vector<CoreResultsVtkFieldPlan> fields;
-  // Per-record sources such as FRD CELS; repeated reported node IDs are valid.
+  // Per-record sources such as FRD CELS and DAT nodal histories. Repeated IDs
+  // are retained in source mapping order; these are not spatial fields.
   // Source indices refer to the same reader generation as spatial fields.
   std::vector<CoreResultsVtkFieldPlan> table_fields;
 };

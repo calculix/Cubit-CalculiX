@@ -1,4 +1,5 @@
 #include "CoreJobRunPersistence.hpp"
+#include "Framework/MeshQuality/MeshQualitySnapshotCodec.hpp"
 #include "CoreJobSnapshotBuilder.hpp"
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Framework/Reporting/ReportJson.hpp"
@@ -282,6 +283,18 @@ bool writeRecord(HDF5Tool& file, const std::string& path, const CalculiXJobRunRe
     metadata["snapshot"] = QJsonObject{{"id", QString::fromStdString(setup.id)}, {"hash", QString::fromStdString(setup.fingerprint)},
       {"size", setup.symbolSize}, {"steps", static_cast<int>(setup.steps.size())}, {"camera", setup.camera.toJson()}};
   }
+  metadata["quality"] = static_cast<bool>(record.quality);
+  metadata["quality_reason"] = QString::fromStdString(record.qualityUnavailableReason);
+  if (record.quality)
+  {
+    QByteArray bytes;
+    std::string error;
+    if (!MeshQualitySnapshotCodec::encode(*record.quality, bytes, error) ||
+        !writeBytes(file, path + "/Quality", "bytes", bytes))
+    {
+      return false;
+    }
+  }
   return writeJson(file, path, metadata);
 }
 
@@ -374,10 +387,34 @@ bool readRecord(HDF5Tool& file, const std::string& path, CalculiXJobRunRecord& r
     }
     record.setup = std::move(setup);
   }
+  record.qualityUnavailableReason = metadata.value("quality_reason").toString().toStdString();
+  if (metadata.value("quality").toBool())
+  {
+    QByteArray bytes;
+    if (!readBytes(file, path + "/Quality", "bytes", MeshQualitySnapshotCodec::maximum_bytes, bytes) ||
+        !MeshQualitySnapshotCodec::decode(bytes, record.quality, error))
+    {
+      return false;
+    }
+    if (record.quality->input_fingerprint != record.input.manifestFingerprint)
+    {
+      error = "Saved quality archive does not match its exported input.";
+      return false;
+    }
+  }
   if (!CoreJobSnapshotBuilder::validate(record, error)) {
     return false;
   }
-  return record.read_input_units(error);
+  if (!record.read_input_units(error))
+  {
+    return false;
+  }
+  if (record.quality && record.quality->coordinate_unit != record.geometryLengthUnit)
+  {
+    error = "Saved quality coordinates and input geometry units disagree.";
+    return false;
+  }
+  return true;
 }
 }
 

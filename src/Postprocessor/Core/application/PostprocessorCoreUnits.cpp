@@ -2,6 +2,7 @@
 #include "../representations/ResultColoringUnits.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include <limits>
+#include <utility>
 
 bool Postprocessor::PostprocessorCore::configure_units(const std::string& system, const std::string& quantity, const std::string& unit, std::string& error)
 {
@@ -33,6 +34,33 @@ bool Postprocessor::PostprocessorCore::configure_units(const std::string& system
   auto candidate = state;
   for (auto& entry : candidate.representations)
   {
+    auto vectorLegend = entry.second.vectors.legend;
+    vectorLegend.field = entry.second.vectors.field;
+    if (vectorLegend.field && !vectorLegend.bounds_unit)
+    {
+      const auto source = result_data(output_source(entry.second.input));
+      if (source)
+      {
+        for (const auto& frame : source->increments)
+        {
+          const auto* field = find_field(frame,*vectorLegend.field);
+          if (field)
+          {
+            if (!bind_coloring_units(vectorLegend,*field,error))
+            {
+              return false;
+            }
+            break;
+          }
+        }
+      }
+    }
+    if (!convert_coloring_units(vectorLegend,stagedUnits,error))
+    {
+      return false;
+    }
+    vectorLegend.field.reset();
+    entry.second.vectors.legend = std::move(vectorLegend);
     auto& coloring = entry.second.coloring;
     if (coloring.field && !coloring.bounds_unit)
     {
@@ -94,6 +122,8 @@ bool Postprocessor::PostprocessorCore::configure_units(const std::string& system
   framework_units().swap_project_state(stagedUnits);
   state.swap(candidate);
   filter_cache.clear();
+  explosion_cache.clear();
+  explosion_references.clear();
   for (auto& entry : runtime)
   {
     entry.second.all_frame_ranges.clear();

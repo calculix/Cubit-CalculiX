@@ -6,6 +6,7 @@
 #include <map>
 #include "Framework/Reporting/ReportRequest.hpp"
 class ReportApplicationInterface;
+class ReportMeshQualitySettings;
 class ReportConfiguration;
 class QLineEdit;
 class QSpinBox;
@@ -22,6 +23,7 @@ public:
 
 private:
   void apply();
+  ReportMeshQualitySettings* qualitySettings = nullptr;
   std::weak_ptr<ReportApplicationInterface> application;
   ReportRequest source;
   ReportConfiguration initialConfiguration;
@@ -38,6 +40,7 @@ private:
   std::map<std::string, QCheckBox*> decorationFlags;
   std::map<std::string, QComboBox*> captureChoices;
   std::map<std::string, QSpinBox*> captureIntegers;
+  std::map<std::string, QLineEdit*> captureTexts;
   QComboBox* logoPlacement;
   QSpinBox* logoWidth;
   QLabel* logoThumbnail;

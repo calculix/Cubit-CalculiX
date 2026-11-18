@@ -21,11 +21,17 @@ namespace Postprocessor
     // Original result identity, never a VTK tuple or tessellation index.
     std::int64_t entity_id = 0;
     std::optional<std::int64_t> integration_point;
+    // Display copy of a shared node after explosion; solver identity is unchanged.
+    std::optional<std::int64_t> display_element;
   };
   inline bool same_entity(const EntityReference& a, const EntityReference& b)
   {
     return a.source_id == b.source_id && a.dataset_id == b.dataset_id && a.kind == b.kind &&
       a.entity_id == b.entity_id && a.integration_point == b.integration_point;
+  }
+  inline bool same_display_entity(const EntityReference& a, const EntityReference& b)
+  {
+    return same_entity(a,b) && a.display_element == b.display_element;
   }
 }
 #endif

@@ -1,4 +1,5 @@
 #include "ReportCore.hpp"
+#include "Framework/Reporting/ReportMeshQualityContent.hpp"
 #include "ReportUnitValidation.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 
@@ -301,6 +302,33 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
     }
     candidate->profile_revision = request.profile_revision;
   }
+  MeshQualitySettings qualitySettings;
+  std::shared_ptr<const MeshQualitySnapshot> qualitySnapshot;
+  if (!MeshQualitySettings::decode(resolved.overrides, qualitySettings, error))
+  {
+    return false;
+  }
+  const bool qualityContent = qualitySettings.statistics || qualitySettings.images ||
+    qualitySettings.failed_images || qualitySettings.element_values;
+  if (resolved.overrides.values.count("mesh.quality.enabled") != 0 && qualitySettings.enabled &&
+      qualityContent && !qualitySettings.metrics.empty())
+  {
+    if (!models->mesh_quality(resolved, candidate->source, qualitySnapshot, error))
+    {
+      return false;
+    }
+    if (qualitySnapshot)
+    {
+      if (!ReportMeshQualityContent::append(*qualitySnapshot, qualitySettings, progress, *candidate, error))
+      {
+        return false;
+      }
+    }
+    else
+    {
+      candidate->diagnostics.push_back({"mesh.quality", "unavailable", "Mesh quality was not captured for this source."});
+    }
+  }
   const auto resultSelection = resolved.overrides.values.find("post.results");
   if (request.kind == "job" && resultSelection != resolved.overrides.values.end() && resultSelection->second == "true") {
     if (auto* results = registry.report_results()) {
@@ -339,6 +367,27 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
       return false;
     }
   }
+  if (qualitySnapshot && !qualitySnapshot->blocks.empty() && (qualitySettings.images || qualitySettings.failed_images))
+  {
+    if (auto* images = registry.report_images("postprocessor"))
+    {
+      ReportImageRequest imageRequest;
+      imageRequest.progress = progress;
+      imageRequest.provider = "postprocessor";
+      imageRequest.purpose = "mesh_quality";
+      imageRequest.source = candidate->source;
+      imageRequest.settings = resolved.overrides;
+      imageRequest.mesh_quality = qualitySnapshot;
+      if (!images->collect(imageRequest, *candidate, error))
+      {
+        return false;
+      }
+    }
+    else
+    {
+      candidate->diagnostics.push_back({"mesh.quality", "unavailable", "Quality images require the Postprocessor image provider."});
+    }
+  }
   if (request.kind == "job" && imageSelection != resolved.overrides.values.end() && imageSelection->second == "true")
   {
     if (auto* images = registry.report_images("postprocessor"))
@@ -362,6 +411,7 @@ bool ReportCore::build(const ReportRequest& request, const ReportProfile* profil
       candidate->diagnostics.push_back(std::move(issue));
     }
   }
+  qualitySnapshot.reset();
   if (!ReportProgress::advance(progress, ReportProgressStage::Validation, "Validating generated report", 0, 1, error))
   {
     return false;

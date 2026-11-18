@@ -68,8 +68,9 @@ Dataset construction
 --------------------
 
 ``CoreResultsVtkConverter`` consumes a fresh plan without querying Cubit. It
-constructs compact unstructured grids for blocks, nodesets, surfaces, DAT node
-and element sets, and DAT integration points. Surface connectivity uses explicit
+constructs compact unstructured grids for blocks, nodesets, surfaces, DAT
+element sets, and DAT integration points. DAT nodal histories become tables.
+Surface connectivity uses explicit
 CCX side tables with quadratic edge nodes and outward solid-face winding.
 Integration-point datasets use the union of ``(element ID, point ID)`` across
 their increments. Original IDs, side labels, group names and source metadata are
@@ -84,7 +85,8 @@ collisions between FRD/DAT fields and user set names.
 
 Known spatial-vector layouts publish explicit XYZ component indices. These
 include FRD FORC/FORCI (F1/F2/F3), VELO (V1/V2/V3), FLUX (F1/F2/F3), DISPI
-(D1/D2/D3), and global DAT forces, displacements, velocities and heat flux.
+(D1/D2/D3), and DAT integration-point heat flux. DAT nodal forces,
+displacements and velocities use the same recognized triplets in history tables.
 All three named directions must be present and unambiguous. Extra generalized
 DOFs and derived columns are excluded from the physical vector norm. Unknown
 three-column fields and incomplete triplets do not acquire vector semantics.
@@ -100,7 +102,7 @@ reader data to add the new vector metadata to previously converted snapshots.
 Missing tuples are represented by NaN and a zero validity mask. Reported
 non-finite values retain their components with zero tuple validity. Fields and
 table rows are always retained. ``Partial`` cell arrays summarize invalid
-incident point or cell values. Duplicate source identifiers are rejected until an explicit
+incident point or cell values. Duplicate spatial source identifiers are rejected until an explicit
 reduction policy is defined. No field is silently overwritten.
 
 Supported integration-point positions use cached shape coefficients. Matching
@@ -108,6 +110,30 @@ FRD nodal displacement is interpolated into a separate vector array for each
 increment, including when only DAT fields were requested. Missing displacement
 is reported and reference geometry is retained. No deformation scale is baked
 into the coordinates. Existing DAT buckling and section records become tables.
+
+DAT history routing
+~~~~~~~~~~~~~~~~~~~
+
+Routing uses the reader's association, not a field name or a set-name prefix.
+Nodal DAT records are native per-increment tables, with ``RecordIndex``,
+``NodeId``, optional ``Magnitude``, the reported components and ``Valid``.
+Repeated IDs remain separate rows in source mapping order. No averaging or
+summation is implicit. Source file/block/data, set, job/run and frame metadata
+remain attached; local-coordinate rows retain their existing separate tables.
+Known vector magnitudes exclude generalized or derived extra components.
+FRD spatial fields, including DISP and FORC, retain their current behavior.
+
+DAT element/IP fields remain spatial fields and also appear in the table
+catalogue. These table views borrow their spatial arrays through the immutable
+snapshot; they do not allocate a second set of tensor/vector values. Histories
+prepend Frame, Step, Increment and Time and retain original element/IP IDs and
+validity. IP histories include reference X/Y/Z coordinates with length units.
+Magnitude and existing MISES components precede the remaining payload columns.
+
+The Results tree groups table entries by category; ``History outputs`` groups
+them by set and output name. Native nodal histories use the existing VTT export
+and reload path. Element/IP histories are reconstructed from the field metadata
+and VTU arrays, so they need no duplicate VTT payload.
 
 Parallel construction and publication
 -------------------------------------
@@ -197,8 +223,9 @@ constructs must not be interpreted as a complete mesh. Set names are
 case-insensitive. INP groups do not invent Cubit numeric IDs.
 
 All metadata required for the layout is collected before allocating datasets.
-Groups and integration-point clouds imply collection layout. DAT node/element
-IDs are resolved against the shared job mesh. Ambiguous time matches fail rather
+Groups and integration-point clouds imply collection layout. DAT spatial element
+IDs are resolved against the shared job mesh. Nodal history labels need no
+geometry mapping. Ambiguous time matches fail rather
 than associating results with the wrong increment. Existing DAT buckling and
 section records are retained as table plans; broader reader coverage is deferred.
 

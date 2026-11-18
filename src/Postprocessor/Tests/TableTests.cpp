@@ -22,6 +22,9 @@
 #include <vtkSmartPointer.h>
 #include <vtkStringArray.h>
 #include <vtkTable.h>
+#include <vtkPointData.h>
+#include <vtkPoints.h>
+#include <vtkUnstructuredGrid.h>
 #include <vtkTypeInt64Array.h>
 #include <vtkXMLTableWriter.h>
 #include <iostream>
@@ -112,6 +115,72 @@ int main(int argc, char** argv)
   provider.data->increments[1].tables.push_back(table("Forces",30));
   PostprocessorCore core;
   std::string error;
+  {
+    auto histories = std::make_shared<SimResults::VtkResultsData>();
+    histories->increments.resize(2);
+    auto mesh = std::shared_ptr<vtkUnstructuredGrid>(vtkUnstructuredGrid::New(),[](vtkUnstructuredGrid* value)
+    {
+      value->Delete();
+    });
+    auto points = vtkSmartPointer<vtkPoints>::New();
+    points->InsertNextPoint(1,2,3);
+    mesh->SetPoints(points);
+    auto values = vtkSmartPointer<vtkDoubleArray>::New();
+    values->SetName("stresses");
+    values->SetNumberOfComponents(2);
+    values->InsertNextTuple2(42,99);
+    mesh->GetPointData()->AddArray(values);
+    for (const auto* name : {"OriginalElementId","IntegrationPointId"})
+    {
+      auto id = vtkSmartPointer<vtkTypeInt64Array>::New();
+      id->SetName(name);
+      id->InsertNextValue(1);
+      mesh->GetPointData()->AddArray(id);
+    }
+    SimResults::Field stress;
+    stress.name = "stresses";
+    stress.source = "DAT";
+    stress.set_name = "BLOCK_1";
+    stress.association = SimResults::Association::IntegrationPoint;
+    stress.array_name = "stresses";
+    stress.components = {"sxx","MISES"};
+    stress.component_units.assign(2,SimUnits::QuantityUnit("stress","MPa",SimUnits::Stress));
+    for (auto& frame : histories->increments)
+    {
+      frame.dataset = mesh;
+      frame.coordinate_unit = "mm";
+      frame.fields.push_back(stress);
+      frame.independent_variable = SimUnits::QuantityUnit("time","s",SimUnits::Time);
+    }
+    const auto list = result_tables(*histories,std::nullopt);
+    check(list.size() == 1 && list.front().field && list.front().category == "History outputs" &&
+      list.front().set_name == "BLOCK_1","IP history catalogue grouping changed");
+    TableReference reference;
+    reference.field = true;
+    reference.key = field_group_key(stress);
+    const auto history = result_table_data(histories,reference);
+    check(history.rows == 2 && !history.table && history.parts.front().mesh == mesh.get() &&
+      history.parts.front().mesh->GetPointData()->GetArray("stresses") == values.GetPointer(),
+      "IP history copied its spatial arrays or lost frames");
+    check(history.columns.size() == 13 && history.columns[10] == "MISES" &&
+      result_table_cell(history,0,10) == "99" && result_table_cell(history,0,12) == "1",
+      "IP history Mises preference or validity changed");
+    check(history.columns[7] == "X" && result_table_cell(history,0,7) != "Unavailable" &&
+      result_table_column_unit(history,7) != "unknown unit","IP history coordinates or units missing");
+    auto native = table("displacements",1);
+    for (const auto& entry : std::vector<std::pair<std::string,std::string>>{
+      {"Source","DAT"},{"ResultKind","NodalHistory"},{"SetName","LOAD_TARGET"}})
+    {
+      auto label = vtkSmartPointer<vtkStringArray>::New();
+      label->SetName(entry.first.c_str());
+      label->InsertNextValue(entry.second);
+      native->GetFieldData()->AddArray(label);
+    }
+    histories->increments.front().tables.push_back(native);
+    const auto grouped = result_tables(*histories,std::nullopt);
+    check(grouped.size() == 2 && !grouped.front().field && grouped.front().set_name == "LOAD_TARGET" &&
+      grouped.front().category == "History outputs","Nodal table grouping changed");
+  }
   check(core.open_result(provider,SimResults::JobSourceReference{"test","",1,""},std::nullopt,error),"Cannot open table-only source");
   const auto source = core.session().active_source_id;
   check(core.session().representations.empty(),"Table-only source fabricated a mesh representation");
@@ -267,7 +336,8 @@ int main(int argc, char** argv)
     if ((*item)->data(0,Qt::UserRole).toInt() == static_cast<int>(ResultTreeItemKind::Table))
     {
       ++tableItems;
-      check((*item)->parent() && (*item)->parent()->text(0) == "Tables","Tree retained an unnecessary table-scope layer");
+      check((*item)->parent() && (*item)->parent()->parent() &&
+        (*item)->parent()->parent()->text(0) == "Tables","Table category is missing from the tree");
     }
   }
   check(tableItems == 2,"Tree duplicated a table family across frames");

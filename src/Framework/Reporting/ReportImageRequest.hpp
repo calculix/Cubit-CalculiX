@@ -1,5 +1,7 @@
 #pragma once
 #include <QJsonObject>
+#include <memory>
+class MeshQualitySnapshot;
 #include "ReportProgress.hpp"
 #include <map>
 #include <optional>
@@ -23,6 +25,8 @@ class ReportImageRequest
 public:
   // Transient, borrowed during synchronous provider collection; never persisted.
   ReportProgress* progress = nullptr;
+  // Transient typed geometry/values; deliberately excluded from request JSON.
+  std::shared_ptr<const MeshQualitySnapshot> mesh_quality;
   ReportImageRequest();
   std::string provider;
   // Opaque provider-defined purpose and scope, e.g. setup / step:17.

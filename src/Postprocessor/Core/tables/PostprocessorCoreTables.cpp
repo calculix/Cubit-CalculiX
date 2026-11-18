@@ -57,6 +57,7 @@ namespace Postprocessor
           return false;
         }
         reference.key = selected.key;
+        reference.field = selected.field;
       }
       // The reference frame marks active rows; the adapter includes the full
       // history even when this particular frame has no matching records.

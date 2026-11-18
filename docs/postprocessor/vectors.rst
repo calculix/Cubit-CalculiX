@@ -6,10 +6,12 @@ in a 3D view. They are off by default. The mesh keeps its independent coloring,
 visibility and opacity settings. Different views retain independent vector
 settings for the same source.
 
-Use the Vectors controls beside the deformation controls in result navigation.
-Select a vector field, then enable Vectors. Options controls arrow length,
-scale, sample distribution, density and coloring. Changes use the normal Cubit
-command route and errors appear in Cubit's messages.
+The VV2 button immediately after Component toggles vectors and opens Vector settings
+in the right dock. The first eligible field is selected by default. The panel contains
+arrow length, scale, sample distribution, density and coloring. There are no
+inline field dropdown or Options popup. Changes use the normal Cubit command
+route and errors appear in Cubit's messages. Vector legend properties opens a
+separate page in the same dock.
 
 Supported fields
 ----------------
@@ -65,7 +67,34 @@ than zero and at most 1000. A zero-size source has no automatic arrow length.
 These are visual lengths; force and heat-flux values are not displacements.
 The magnitude legend uses the Postprocessor's presentation units and the same
 all-frame reference. Capture uses its frozen presentation-unit context.
-The existing legend visibility control also controls the vector legend.
+The vector legend has independent visibility, palette, range, limits and position.
+It uses the same compact bottom-right layout and normal fonts as the result
+legend, in a neighboring slot. Drag either legend independently. Movement previews
+are silent; release journals one final position. Escape restores the previous
+position. Double-click opens that legend's own properties page.
+
+Vector legend properties applies selections immediately and numeric values on
+editing completion. Defaults restores Core legend defaults while retaining vector
+field and arrow settings. Low color and High color define a custom HSV gradient
+that is sampled using the selected band count. Reset palette colors restores the
+selected built-in palette.
+Changing presentation units also converts vector legend bounds and limits.
+
+Examples::
+
+   post properties vectors
+   post properties vectorlegend source "first_run"
+   post vector legend position 0.6 0.08 source "first_run"
+   post vector legend auto source "first_run"
+   post vector legend palette rainbow source "first_run"
+   post vector legend palette low color 0.1 0.2 1 source "first_run"
+   post vector legend palette reset source "first_run"
+   post vector legend range allframes source "first_run"
+   post vector legend defaults source "first_run"
+
+Legend colors match arrow magnitude colors. Hiding the result legend does not
+hide the vector legend. Both legends and custom colors persist in projects and
+are retained by image, report and animation captures.
 
 Sampling and animation
 ----------------------

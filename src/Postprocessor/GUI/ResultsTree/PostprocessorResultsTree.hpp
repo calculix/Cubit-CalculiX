@@ -18,6 +18,7 @@ enum class ResultTreeItemKind
   Dataset,
   FieldsGroup,
   Field,
+  Component,
   ResultGroup,
   Table,
   Category,
@@ -55,6 +56,7 @@ public:
   std::function<void(const std::vector<Postprocessor::AppearanceTarget>&)> appearance_selection;
   std::function<void(bool)> ids_action;
   std::function<void(const QString&, std::size_t)> activate_field;
+  std::function<void(const QString&, std::size_t, const QString&, bool)> activate_component;
   std::function<void(const QString&,const QString&,bool)> open_table;
   std::function<void(const QString&,Postprocessor::DatasetVisibilityAction,std::optional<std::size_t>)> dataset_action;
   std::function<void(const QString&,Postprocessor::DatasetCategory,bool)> category_action;

@@ -4,6 +4,7 @@ Report workspace
 .. toctree::
    :maxdepth: 2
 
+   mesh-quality
    workspace
    setup-images
 

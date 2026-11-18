@@ -19,6 +19,7 @@ namespace Postprocessor
   {
     std::shared_ptr<const SimResults::VtkResultsData> source, data;
     std::string source_id;
+    bool exploded = false;
     std::vector<FilteredPart> parts;
     std::map<std::size_t,std::string> warnings;
   };

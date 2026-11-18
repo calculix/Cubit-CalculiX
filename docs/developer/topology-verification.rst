@@ -1248,8 +1248,56 @@ viewer, and resets models. Save current work first::
 
    playback "C:/Users/offic/Desktop/Git/Cubit-CalculiX/tests/topology/verify_level_set_release.jou"
 
-The journal creates a unique tests/release_topology_runs/<token> directory. It
-runs six cases using all numerical settings from a newly created Core level-set
+The journal creates a unique tests/release_topology_runs/<token> directory.
+Before any model reset, it checks required APIs, the developer controller
+capability, Python helper syntax, the reviewed fixture's N-mm-s/mm units and
+single active isotropic elastic card, writable evidence storage and configured
+runtime paths. It reads build/CMakeCache.txt and the standalone native build's
+native-config-<configuration>.json manifest. On Windows the default configuration
+is Release; single-configuration generators use their configured build type.
+The manifest must list all ten suites and the same Core library already loaded
+in Cubit, with the same Cubit SDK as the main build. Missing/stale executables,
+missing manifests and runtime mismatches block the campaign without resetting
+the current model. Configured paths identify the runtime; they do not prove the
+source revision of an already loaded binary. The report leaves that revision
+unestablished. No build or configuration is performed by the journal.
+
+Generate the manifest and build helpers separately, from the repository root,
+after building the production plugin. These are instructions for a later run;
+they were not executed while preparing this batch::
+
+   cmake -S tests/topology -B build/topology-tests "-DCUBIT_ROOT=C:/Program Files/Coreform Cubit 2026.11"
+   cmake --build build/topology-tests --config Release
+
+Restart Cubit with the matching plugin before playback. The native phase runs
+all ten configured executables directly: interpolation, geometry, evaluation,
+QP, initialization, geometry cache, quadrature, moves, material grouping and
+pipeline. Each writes a fresh CSV and individual log under native/. A zero exit
+status, the expected CSV columns, nonempty evidence and passing check rows are
+all required. Missing executables or Windows loader failures are BLOCKED;
+numerical failure, missing/invalid CSV evidence and timeouts are FAIL. Native
+failure stops the campaign before reset. Qt paths come from the main build's
+configured Qt installation, ahead of plugin and SDK runtime paths; they are
+not inferred from Cubit's embedded Python executable.
+
+Next, 18 density smoke cases cover compliance, Y displacement and displacement
+magnitude for all six supported solid formulations. Each evaluates exactly two
+iterations using the reviewed mesh/setup and density validators. Checks include
+physical job completion, element coverage, preserved support/rigid-body elements,
+bounded density/stiffness, material cap and monitored displacement. Compliance
+is compared independently against twice the final raw DAT internal energy;
+displacement cases require nonempty adjoint input and DAT files. Exported physical
+decks must retain the expected elastic modulus and Poisson ratio. The original
+Steel card must separately retain its 273.15 K reference temperature. Generated
+topology groups contain constant elastic properties and may omit the optional
+temperature column; an explicit group temperature must match the fixture value.
+The parser still rejects temperature tables and nonfinite data. This phase
+requests neither VTK conversion nor duplicate history
+snapshots. It checks execution, not density convergence or a new displacement
+finite-difference verification. The standalone density journal keeps its prior
+conversion and snapshot behavior by default.
+
+The journal then runs six cases using all numerical settings from a newly created Core level-set
 compliance case, followed by the existing broad-band C3D8/C3D20 baseline profile.
 The default profile first deletes the density case created by the reviewed mesh
 fixture and recreates it with only name, method and objective supplied. It does
@@ -1267,6 +1315,11 @@ scans raw DAT files rather than querying every element through repeated scans.
 Native reopen and grouped/exact reanalysis use the same reviewed numerical
 checks as the matrix. Reports distinguish profile/case IDs and record commands,
 entry/return events, expected failures, selected native-trace path and settings.
+The elastic parser accepts one constant isotropic row with an optional finite
+reference temperature, including 273.15 K, and preserves it in exact reanalysis.
+It rejects a second temperature row, nonfinite data and unsupported material
+options. This does not introduce temperature-dependent material verification.
+The exact-factor level-set stiffness law is never applied to density/SIMP cases.
 
 Lifecycle stages reopen the verified broad-band C3D8 checkpoint into separate
 working directories: rerun/case isolation; nonblocking start, immediate kill and
@@ -1284,14 +1337,116 @@ pause setting, and retains completed evidence. Every playback is a fresh run;
 automatic checkpoint resume is not implemented in this separate release journal.
 The existing matrix journal and its explicit same-build resume behavior remain
 unchanged.
+Native outcomes are summarized in native.csv, density outcomes in density.csv
+and the eight long level-set cases in summary.csv. The aggregate all_converged
+flag refers only to those eight long cases. Stage dispatch names the lifecycle
+checks explicitly, so inserting prerequisite stages cannot replay numerical
+groups as lifecycle commands. No later stage is silently marked PASS after a
+failure.
 
 The report always keeps release_ready false. Manual entries remain PENDING for
 kill after a completed iteration, an actual solver-process failure, GUI visual
 and navigation checks, and Linux runtime verification. An immediate kill and
 infeasible-preparation rejection must not be counted as those stronger checks.
-Native standalone suite results are also separate evidence. The release-check
-journal has not been executed in Cubit during preparation; its orchestration
-and fixture profile paths are covered by offline Python harness tests.
+The native phase is recorded separately from physical/controller evidence.
+GUI checks include GIF export and alpha wrap after shared media changes.
+Linux verification remains PENDING. The expanded release-check journal has not
+been executed in Cubit during preparation; offline standard-library Python tests
+cover its prerequisite checks, mocked native outcomes, all 18 density runner
+combinations, optional conversion, reference-temperature parsing and stage
+continuation/environment restoration. No native executable, solver or build is
+run by those offline tests::
+
+   python -m unittest discover -s tests/topology -p "test_*verification*.py"
+
+Integration-limit diagnostics and replay
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Release campaign 20261118T125031Z_fc8fe071 passed preflight, all ten native
+suites and all 18 density smoke cases. The first Core-default C3D8 level-set case
+completed seven physical iterations, then rejected trial geometry for iteration
+8: element 182 did not meet the integration tolerance within four refinements.
+Later release stages were not executed. This remains a release blocker; the
+diagnostic implementation below does not establish that the integration issue
+has been fixed.
+
+CoreTopologyLevelSetIntegrationDiagnostics.hpp/.cpp records each comparison
+between successive composite quadrature levels. The three components are:
+
+* Absolute change in integrated volume divided by the larger integrated volume.
+* Absolute change in regularized solid fraction.
+* Maximum absolute change in a nodal fraction derivative, multiplied by the
+  dimensionless interface half-width.
+
+The maximum of these components must remain less than or equal to the existing
+integration tolerance. This is a successive-estimate criterion, not a certified
+error bound. The diagnostic reports the derivative's zero-based index in Cubit
+expanded-connectivity order. It does not reorder nodes, change summation order,
+increase the refinement budget, relax tolerance or introduce automatic retries.
+Defaults remain width 0.1, tolerance 1e-4 and four refinements.
+
+Workers collect comparisons privately without printing or accessing files.
+After a failed batch has drained its workers, the calling thread can capture
+one actual refinement-limit failure. Cancellation, invalid input and scheduling
+failures are not mislabeled as exhausted refinement. A sibling's cancellation
+message does not hide a recorded refinement-limit cause in the batch error.
+
+Capture is opt-in through CUBITSIM_TOPOLOGY_FAILURE_DIRECTORY. With no value,
+no capture file is written. The release journal sets this per long numerical
+case and restores the inherited value on exit. Captures are separate atomic,
+uniquely named JSON files, containing only one element: iteration/source IDs,
+phase, formulation and Cubit type, node IDs, coordinates, trial coefficients,
+queried volume, preservation flag, complete settings, comparison history and
+original error. Coordinates and coefficients are exactly those supplied to
+integration; no mesh snapshot or fingerprint is introduced. JSON numbers retain
+double round-trip precision. Replay rejects malformed/nonfinite data, duplicate
+nodes, invalid settings, unsupported types and captures beyond 20 nodes/five
+comparisons. The reader limits files to 1 MiB and publishes no partial output.
+Capture write failure emits a warning and retains the original integration
+failure. The JSON is a fixed diagnostic contract, with no save-file migration.
+
+After a matching production/helper rebuild and Cubit restart, obtain a focused
+C3D8 capture without repeating the native and density suites::
+
+   playback "C:/Users/offic/Desktop/Git/Cubit-CalculiX/tests/topology/reproduce_level_set_integration.jou"
+
+Save current work first: this diagnostic resets the model. It reuses the
+reviewed fixture and the Core-default profile without numerical overrides.
+Evidence is retained under tests/integration_topology_runs/<token>/. CAPTURED
+means the diagnostic was obtained, not that the optimization passed. A completed
+run without a capture reports NOT_REPRODUCED. A failure without a capture remains
+FAIL and requires inspection of the original error and loaded plugin.
+
+The separate topology_integration_replay helper links the production Core and
+needs no live Cubit mesh, solver or journal. Its target is intentionally outside
+CTest and the ten-suite manifest because it requires an explicit capture file.
+Configure tests/topology after adding this target, then build it separately::
+
+   cmake --build build/topology-tests --config Release --target topology_geometry_tests topology_pipeline_tests topology_integration_replay
+
+Run the helper with the same configured Qt/plugin/Cubit runtime search paths as
+the native suites; these paths are recorded in the release report's preflight
+section. On Windows, Qt bin must precede plugin, SDK bin and SDK acis/code/bin
+in PATH. Do not infer the SDK from the embedded Python executable. Example
+arguments, with the capture path replaced by the newly written file::
+
+   build/topology-tests/Release/topology_integration_replay.exe tests/integration-replay.csv "<capture.json>"
+
+The first argument receives regression checks; a sibling
+integration-replay.csv.refinements.csv records each refinement's error
+components. The original budget must reproduce the recorded rejection and error
+components. The helper also tries the remaining supported budgets up to five,
+recording either convergence or another refinement-limit rejection. It does not
+assume five will converge. A passing replay verifies reproduction of a known
+failure, not optimizer correctness or release readiness. Once captured, retain
+the element input as the regression fixture when implementing the numerical fix.
+
+Geometry/pipeline native tests now cover component definitions, successful and
+failed diagnostics, serial/parallel agreement, cancellation distinction, batch
+reuse, capture round trips and malformed capture rejection. These additions
+have not been compiled or run during this batch. Offline Python tests exercise
+capture-directory setup, focused-journal outcomes and environment restoration.
+Linux verification remains PENDING.
 
 Cubit progress display
 ~~~~~~~~~~~~~~~~~~~~~~

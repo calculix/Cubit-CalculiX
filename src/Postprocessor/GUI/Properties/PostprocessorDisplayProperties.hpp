@@ -15,9 +15,10 @@ class QLineEdit;
 class QSpinBox;
 class QPushButton;
 class QLabel;
+class QGridLayout;
 
-// A page-local draft. Only Apply submits commands; animation refreshes preserve
-// edits while the representation, result snapshot and committed coloring agree.
+// User edits publish through commands after a completed edit. Refreshes preserve
+// pending numeric edits while their representation and committed state agree.
 class PostprocessorDisplayProperties : public QWidget
 {
 public:
@@ -47,11 +48,13 @@ private:
   bool current_context(Context& context) const;
   bool same_context(const Context& context) const;
   void load(const Postprocessor::ResultColoring& coloring);
-  void changed();
+  void changed(bool commit = true);
   void update_enabled();
   bool draft(Postprocessor::ResultColoring& result, std::string& error) const;
   bool commands(const Postprocessor::ResultColoring& target, std::vector<Command>& plan, std::string& error) const;
   void choose_color(QPushButton* button);
+  void rebuild_colors(const Postprocessor::ResultColoring& coloring);
+  void send_palette(const QString& operation);
   void recover(const std::string& error);
 
   std::weak_ptr<PostprocessorApplicationInterface> application;
@@ -61,6 +64,8 @@ private:
   bool dirty = false;
   bool loading = false;
   bool applying = false;
+  bool applyQueued = false;
+  bool paletteReset = false;
   QLabel* view;
   QLabel* field;
   QLabel* component;
@@ -79,7 +84,9 @@ private:
   QPushButton* minimumColor;
   QPushButton* maximumColor;
   QCheckBox* legend;
-  QPushButton* applyButton;
+  QPushButton* defaultsButton;
   QLabel* errorMessage;
+  QGridLayout* paletteColors;
+  std::vector<std::array<double,3>> swatches;
 };
 #endif

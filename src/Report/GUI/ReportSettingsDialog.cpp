@@ -1,5 +1,6 @@
 #include <type_traits>
 #include "ReportSettingsDialog.hpp"
+#include "ReportMeshQualitySettings.hpp"
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
 #include "Framework/Reporting/ReportConfiguration.hpp"
 #include <QVBoxLayout>
@@ -110,8 +111,16 @@ ReportSettingsDialog::ReportSettingsDialog(QWidget* parent, const ReportConfigur
       captureIntegers.emplace(option.key, spin);
       captureFields->addRow(QString::fromStdString(option.label), spin);
     }
+    else if (option.kind == "text" && option.key == "post.images.view")
+    {
+      auto* field = new QLineEdit(text(option.key), capture);
+      field->setObjectName(QString::fromStdString("ReportSetting_" + option.key));
+      field->setMaxLength(256);
+      captureTexts.emplace(option.key, field);
+      captureFields->addRow(QString::fromStdString(option.label), field);
+    }
   }
-  if (!captureChoices.empty() || !captureIntegers.empty())
+  if (!captureChoices.empty() || !captureIntegers.empty() || !captureTexts.empty())
   {
     auto* hint = new QLabel(tr("Image inclusion and label visibility are controlled in the report content tree. These settings are saved with the report profile."), capture);
     hint->setWordWrap(true);
@@ -232,6 +241,11 @@ ReportSettingsDialog::ReportSettingsDialog(QWidget* parent, const ReportConfigur
   brandingFields->addRow(proportions);
   brandingScroll->setWidget(branding);
   tabs->addTab(brandingScroll, tr("Header & footer"));
+  if (displayed.values.count("mesh.quality.enabled") != 0)
+  {
+    qualitySettings = new ReportMeshQualitySettings(displayed, tabs);
+    tabs->addTab(qualitySettings, tr("Mesh quality"));
+  }
   outer->addWidget(tabs);
   message = new QLabel(this);
   message->setWordWrap(true);
@@ -286,9 +300,24 @@ void ReportSettingsDialog::apply()
   {
     patch.values[entry.first] = std::to_string(entry.second->value());
   }
+  for (const auto& entry : captureTexts)
+  {
+    patch.values[entry.first] = entry.second->text().toStdString();
+  }
   patch.values["logo_width_mm"] = std::to_string(logoWidth->value());
   patch.replace_company_logo = logoChanged;
   patch.company_logo = stagedLogo;
+  if (qualitySettings != nullptr)
+  {
+    ReportConfiguration qualityPatch;
+    std::string qualityError;
+    if (!qualitySettings->configuration_patch(qualityPatch, qualityError))
+    {
+      message->setText(QString::fromStdString(qualityError));
+      return;
+    }
+    patch.values.insert(qualityPatch.values.begin(), qualityPatch.values.end());
+  }
   for (auto entry = patch.values.begin(); entry != patch.values.end();)
   {
     const auto initial = initialConfiguration.values.find(entry->first);

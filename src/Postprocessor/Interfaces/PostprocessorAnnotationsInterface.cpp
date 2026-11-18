@@ -7,7 +7,7 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
   const std::string& sourceName, const std::optional<DatasetSelector>& selector, Postprocessor::EntityKind kind,
   std::int64_t id, std::optional<std::int64_t> ip, const std::string& fieldName,
   const std::string& component, bool magnitude, std::string& assigned, std::string& error,
-  const Postprocessor::FieldQualifiers& qualifiers)
+  const Postprocessor::FieldQualifiers& qualifiers, std::optional<std::int64_t> owner)
 {
   error.clear();
   if (fieldName.empty() && (qualifiers.origin || qualifiers.association || qualifiers.set_name))
@@ -90,7 +90,7 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
       auto selected = *field;
       selected.dataset_id = part.id;
       copy.coloring.field = selected;
-      const Postprocessor::EntityReference entity{source,part.id,kind,id,ip};
+      const Postprocessor::EntityReference entity{source,part.id,kind,id,ip,owner};
       const auto probe = Postprocessor::annotation_probe(*data,copy,entity);
       if (probe.available && probe.values && probe.displayed_position)
       {

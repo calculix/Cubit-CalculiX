@@ -24,6 +24,13 @@ add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Results" results)
 add_subdirectory("${CUBITSIM_SOURCE_ROOT}/Framework/Media" media)
 
 add_library(postprocessor_display_code STATIC
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/explosion/ExplosionLayout.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/explosion/ExplosionPulse.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/explosion/ExplosionRuntime.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/explosion/ExplosionCodec.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/explosion/PostprocessorCoreExplosion.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorExplosionInterface.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/Explosion/PostprocessorExplosionControls.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/VectorPlotDefinition.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/ResultVectors.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/VectorPlotRuntime.cpp"
@@ -33,6 +40,7 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Commands/results/VectorCommandText.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/VectorPlot/PostprocessorVectorControls.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/VectorPlot/PostprocessorVectorActors.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/GUI/VectorPlot/PostprocessorVectorLegendProperties.cpp"
 
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/capture/AnimationCaptureDefinition.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/capture/AnimationCapturePlan.cpp"
@@ -49,6 +57,7 @@ add_library(postprocessor_display_code STATIC
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorReportExtrema.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorReportBlockSummary.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorReportResultImages.cpp"
+  "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Interfaces/PostprocessorReportCapturePlan.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/application/PostprocessorCoreUnits.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/ResultColoringUnits.cpp"
   "${CUBITSIM_SOURCE_ROOT}/Postprocessor/Core/representations/AnimationRotationCodec.cpp"
@@ -300,7 +309,7 @@ if (WIN32)
   set_property(TEST postprocessor_presentation_units APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
 endif ()
 
-add_executable(postprocessor_report_collection_tests ReportCollectionTests.cpp)
+add_executable(postprocessor_report_collection_tests ReportCollectionTests.cpp ReportCaptureTests.cpp)
 target_link_libraries(postprocessor_report_collection_tests PRIVATE postprocessor_display_code)
 add_test(NAME postprocessor_report_collection COMMAND postprocessor_report_collection_tests)
 
@@ -311,3 +320,10 @@ set_tests_properties(postprocessor_appearance PROPERTIES ENVIRONMENT "QT_QPA_PLA
 if (WIN32)
   set_property(TEST postprocessor_appearance APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
 endif ()
+
+add_executable(postprocessor_explosion_tests ExplosionTests.cpp)
+target_link_libraries(postprocessor_explosion_tests PRIVATE postprocessor_display_code)
+add_test(NAME postprocessor_explosion COMMAND postprocessor_explosion_tests)
+if(WIN32)
+  set_property(TEST postprocessor_explosion APPEND PROPERTY ENVIRONMENT "PATH=${_test_path}")
+endif()

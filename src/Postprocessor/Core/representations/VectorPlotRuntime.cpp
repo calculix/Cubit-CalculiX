@@ -211,7 +211,45 @@ namespace Postprocessor
         {
           mesh->GetPoint(i,sample.position.data());
         }
+        sample.pulse_base = sample.position;
+        auto* pulseBase = mesh->GetPointData()->GetArray("PostprocessorPulseBase");
+        auto* pulseComponents = mesh->GetPointData()->GetArray("PostprocessorPulseComponents");
+        auto* pulseMesh = mesh->GetPointData()->GetArray("PostprocessorPulseMesh");
+        if (pulseBase && pulseComponents && pulseMesh)
+        {
+          // Match the same nodal position or isoparametric cell center used
+          // above; only translations pulse, never vector direction or length.
+          const auto sampleArray = [&](vtkDataArray* array,std::array<double,3>& value)
+          {
+            if (!element)
+            {
+              array->GetTuple(i,value.data());
+              return;
+            }
+            auto* cell = mesh->GetCell(i);
+            std::vector<double> weights(static_cast<std::size_t>(cell->GetNumberOfPoints()));
+            double pcoords[3],position[3];
+            int subId = cell->GetParametricCenter(pcoords);
+            cell->EvaluateLocation(subId,pcoords,position,weights.data());
+            value = {0,0,0};
+            for (vtkIdType point = 0; point < cell->GetNumberOfPoints(); ++point)
+            {
+              for (int axis = 0; axis < 3; ++axis)
+              {
+                value[axis] += weights[static_cast<std::size_t>(point)]*array->GetComponent(cell->GetPointId(point),axis);
+              }
+            }
+          };
+          sampleArray(pulseBase,sample.pulse_base);
+          sampleArray(pulseComponents,sample.pulse_components);
+          sampleArray(pulseMesh,sample.pulse_mesh);
+        }
         sample.key = mix(part.first)^mix(static_cast<std::uint64_t>(sample.entity))^mix(static_cast<std::uint64_t>(sample.integration_point));
+        const auto owner = identity(attributes,"PostprocessorExplosionElement",i);
+        if (owner >= 0)
+        {
+          sample.key ^= mix(static_cast<std::uint64_t>(owner)+0x9e3779b97f4a7c15ULL);
+        }
         if (sample.entity < 0)
         {
           // Interpolated section/clip points have no solver node identity.

@@ -83,6 +83,10 @@ namespace Postprocessor
       }())+id;
     }
     command += " dataset "+dataset+" source "+name;
+    if (entity.display_element)
+    {
+      command += " owner \""+std::to_string(*entity.display_element)+"\"";
+    }
     return true;
   }
 }

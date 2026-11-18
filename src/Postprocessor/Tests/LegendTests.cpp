@@ -67,6 +67,26 @@ int legend_cases(const std::shared_ptr<PostprocessorApplicationInterface>& app)
       return true;
     }
     check(command.endsWith("source \"Model\""),"Legend command did not name its source");
+    if (command.startsWith("post vector legend"))
+    {
+      auto vectors = app->vector_plot("Model",error);
+      if (!vectors)
+      {
+        return false;
+      }
+      if (command.section(' ',3,3) == "auto")
+      {
+        vectors->legend.legend_position.reset();
+      }
+      else
+      {
+        bool a = false,b = false;
+        const double x = command.section(' ',4,4).toDouble(&a),y = command.section(' ',5,5).toDouble(&b);
+        check(a && b,"Vector drag lost numeric coordinates");
+        vectors->legend.legend_position = std::array<double,2>{x,y};
+      }
+      return app->set_vector_plot("Model",*vectors,error);
+    }
     auto color = app->coloring("Model",error);
     if (!color)
     {
@@ -125,6 +145,48 @@ int legend_cases(const std::shared_ptr<PostprocessorApplicationInterface>& app)
   const auto restored = app->coloring("Model",error);
   check(escaped && restored && moved && restored->legend_position == moved->legend_position && journals == 2,
     "Escape did not restore the legend silently");
+  const auto savedVectors = app->vector_plot("Model",error);
+  check(app->vector_field("Model","DISP",std::nullopt,error),"Cannot choose vector legend fixture field");
+  auto vectors = app->vector_plot("Model",error);
+  if (vectors)
+  {
+    vectors->enabled = true;
+    vectors->legend.legend_visible = true;
+    vectors->legend.legend_position = std::array<double,2>{.1,.06};
+    check(app->set_vector_plot("Model",*vectors,error),"Cannot show vector legend fixture");
+    check(scene.synchronize(*app,error),"Cannot synchronize vector legend fixture");
+    const auto vectorHit = scene.legend_at(.12,.1);
+    check(vectorHit && vectorHit->vector && vectorHit->frame[2]*800 <= 141 && vectorHit->frame[3]*600 <= 221,
+      "Vector legend is not an independent compact sibling");
+    const QPointF vectorStart(.12*800,.9*600),vectorEnd = vectorStart+QPointF(80,-60);
+    QMouseEvent vectorPress(QEvent::MouseButtonPress,vectorStart,vectorStart,Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+    QMouseEvent vectorMove(QEvent::MouseMove,vectorEnd,vectorEnd,Qt::NoButton,Qt::LeftButton,Qt::NoModifier);
+    QMouseEvent vectorRelease(QEvent::MouseButtonRelease,vectorEnd,vectorEnd,Qt::LeftButton,Qt::NoButton,Qt::NoModifier);
+    const auto beforeJournals = journals,beforePreviews = previews;
+    check(interaction.handle(&vectorPress) && interaction.handle(&vectorMove),"Cannot drag vector legend");
+    interaction.flush_preview();
+    check(interaction.handle(&vectorRelease) && journals == beforeJournals+1 && previews == beforePreviews+1,
+      "Vector drag did not use silent preview and one journal entry");
+    const auto resultUnchanged = app->coloring("Model",error);
+    check(resultUnchanged && moved && resultUnchanged->legend_position == moved->legend_position,
+      "Vector drag moved the result legend");
+    check(scene.synchronize(*app,error),"Cannot refresh dragged vector legend");
+    const QPointF vectorClick(.22*800,.8*600);
+    QMouseEvent vectorDoubleClick(QEvent::MouseButtonDblClick,vectorClick,vectorClick,Qt::LeftButton,Qt::LeftButton,Qt::NoModifier);
+    check(interaction.handle(&vectorDoubleClick) && properties == "post properties vectorlegend source \"Model\"",
+      "Vector double-click did not open vector legend properties");
+    auto hideResult = app->coloring("Model",error);
+    if (hideResult)
+    {
+      hideResult->legend_visible = false;
+      check(app->set_coloring("Model",*hideResult,error) && scene.synchronize(*app,error) && scene.legend_at(.22,.2).has_value(),
+        "Hiding the result legend also hid the vector legend");
+    }
+  }
+  if (savedVectors)
+  {
+    check(app->set_vector_plot("Model",*savedVectors,error),"Cannot restore vector legend fixture");
+  }
   check(app->set_coloring("Model",*saved,error),"Cannot restore legend fixture");
   return failures;
 }

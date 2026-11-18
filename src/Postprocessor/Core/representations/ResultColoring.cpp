@@ -1,5 +1,6 @@
 #include "ResultColoringUnits.hpp"
 #include "ResultColoring.hpp"
+#include <vtkMath.h>
 #include "Framework/Results/ResultsUnits.hpp"
 #include <vtkDataSet.h>
 #include <vtkDataArray.h>
@@ -231,7 +232,7 @@ namespace Postprocessor
       a->component == b->component && a->magnitude == b->magnitude && a->group_key == b->group_key));
   }
   bool same_coloring(const ResultColoring& a, const ResultColoring& b) {
-    return same_coloring_units(a.bounds_unit, b.bounds_unit) && same_field(a.field, b.field) && a.palette == b.palette && a.range_mode == b.range_mode &&
+    return same_coloring_units(a.bounds_unit, b.bounds_unit) && same_field(a.field, b.field) && a.palette == b.palette && a.custom_palette == b.custom_palette && a.palette_hsv == b.palette_hsv && a.range_mode == b.range_mode &&
       a.fixed_range == b.fixed_range && a.reversed == b.reversed && a.legend_visible == b.legend_visible &&
       a.bands == b.bands && a.legend_position == b.legend_position && a.minimum.enabled == b.minimum.enabled && a.minimum.value == b.minimum.value &&
       a.minimum.color == b.minimum.color && a.maximum.enabled == b.maximum.enabled &&
@@ -240,6 +241,18 @@ namespace Postprocessor
   bool valid_coloring(const ResultColoring& c, std::string& error) {
     if (!valid_coloring_units(c.bounds_unit, error))
     {
+      return false;
+    }
+    if ((c.palette_hsv && c.custom_palette.size() != 2) || (!c.custom_palette.empty() && c.custom_palette.size() < 2) || c.custom_palette.size() > ColoringDefaults::maximum_bands ||
+        !std::all_of(c.custom_palette.begin(),c.custom_palette.end(),[](const auto& rgb)
+        {
+          return std::all_of(rgb.begin(),rgb.end(),[](double v)
+          {
+            return std::isfinite(v) && v >= 0 && v <= 1;
+          });
+        }))
+    {
+      error = "Custom palettes require 2..256 finite RGB stops in [0,1].";
       return false;
     }
     if (c.legend_position && !std::all_of(c.legend_position->begin(),c.legend_position->end(),[](double value)
@@ -387,13 +400,13 @@ namespace Postprocessor
         break;
       case ColorPalette::Rainbow:
       {
-        // Equally spaced RGB stops match the approved Classic rainbow preview.
+        // Bright blue/red endpoints; retain the interior Classic rainbow stops.
         constexpr double half = 128.0 / 255.0;
         constexpr double sky = 191.0 / 255.0;
-        const std::array<RGB,10> rainbow = {{{0,0,half},{0,0,1},{0,sky,1},{0,1,1},
-          {0,1,half},{half,1,0},{1,1,0},{1,half,0},{1,0,0},{half,0,0}}};
-        const double p = t * 9;
-        const auto i = std::min(static_cast<std::size_t>(p),std::size_t{8});
+        const std::array<RGB,8> rainbow = {{{0,0,1},{0,sky,1},{0,1,1},
+          {0,1,half},{half,1,0},{1,1,0},{1,half,0},{1,0,0}}};
+        const double p = t * 7;
+        const auto i = std::min(static_cast<std::size_t>(p),std::size_t{6});
         RGB value;
         for (std::size_t c = 0; c < 3; ++c) {
           value[c] = rainbow[i][c] + (rainbow[i+1][c] - rainbow[i][c]) * (p - static_cast<double>(i));
@@ -412,6 +425,136 @@ namespace Postprocessor
       value[c] = points[i][c] + (points[i+1][c] - points[i][c]) * (p - static_cast<double>(i));
     }
     return value;
+  }
+  std::array<double,3> coloring_palette_color(const ResultColoring& coloring,double t)
+  {
+    if (!std::isfinite(t))
+    {
+      return ColoringDefaults::missing;
+    }
+    if (coloring.custom_palette.empty())
+    {
+      return palette_color(coloring.palette,t);
+    }
+    const auto& stops = coloring.custom_palette;
+    if (t <= 0)
+    {
+      return stops.front();
+    }
+    if (t >= 1)
+    {
+      return stops.back();
+    }
+    if (coloring.palette_hsv)
+    {
+      std::array<double,3> low, high, rgb;
+      vtkMath::RGBToHSV(stops.front().data(),low.data());
+      vtkMath::RGBToHSV(stops.back().data(),high.data());
+      // Gray has no hue. Borrow the chromatic endpoint's hue, then take
+      // the shortest path around the hue circle between the two colors.
+      if (low[1] == 0)
+      {
+        low[0] = high[0];
+      }
+      if (high[1] == 0)
+      {
+        high[0] = low[0];
+      }
+      const double hue = low[0]+t*std::remainder(high[0]-low[0],1.0);
+      const std::array<double,3> hsv = {hue-std::floor(hue),
+        low[1]+t*(high[1]-low[1]),low[2]+t*(high[2]-low[2])};
+      vtkMath::HSVToRGB(hsv.data(),rgb.data());
+      return rgb;
+    }
+    const double p = std::clamp(t,0.0,1.0)*(stops.size()-1);
+    const auto i = std::min(static_cast<std::size_t>(p),stops.size()-2);
+    std::array<double,3> rgb;
+    for (std::size_t c = 0; c < 3; ++c)
+    {
+      rgb[c] = stops[i][c]+(stops[i+1][c]-stops[i][c])*(p-i);
+    }
+    return rgb;
+  }
+  std::vector<std::array<double,3>> palette_endpoints(const ResultColoring& coloring)
+  {
+    auto low = coloring_palette_color(coloring,0);
+    auto high = coloring_palette_color(coloring,1);
+    if (coloring.reversed)
+    {
+      std::swap(low,high);
+    }
+    return {low,high};
+  }
+
+  bool set_palette_endpoint(ResultColoring& coloring,bool high,const std::array<double,3>& rgb,std::string& error)
+  {
+    if (!valid_coloring(coloring,error))
+    {
+      return false;
+    }
+    if (!std::all_of(rgb.begin(),rgb.end(),[](double channel)
+      {
+        return std::isfinite(channel) && channel >= 0 && channel <= 1;
+      }))
+    {
+      error = "Palette endpoint RGB must be in [0,1].";
+      return false;
+    }
+    auto stops = palette_endpoints(coloring);
+    stops[static_cast<std::size_t>(high)] = rgb;
+    if (coloring.reversed)
+    {
+      std::swap(stops.front(),stops.back());
+    }
+    coloring.custom_palette = std::move(stops);
+    coloring.palette_hsv = true;
+    return true;
+  }
+
+  void reset_custom_palette(ResultColoring& coloring)
+  {
+    coloring.custom_palette.clear();
+    coloring.palette_hsv = false;
+  }
+
+  std::vector<std::array<double,3>> palette_samples(const ResultColoring& coloring)
+  {
+    std::size_t count = 8;
+    if (!coloring.custom_palette.empty())
+    {
+      count = coloring.custom_palette.size();
+    }
+    if (coloring.bands)
+    {
+      count = *coloring.bands;
+    }
+    std::vector<std::array<double,3>> colors;
+    for (std::size_t i = 0; i < count; ++i)
+    {
+      colors.push_back(coloring_palette_color(coloring,static_cast<double>(i)/(count-1)));
+    }
+    return colors;
+  }
+  bool set_palette_stop(ResultColoring& coloring,std::size_t stop,const std::array<double,3>& rgb,std::string& error)
+  {
+    error.clear();
+    if (!valid_coloring(coloring,error))
+    {
+      return false;
+    }
+    auto colors = palette_samples(coloring);
+    if (stop == 0 || stop > colors.size() || !std::all_of(rgb.begin(),rgb.end(),[](double c)
+      {
+        return std::isfinite(c) && c >= 0 && c <= 1;
+      }))
+    {
+      error = "Palette stop must address an existing color (starting at 1), with RGB in [0,1].";
+      return false;
+    }
+    colors[stop-1] = rgb;
+    coloring.custom_palette = std::move(colors);
+    coloring.palette_hsv = false;
+    return true;
   }
   std::array<double, 3> result_color(double value, const ResultColoring& c, const std::array<double, 2>& range) {
     if (!std::isfinite(value)) {
@@ -435,6 +578,6 @@ namespace Postprocessor
     if (c.reversed) {
       t = 1 - t;
     }
-    return palette_color(c.palette, t);
+    return coloring_palette_color(c, t);
   }
 }

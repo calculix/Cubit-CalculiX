@@ -26,12 +26,7 @@ bool report_error(const std::string& message, std::string* error)
   return false;
 }
 
-struct Integral
-{
-  double volume = 0.0;
-  double solid = 0.0;
-  std::vector<double> derivatives;
-};
+using Integral = CoreTopologyLevelSetIntegrationDiagnostics::Estimate;
 
 void heaviside(double phi, double width, double& value, double& derivative)
 {
@@ -178,21 +173,15 @@ bool integrate(const std::string& type, int cubit_type, const ElementPhysicalMap
   return true;
 }
 
-bool converged(const Integral& previous, const Integral& current, const TopologyLevelSetSettings& settings)
-{
-  const double relative_volume = std::abs(current.volume - previous.volume) / (std::max)(current.volume, previous.volume);
-  double error = (std::max)(relative_volume, std::abs(current.solid - previous.solid));
-  for (std::size_t node = 0; node < current.derivatives.size(); ++node)
-  {
-    error = (std::max)(error, settings.interface_width * std::abs(current.derivatives[node] - previous.derivatives[node]));
-  }
-  return error <= settings.integration_tolerance;
-}
 }
 
-bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_type, int cubit_type, const std::vector<std::array<double, 3>>& node_coordinates, const std::vector<double>& node_values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll, CoreTopologyLevelSetQuadrature* quadrature, std::string* error)
+bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_type, int cubit_type, const std::vector<std::array<double, 3>>& node_coordinates, const std::vector<double>& node_values, double cubit_volume, bool preserved, const TopologyLevelSetSettings& settings, TopologyLevelSetElementGeometry& geometry, const std::function<bool()>& poll, CoreTopologyLevelSetQuadrature* quadrature, std::string* error, CoreTopologyLevelSetIntegrationDiagnostics::Result* diagnostics)
 {
   geometry = {};
+  if (diagnostics)
+  {
+    *diagnostics = {};
+  }
   if (!CoreTopologyLevelSet::validate_settings(settings, error))
   {
     return false;
@@ -221,6 +210,7 @@ bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_
     return false;
   }
   int subdivisions = 1;
+  CoreTopologyLevelSetIntegrationDiagnostics::Comparison comparison;
   for (int refinement = 0; refinement < settings.integration_max_refinements; ++refinement)
   {
     subdivisions *= 2;
@@ -229,7 +219,13 @@ bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_
     {
       return false;
     }
-    if (converged(previous, current, settings))
+    comparison = CoreTopologyLevelSetIntegrationDiagnostics::compare(previous, current,
+      settings.interface_width, subdivisions, settings.integration_tolerance);
+    if (diagnostics)
+    {
+      diagnostics->comparisons.push_back(comparison);
+    }
+    if (comparison.maximum_error <= settings.integration_tolerance)
     {
       TopologyLevelSetElementGeometry candidate;
       candidate.solid_fraction = current.solid;
@@ -252,7 +248,14 @@ bool CoreTopologyLevelSetGeometry::evaluate_element(const std::string& calculix_
     }
     previous = std::move(current);
   }
-  return report_error("Level-set element geometry integration did not converge within " + std::to_string(settings.integration_max_refinements) + " refinements.", error);
+  CoreTopologyLevelSetIntegrationDiagnostics::Result failure;
+  failure.refinement_limit_reached = true;
+  failure.comparisons.push_back(comparison);
+  if (diagnostics)
+  {
+    diagnostics->refinement_limit_reached = true;
+  }
+  return report_error("Level-set element geometry integration did not converge within " + std::to_string(settings.integration_max_refinements) + " refinements." + CoreTopologyLevelSetIntegrationDiagnostics::describe(failure), error);
 }
 
 bool CoreTopologyLevelSetGeometry::query_element(int element_id, std::string& calculix_type, int& cubit_type, std::vector<int>& nodes, std::vector<std::array<double, 3>>& coordinates)

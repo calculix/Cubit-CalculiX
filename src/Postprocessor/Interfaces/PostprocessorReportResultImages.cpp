@@ -1,6 +1,7 @@
 #include "PostprocessorReportResultImages.hpp"
 #include "PostprocessorReportBlockSummary.hpp"
 #include "PostprocessorApplicationInterface.hpp"
+#include "PostprocessorReportCapturePlan.hpp"
 #include <set>
 #include <utility>
 
@@ -20,11 +21,11 @@ bool PostprocessorReportResultImages::collect(const PostprocessorApplicationInte
     return false;
   }
   ReportDocument candidate = output;
-  const auto diagnose = [&](const std::string& message)
+  const auto diagnose = [&](const std::string& message, const std::string& severity = "unavailable")
   {
     ReportDiagnostic diagnostic;
     diagnostic.section_id = "post.images";
-    diagnostic.severity = "unavailable";
+    diagnostic.severity = severity;
     diagnostic.message = message;
     candidate.diagnostics.push_back(std::move(diagnostic));
   };
@@ -48,6 +49,60 @@ bool PostprocessorReportResultImages::collect(const PostprocessorApplicationInte
   ReportSection images;
   images.id = "post.images";
   images.title = "Block component result images";
+  PostprocessorReportCapturePlan capturePlan;
+  if (!summaries.empty())
+  {
+    if (!ReportProgress::advance(request.progress, ReportProgressStage::Images,
+          "Freezing Postprocessor presentation", 0, summaries.size(), error))
+    {
+      return false;
+    }
+    Postprocessor::CaptureDefinition definition;
+    if (request.visual)
+    {
+      if (request.visual->kind != ReportVisualKind::View)
+      {
+        error = "Block result images require a Postprocessor view.";
+        return false;
+      }
+      definition.name = request.visual->reference;
+    }
+    else
+    {
+      const auto view = request.settings.values.find("post.images.view");
+      if (view != request.settings.values.end())
+      {
+        definition.name = view->second;
+      }
+    }
+    if (request.width != 0 || request.height != 0)
+    {
+      definition.width = request.width;
+      definition.height = request.height;
+    }
+    Postprocessor::CaptureSnapshot snapshot;
+    std::string captureSource;
+    std::string captureError;
+    if (application.capture_snapshot(definition, snapshot, captureError))
+    {
+      for (const auto& item : snapshot.sources)
+      {
+        if (item.second == source)
+        {
+          captureSource = item.first;
+          break;
+        }
+      }
+    }
+    if (!captureError.empty() || !capturePlan.initialize(std::move(snapshot), captureSource,
+          request.settings, captureError))
+    {
+      diagnose("Result image presentation unavailable: " + captureError);
+      output = std::move(candidate);
+      error.clear();
+      return true;
+    }
+  }
   std::size_t completed = 0;
   for (const auto& summary : summaries)
   {
@@ -75,15 +130,55 @@ bool PostprocessorReportResultImages::collect(const PostprocessorApplicationInte
       selection.group_key = Postprocessor::field_group_key(summary.field);
       ReportImage image;
       std::string captureError;
-      if (!application.render_report_result(request.source, frame, summary.block.id,
-            selection, image, captureError))
+      Postprocessor::CaptureSnapshot snapshot;
+      if (!ReportProgress::advance(request.progress, ReportProgressStage::Images,
+            "Preparing block filters and vectors / " + summary.component,
+            completed, summaries.size(), error))
+      {
+        return false;
+      }
+      if (!capturePlan.prepare(frame, summary.block.id, selection, snapshot, captureError))
       {
         diagnose(section.title + ": " + captureError);
         continue;
       }
+      if (!ReportProgress::advance(request.progress, ReportProgressStage::Images,
+            "Rendering block image / " + summary.component, completed, summaries.size(), error))
+      {
+        return false;
+      }
+      if (!application.render_report_result(snapshot, image, captureError))
+      {
+        diagnose(section.title + ": " + captureError);
+        continue;
+      }
+      if (!ReportProgress::advance(request.progress, ReportProgressStage::Images,
+            "Storing block image / " + summary.component, completed, summaries.size(), error))
+      {
+        return false;
+      }
       image.id = summary.id + ".frame." + std::to_string(frame);
       image.caption = section.title + " / step " + std::to_string(source->increments[frame].step) +
         " / increment " + std::to_string(source->increments[frame].increment);
+      const auto capture = image.provenance.value("report_capture").toObject();
+      const auto warning = image.provenance.value("presentation_warning").toString();
+      if (!warning.isEmpty())
+      {
+        diagnose(section.title + ": " + warning.toStdString(), "warning");
+        image.caption += " / presentation warning (see diagnostics)";
+      }
+      if (capture.value("filtered").toBool())
+      {
+        image.caption += " / inherited filters; extrema describe the complete original block";
+      }
+      if (image.provenance.value("presentation_fallback").toBool())
+      {
+        image.caption += " / default presentation (no matching visible representation)";
+      }
+      if (capture.value("automatic_range_adjustment").toBool())
+      {
+        image.caption += " / automatic range (inherited limits have a different or unresolved quantity)";
+      }
       if (frames.size() > 1)
       {
         if (frame == summary.minimum_frame)

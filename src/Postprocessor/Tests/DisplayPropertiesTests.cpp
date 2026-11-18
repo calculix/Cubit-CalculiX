@@ -154,9 +154,16 @@ int main(int argc,char** argv)
     {
       c.legend_visible = operation == "on";
     }
+    else if (operation == "defaults")
+    {
+      const auto field = c.field;
+      c = ResultColoring{};
+      c.field = field;
+    }
     else if (operation == "palette")
     {
       stream >> value;
+      c.custom_palette.clear();
       if (value == "viridis")
       {
         c.palette = ColorPalette::Viridis;
@@ -261,18 +268,18 @@ int main(int argc,char** argv)
   auto* minValue = page.findChild<QLineEdit*>("Postprocessor.Display.MinimumValue");
   auto* maxValue = page.findChild<QLineEdit*>("Postprocessor.Display.MaximumValue");
   auto* reverse = page.findChild<QCheckBox*>("Postprocessor.Display.Reverse");
-  auto* apply = page.findChild<QPushButton*>("Postprocessor.Display.Apply");
+  auto* defaults = page.findChild<QPushButton*>("Postprocessor.Display.Defaults");
   auto* message = page.findChild<QLabel*>("Postprocessor.Display.Error");
   auto* contours = page.findChild<QComboBox*>("Postprocessor.Display.Contours");
   auto* bands = page.findChild<QSpinBox*>("Postprocessor.Display.Bands");
   auto* legend = page.findChild<QCheckBox*>("Postprocessor.Display.Legend");
-  check(palette && range && low && high && minimum && maximum && minValue && maxValue && reverse && apply && message && contours && bands && legend,
+  check(palette && range && low && high && minimum && maximum && minValue && maxValue && reverse && defaults && message && contours && bands && legend,
     "Display property controls missing");
-  if (!palette || !range || !low || !high || !minimum || !maximum || !minValue || !maxValue || !reverse || !apply || !message || !contours || !bands || !legend)
+  if (!palette || !range || !low || !high || !minimum || !maximum || !minValue || !maxValue || !reverse || !defaults || !message || !contours || !bands || !legend)
   {
     return 1;
   }
-  check(sent.empty() && !apply->isEnabled(),"Refreshing properties submitted commands or enabled Apply");
+  check(sent.empty() && defaults->isEnabled(),"Refreshing properties submitted commands or disabled Defaults");
   range->setCurrentIndex(range->findData(static_cast<int>(ColorRangeMode::Fixed)));
   low->setText("1e2");
   high->setText("3e2");
@@ -280,12 +287,12 @@ int main(int argc,char** argv)
   maximum->setChecked(true);
   minValue->setText("100");
   maxValue->setText("250");
-  check(sent.empty() && apply->isEnabled(),"Editing controls applied state before Apply");
+  check(sent.empty() && defaults->isEnabled(),"Queued edits submitted before returning to the event loop");
   check(page.apply(error),"Cannot apply scientific fixed range and paired limits");
   auto settings = application->coloring("Mesh",error);
   check(settings && settings->fixed_range == std::array<double,2>{100,300} && settings->minimum.enabled && settings->maximum.enabled &&
     settings->minimum.value == 100 && settings->maximum.value == 250,"Property commands did not publish the complete draft");
-  check(!apply->isEnabled(),"Successful Apply retained dirty state");
+  check(defaults->isEnabled(),"Defaults became unavailable after an edit");
   contours->setCurrentIndex(contours->findData(true));
   bands->setValue(8);
   legend->setChecked(false);
@@ -302,7 +309,7 @@ int main(int argc,char** argv)
   palette->setCurrentIndex(palette->findData(static_cast<int>(ColorPalette::Grayscale)));
   check(application->set_frame("Mesh",2,error),"Cannot update frame during a draft");
   page.refresh();
-  check(palette->currentData().toInt() == static_cast<int>(ColorPalette::Grayscale) && apply->isEnabled(),"Frame refresh overwrote pending edits");
+  check(palette->currentData().toInt() == static_cast<int>(ColorPalette::Grayscale) && defaults->isEnabled(),"Frame refresh overwrote pending edits");
   settings = application->coloring("Mesh",error);
   if (settings)
   {
@@ -310,7 +317,7 @@ int main(int argc,char** argv)
     check(application->set_coloring("Mesh",*settings,error),"Cannot apply external property change");
   }
   page.refresh();
-  check(reverse->isChecked() && palette->currentData().toInt() == static_cast<int>(ColorPalette::Viridis) && !apply->isEnabled(),
+  check(reverse->isChecked() && palette->currentData().toInt() == static_cast<int>(ColorPalette::Viridis) && defaults->isEnabled(),
     "External coloring command failed to replace the draft with committed state");
 
   minValue->setText("300");
@@ -343,9 +350,20 @@ int main(int argc,char** argv)
   check(application->open_job("fake",1,std::string("Other"),error),"Cannot change property source");
   check(!page.apply(error) && sent.size() == before && palette->currentData().toInt() == static_cast<int>(ColorPalette::Viridis),
     "A stale draft was applied to the newly selected source");
+  QApplication::processEvents();
+  const auto beforeAutomatic = sent.size();
+  reverse->setChecked(!reverse->isChecked());
+  QApplication::processEvents();
+  check(sent.size() == beforeAutomatic+1,"A checkbox edit did not auto-submit exactly once");
+  check(page.findChild<QPushButton*>("Postprocessor.Display.Apply") == nullptr,"Apply button remains in automatic properties");
+  defaults->click();
+  settings = application->coloring("Other",error);
+  check(settings && settings->field && settings->palette == ColoringDefaults::palette &&
+    settings->bands == std::optional<unsigned int>(ColoringDefaults::default_bands) && settings->custom_palette.empty(),
+    "Defaults did not restore Core appearance while preserving the field");
   check(application->reset(error),"Cannot reset property fixture");
   page.refresh();
-  check(!page.isEnabled() && !apply->isEnabled(),"Reset left stale property controls active");
+  check(!page.isEnabled() && !defaults->isEnabled(),"Reset left stale property controls active");
   if (failures == 0) {
     return 0;
   } else {

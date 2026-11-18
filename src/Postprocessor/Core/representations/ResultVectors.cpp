@@ -9,6 +9,17 @@
 #include <cmath>
 namespace Postprocessor
 {
+  bool vector_field_choice(const std::vector<ResultFieldGroup>& groups,const ResultFieldGroup& group,
+    ResultFieldSelector& selector)
+  {
+    if (!spatial_vector(group.field) || !group.unit_issue.empty())
+    {
+      return false;
+    }
+    std::string error;
+    return readable_result_field(groups,preferred_field_selection(group.field,group.key),selector,error);
+  }
+
   bool spatial_vector(const SimResults::Field& field)
   {
     if (field.categorical || !field.vector_components || field.association == SimResults::Association::Table)

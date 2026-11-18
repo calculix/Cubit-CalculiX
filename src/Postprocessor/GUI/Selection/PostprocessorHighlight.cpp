@@ -66,7 +66,7 @@ bool PostprocessorScene::set_hover(const std::optional<Postprocessor::EntityRefe
   {
     return clear_hover();
   }
-  if (hoveredEntity && Postprocessor::same_entity(*hoveredEntity,*entity))
+  if (hoveredEntity && Postprocessor::same_display_entity(*hoveredEntity,*entity))
   {
     return false;
   }
@@ -82,7 +82,7 @@ void PostprocessorScene::build_highlight(const Postprocessor::EntityReference& e
 {
   const auto active = application.session().representations.find(application.session().active_representation_id);
   if (entity.kind == Postprocessor::EntityKind::Element && active != application.session().representations.end() &&
-      active->second.view_id == viewId && active->second.input.owner == Postprocessor::OutputOwner::Feature &&
+      active->second.view_id == viewId && (active->second.input.owner == Postprocessor::OutputOwner::Feature || application.explosion_active(active->second)) &&
       application.output_source(active->second.input) == entity.source_id)
   {
     std::string error;

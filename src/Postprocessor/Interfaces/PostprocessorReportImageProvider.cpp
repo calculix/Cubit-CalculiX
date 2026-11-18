@@ -1,5 +1,6 @@
 #include <type_traits>
 #include "PostprocessorReportImageProvider.hpp"
+#include "PostprocessorReportMeshQualityImages.hpp"
 #include "PostprocessorReportResultImages.hpp"
 #include "PostprocessorApplicationInterface.hpp"
 #include "Framework/Reporting/ReportImageRequest.hpp"
@@ -17,6 +18,10 @@ bool PostprocessorReportImageProvider::collect(const ReportImageRequest& request
   {
     error = "The Postprocessor report image provider is unavailable.";
     return false;
+  }
+  if (request.purpose == "mesh_quality")
+  {
+    return PostprocessorReportMeshQualityImages().collect(*active, request, output, error);
   }
   return PostprocessorReportResultImages().collect(*active, request, output, error);
 }

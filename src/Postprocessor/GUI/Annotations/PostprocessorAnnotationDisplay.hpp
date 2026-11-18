@@ -22,6 +22,7 @@ private:
   vtkRenderer* renderer;
   std::string viewId, activeRepresentation, activeSource;
   std::optional<std::uint64_t> geometryRevision;
+  bool pulseWasEnabled = false;
   Postprocessor::AnnotationState previous;
   std::vector<Label> labels;
 };

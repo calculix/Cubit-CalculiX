@@ -63,6 +63,14 @@ namespace Postprocessor
             return QJsonValue(QJsonValue::Null);
           }
         }()},
+        {"owner",[&]() -> QJsonValue
+        {
+          if (label.entity.display_element)
+          {
+            return q(std::to_string(*label.entity.display_element));
+          }
+          return QJsonValue(QJsonValue::Null);
+        }()},
         {"dataset_kind",q(label.dataset_kind)},{"dataset_name",q(label.dataset_name)},{"model",label.model_id},
         {"array",q(label.field.array_name)},{"association",static_cast<int>(label.field.association)},
         {"component",q(label.field.component)},{"magnitude",label.field.magnitude},{"group",q(label.field.group_key)},
@@ -111,6 +119,15 @@ namespace Postprocessor
           !position_read(json.value("position"),label.position))
       {
         return false;
+      }
+      if (json.contains("owner") && !json.value("owner").isNull())
+      {
+        std::int64_t owner = -1;
+        if (!id_read(json.value("owner"),owner))
+        {
+          return false;
+        }
+        label.entity.display_element = owner;
       }
       const auto kind = json.value("kind").toDouble(-1);
       const auto association = json.value("association").toDouble(-1);

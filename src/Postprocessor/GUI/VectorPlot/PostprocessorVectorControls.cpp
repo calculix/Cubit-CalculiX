@@ -4,39 +4,27 @@
 #include "Postprocessor/Commands/results/VectorCommandText.hpp"
 #include "CubitMessage.hpp"
 #include "Postprocessor/Commands/FieldCommandText.hpp"
-#include <QToolButton>
+#include <QCheckBox>
+#include <QPushButton>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QSpinBox>
-#include <QHBoxLayout>
 #include <QFormLayout>
-#include <QMenu>
-#include <QWidgetAction>
 #include <QScopedValueRollback>
 #include <utility>
 PostprocessorVectorControls::PostprocessorVectorControls(std::weak_ptr<PostprocessorApplicationInterface> active,
   Submit dispatcher,QWidget* parent) : QWidget(parent),application(std::move(active)),submit(std::move(dispatcher))
 {
   setObjectName("Postprocessor.VectorControls");
-  auto* layout = new QHBoxLayout(this);
-  layout->setContentsMargins(0,0,0,0);
-  layout->setSpacing(4);
-  enabled = new QToolButton(this);
+  auto* form = new QFormLayout(this);
+  auto* panel = this;
+  enabled = new QCheckBox(tr("Show vectors"),this);
   enabled->setObjectName("Postprocessor.Vector.Enabled");
-  enabled->setText(tr("Vectors"));
-  enabled->setCheckable(true);
-  enabled->setToolTip(tr("Show vector arrows for the selected field."));
-  layout->addWidget(enabled);
+  enabled->setToolTip(tr("Show vector arrows for the selected field"));
+  form->addRow(enabled);
   fields = new QComboBox(this);
   fields->setObjectName("Postprocessor.Vector.Field");
-  fields->setMaximumWidth(180);
-  layout->addWidget(fields);
-  auto* options = new QToolButton(this);
-  options->setText(tr("Options"));
-  options->setPopupMode(QToolButton::InstantPopup);
-  auto* menu = new QMenu(options);
-  auto* panel = new QWidget(menu);
-  auto* form = new QFormLayout(panel);
+  form->addRow(tr("Field"),fields);
   length = new QComboBox(panel);
   length->addItems({tr("Proportional"),tr("Uniform")});
   form->addRow(tr("Arrow length"),length);
@@ -62,12 +50,23 @@ PostprocessorVectorControls::PostprocessorVectorControls(std::weak_ptr<Postproce
   color = new QComboBox(panel);
   color->addItems({tr("Magnitude"),tr("Solid")});
   form->addRow(tr("Color"),color);
-  auto* widgetAction = new QWidgetAction(menu);
-  widgetAction->setDefaultWidget(panel);
-  menu->addAction(widgetAction);
-  options->setMenu(menu);
-  layout->addWidget(options);
-  connect(enabled,&QToolButton::toggled,this,[this](bool on)
+  auto* legend = new QPushButton(tr("Vector legend properties..."),this);
+  form->addRow(legend);
+  connect(legend,&QPushButton::clicked,this,[this]()
+  {
+    const auto command = Postprocessor::vector_command_text("on",source);
+    const auto suffix = command.indexOf(" source ");
+    if (suffix < 0)
+    {
+      return;
+    }
+    std::string error;
+    if (submit)
+    {
+      submit(("post properties vectorlegend"+command.mid(suffix)).toStdString(),error);
+    }
+  });
+  connect(enabled,&QCheckBox::clicked,this,[this](bool on)
   {
     QString operation = "off";
     if (on)
@@ -169,14 +168,8 @@ void PostprocessorVectorControls::refresh()
   const auto groups = active->field_groups(state.active_source_id,std::nullopt);
   for (const auto& group : groups)
   {
-    if (!Postprocessor::spatial_vector(group.field) || !group.unit_issue.empty())
-    {
-      continue;
-    }
     Postprocessor::ResultFieldSelector selector;
-    const auto selection = Postprocessor::preferred_field_selection(group.field,group.key);
-    std::string selectorError;
-    if (!Postprocessor::readable_result_field(groups,selection,selector,selectorError))
+    if (!Postprocessor::vector_field_choice(groups,group,selector))
     {
       continue;
     }
@@ -189,9 +182,13 @@ void PostprocessorVectorControls::refresh()
     fields->addItem(QString::fromStdString(group.field.name+" / "+group.field.source+" / "+
       Postprocessor::field_association_name(group.field.association)+" / "+group.field.set_name));
   }
+  if (!settings->field && !selectors.empty())
+  {
+    selected = 0;
+  }
   fields->setCurrentIndex(selected);
   enabled->setChecked(settings->enabled);
-  enabled->setEnabled(settings->field.has_value());
+  enabled->setEnabled(settings->field.has_value() || !selectors.empty());
   length->setCurrentIndex(!settings->proportional);
   samples->setCurrentIndex(!settings->surface_only);
   color->setCurrentIndex(!settings->magnitude_color);

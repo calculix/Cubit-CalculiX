@@ -11,8 +11,10 @@ std::vector<std::string> PostViewToolsCommand::get_syntax()
 {
   return {"post view {front|back|top|bottom|left|right|iso}",
     "post view projection {parallel|perspective}","post scale {on|off}",
-    "post properties {legend|clip|section|threshold|close}",
+    "post properties {legend|vectors|vectorlegend|clip|section|threshold|explosion|close}",
     "post properties legend source <string:type='quoted',number='1',label='source_name'>",
+    "post properties vectorlegend source <string:type='quoted',number='1',label='source_name'>",
+    "post properties vectors source <string:type='quoted',number='1',label='source_name'>",
     "post properties source <string:type='quoted',number='1',label='source_name'>"};
 }
 std::vector<std::string> PostViewToolsCommand::get_syntax_help()
@@ -42,7 +44,7 @@ bool PostViewToolsCommand::execute(CubitCommandData& data)
         page = "source";
         data.get_string("source_name",source);
       }
-      for (const auto* name : {"legend","clip","section","threshold","close"})
+      for (const auto* name : {"legend","vectors","vectorlegend","clip","section","threshold","explosion","close"})
       {
         std::string keyword(name);
         for (auto& character : keyword)

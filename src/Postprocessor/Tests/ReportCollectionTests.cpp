@@ -1,6 +1,7 @@
 #include "Postprocessor/Interfaces/PostprocessorReportFrameSelection.hpp"
 #include "Postprocessor/Interfaces/PostprocessorReportExtrema.hpp"
 #include "Postprocessor/Interfaces/PostprocessorReportBlockSummary.hpp"
+#include "ReportCaptureTests.hpp"
 #include <vtkNew.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkPoints.h>
@@ -119,5 +120,5 @@ int main(int argc, char** argv)
   source.datasets.front().kind = "DAT_Elements";
   check(PostprocessorReportBlockSummary::collect(request, source, summaries, error) && summaries.empty(),
     "An arbitrary DAT element set is not mislabeled as a model block");
-  return failures;
+  return failures + report_capture_cases();
 }

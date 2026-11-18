@@ -103,9 +103,47 @@ int vector_plot_tests()
   display.hidden_datasets.insert(0);
   check(prepare_vector_plot(source,source,display,10,output,error) && output.samples.empty(),"Hidden dataset still has vectors");
   display.hidden_datasets.clear();
+  display.vectors.legend.legend_position = std::array<double,2>{.3,.2};
+  display.vectors.legend.palette = ColorPalette::Rainbow;
+  const auto originalPalette = palette_samples(display.vectors.legend);
+  check(originalPalette.size() == 12 && originalPalette.front() != originalPalette[1] && originalPalette.back() != originalPalette[10],
+    "Bright rainbow endpoints duplicate adjacent bands");
+  check(set_palette_stop(display.vectors.legend,1,{.2,.3,.4},error),"Cannot customize the first palette band");
+  check(set_palette_stop(display.vectors.legend,12,{.8,.7,.6},error),"Cannot customize the last palette band");
+  const auto colors = palette_samples(display.vectors.legend);
+  check(colors.front() == std::array<double,3>{.2,.3,.4} && colors.back() == std::array<double,3>{.8,.7,.6},
+    "Custom endpoint colors were not used");
+  const auto unchanged = display.vectors.legend.custom_palette;
+  check(!set_palette_stop(display.vectors.legend,13,{1,0,0},error) && display.vectors.legend.custom_palette == unchanged,
+    "Invalid palette index changed stored colors");
+  check(!set_palette_stop(display.vectors.legend,2,{-1,0,0},error) && display.vectors.legend.custom_palette == unchanged,
+    "Invalid palette channel changed stored colors");
+  check(coloring_palette_color(display.vectors.legend,0) == colors.front() && coloring_palette_color(display.vectors.legend,1) == colors.back(),
+    "Palette interpolation lost its endpoints");
+  auto endpointSettings = display.vectors;
+  auto& ramp = endpointSettings.legend;
+  check(set_palette_endpoint(ramp,false,{0,0,1},error) && set_palette_endpoint(ramp,true,{1,0,0},error),
+    "Cannot configure the two palette endpoints");
+  const auto midpoint = coloring_palette_color(ramp,.5);
+  check(std::abs(midpoint[0]-1) < 1e-12 && std::abs(midpoint[1]) < 1e-12 && std::abs(midpoint[2]-1) < 1e-12,
+    "The HSV ramp did not take the short path from blue to red");
+  ramp.reversed = true;
+  check(set_palette_endpoint(ramp,false,{0,1,0},error) && palette_endpoints(ramp).front() == std::array<double,3>{0,1,0},
+    "Editing the low color targeted the wrong reversed endpoint");
+  ramp.bands = 20;
+  check(ramp.custom_palette.size() == 2 && palette_endpoints(ramp).size() == 2,
+    "Band count changed the editable endpoints");
+  VectorPlotDefinition endpointDecoded;
+  check(vector_plot_from_json(vector_plot_to_json(endpointSettings),endpointDecoded,error) &&
+    same_vector_plot(endpointDecoded,endpointSettings),"HSV palette did not round trip");
+  reset_custom_palette(ramp);
+  check(!ramp.palette_hsv && ramp.custom_palette.empty(),"Reset left custom interpolation enabled");
   auto encoded = vector_plot_to_json(display.vectors);
   VectorPlotDefinition decoded;
   check(vector_plot_from_json(encoded,decoded,error) && same_vector_plot(decoded,display.vectors),"Vector settings did not round trip");
+  auto invalidLegend = display.vectors;
+  invalidLegend.legend.legend_position = std::array<double,2>{-1,0};
+  check(!valid_vector_plot(invalidLegend,error),"Out-of-viewport vector legend position was accepted");
   encoded.insert("stride",0);
   check(!vector_plot_from_json(encoded,decoded,error) && same_vector_plot(decoded,display.vectors),"Malformed vector settings replaced committed state");
   check(vector_plot_from_json(QJsonValue(QJsonValue::Undefined),decoded,error) && !decoded.enabled,

@@ -6,6 +6,7 @@ namespace Postprocessor
   struct VectorPlotSample
   {
     std::array<double,3> position, direction;
+    std::array<double,3> pulse_base = {}, pulse_components = {}, pulse_mesh = {};
     double magnitude = 0, length = 0;
     std::size_t dataset = 0;
     long long entity = -1, integration_point = -1;

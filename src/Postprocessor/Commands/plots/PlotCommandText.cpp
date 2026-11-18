@@ -54,7 +54,9 @@ namespace Postprocessor
     }
     const auto& state = application.session();
     std::string pick, error;
-    if (!pick_command_text(application,entity,pick,error))
+    auto physicalEntity = entity;
+    physicalEntity.display_element.reset();
+    if (!pick_command_text(application,physicalEntity,pick,error))
     {
       return {};
     }

@@ -1,4 +1,5 @@
 add_executable(report_tests
+  ReportMeshQualityTests.cpp ReportMeshQualityTests.hpp
   ReportExportTests.cpp
   ReportTreeTests.cpp
   ReportProgressTests.cpp ReportTestProgress.cpp ReportTestProgress.hpp

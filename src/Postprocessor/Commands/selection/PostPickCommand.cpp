@@ -14,7 +14,8 @@ std::vector<std::string> PostPickCommand::get_syntax()
 {
   const std::string id = "{<value:label='entity_id'>|<string:type='quoted',number='1',label='entity_text'>}";
   const std::string scope = " dataset {<value:label='dataset_id'>|<string:type='quoted',number='1',label='dataset_name'>}"
-    " [source <string:type='quoted',number='1',label='source_name'>]";
+    " [source <string:type='quoted',number='1',label='source_name'>]"
+    " [owner <string:type='quoted',number='1',label='owner_element'>]";
   return {"post pick mode {node|element|integrationpoint}","post pick clear",
     "post pick node "+id+scope,"post pick element "+id+scope,
     "post pick integrationpoint <value:label='ip'> element "+id+scope};
@@ -121,7 +122,19 @@ bool PostPickCommand::execute(CubitCommandData& data)
         PRINT_ERROR("Source requires a nonempty quoted name.\n");
         return false;
       }
-      accepted = active->pick_entity(source,dataset,kind,id,ip,error);
+      std::optional<std::int64_t> owner;
+      if (data.get_string("owner_element",exact))
+      {
+        std::int64_t value = -1;
+        const auto parsed = std::from_chars(exact.data(),exact.data()+exact.size(),value);
+        if (parsed.ec != std::errc{} || parsed.ptr != exact.data()+exact.size() || value < 0)
+        {
+          PRINT_ERROR("Display owner requires a nonnegative decimal element ID.\n");
+          return false;
+        }
+        owner = value;
+      }
+      accepted = active->pick_entity(source,dataset,kind,id,ip,error,owner);
     }
     if (!accepted)
     {

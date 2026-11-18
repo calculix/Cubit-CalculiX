@@ -258,7 +258,8 @@ void PostprocessorColorControls::refresh()
     }
   }
 }
-void PostprocessorColorControls::apply_field(const QString& name, std::size_t field_index)
+void PostprocessorColorControls::apply_field(const QString& name, std::size_t field_index,
+  const std::optional<std::string>& component, bool magnitude)
 {
   const auto active = application.lock();
   if (!active)
@@ -296,7 +297,17 @@ void PostprocessorColorControls::apply_field(const QString& name, std::size_t fi
       {
         return;
       }
-      const auto selected = Postprocessor::preferred_field_selection(field, group.key);
+      auto selected = Postprocessor::preferred_field_selection(field, group.key);
+      if (component)
+      {
+        if ((magnitude && !field.vector_components) || (!magnitude &&
+            std::find(field.components.begin(),field.components.end(),*component) == field.components.end()))
+        {
+          return;
+        }
+        selected.component = *component;
+        selected.magnitude = magnitude;
+      }
       Postprocessor::ResultFieldSelector selector;
       std::string error;
       if (!active->readable_field(entry.first,selected,selector,error))
@@ -307,7 +318,11 @@ void PostprocessorColorControls::apply_field(const QString& name, std::size_t fi
       }
       const auto fieldArg = Postprocessor::field_command_text(selector);
       const auto sourceArg = quote(entry.second.name);
-      const auto componentArg = selected.magnitude ? QStringLiteral("magnitude") : quote(selected.component);
+      QString componentArg = quote(selected.component);
+      if (selected.magnitude)
+      {
+        componentArg = QStringLiteral("magnitude");
+      }
       if (fieldArg.isEmpty() || sourceArg.isEmpty() || componentArg.isEmpty())
       {
         PRINT_ERROR("The field/source/component cannot be represented as a quoted command argument.\n");

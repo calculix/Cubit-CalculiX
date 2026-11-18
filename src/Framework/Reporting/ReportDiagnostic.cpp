@@ -32,3 +32,8 @@ bool ReportDiagnostic::from_json(const QJsonObject& input, ReportDiagnostic& out
   error.clear();
   return true;
 }
+
+ReportDiagnostic::ReportDiagnostic(std::string section, std::string level, std::string text)
+  : section_id(std::move(section)), message(std::move(text)), severity(std::move(level))
+{
+}

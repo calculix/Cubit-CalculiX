@@ -26,6 +26,9 @@ public:
   using PropertiesHandler = std::function<bool(const std::string&,const std::string&,std::string&)>;
   void set_properties_handler(PropertiesHandler handler);
   bool show_properties(const std::string& page,const std::string& source,std::string& error);
+  bool change_explosion(const std::string& source,const std::string& view,const std::string& action,
+    double value,const std::string& option,const std::string& block,const std::array<double,3>& offset,
+    const std::string& unit,std::string& error);
   bool standard_view(const std::string& name,std::string& error);
   bool set_scale_visible(bool visible,std::string& error);
   Postprocessor::DatasetAppearance dataset_appearance(const std::string& source,const std::string& view,std::size_t dataset) const;
@@ -33,6 +36,7 @@ public:
     const Postprocessor::AppearancePatch& patch,std::string& error,bool validate_only = false);
   bool resolve_appearance_targets(const std::string& source,Postprocessor::DatasetCategory category,
     const std::vector<std::string>& names,std::vector<Postprocessor::AppearanceTarget>& targets,std::string& error) const;
+  bool explosion_active(const Postprocessor::Representation& display) const;
   bool scene_scale(const Postprocessor::Representation& display,double& factor,bool& known,std::string& error) const;
   using CaptureRenderer = std::function<bool(const Postprocessor::CaptureSnapshot&,
     const std::shared_ptr<PostprocessorApplicationInterface>&,QByteArray&,QJsonObject&,std::string&)>;
@@ -50,9 +54,11 @@ public:
     Postprocessor::CaptureSnapshot& frame,std::string& error);
   std::array<int,2> capture_reference_size(Postprocessor::CaptureTarget target,const std::string& id) const;
   bool render_capture(const Postprocessor::CaptureDefinition& request,QByteArray& png,QJsonObject& provenance,std::string& error) const;
+  // Freeze Core definitions, options and viewport reference size without rendering.
+  bool capture_snapshot(const Postprocessor::CaptureDefinition& request,
+    Postprocessor::CaptureSnapshot& output, std::string& error) const;
   // Detached report rendering; never changes the live view or source state.
-  bool render_report_result(const ReportSource& source, std::size_t frame,
-    std::size_t dataset, const Postprocessor::FieldSelection& field,
+  bool render_report_result(const Postprocessor::CaptureSnapshot& snapshot,
     ReportImage& output, std::string& error) const;
   bool capture_file(const Postprocessor::CaptureDefinition& request,const std::string& path,std::string& error) const;
   using DatasetSelector = std::variant<std::size_t,std::string>;
@@ -128,7 +134,7 @@ public:
   bool add_label(const std::string& view, const std::string& name, const std::string& source,
     const std::optional<DatasetSelector>& dataset, Postprocessor::EntityKind kind, std::int64_t id,
     std::optional<std::int64_t> ip, const std::string& field, const std::string& component,
-    bool magnitude, std::string& assigned, std::string& error,const Postprocessor::FieldQualifiers& qualifiers = {});
+    bool magnitude, std::string& assigned, std::string& error,const Postprocessor::FieldQualifiers& qualifiers = {}, std::optional<std::int64_t> owner = std::nullopt);
   bool change_label(const std::string& view, const std::string& name, const std::string& action,
     const std::string& replacement, const std::array<double,2>& position, std::string& error);
   bool set_labels(const std::string& view, bool extrema, bool visible, std::string& error);
@@ -136,7 +142,7 @@ public:
   bool set_pick_mode(Postprocessor::EntityKind kind, std::string& error);
   bool clear_pick(std::string& error);
   bool pick_entity(const std::string& source_name, const DatasetSelector& dataset,
-    Postprocessor::EntityKind kind, std::int64_t id, std::optional<std::int64_t> integration_point, std::string& error);
+    Postprocessor::EntityKind kind, std::int64_t id, std::optional<std::int64_t> integration_point, std::string& error, std::optional<std::int64_t> owner = std::nullopt);
   std::optional<Postprocessor::ProbeResult> probe(std::string& error) const;
   std::optional<Postprocessor::ProbeResult> probe_entity(const Postprocessor::EntityReference& entity, std::string& error) const;
   bool select_source(const std::string& name, std::string& error);

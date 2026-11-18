@@ -84,6 +84,8 @@ void CoreJobs::prepare_run_record(int jobId, const std::string& filename, bool i
       const auto prepared = preparedRuns.find(jobId);
       if (!imported && prepared != preparedRuns.end() && prepared->second.input.manifestFingerprint == output.input.manifestFingerprint) {
         output.setup = prepared->second.setup;
+        output.quality = prepared->second.quality;
+        output.qualityUnavailableReason = prepared->second.qualityUnavailableReason;
       } else {
         const auto reason = preparedRunErrors.find(jobId);
         if (imported) {
@@ -96,8 +98,14 @@ void CoreJobs::prepare_run_record(int jobId, const std::string& filename, bool i
       }
       if (!CoreJobSnapshotBuilder::validate(output, error)) {
         output.setup.reset();
+        output.quality.reset();
+        output.qualityUnavailableReason = "Job quality validation failed: " + error;
         output.setupUnavailableReason = "Setup snapshot validation failed: " + error;
       }
+    }
+    if (!output.quality && output.qualityUnavailableReason.empty())
+    {
+      output.qualityUnavailableReason = "No verified quality snapshot was prepared for this solver launch.";
     }
     clear_prepared_setup(jobId);
     if (!output.setup && !output.setupUnavailableReason.empty()) {
@@ -106,10 +114,12 @@ void CoreJobs::prepare_run_record(int jobId, const std::string& filename, bool i
   }
   catch (const std::exception& exception) {
     output.setup.reset();
+    output.quality.reset();
     PRINT_WARNING("Job %d: cannot prepare run archive: %s\n", jobId, exception.what());
   }
   catch (...) {
     output.setup.reset();
+    output.quality.reset();
     PRINT_WARNING("Job %d: cannot prepare run archive.\n", jobId);
   }
 }

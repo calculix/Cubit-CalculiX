@@ -108,7 +108,7 @@ namespace Postprocessor
         {
           continue;
         }
-        if (display.input.owner == OutputOwner::Feature && !filtered_entity_position(display,entity))
+        if ((display.input.owner == OutputOwner::Feature || explosion_active(display)) && !filtered_entity_position(display,entity))
         {
           error = "The entity is not retained by the active filter.";
           return false;
@@ -121,7 +121,7 @@ namespace Postprocessor
         }
         auto staged = state;
         auto& selection = staged.views.at(view_id).selection;
-        if (selection.entity && same_entity(*selection.entity,entity) && selection.mode == entity.kind &&
+        if (selection.entity && same_display_entity(*selection.entity,entity) && selection.mode == entity.kind &&
             staged.active_source_id == entity.source_id && staged.active_representation_id == entry.first)
         {
           return true;
@@ -198,7 +198,7 @@ namespace Postprocessor
         if (display_matches_source(display,entity.source_id,view_id) && data)
         {
           auto result = probe_result(*data,display,entity,captured_units());
-          if (display.input.owner == OutputOwner::Feature)
+          if (display.input.owner == OutputOwner::Feature || explosion_active(display))
           {
             result.displayed_position = filtered_entity_position(display,entity);
             result.available = result.available && result.displayed_position.has_value();

@@ -5,6 +5,8 @@ namespace Postprocessor
   struct VectorPlotDefinition
   {
     bool enabled = false;
+    // Independent legend appearance; field stays empty because vectors own it.
+    ResultColoring legend;
     std::optional<FieldSelection> field;
     bool proportional = true;
     bool surface_only = true;

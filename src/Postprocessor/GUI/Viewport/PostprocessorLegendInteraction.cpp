@@ -25,9 +25,15 @@ bool PostprocessorLegendInteraction::owns_legend() const
     return false;
   }
   const auto display = active->session().representations.find(hit->representation_id);
-  return display != active->session().representations.end() &&
-    active->display_matches_source(display->second,hit->source_id,viewId) &&
-    Postprocessor::same_coloring(display->second.coloring,expected);
+  if (display == active->session().representations.end() || !active->display_matches_source(display->second,hit->source_id,viewId))
+  {
+    return false;
+  }
+  if (hit->vector)
+  {
+    return Postprocessor::same_vector_plot(display->second.vectors,expectedVectors);
+  }
+  return Postprocessor::same_coloring(display->second.coloring,expected);
 }
 bool PostprocessorLegendInteraction::send(const std::optional<std::array<double,2>>& position,bool journal)
 {
@@ -36,6 +42,10 @@ bool PostprocessorLegendInteraction::send(const std::optional<std::array<double,
     return false;
   }
   QString command = QStringLiteral("post legend position ");
+  if (hit->vector)
+  {
+    command = QStringLiteral("post vector legend position ");
+  }
   if (position)
   {
     std::ostringstream coordinates;
@@ -46,6 +56,10 @@ bool PostprocessorLegendInteraction::send(const std::optional<std::array<double,
   else
   {
     command += QStringLiteral("automatic");
+    if (hit->vector)
+    {
+      command = QStringLiteral("post vector legend auto");
+    }
   }
   command += QStringLiteral(" source ")+Postprocessor::plot_quote(sourceName);
   std::string error;
@@ -61,6 +75,20 @@ bool PostprocessorLegendInteraction::send(const std::optional<std::array<double,
   if (accepted)
   {
     expected.legend_position = position;
+    if (hit->vector)
+    {
+      expectedVectors.legend.legend_position = position;
+      if (const auto active = application.lock())
+      {
+        std::string issue;
+        const auto current = active->vector_plot(sourceName,issue);
+        if (current)
+        {
+          expectedVectors = *current;
+          expected = current->legend;
+        }
+      }
+    }
     previewed = previewed || !journal;
   }
   else if (!error.empty())
@@ -154,7 +182,12 @@ bool PostprocessorLegendInteraction::handle(QEvent* event)
       const auto quoted = Postprocessor::plot_quote(source->second.name);
       cancel();
       std::string error;
-      if (!submitCommand(QStringLiteral("post properties legend source ")+quoted,error))
+      QString command = QStringLiteral("post properties legend source ");
+      if (found->vector)
+      {
+        command = QStringLiteral("post properties vectorlegend source ");
+      }
+      if (!submitCommand(command+quoted,error))
       {
         report(error);
       }
@@ -165,6 +198,11 @@ bool PostprocessorLegendInteraction::handle(QEvent* event)
     hit = found;
     sourceName = source->second.name;
     baseline = display->second.coloring;
+    expectedVectors = display->second.vectors;
+    if (found->vector)
+    {
+      baseline = display->second.vectors.legend;
+    }
     expected = baseline;
     origin = mouse->position();
     target = {found->frame[0],found->frame[1]};

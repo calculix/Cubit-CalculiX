@@ -104,6 +104,7 @@ void PostprocessorViewport::cancel_interaction()
 void PostprocessorViewport::prepare_model_reset()
 {
   modelResetPending = true;
+  pulseFramePending = false;
   animationPresentationCredit = false;
   interaction->discard();
   legendInteraction->discard();
@@ -115,6 +116,11 @@ void PostprocessorViewport::prepare_model_reset()
 bool PostprocessorViewport::animation_rotation_ready() const
 {
   return !renderingFrame && isVisible() && isValid() && !interaction->active();
+}
+bool PostprocessorViewport::explosion_pulse_ready() const
+{
+  return !renderingFrame && !awaitingPresentation && !modelResetPending &&
+    !frameDirty && !renderQueued && !pulseFramePending && isVisible() && isValid() && width() > 0 && height() > 0;
 }
 
 void PostprocessorViewport::fit_view()
@@ -178,7 +184,7 @@ void PostprocessorViewport::update_hover()
     QToolTip::hideText();
     return;
   }
-  if (tooltipEntity && Postprocessor::same_entity(*tooltipEntity,*entity) && !tooltipText.isEmpty())
+  if (tooltipEntity && Postprocessor::same_display_entity(*tooltipEntity,*entity) && !tooltipText.isEmpty())
   {
     QToolTip::showText(mapToGlobal(hoverPosition.toPoint()),tooltipText,this);
     return;
@@ -469,6 +475,7 @@ void PostprocessorViewport::synchronize(const std::shared_ptr<PostprocessorAppli
     scene->clear();
     annotationDisplay->hide();
     renderedGeometry.reset();
+    renderedPulseSettings.reset();
     renderedCamera.reset();
     renderedSelection.reset();
     return;
@@ -500,6 +507,7 @@ void PostprocessorViewport::synchronize(const std::shared_ptr<PostprocessorAppli
   if (!renderedGeometry || *renderedGeometry != active->display_revision() ||
       view == active->session().views.end() || !renderedCamera || *renderedCamera != view->second.camera_revision ||
       !renderedSelection || *renderedSelection != view->second.selection.revision ||
+      !renderedPulseSettings || *renderedPulseSettings != view->second.explosion.pulse.settings_revision ||
       options.backgroundTop != renderedOptions.backgroundTop || options.backgroundBottom != renderedOptions.backgroundBottom ||
       options.triadVisible != renderedOptions.triadVisible)
   {
@@ -509,12 +517,14 @@ void PostprocessorViewport::synchronize(const std::shared_ptr<PostprocessorAppli
 
 bool PostprocessorViewport::prepare_animation_step()
 {
-  if (renderingFrame || awaitingPresentation || !isVisible() || !isValid())
+  // A pulse-only image already in Qt's presentation queue does not prevent
+  // selecting the next result. Its redraw waits for the same presentation gate.
+  if (renderingFrame || (awaitingPresentation && !presentingPulseOnly) || !isVisible() || !isValid())
   {
     return false;
   }
   const bool cameraPending = interaction->preview_pending();
-  if ((cameraPending || frameDirty || renderQueued) && !animationPresentationCredit)
+  if ((cameraPending || frameDirty) && !animationPresentationCredit)
   {
     request_frame();
     return false;
@@ -543,6 +553,26 @@ void PostprocessorViewport::request_frame()
   {
     timings.queue_frame();
   }
+  schedule_frame();
+}
+
+void PostprocessorViewport::request_explosion_pulse()
+{
+  if (explosion_pulse_ready())
+  {
+    pulseFramePending = true;
+    timings.queue_frame();
+    schedule_frame();
+  }
+}
+
+void PostprocessorViewport::set_explosion_pulse_step(std::function<void()> step)
+{
+  explosionPulseStep = std::move(step);
+}
+
+void PostprocessorViewport::schedule_frame()
+{
   if (renderQueued || awaitingPresentation || renderingFrame)
   {
     return;
@@ -570,15 +600,22 @@ void PostprocessorViewport::request_frame()
 
 void PostprocessorViewport::render_frame()
 {
-  if (renderingFrame || awaitingPresentation || !frameDirty || !isVisible() || !isValid() || width() <= 0 || height() <= 0)
+  if (renderingFrame || awaitingPresentation || (!frameDirty && !pulseFramePending) || !isVisible() || !isValid() || width() <= 0 || height() <= 0)
   {
     return;
   }
   QScopedValueRollback<bool> guard(renderingFrame, true);
   timings.begin_frame();
+  const bool pulseOnly = pulseFramePending && !frameDirty;
+  pulseFramePending = false;
   legendInteraction->flush_preview();
   annotationInteraction->flush_preview();
   interaction->flush_preview();
+  if (explosionPulseStep)
+  {
+    explosionPulseStep();
+  }
+  presentingPulseOnly = pulseOnly && !frameDirty;
   frameDirty = false;
   awaitingPresentation = true;
   render_scene();
@@ -694,6 +731,7 @@ void PostprocessorViewport::render_scene()
       {
         renderedCamera = current->second.camera_revision;
         renderedSelection = current->second.selection.revision;
+        renderedPulseSettings = current->second.explosion.pulse.settings_revision;
         renderedAnnotations = current->second.annotations.revision;
         renderedAnnotationSource = active->session().active_source_id;
         renderedAnnotationRepresentation = active->session().active_representation_id;

@@ -46,6 +46,7 @@ namespace
         }
       }
       const auto set = metadata(table.get(),"SetName");
+      const auto output = name;
       const auto scope = metadata(table.get(),"TableScope");
       if (!set.empty()) {
         name += " / "+set;
@@ -68,7 +69,22 @@ namespace
       if (scope == "StepSummary") {
         category = "Summaries";
       }
-      result.push_back({key, name, category, global, type, occurrence});
+      if (scope != "StepSummary")
+      {
+        if (type == "NodalHistory" || metadata(table.get(),"CoordinateSystem") == "Local")
+        {
+          category = "History outputs";
+        }
+        else if (type == "ContactContributions" || !metadata(table.get(),"SlaveSet").empty())
+        {
+          category = "Contact";
+        }
+        else if (type == "Section")
+        {
+          category = "Sections";
+        }
+      }
+      result.push_back({key, name, category, global, type, occurrence, false, set, output});
     }
     return result;
   }
@@ -113,6 +129,25 @@ namespace Postprocessor
       for (std::size_t index = 0; index < data.increments.size(); ++index) {
         append(index);
       }
+    }
+    // Element/IP histories borrow the spatial arrays. FRD fields remain in the
+    // field catalogue and can still be opened explicitly as tables.
+    for (const auto& group : result_field_groups(data, frame))
+    {
+      const auto& field = group.field;
+      if (field.source != "DAT" || field.interpolated || field.categorical ||
+          (field.association != SimResults::Association::Element &&
+           field.association != SimResults::Association::IntegrationPoint))
+      {
+        continue;
+      }
+      auto name = field.name;
+      if (!field.set_name.empty())
+      {
+        name += " / " + field.set_name;
+      }
+      result.push_back({group.key, name, "History outputs", false, "ElementHistory", 1,
+        true, field.set_name, field.name});
     }
     return result;
   }
@@ -175,6 +210,27 @@ namespace Postprocessor
         if (mesh.first != field.dataset_id) {
           continue;
         }
+        std::vector<int> components;
+        if (field.vector_components)
+        {
+          components.push_back(-1);
+        }
+        const auto preferred = preferred_field_component(field);
+        for (std::size_t component = 0; component < field.components.size(); ++component)
+        {
+          if (field.components[component] == preferred)
+          {
+            components.push_back(static_cast<int>(component));
+          }
+        }
+        for (std::size_t component = 0; component < field.components.size(); ++component)
+        {
+          if (field.components[component] != preferred)
+          {
+            components.push_back(static_cast<int>(component));
+          }
+        }
+        const bool coordinates = field.source == "DAT" && field.association == SimResults::Association::IntegrationPoint;
         if (result.columns.empty()) {
           result.title = field.name;
           std::string entity = "Element ID";
@@ -185,9 +241,29 @@ namespace Postprocessor
           if (field.association == SimResults::Association::IntegrationPoint) {
             result.columns.push_back("IP");
           }
-          result.columns.insert(result.columns.end(),field.components.begin(),field.components.end());
-          result.column_units.assign(result.columns.size() - field.components.size(), SimUnits::QuantityUnit("dimensionless", "1", SimUnits::Dimensionless));
-          result.column_units.insert(result.column_units.end(), field.component_units.begin(), field.component_units.end());
+          result.column_units.assign(result.columns.size(), SimUnits::QuantityUnit("dimensionless", "1", SimUnits::Dimensionless));
+          if (coordinates)
+          {
+            for (const auto* name : {"X", "Y", "Z"})
+            {
+              result.columns.push_back(name);
+              result.column_units.emplace_back("length", frame.coordinate_unit, SimUnits::Length);
+            }
+          }
+          for (const auto component : components)
+          {
+            const auto name = component < 0 ? std::string("Magnitude") : field.components[component];
+            result.columns.push_back(name);
+            SimUnits::QuantityUnit unit;
+            std::string error;
+            SimResults::ResultsUnits::field_quantity(field, name, component < 0, unit, error);
+            result.column_units.push_back(unit);
+          }
+          if (field.source == "DAT")
+          {
+            result.columns.push_back("Valid");
+            result.column_units.emplace_back("dimensionless", "1", SimUnits::Dimensionless);
+          }
           result.column_units.resize(result.columns.size());
           result.numeric.assign(result.columns.size(),true);
         }
@@ -201,6 +277,9 @@ namespace Postprocessor
           return result;
         }
         result.parts.push_back({mesh.second,field,mesh.first,result.rows,count});
+        result.parts.back().components = components;
+        result.parts.back().coordinates = coordinates;
+        result.parts.back().column_units = result.column_units;
         result.rows += count;
       }
     }
@@ -476,12 +555,49 @@ namespace Postprocessor
     if (ip) {
       offset = 3;
     }
+    if (part.coordinates)
+    {
+      if (column >= offset && column < offset + 3)
+      {
+        double point[3];
+        part.mesh->GetPoint(static_cast<vtkIdType>(index), point);
+        double value = point[column - offset];
+        std::string unit;
+        std::string error;
+        if (column >= part.column_units.size() || !SimResults::ResultsUnits::display_value(value,
+            part.column_units[column], "postprocessor", value, unit, error, presentation) || !std::isfinite(value))
+        {
+          return "Unavailable";
+        }
+        std::ostringstream text;
+        text.imbue(std::locale::classic());
+        text << std::setprecision(17) << value;
+        return text.str();
+      }
+      offset += 3;
+    }
     const auto component = column - offset;
-    if (component >= part.field.components.size()) {
+    if (part.field.source == "DAT" && component == part.components.size())
+    {
+      if (part.field.validity_array.empty())
+      {
+        return "1";
+      }
+      auto* mask = attributes->GetArray(part.field.validity_array.c_str());
+      return mask && index < static_cast<std::size_t>(mask->GetNumberOfTuples()) &&
+        std::isfinite(mask->GetComponent(static_cast<vtkIdType>(index), 0)) &&
+        mask->GetComponent(static_cast<vtkIdType>(index), 0) > 0 ? "1" : "0";
+    }
+    if (component >= part.components.size())
+    {
       return "Unavailable";
     }
     FieldSelection selection;
-    selection.component = part.field.components[component];
+    selection.magnitude = part.components[component] < 0;
+    if (!selection.magnitude)
+    {
+      selection.component = part.field.components[part.components[component]];
+    }
     double value = 0;
     std::string error;
     if (!color_sample(part.mesh,part.field,selection,index,value,error,presentation) || !std::isfinite(value)) {

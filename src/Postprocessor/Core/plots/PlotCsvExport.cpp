@@ -89,8 +89,11 @@ namespace Postprocessor
       return false;
     }
     temporary.close();
-    if (!QFile::rename(temporary.fileName(),target.absoluteFilePath())) {
-      error = "Cannot publish the CSV; destination may already exist.";
+    // close() retains QTemporaryFile's native handle; its own rename releases
+    // the handle correctly and keeps publication atomic without overwriting.
+    if (!temporary.rename(target.absoluteFilePath()))
+    {
+      error = "Cannot publish CSV to \""+target.absoluteFilePath().toUtf8().toStdString()+"\": "+temporary.errorString().toUtf8().toStdString();
       return false;
     }
     temporary.setAutoRemove(false);

@@ -1,4 +1,13 @@
 add_library(cubitsim_reporting STATIC
+  ../MeshQuality/MeshQualityMetric.cpp ../MeshQuality/MeshQualityMetric.hpp
+  ../MeshQuality/MeshQualityDefaults.cpp ../MeshQuality/MeshQualityDefaults.hpp
+  ../MeshQuality/MeshQualitySettings.cpp ../MeshQuality/MeshQualitySettings.hpp
+  ../MeshQuality/MeshQualityBlock.cpp ../MeshQuality/MeshQualityBlock.hpp
+  ../MeshQuality/MeshQualitySnapshot.cpp ../MeshQuality/MeshQualitySnapshot.hpp
+  ../MeshQuality/MeshQualityStatistics.cpp ../MeshQuality/MeshQualityStatistics.hpp
+  ../MeshQuality/MeshQualitySnapshotCodec.cpp ../MeshQuality/MeshQualitySnapshotCodec.hpp
+  ReportMeshQualityContent.cpp ReportMeshQualityContent.hpp
+  ../MeshQuality/MeshQualityPresentation.cpp ../MeshQuality/MeshQualityPresentation.hpp
   ReportContentGroup.cpp ReportContentGroup.hpp
   ReportProgress.cpp ReportProgress.hpp
   ReportQuantity.cpp ReportQuantity.hpp

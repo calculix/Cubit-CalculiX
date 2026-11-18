@@ -60,7 +60,12 @@ namespace Postprocessor
           {
             maximum = (*range)[1];
           }
-          if (issue.empty() && prepare_vector_plot(*evaluated->source,*data,display,maximum,arrows,issue,captured_units()) && !arrows.samples.empty())
+          auto vectorDisplay = display;
+          if (evaluated->exploded)
+          {
+            vectorDisplay.deformation.enabled = false;
+          }
+          if (issue.empty() && prepare_vector_plot(*evaluated->source,*data,vectorDisplay,maximum,arrows,issue,captured_units()) && !arrows.samples.empty())
           {
             vectorBounds = arrows.bounds;
           }
@@ -74,7 +79,7 @@ namespace Postprocessor
           }
           std::shared_ptr<vtkDataSet> transformed;
           std::string warning;
-          if (display.input.owner == OutputOwner::Source && !deform_mesh(part.second,part.first,frame,display.deformation,transformed,warning,error))
+          if (!evaluated->exploded && display.input.owner == OutputOwner::Source && !deform_mesh(part.second,part.first,frame,display.deformation,transformed,warning,error))
           {
             return false;
           }
@@ -95,7 +100,7 @@ namespace Postprocessor
             // All bounds remain native until the one source-to-scene conversion.
             std::vector<vtkDataSet*> originals = {part.second};
             std::vector<std::shared_ptr<vtkDataSet>> parents;
-            if (display.input.owner == OutputOwner::Source && part.second->GetPointData()->HasArray("IntegrationPointId"))
+            if (!evaluated->exploded && display.input.owner == OutputOwner::Source && part.second->GetPointData()->HasArray("IntegrationPointId"))
             {
               if (!integration_point_reference_meshes(frame,part.second,parents,warning))
               {

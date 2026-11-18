@@ -1,4 +1,5 @@
 #include "PostprocessorVectorActors.hpp"
+#include "Postprocessor/Core/explosion/ExplosionRuntime.hpp"
 #include <vtkRenderer.h>
 #include <vtkActor.h>
 #include <vtkOpenGLActor.h>
@@ -9,6 +10,10 @@
 #include <vtkCellArray.h>
 #include <vtkPointData.h>
 #include <vtkDoubleArray.h>
+#include <vtkUnsignedCharArray.h>
+#include <vtkTextRenderer.h>
+#include <vtkRenderWindow.h>
+#include <algorithm>
 #include <vtkIdTypeArray.h>
 #include <vtkTypeInt64Array.h>
 #include <vtkLookupTable.h>
@@ -72,6 +77,18 @@ PostprocessorVectorActors::PostprocessorVectorActors(vtkRenderer* target,const P
     return;
   }
   vtkNew<vtkPolyData> samples;
+  pulseSamples = samples.GetPointer();
+  vtkNew<vtkDoubleArray> pulseBase;
+  vtkNew<vtkDoubleArray> pulseComponents;
+  vtkNew<vtkDoubleArray> pulseMesh;
+  pulseBase->SetName("PostprocessorPulseBase");
+  pulseComponents->SetName("PostprocessorPulseComponents");
+  pulseMesh->SetName("PostprocessorPulseMesh");
+  for (auto* array : {pulseBase.GetPointer(),pulseComponents.GetPointer(),pulseMesh.GetPointer()})
+  {
+    array->SetNumberOfComponents(3);
+    samples->GetPointData()->AddArray(array);
+  }
   vtkNew<vtkPoints> points;
   points->SetDataTypeToDouble();
   vtkNew<vtkDoubleArray> directions;
@@ -81,6 +98,38 @@ PostprocessorVectorActors::PostprocessorVectorActors(vtkRenderer* target,const P
   lengths->SetName("VectorLength");
   vtkNew<vtkDoubleArray> magnitudes;
   magnitudes->SetName("VectorMagnitude");
+  const auto& coloring = settings.legend;
+  std::array<double,2> range = {0,data.reference_magnitude};
+  if (!std::isfinite(range[1]) || range[1] <= 0)
+  {
+    range[1] = 1;
+  }
+  if (coloring.range_mode == Postprocessor::ColorRangeMode::Automatic || coloring.range_mode == Postprocessor::ColorRangeMode::Symmetric)
+  {
+    range = {data.samples.front().magnitude,data.samples.front().magnitude};
+    for (const auto& sample : data.samples)
+    {
+      range[0] = std::min(range[0],sample.magnitude);
+      range[1] = std::max(range[1],sample.magnitude);
+    }
+    if (coloring.range_mode == Postprocessor::ColorRangeMode::Symmetric)
+    {
+      const double extent = std::max(std::abs(range[0]),std::abs(range[1]));
+      range = {-extent,extent};
+    }
+    if (range[0] == range[1])
+    {
+      const double extent = std::max(1.0,std::abs(range[0]))*.01;
+      range = {range[0]-extent,range[1]+extent};
+    }
+  }
+  if (coloring.range_mode == Postprocessor::ColorRangeMode::Fixed)
+  {
+    range = coloring.fixed_range;
+  }
+  vtkNew<vtkUnsignedCharArray> colors;
+  colors->SetName("VectorColor");
+  colors->SetNumberOfComponents(3);
   vtkNew<vtkIdTypeArray> datasets;
   datasets->SetName("VectorDatasetId");
   vtkNew<vtkTypeInt64Array> entities;
@@ -90,14 +139,25 @@ PostprocessorVectorActors::PostprocessorVectorActors(vtkRenderer* target,const P
   for (const auto& sample : data.samples)
   {
     points->InsertNextPoint(sample.position.data());
+    pulseBase->InsertNextTuple(sample.pulse_base.data());
+    pulseComponents->InsertNextTuple(sample.pulse_components.data());
+    pulseMesh->InsertNextTuple(sample.pulse_mesh.data());
     directions->InsertNextTuple(sample.direction.data());
     lengths->InsertNextValue(sample.length);
     magnitudes->InsertNextValue(sample.magnitude);
+    const auto rgb = Postprocessor::result_color(sample.magnitude,coloring,range);
+    unsigned char bytes[3];
+    for (int channel = 0; channel < 3; ++channel)
+    {
+      bytes[channel] = static_cast<unsigned char>(std::round(std::clamp(rgb[channel],0.0,1.0)*255));
+    }
+    colors->InsertNextTypedTuple(bytes);
     datasets->InsertNextValue(static_cast<vtkIdType>(sample.dataset));
     entities->InsertNextValue(sample.entity);
     integrationPoints->InsertNextValue(sample.integration_point);
   }
   samples->SetPoints(points);
+  samples->GetPointData()->AddArray(colors);
   for (vtkDataArray* array : {static_cast<vtkDataArray*>(directions.GetPointer()),static_cast<vtkDataArray*>(lengths.GetPointer()),
        static_cast<vtkDataArray*>(magnitudes.GetPointer()),static_cast<vtkDataArray*>(datasets.GetPointer()),
        static_cast<vtkDataArray*>(entities.GetPointer()),static_cast<vtkDataArray*>(integrationPoints.GetPointer())})
@@ -116,26 +176,21 @@ PostprocessorVectorActors::PostprocessorVectorActors(vtkRenderer* target,const P
   mapper->ScalingOn();
   mapper->ScalarVisibilityOff();
   vtkNew<vtkLookupTable> lookup;
-  double maximum = data.reference_magnitude;
-  if (!std::isfinite(maximum) || maximum <= 0)
-  {
-    maximum = 1;
-  }
-  lookup->SetRange(0,maximum);
-  lookup->SetNumberOfTableValues(256);
+  lookup->SetRange(range.data());
+  const int count = static_cast<int>(coloring.bands.value_or(256));
+  lookup->SetNumberOfTableValues(count);
   lookup->Build();
-  for (int index = 0; index < 256; ++index)
+  for (int index = 0; index < count; ++index)
   {
-    const auto color = Postprocessor::palette_color(Postprocessor::ColoringDefaults::palette,index/255.0);
+    const double t = static_cast<double>(index)/(count-1);
+    const auto color = Postprocessor::result_color(range[0]*(1-t)+range[1]*t,coloring,range);
     lookup->SetTableValue(index,color[0],color[1],color[2],1);
   }
   if (settings.magnitude_color)
   {
     mapper->SetScalarModeToUsePointFieldData();
-    mapper->SetColorModeToMapScalars();
-    mapper->SelectColorArray("VectorMagnitude");
-    mapper->SetLookupTable(lookup);
-    mapper->SetScalarRange(0,maximum);
+    mapper->SetColorModeToDirectScalars();
+    mapper->SelectColorArray("VectorColor");
     mapper->ScalarVisibilityOn();
   }
   actor = vtkSmartPointer<vtkOpenGLActor>::New();
@@ -147,22 +202,31 @@ PostprocessorVectorActors::PostprocessorVectorActors(vtkRenderer* target,const P
   // provenance is retained above, including -1 for generated filter samples.
   actor->PickableOff();
   renderer->AddActor(actor);
-  if (settings.magnitude_color && showLegend)
+  position = coloring.legend_position;
+  slot = legendSlot;
+  if (settings.magnitude_color && showLegend && coloring.legend_visible)
   {
     legend = vtkSmartPointer<vtkScalarBarActor>::New();
     legend->SetLookupTable(lookup);
     std::string title = "Vector magnitude";
     if (!data.unit.empty())
     {
-      title += " ["+data.unit+"]";
+      title += " ("+data.unit+")";
     }
     legend->SetTitle(title.c_str());
     legend->SetNumberOfLabels(5);
-    legend->SetPosition(0.02+0.16*legendSlot,0.08);
-    legend->SetWidth(0.13);
-    legend->SetHeight(0.35);
-    legend->GetLabelTextProperty()->SetColor(0.2,0.2,0.2);
-    legend->GetTitleTextProperty()->SetColor(0.2,0.2,0.2);
+    legend->SetMaximumNumberOfColors(count);
+    legend->SetLabelFormat("%.6g");
+    legend->SetBarRatio(Postprocessor::ColoringDefaults::legend_bar_pixels/Postprocessor::ColoringDefaults::legend_width_pixels);
+    legend->UnconstrainedFontSizeOn();
+    for (auto* text : {legend->GetLabelTextProperty(),legend->GetTitleTextProperty()})
+    {
+      text->SetFontSize(Postprocessor::ColoringDefaults::legend_font_pixels);
+      text->BoldOff();
+      text->ItalicOff();
+      text->ShadowOff();
+    }
+    update_appearance();
     renderer->AddActor2D(legend);
   }
 }
@@ -177,11 +241,83 @@ PostprocessorVectorActors::~PostprocessorVectorActors()
     renderer->RemoveActor2D(legend);
   }
 }
+void PostprocessorVectorActors::apply_pulse(const Postprocessor::ExplosionState& settings)
+{
+  Postprocessor::ExplosionPointBuffers updated;
+  Postprocessor::apply_explosion_pulse_mesh(pulseSamples,settings.pulse,updated);
+}
 void PostprocessorVectorActors::scale_capture(double scale)
 {
-  if (legend)
+  captureScale = scale;
+  update_appearance();
+}
+std::array<double,4> PostprocessorVectorActors::legend_frame() const
+{
+  if (!legend)
   {
-    legend->GetLabelTextProperty()->SetFontSize(static_cast<int>(12*scale));
-    legend->GetTitleTextProperty()->SetFontSize(static_cast<int>(12*scale));
+    return {0,0,0,0};
+  }
+  const auto* p = legend->GetPosition();
+  return {p[0],p[1],legend->GetWidth(),legend->GetHeight()};
+}
+bool PostprocessorVectorActors::legend_contains(double x,double y) const
+{
+  if (!legend || !legend->GetVisibility())
+  {
+    return false;
+  }
+  const auto frame = legend_frame();
+  double left = frame[0],right = frame[0]+frame[2];
+  int bounds[4];
+  auto* text = vtkTextRenderer::GetInstance();
+  auto* window = renderer->GetRenderWindow();
+  if (text && window && legend->GetTitle() && text->GetBoundingBox(legend->GetTitleTextProperty(),legend->GetTitle(),bounds,window->GetDPI()))
+  {
+    const double half = .5*(bounds[1]-bounds[0]+1)/std::max(1,renderer->GetSize()[0]);
+    left = std::min(left,frame[0]+frame[2]*.5-half);
+    right = std::max(right,frame[0]+frame[2]*.5+half);
+  }
+  return x >= left && x <= right && y >= frame[1] && y <= frame[1]+frame[3];
+}
+void PostprocessorVectorActors::update_appearance()
+{
+  if (!legend)
+  {
+    return;
+  }
+  const double width = std::min(.8,Postprocessor::ColoringDefaults::legend_width_pixels*captureScale/std::max(1,renderer->GetSize()[0]));
+  const double height = std::min(.7,Postprocessor::ColoringDefaults::legend_height_pixels*captureScale/std::max(1,renderer->GetSize()[1]));
+  double x = std::max(.02,.98-width-(width+.02)*slot),y = .06;
+  if (position)
+  {
+    x = (*position)[0];
+    y = (*position)[1];
+  }
+  legend->SetWidth(width);
+  legend->SetHeight(height);
+  legend->SetPosition(std::clamp(x,0.0,1.0-width),std::clamp(y,0.0,1.0-height));
+  const auto* background = renderer->GetBackground();
+  const auto* top = background;
+  if (renderer->GetGradientBackground())
+  {
+    top = renderer->GetBackground2();
+  }
+  double ink = 1;
+  if ((background[0]+background[1]+background[2]+top[0]+top[1]+top[2])/6 > .5)
+  {
+    ink = 0;
+  }
+  for (auto* text : {legend->GetLabelTextProperty(),legend->GetTitleTextProperty()})
+  {
+    text->SetColor(ink,ink,ink);
+    text->SetOpacity(1);
+    text->SetFontSize(static_cast<int>(std::max(1.0,std::round(Postprocessor::ColoringDefaults::legend_font_pixels*captureScale))));
+    text->SetBackgroundColor(1-ink,1-ink,1-ink);
+    double opacity = 0;
+    if (renderer->GetGradientBackground())
+    {
+      opacity = .75;
+    }
+    text->SetBackgroundOpacity(opacity);
   }
 }

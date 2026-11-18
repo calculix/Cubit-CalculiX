@@ -338,3 +338,10 @@ target_link_libraries(calculix_gui cubitsim_model)
 target_sources(calculix_core PRIVATE Core/reporting/CalculiXReportMaterials.cpp Core/reporting/CalculiXReportMaterials.hpp)
 
 target_sources(calculix_core PRIVATE Core/reporting/CalculiXReportDomainSettings.cpp Core/reporting/CalculiXReportDomainSettings.hpp)
+
+target_sources(calculix_core PRIVATE
+  Core/reporting/CalculiXReportMeshQuality.cpp Core/reporting/CalculiXReportMeshQuality.hpp
+  ${CUBITSIM_SOURCE_ROOT}/Framework/MeshQuality/CubitMeshQualityProvider.cpp
+  ${CUBITSIM_SOURCE_ROOT}/Framework/MeshQuality/CubitMeshQualityProvider.hpp
+  ${CUBITSIM_SOURCE_ROOT}/Framework/MeshQuality/CubitMeshQualityProgress.cpp
+  ${CUBITSIM_SOURCE_ROOT}/Framework/MeshQuality/CubitMeshQualityProgress.hpp)

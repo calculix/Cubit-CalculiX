@@ -32,6 +32,7 @@ private:
   std::function<void(const std::string&)> report;
   std::optional<PostprocessorScene::LegendHit> hit;
   Postprocessor::ResultColoring baseline,expected;
+  Postprocessor::VectorPlotDefinition expectedVectors;
   QPointF origin;
   std::array<double,2> target{};
   bool pending = false,moved = false,previewed = false;

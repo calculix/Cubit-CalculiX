@@ -484,6 +484,28 @@ namespace
         return false;
       }
       field.field.components.assign(components.begin() + field.component_offset, components.end());
+      // Nodal DAT output is a set-scoped history, not a whole-mesh field.
+      // Preserve mapping order and repeated labels without spatial reduction.
+      if (association == 1)
+      {
+        for (const auto& row : mapping)
+        {
+          if (row.size() < 3 || row[0] <= 0 || row[2] != association || row[1] < 0 ||
+              static_cast<std::size_t>(row[1]) >= dat.result_block_data[block[4]].size() ||
+              dat.result_block_data[block[4]][row[1]].size() != components.size())
+          {
+            error = "Invalid DAT nodal history mapping or component layout.";
+            return false;
+          }
+        }
+        std::size_t destination = 0;
+        if (!frame(plan, block[5], block[6], -1, dat.total_times[block[1]], false, destination, error))
+        {
+          return false;
+        }
+        plan.increments[destination].table_fields.push_back(std::move(field));
+        continue;
+      }
       CoreResultsVtkGroup group;
       group.name = field.field.set_name;
       group.kind = CoreResultsVtkGroupKind::DatElements;
@@ -661,6 +683,22 @@ bool CoreResultsVtkLink::compatible(const CoreResultsVtkMesh& result, const Core
     }
   }
   reason.clear();
+  return true;
+}
+
+bool CoreResultsVtkLink::match_input_mesh(const CoreResultsFrd& frd, const std::string& input_path,
+  std::vector<std::string>& input_files, std::string& error)
+{
+  CoreResultsVtkMesh reference;
+  CoreResultsVtkMesh input;
+  std::vector<std::string> files;
+  if (!frd_mesh(frd, reference, error) ||
+      !CoreResultsInpReader().read(input_path, input, files, error) ||
+      !compatible(reference, input, CoreResultsVtkOptions{}, error))
+  {
+    return false;
+  }
+  input_files = std::move(files);
   return true;
 }
 

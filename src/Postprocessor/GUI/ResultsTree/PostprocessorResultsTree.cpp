@@ -31,8 +31,11 @@ namespace
     Index,
     Key,
     TableKey,
+    TableField,
     Category,
-    FilterName
+    FilterName,
+    ComponentName,
+    ComponentMagnitude
   };
 
   QString association(SimResults::Association value)
@@ -74,6 +77,13 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
     if (item && item->isSelected())
     {
       targets = appearance_targets();
+    }
+    if (appearance_value)
+    {
+      targets.erase(std::remove_if(targets.begin(),targets.end(),[this,style](const auto& target)
+      {
+        return appearance_value(target).style == style;
+      }),targets.end());
     }
     if (appearance_action && !targets.empty())
     {
@@ -275,13 +285,14 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
       const auto key = item->data(0,TableKey).toString();
       const auto view = activeView;
       const auto snapshot = snapshots.at(id);
+      const bool tableField = kind == ResultTreeItemKind::Field || item->data(0,TableField).toBool();
       QMenu menu(this);
       auto* open = menu.addAction(tr("Open as table"));
       const auto* chosen = menu.exec(viewport()->mapToGlobal(position));
       const auto found = snapshots.find(id);
       if (chosen == open && found != snapshots.end() && found->second == snapshot && activeView == view)
       {
-        open_table(source,key,kind == ResultTreeItemKind::Field);
+        open_table(source,key,tableField);
       }
       return;
     }
@@ -436,12 +447,13 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
       const auto id = item->data(0,SourceId).toString().toStdString();
       const auto snapshot = snapshots.at(id);
       const auto view = activeView;
-      QTimer::singleShot(0,this,[this,source,key,id,snapshot,view]()
+      const bool field = item->data(0,TableField).toBool();
+      QTimer::singleShot(0,this,[this,source,key,id,snapshot,view,field]()
       {
         const auto found = snapshots.find(id);
         if (found != snapshots.end() && found->second == snapshot && activeView == view && open_table)
         {
-          open_table(source,key,false);
+          open_table(source,key,field);
         }
       });
       return;
@@ -468,6 +480,10 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
       });
       return;
     }
+    if (!current->flags().testFlag(Qt::ItemIsSelectable))
+    {
+      return;
+    }
     const auto kind = static_cast<ResultTreeItemKind>(current->data(0, Kind).toInt());
     const auto name = current->data(0, SourceName).toString();
     if (kind == ResultTreeItemKind::Filter)
@@ -482,6 +498,34 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
       });
       return;
     }
+    if (kind == ResultTreeItemKind::Component)
+    {
+      const auto key = current->data(0,Key).toString();
+      const auto id = current->data(0,SourceId).toString().toStdString();
+      const auto index = static_cast<std::size_t>(current->data(0,Index).toULongLong());
+      const auto component = current->data(0,ComponentName).toString();
+      const bool magnitude = current->data(0,ComponentMagnitude).toBool();
+      const auto found = snapshots.find(id);
+      if (found == snapshots.end())
+      {
+        return;
+      }
+      const auto snapshot = found->second;
+      const auto view = activeView;
+      // Commands may rebuild the tree. Keep values, and ignore stale selections.
+      QTimer::singleShot(0,this,[this,name,key,id,index,component,magnitude,snapshot,view]()
+      {
+        const auto* selected = currentItem();
+        const auto found = snapshots.find(id);
+        if (activeView == view && selected && selected->data(0,Key).toString() == key &&
+            selected->data(0,Index).toULongLong() == index && selected->flags().testFlag(Qt::ItemIsEnabled) &&
+            found != snapshots.end() && found->second == snapshot && activate_component)
+        {
+          activate_component(name,index,component,magnitude);
+        }
+      });
+      return;
+    }
     if (inspect_source && !name.isEmpty())
     {
       // Dispatch after this signal returns: commands can rebuild the tree.
@@ -489,7 +533,8 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
       QTimer::singleShot(0,this,[this,name]()
       {
         const auto* selected = currentItem();
-        if (selected && selected->data(0,SourceName).toString() == name && inspect_source)
+        if (selected && selected->flags().testFlag(Qt::ItemIsSelectable) &&
+            selected->data(0,SourceName).toString() == name && inspect_source)
         {
           inspect_source(name);
         }
@@ -1070,10 +1115,39 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
           {
             activeField = item;
           }
+          const bool activeGroup = activeField == item;
+          auto addComponent = [&](const QString& text, const QString& component, bool magnitude)
+          {
+            // Length-prefix the component name to avoid collisions with separators
+            // or a real component named Magnitude. The group key qualifies datasets.
+            QString suffix = "component:" + QString::fromStdString(group.key) + ":";
+            if (magnitude)
+            {
+              suffix += "magnitude";
+            }
+            else
+            {
+              suffix += QString::number(component.size()) + ":" + component;
+            }
+            auto* child = make(item,text,ResultTreeItemKind::Component,suffix,index);
+            child->setData(0,ComponentName,component);
+            child->setData(0,ComponentMagnitude,magnitude);
+            if (activeGroup && coloringField->magnitude == magnitude &&
+                (magnitude || coloringField->component == component.toUtf8().toStdString()))
+            {
+              activeField = child;
+            }
+          };
+          if (field.vector_components)
+          {
+            addComponent(tr("Magnitude"),{},true);
+          }
           QStringList components;
           for (const auto& component : field.components)
           {
-            components.append(QString::fromUtf8(component.c_str()));
+            const auto text = QString::fromUtf8(component.c_str());
+            components.append(text);
+            addComponent(text,text,false);
           }
           item->setToolTip(0,components.join(", ") + ([&]() -> std::common_type_t<decltype(QString()), decltype(tr(" (unavailable in this frame)"))> {
             if (group.available) {
@@ -1099,10 +1173,40 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
     if (!tableList.empty())
     {
       auto* tableRoot = make(root,tr("Tables"),ResultTreeItemKind::MeshGroup,"tables");
+      std::map<std::string,QTreeWidgetItem*> categories;
+      std::map<std::pair<std::string,std::string>,QTreeWidgetItem*> sets;
       for (const auto& table : tableList)
       {
-        auto* item = make(tableRoot,QString::fromUtf8(table.name.c_str()),ResultTreeItemKind::Table,"table:"+QString::fromStdString(table.key));
+        auto* category = tableRoot;
+        if (table.category != "History outputs")
+        {
+          auto*& group = categories[table.category];
+          if (!group)
+          {
+            group = make(tableRoot,QString::fromUtf8(table.category.c_str()),ResultTreeItemKind::MeshGroup,
+              "table-category:"+QString::fromStdString(table.category));
+          }
+          category = group;
+        }
+        auto* parent = category;
+        if (table.category == "History outputs" && !table.set_name.empty())
+        {
+          auto*& set = sets[{table.category,table.set_name}];
+          if (!set)
+          {
+            set = make(category,QString::fromUtf8(table.set_name.c_str()),ResultTreeItemKind::MeshGroup,
+              "table-set:"+QString::fromStdString(table.category+":"+table.set_name));
+          }
+          parent = set;
+        }
+        std::string label = table.name;
+        if (parent != category && !table.output_name.empty())
+        {
+          label = table.output_name;
+        }
+        auto* item = make(parent,QString::fromUtf8(label.c_str()),ResultTreeItemKind::Table,"table:"+QString::fromStdString(table.key));
         item->setData(0,TableKey,QString::fromStdString(table.key));
+        item->setData(0,TableField,table.field);
         item->setToolTip(0,QString::fromStdString(table.category)+"\n"+QString::fromStdString(table.key));
       }
     }
@@ -1165,9 +1269,17 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
       kind == ResultTreeItemKind::FieldsGroup || kind == ResultTreeItemKind::ResultGroup || kind == ResultTreeItemKind::FiltersGroup);
     (*item)->setExpanded(expanded.contains(key) || initiallyExpanded);
   }
-  if (activeField && (!selected || selected->data(0,Kind).toInt() == static_cast<int>(ResultTreeItemKind::Field)))
+  if (activeField && (!selected || selected->data(0,Kind).toInt() == static_cast<int>(ResultTreeItemKind::Field) ||
+      selected->data(0,Kind).toInt() == static_cast<int>(ResultTreeItemKind::Component)))
   {
+    selectedKeys.remove(selectedKey);
+    selectedKeys.insert(activeField->data(0,Key).toString());
     selected = activeField;
+    if (activeField->data(0,Kind).toInt() == static_cast<int>(ResultTreeItemKind::Component) &&
+        !known.contains(activeField->parent()->data(0,Key).toString()))
+    {
+      activeField->parent()->setExpanded(true);
+    }
   }
   setCurrentItem([&]() -> std::common_type_t<decltype(selected), decltype(activeRoot)> {
     if (selected != nullptr) {
@@ -1193,7 +1305,15 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
 
 void PostprocessorResultsTree::mousePressEvent(QMouseEvent* event)
 {
-  const bool empty = itemAt(event->position().toPoint()) == nullptr;
+  const auto point = event->position().toPoint();
+  const auto* item = itemAt(point);
+  if (event->button() == Qt::LeftButton && columnAt(point.x()) == 2 && item &&
+      !item->data(2,PostprocessorTreeRoles::Style).isValid())
+  {
+    event->accept();
+    return;
+  }
+  const bool empty = item == nullptr;
   QTreeWidget::mousePressEvent(event);
   if (empty && event->button() == Qt::LeftButton && !refreshing)
   {

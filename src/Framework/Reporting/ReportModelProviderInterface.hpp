@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <memory>
+class MeshQualitySnapshot;
 #include <vector>
 class ReportSourceEntry;
 class ReportTemplate;
@@ -24,5 +26,7 @@ public:
   virtual ~ReportModelProviderInterface();
   virtual bool available_sources(std::vector<ReportSourceEntry>& output, std::string& error) const = 0;
   virtual bool resolve_source(const ReportRequest& request, ReportSource& output, std::string& error) const = 0;
+  virtual bool mesh_quality(const ReportRequest& request, const ReportSource& source,
+    std::shared_ptr<const MeshQualitySnapshot>& output, std::string& error) const;
   virtual bool collect(const ReportRequest& request, const ReportSource& source, ReportDocument& output, std::string& error) const = 0;
 };

@@ -471,6 +471,8 @@ namespace Postprocessor
     // Every allocation and validation is complete before publishing containers.
     next_source_number = next;
     filter_cache.clear();
+    explosion_cache.clear();
+    explosion_references.clear();
       animation_rotation.clear();
     state.swap(prepared.definitions.session);
     runtime.swap(prepared.runtime);

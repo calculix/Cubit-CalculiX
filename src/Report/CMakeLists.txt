@@ -38,6 +38,7 @@ add_library(report_module SHARED
   GUI/ReportPreviewWindow.cpp
   GUI/ReportIconLoader.cpp GUI/ReportIconLoader.hpp
   Icons/Report.svg
+  GUI/ReportMeshQualitySettings.cpp GUI/ReportMeshQualitySettings.hpp
   GUI/ReportSettingsDialog.cpp
   GUI/ReportSettingsCommandText.cpp GUI/ReportSettingsCommandText.hpp
   GUI/ReportWorkspace.cpp

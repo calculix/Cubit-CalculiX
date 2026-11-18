@@ -128,15 +128,27 @@ Remaining implementation
   Trace pairs completed for 232 exports, 240 result loads and 56 GUI refreshes,
   with no exception markers. This is positive regression evidence for the
   export/result guards, not proof that an intermittent failure is impossible.
-* Next: run the consolidated verify_level_set_release.jou for all six Core-default
-  cases, current-build broad-band hex baselines and automated lifecycle checks.
+* Next: run the expanded consolidated verify_level_set_release.jou after a
+  matching production/helper build and Cubit restart. Preflight and all ten
+  native suites run before any reset, followed by 18 two-iteration density
+  compliance/displacement smoke cases, all six Core-default level-set cases,
+  current-build broad-band hex baselines and automated lifecycle checks.
+  The new native manifest requires separate configuration of tests/topology.
+  Preparation of the harness does not establish new native or Cubit evidence.
   It must not silently replace width 0.1 with the already-tested width 1.0.
   Archive execution, convergence and approximation differences separately.
   Keep actual solver-process failure, kill after a completed iteration, visual
   GUI checks and Linux verification explicitly pending until exercised.
 * Remaining: kill after completed iterations, solver-process failure cleanup,
+  Core-default integration robustness,
   mixed/curved meshes, narrow-band refinement, larger-model performance, GUI
   lifecycle and Linux evidence. The standalone cache-suite result is separate.
+* Release campaign 20261118T125031Z_fc8fe071 passed all ten native suites and
+  all 18 density smoke cases, then stopped on Core-default C3D8 trial geometry
+  for iteration 8 (element 182, four-refinement limit). New source-level
+  diagnostics, opt-in single-element capture and standalone replay support
+  investigation without relaxing defaults. The numerical blocker is still
+  unresolved; the new C++ diagnostics/native tests await build and execution.
 * Review the required evidence before enabling the supported level-set scope.
   Public runs remain gated; current level-set integration supports compliance
   only. Passing density displacement tests does not add level-set displacement.

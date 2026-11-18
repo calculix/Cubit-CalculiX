@@ -21,6 +21,7 @@ See :doc:`../developer/postprocessor-verification` for the acceptance checklist.
    annotations
    plots
    filters
+   explosion
    vectors
    capture
    tables

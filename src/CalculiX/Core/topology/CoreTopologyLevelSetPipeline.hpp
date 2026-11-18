@@ -3,6 +3,7 @@
 
 #include "CoreTopologyLevelSetStructs.hpp"
 #include "CoreTopologyLevelSetQuadrature.hpp"
+#include "CoreTopologyLevelSetIntegrationDiagnostics.hpp"
 #include <boost/asio/thread_pool.hpp>
 #include <array>
 #include <atomic>
@@ -42,6 +43,7 @@ public:
     TopologyLevelSetElementGeometry geometry;
     double integration_ms = 0.0;
     std::string error;
+    CoreTopologyLevelSetIntegrationDiagnostics::Result diagnostics;
   };
 
   struct Statistics

@@ -58,6 +58,7 @@ QWidget* PostprocessorStyleDelegate::createEditor(QWidget* parent,const QStyleOp
   QObject::connect(editor,&QComboBox::activated,self,[self,editor](int)
   {
     QPointer<QComboBox> guarded(editor);
+    editor->setProperty("Postprocessor.StyleActivated",true);
     emit self->commitData(editor);
     if (guarded)
     {
@@ -72,13 +73,19 @@ void PostprocessorStyleDelegate::setEditorData(QWidget* widget,const QModelIndex
   if (editor)
   {
     editor->setCurrentIndex(editor->findData(index.data(PostprocessorTreeRoles::Style)));
+    editor->setProperty("Postprocessor.StyleActivated",false);
   }
 }
 void PostprocessorStyleDelegate::setModelData(QWidget* widget,QAbstractItemModel*,const QModelIndex& index) const
 {
-  const auto* editor = qobject_cast<QComboBox*>(widget);
-  if (editor && editor->currentIndex() >= 0 && change)
+  auto* editor = qobject_cast<QComboBox*>(widget);
+  if (editor && editor->currentIndex() >= 0 && index.isValid() &&
+      index.data(PostprocessorTreeRoles::Style).isValid() &&
+      editor->property("Postprocessor.StyleActivated").toBool() && change)
   {
+    // Focus loss or tree refresh must not commit an untouched editor. Explicit
+    // activation may apply this row's style to differently styled selected rows.
+    editor->setProperty("Postprocessor.StyleActivated",false);
     change(index,static_cast<Postprocessor::DisplayStyle>(editor->currentData().toInt()));
   }
 }
