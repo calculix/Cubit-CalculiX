@@ -1,5 +1,5 @@
 #include "PostprocessorVectorActors.hpp"
-#include "Postprocessor/Core/explosion/ExplosionRuntime.hpp"
+#include "Postprocessor/Core/explosion/ExplosionPulseGeometry.hpp"
 #include <vtkRenderer.h>
 #include <vtkActor.h>
 #include <vtkOpenGLActor.h>

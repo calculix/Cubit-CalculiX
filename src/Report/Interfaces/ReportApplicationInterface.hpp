@@ -1,10 +1,19 @@
 #pragma once
 #include "Framework/Reporting/ReportImageRequest.hpp"
-#include "Report/Core/ReportCore.hpp"
-#include <memory>
+#include "Framework/Reporting/ReportDocument.hpp"
+#include "Framework/Reporting/ReportProfile.hpp"
+#include "Framework/Reporting/ReportSourceEntry.hpp"
+#include "Framework/Reporting/ReportTemplate.hpp"
 #include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
 
+class ReportCore;
 class ReportDocumentLayout;
+class ReportProgress;
+class ReportProviderRegistryInterface;
+class ReportSession;
 
 // Commands mutate through this boundary; widgets read committed snapshots.
 class ReportApplicationInterface
@@ -56,17 +65,10 @@ private:
     std::shared_ptr<ReportDocumentLayout>& output, std::string& error) const;
   void publish_layout(std::shared_ptr<ReportDocumentLayout> layout);
   bool prepare_selected_layout(std::string& error);
-  ReportCore core;
+  struct PreviewState;
+  std::unique_ptr<ReportCore> core;
   std::unique_ptr<ReportSession> preparedProject;
-  std::shared_ptr<const ReportDocument> layout_source;
-  std::shared_ptr<ReportDocumentLayout> cached_layout;
-  std::uint64_t previewRevision = 0;
-  int previewPage;
-  int previewZoom;
-  std::string previewMode;
-  std::uint64_t previewWindowRevision = 0;
-  std::uint64_t previewPageRevision = 0;
-  std::uint64_t previewFitRevision = 0;
+  std::unique_ptr<PreviewState> previewState;
   bool guiAvailable = false;
   bool generating = false;
 };

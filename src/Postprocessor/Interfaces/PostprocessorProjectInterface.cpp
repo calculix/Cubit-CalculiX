@@ -1,4 +1,5 @@
 #include "PostprocessorApplicationInterface.hpp"
+#include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "Postprocessor/Core/persistence/PostprocessorProjectPersistence.hpp"
 #include "Postprocessor/Core/sources/VtkFileSourceProvider.hpp"
 #include "Framework/Interfaces/ResultSourceRegistryInterface.hpp"
@@ -109,7 +110,7 @@ bool PostprocessorApplicationInterface::resolve_project_sources(std::string& err
     }
     preparedProject->runtime[item.first] = std::move(runtime);
   }
-  if (!core.bind_project(*preparedProject,error))
+  if (!core->bind_project(*preparedProject,error))
   {
     return false;
   }
@@ -133,7 +134,7 @@ bool PostprocessorApplicationInterface::commit_project_restore(std::string& erro
     error = "No Postprocessor project restore is prepared.";
     return false;
   }
-  if (!core.restore_project(std::move(*preparedProject),error))
+  if (!core->restore_project(std::move(*preparedProject),error))
   {
     return false;
   }
@@ -143,7 +144,7 @@ bool PostprocessorApplicationInterface::commit_project_restore(std::string& erro
 bool PostprocessorApplicationInterface::prepare_project_save(std::string& error)
 {
   auto candidate = std::make_unique<Postprocessor::PostprocessorProjectState>();
-  if (!core.capture_project(*candidate,error))
+  if (!core->capture_project(*candidate,error))
   {
     return false;
   }
@@ -166,5 +167,5 @@ void PostprocessorApplicationInterface::discard_project_restore() noexcept
 }
 std::string PostprocessorApplicationInterface::source_unavailable_reason(const std::string& id) const
 {
-  return core.source_unavailable_reason(id);
+  return core->source_unavailable_reason(id);
 }

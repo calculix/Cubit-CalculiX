@@ -1,3 +1,4 @@
+#include "FilterRuntimeState.hpp"
 #include <type_traits>
 #include "../application/PostprocessorCore.hpp"
 #include <QUuid>
@@ -195,9 +196,9 @@ namespace Postprocessor
     staged.active_representation_id = representation.id;
     staged.views.at(view).table.reset();
     staged.views.at(view).selection.entity.reset();
-    std::map<std::string,CachedFilterOutput> nextCache;
-    nextCache[representation.id] = {requested.revision,representation.increment_index,representation.deformation,
-      evaluated.source,std::make_shared<EvaluatedOutput>(std::move(evaluated))};
+    FilterRuntimeState nextCache;
+    const auto evaluatedSource = evaluated.source;
+    nextCache.store(representation,requested.revision,evaluatedSource,std::make_shared<EvaluatedOutput>(std::move(evaluated)));
     for (auto& entry : staged.representations)
     {
       if (entry.second.view_id == view)
@@ -206,7 +207,7 @@ namespace Postprocessor
       }
     }
     state.swap(staged);
-    filter_cache.swap(nextCache);
+    filterRuntime->swap(nextCache);
     ++scene_revision;
     return true;
   }
@@ -391,7 +392,7 @@ namespace Postprocessor
         }
       }
     }
-    std::map<std::string,CachedFilterOutput> nextCache;
+    FilterRuntimeState nextCache;
     for (auto& item : staged.representations)
     {
       auto& display = item.second;
@@ -416,7 +417,7 @@ namespace Postprocessor
           }
           if (validation.enabled == definition.enabled)
           {
-            nextCache[display.id] = {definition.revision,display.increment_index,display.deformation,source,result};
+            nextCache.store(display,definition.revision,source,result);
           }
         }
       }
@@ -426,7 +427,7 @@ namespace Postprocessor
       staged.filters.erase(found->first);
     }
     state.swap(staged);
-    filter_cache.swap(nextCache);
+    filterRuntime->swap(nextCache);
     ++scene_revision;
     return true;
   }
@@ -457,11 +458,9 @@ namespace Postprocessor
       error = "The filter output is unavailable.";
       return false;
     }
-    const auto cached = filter_cache.find(display.id);
-    if (cached != filter_cache.end() && cached->second.source == source && cached->second.revision == found->second.revision &&
-        cached->second.frame == display.increment_index && same_deformation(cached->second.deformation,display.deformation))
+    if (const auto cached = filterRuntime->find(display,found->second.revision,source))
     {
-      output = cached->second.output;
+      output = cached;
       return true;
     }
     auto result = std::make_shared<EvaluatedOutput>();
@@ -469,19 +468,8 @@ namespace Postprocessor
     {
       return false;
     }
-    for (auto item = filter_cache.begin(); item != filter_cache.end();)
-    {
-      const auto display = state.representations.find(item->first);
-      if (display == state.representations.end() || !display->second.visible)
-      {
-        item = filter_cache.erase(item);
-      }
-      else
-      {
-        ++item;
-      }
-    }
-    filter_cache[display.id] = {found->second.revision,display.increment_index,display.deformation,source,result};
+    filterRuntime->prune(state);
+    filterRuntime->store(display,found->second.revision,source,result);
     output = std::move(result);
     return true;
   }

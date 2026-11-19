@@ -2,27 +2,35 @@
 #define POSTPROCESSOR_CORE_HPP
 
 #include "../session/PostprocessorSession.hpp"
-#include "../persistence/PostprocessorProjectState.hpp"
-#include "../sources/SourceRuntime.hpp"
 #include "../selection/ResultProbe.hpp"
 #include "../plots/PlotData.hpp"
 #include "../capture/CaptureDefinition.hpp"
-#include "../filters/FilterRuntime.hpp"
-#include "../explosion/ExplosionRuntime.hpp"
 #include "../tables/ResultTableSelector.hpp"
 #include "../representations/ResultFieldSelector.hpp"
-#include "../representations/AnimationRotationRuntime.hpp"
 #include "Framework/Results/ResultSourceReference.hpp"
 
+#include <array>
 #include <cstdint>
-#include <map>
+#include <memory>
 #include <optional>
+#include <set>
 #include <string>
+#include <vector>
 
 class ResultSourceProviderInterface;
+class vtkPolyData;
 
 namespace Postprocessor
 {
+  struct ExplosionReference;
+  struct EvaluatedOutput;
+  struct PostprocessorProjectState;
+  struct PreparedPostprocessorProject;
+  struct SourceRuntime;
+  class FilterRuntimeState;
+  class AnimationRotationPlayback;
+  class SourceProjectRuntime;
+
   /** Host-thread owner of Postprocessor definitions and runtime result handles.
    * Callers resolve provider prefixes through Framework, then pass a borrowed
    * provider for one operation. No provider or CalculiX reader pointer is retained.
@@ -36,7 +44,8 @@ namespace Postprocessor
   class PostprocessorCore
   {
   public:
-    PostprocessorCore() = default;
+    PostprocessorCore();
+    ~PostprocessorCore();
     bool change_explosion(const std::string& view,const std::vector<std::string>& sources,const std::string& action,
       double value,const std::string& option,const std::string& block,const std::array<double,3>& offset,
       const std::string& unit,std::string& error);
@@ -185,8 +194,9 @@ namespace Postprocessor
   private:
     std::shared_ptr<const ExplosionReference> explosion_reference(const std::string& source,std::string& error) const;
     bool evaluate_unexploded_output(const Representation& display,std::shared_ptr<const EvaluatedOutput>& output,std::string& error) const;
-    mutable std::map<std::string,std::shared_ptr<ExplosionReference>> explosion_references;
-    mutable std::map<std::string,CachedExplosionOutput> explosion_cache;
+    struct ExplosionRuntimeState;
+    std::unique_ptr<ExplosionRuntimeState> explosionRuntime;
+    void invalidate_explosion_runtime() noexcept;
     std::vector<EvaluatedAnnotation> native_annotations(const std::string& view_id) const;
     bool evaluate_plot(const PlotDefinition& definition, PlotData& output, std::string& error) const;
     std::optional<SimUnits::WorkspaceUnitContext> captureUnits;
@@ -194,13 +204,16 @@ namespace Postprocessor
       const std::string& view_id, std::size_t increment, bool visible, std::string& error) const;
     bool prepare_initial_display(PostprocessorSession& staged, const std::string& source_id,
       const std::optional<std::size_t>& increment, std::string& error) const;
-    mutable std::map<std::string,CachedFilterOutput> filter_cache;
-    std::map<std::string,AnimationRotationRuntime> animation_rotation;
+    void invalidate_filter_runtime() noexcept;
+    void invalidate_animation_runtime() noexcept;
+    const SourceRuntime* source_runtime(const std::string& id) const noexcept;
+    std::optional<std::size_t> source_first_mesh_frame(const std::string& id) const noexcept;
+    const std::vector<SimResults::Dataset>& source_dataset_catalogue(const std::string& id) const noexcept;
+    std::unique_ptr<FilterRuntimeState> filterRuntime;
+    std::unique_ptr<AnimationRotationPlayback> animationRuntime;
+    std::unique_ptr<SourceProjectRuntime> sourceProjectRuntime;
     PostprocessorSession state;
-    std::map<std::string,SavedRepresentationBinding> saved_bindings;
-    std::map<std::string,SavedFrameReference> saved_table_frames;
     ColorPalette default_palette = ColoringDefaults::palette;
-    std::map<std::string, SourceRuntime> runtime;
     std::uint64_t next_source_number = 1;
     std::uint64_t scene_revision = 1;
     bool source_operation_active = false;

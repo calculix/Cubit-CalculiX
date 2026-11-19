@@ -1,4 +1,6 @@
 #include "../application/PostprocessorCore.hpp"
+#include "ExplosionRuntimeState.hpp"
+#include "ExplosionPulseGeometry.hpp"
 #include "../representations/ResultMesh.hpp"
 #include <iterator>
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
@@ -11,11 +13,17 @@
 #include <utility>
 namespace Postprocessor
 {
+  void PostprocessorCore::invalidate_explosion_runtime() noexcept
+  {
+    explosionRuntime->outputs.clear();
+    explosionRuntime->references.clear();
+  }
+
   std::shared_ptr<const ExplosionReference> PostprocessorCore::explosion_reference(const std::string& source,std::string& error) const
   {
     const auto data = result_data(source);
-    const auto found = explosion_references.find(source);
-    if (found != explosion_references.end() && found->second->source == data)
+    const auto found = explosionRuntime->references.find(source);
+    if (found != explosionRuntime->references.end() && found->second->source == data)
     {
       return found->second;
     }
@@ -24,7 +32,7 @@ namespace Postprocessor
     {
       return {};
     }
-    explosion_references[source] = reference;
+    explosionRuntime->references[source] = reference;
     return reference;
   }
   bool PostprocessorCore::explosion_active(const Representation& display) const
@@ -51,8 +59,8 @@ namespace Postprocessor
       error = "The explosion scene length basis changed. Recalculate the layout before displaying it.";
       return false;
     }
-    const auto found = explosion_cache.find(display.id);
-    if (found != explosion_cache.end() && found->second.input->data == input->data && found->second.input->source == input->source &&
+    const auto found = explosionRuntime->outputs.find(display.id);
+    if (found != explosionRuntime->outputs.end() && found->second.input->data == input->data && found->second.input->source == input->source &&
         found->second.revision == settings.revision && found->second.frame == display.increment_index &&
         same_deformation(found->second.deformation,display.deformation) && found->second.hidden == display.hidden_datasets)
     {
@@ -68,7 +76,7 @@ namespace Postprocessor
       return false;
     }
     apply_explosion_pulse(*output,settings.pulse);
-    explosion_cache[display.id] = {input,output,settings.revision,display.increment_index,display.deformation,display.hidden_datasets};
+    explosionRuntime->outputs[display.id] = {input,output,settings.revision,display.increment_index,display.deformation,display.hidden_datasets};
     return true;
   }
   bool PostprocessorCore::change_explosion(const std::string& viewId,const std::vector<std::string>& requestedSources,
@@ -153,8 +161,8 @@ namespace Postprocessor
         {
           if (item.second.view_id == viewId)
           {
-            const auto cached = explosion_cache.find(item.first);
-            if (cached != explosion_cache.end())
+            const auto cached = explosionRuntime->outputs.find(item.first);
+            if (cached != explosionRuntime->outputs.end())
             {
               apply_explosion_pulse(*cached->second.output,pulse);
             }
@@ -526,7 +534,7 @@ namespace Postprocessor
       {
         return false;
       }
-      std::map<std::string,CachedExplosionOutput> prepared;
+      std::map<std::string,ExplosionRuntimeState::CachedExplosionOutput> prepared;
       // Validate all visible outputs before publishing any settings or camera fit.
       for (const auto& item : state.representations)
       {
@@ -567,7 +575,7 @@ namespace Postprocessor
         ++target.fit_request;
       }
       state.swap(staged);
-      explosion_cache = std::move(prepared);
+      explosionRuntime->outputs = std::move(prepared);
       ++scene_revision;
       return true;
     }

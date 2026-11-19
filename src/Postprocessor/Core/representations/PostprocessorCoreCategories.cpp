@@ -8,9 +8,9 @@ namespace Postprocessor
     DatasetCategory category, bool visible, std::string& error)
   {
     error.clear();
-    const auto loaded = runtime.find(source);
+    const auto first = source_first_mesh_frame(source);
     if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max() ||
-        loaded == runtime.end() || !loaded->second.first_mesh_increment || state.views.count(view) == 0)
+        !first || state.views.count(view) == 0)
     {
       error = "Category visibility requires an available mesh source/view.";
       return false;
@@ -18,7 +18,7 @@ namespace Postprocessor
     try
     {
       std::vector<std::size_t> ids;
-      for (const auto& data : loaded->second.datasets)
+      for (const auto& data : source_dataset_catalogue(source))
       {
         if (dataset_in_category(data,category))
         {
@@ -39,7 +39,7 @@ namespace Postprocessor
         });
       };
       bool created = find() == staged.representations.end();
-      if (created && !ensure_source_representation(staged,source,view,*loaded->second.first_mesh_increment,false,error))
+      if (created && !ensure_source_representation(staged,source,view,*first,false,error))
       {
         return false;
       }
@@ -78,9 +78,9 @@ namespace Postprocessor
   bool PostprocessorCore::show_only_source(const std::string& source, const std::string& view, std::string& error)
   {
     error.clear();
-    const auto loaded = runtime.find(source);
+    const auto first = source_first_mesh_frame(source);
     if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max() ||
-        loaded == runtime.end() || !loaded->second.first_mesh_increment || state.views.count(view) == 0)
+        !first || state.views.count(view) == 0)
     {
       error = "Source isolation requires an available mesh source and view.";
       return false;
@@ -89,7 +89,7 @@ namespace Postprocessor
     {
       auto staged = state;
       staged.views.at(view).table.reset();
-      if (!ensure_source_representation(staged,source,view,*loaded->second.first_mesh_increment,true,error))
+      if (!ensure_source_representation(staged,source,view,*first,true,error))
       {
         return false;
       }

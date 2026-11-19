@@ -6,8 +6,8 @@
 #include "Framework/MeshQuality/MeshQualitySnapshotCodec.hpp"
 #include "Framework/Reporting/ReportMeshQualityContent.hpp"
 #include "Report/Core/ReportConfigurationResolver.hpp"
-#include "Report/GUI/ReportMeshQualitySettings.hpp"
-#include "Report/GUI/ReportSettingsCommandText.hpp"
+#include "Report/GUI/Settings/ReportMeshQualitySettings.hpp"
+#include "Report/GUI/Settings/ReportSettingsCommandText.hpp"
 #include "ReportTestProgress.hpp"
 #include <QComboBox>
 #include <QLineEdit>

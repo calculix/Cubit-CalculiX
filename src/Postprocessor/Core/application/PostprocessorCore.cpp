@@ -1,8 +1,22 @@
 #include "PostprocessorCore.hpp"
+#include "../explosion/ExplosionRuntimeState.hpp"
+#include "../filters/FilterRuntimeState.hpp"
+#include "../representations/AnimationRotationRuntime.hpp"
+#include "../sources/SourceProjectRuntime.hpp"
 #include <set>
 
 namespace Postprocessor
 {
+  PostprocessorCore::PostprocessorCore()
+    : explosionRuntime(std::make_unique<ExplosionRuntimeState>()),
+      filterRuntime(std::make_unique<FilterRuntimeState>()),
+      animationRuntime(std::make_unique<AnimationRotationPlayback>()),
+      sourceProjectRuntime(std::make_unique<SourceProjectRuntime>())
+  {
+  }
+
+  PostprocessorCore::~PostprocessorCore() = default;
+
   void PostprocessorCore::set_default_palette(ColorPalette palette) noexcept
   {
     default_palette = palette;
@@ -28,16 +42,16 @@ namespace Postprocessor
 
   std::vector<ResultFieldGroup> PostprocessorCore::field_groups(const std::string& source_id, std::optional<std::size_t> current) const
   {
-    const auto loaded = runtime.find(source_id);
-    if (loaded == runtime.end())
+    const auto* loaded = source_runtime(source_id);
+    if (!loaded)
     {
       return {};
     }
-    auto groups = loaded->second.groups;
+    auto groups = loaded->groups;
     std::set<std::string> available;
-    if (loaded->second.data && current && *current < loaded->second.data->increments.size())
+    if (loaded->data && current && *current < loaded->data->increments.size())
     {
-      for (const auto& field : loaded->second.data->increments[*current].fields)
+      for (const auto& field : loaded->data->increments[*current].fields)
       {
         available.insert(field_group_key(field));
       }
@@ -51,13 +65,13 @@ namespace Postprocessor
 
   std::shared_ptr<const SimResults::VtkResultsData> PostprocessorCore::result_data(const std::string& source_id) const
   {
-    const auto entry = runtime.find(source_id);
+    const auto* entry = source_runtime(source_id);
 
-    if (entry == runtime.end())
+    if (!entry)
     {
       return {};
     }
 
-    return entry->second.data;
+    return entry->data;
   }
 }

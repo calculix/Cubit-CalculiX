@@ -1,5 +1,6 @@
 #include <type_traits>
 #include "PlotTests.hpp"
+#include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/Core/plots/PlotCodec.hpp"
 #include "Postprocessor/Core/tables/ResultTables.hpp"

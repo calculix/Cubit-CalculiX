@@ -1,4 +1,5 @@
 #include "../application/PostprocessorCore.hpp"
+#include "Postprocessor/Core/sources/SourceProjectRuntime.hpp"
 #include <algorithm>
 #include <limits>
 #include <exception>
@@ -43,7 +44,7 @@ namespace Postprocessor
     try
     {
       auto staged = state;
-      auto stagedBindings = saved_bindings;
+      auto stagedBindings = sourceProjectRuntime->bindings();
       bool changed = false;
       for (const auto& target : targets)
       {
@@ -96,7 +97,7 @@ namespace Postprocessor
       if (!validate_only && changed)
       {
         state.swap(staged);
-        saved_bindings.swap(stagedBindings);
+        sourceProjectRuntime->replace_bindings(stagedBindings);
         ++scene_revision;
       }
       return true;

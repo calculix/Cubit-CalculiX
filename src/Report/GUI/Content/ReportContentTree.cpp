@@ -1,5 +1,5 @@
 #include "ReportContentTree.hpp"
-#include "ReportSettingsCommandText.hpp"
+#include "Report/GUI/Settings/ReportSettingsCommandText.hpp"
 #include "CubitMessage.hpp"
 #include <QSignalBlocker>
 #include <QTreeWidgetItemIterator>

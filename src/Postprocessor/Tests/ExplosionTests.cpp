@@ -1,4 +1,5 @@
 #include "Postprocessor/Core/explosion/ExplosionRuntime.hpp"
+#include "Postprocessor/Core/explosion/ExplosionPulseGeometry.hpp"
 #include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "Framework/Interfaces/ResultSourceProviderInterface.hpp"
 #include "Postprocessor/Core/explosion/ExplosionCodec.hpp"

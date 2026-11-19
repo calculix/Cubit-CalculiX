@@ -1,4 +1,5 @@
 #include <type_traits>
+#include "Postprocessor/Core/filters/FilterRuntime.hpp"
 #include "../application/PostprocessorCore.hpp"
 #include "../representations/ResultMesh.hpp"
 #include "../representations/ResultReferenceMesh.hpp"

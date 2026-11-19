@@ -1303,7 +1303,7 @@ The default profile first deletes the density case created by the reviewed mesh
 fixture and recreates it with only name, method and objective supplied. It does
 not inherit cap, target, iteration limit, seed, width or tolerance overrides.
 Current Core defaults include volume 0.3, maximum 100 iterations, cap 1024,
-interface width 0.1 and maximum refinements 4. Captured settings determine the
+interface width 0.1 and maximum refinements 5. Captured settings determine the
 validation limits; no default is silently relaxed after a failure. These cases
 can take substantially longer than the broad-band matrix and can expose a
 default-settings blocker. Nonconvergence remains explicit, even if execution
@@ -1383,7 +1383,14 @@ integration tolerance. This is a successive-estimate criterion, not a certified
 error bound. The diagnostic reports the derivative's zero-based index in Cubit
 expanded-connectivity order. It does not reorder nodes, change summation order,
 increase the refinement budget, relax tolerance or introduce automatic retries.
-Defaults remain width 0.1, tolerance 1e-4 and four refinements.
+Core defaults are width 0.1, tolerance 1e-4 and at most five refinements.
+Replay of the element 182 capture from run 20261118T140151Z_6da77b06 passed all
+30 checks. At four refinements (16 subdivisions), the width-scaled derivative
+error was 1.0420015e-4 and exceeded tolerance. At five (32 subdivisions), the
+maximum error was 1.7813099e-6 and integration succeeded. The native geometry
+suite embeds the captured coordinates and nodal values and checks both budgets.
+The focused C3D8 run with the new default must still verify that iteration 8
+completes and report any later refinement-limit failure.
 
 Workers collect comparisons privately without printing or accessing files.
 After a failed batch has drained its workers, the calling thread can capture

@@ -1,5 +1,5 @@
 #include "ReportSettingsCommandText.hpp"
-#include "ReportCommandText.hpp"
+#include "Report/GUI/Workspace/ReportCommandText.hpp"
 #include "Report/Core/ReportUserOptions.hpp"
 #include "Framework/Reporting/ReportTemplate.hpp"
 #include <map>

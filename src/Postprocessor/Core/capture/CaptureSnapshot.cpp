@@ -1,4 +1,5 @@
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
+#include "Postprocessor/Core/sources/SourceProjectRuntime.hpp"
 #include "CaptureDefinition.hpp"
 #include "../representations/VectorPlotCodec.hpp"
 #include "../filters/FilterCodec.hpp"
@@ -243,18 +244,20 @@ namespace Postprocessor
   }
   void PostprocessorCore::install_capture_snapshot(const CaptureSnapshot& snapshot)
   {
-    captureUnits = snapshot.presentation_units;
-    state = snapshot.session;
-    runtime.clear();
-    filter_cache.clear();
-    explosion_cache.clear();
-    explosion_references.clear();
-    animation_rotation.clear();
+    auto capturedSession = snapshot.session;
+    std::optional<SimUnits::WorkspaceUnitContext> capturedUnits(snapshot.presentation_units);
+    SourceProjectRuntime::Sources capturedSources;
     for (const auto& source : snapshot.sources)
     {
       SourceRuntime value(source.second,1,first_mesh_increment(*source.second));
-      runtime.emplace(source.first,std::move(value));
+      capturedSources.emplace(source.first,std::move(value));
     }
+    captureUnits.swap(capturedUnits);
+    state.swap(capturedSession);
+    invalidate_filter_runtime();
+    invalidate_explosion_runtime();
+    invalidate_animation_runtime();
+    sourceProjectRuntime->replace_sources(capturedSources);
     ++scene_revision;
   }
 }

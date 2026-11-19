@@ -11,11 +11,11 @@
 #include "CalculiX/Core/reporting/CalculiXReportInputReader.hpp"
 #include <QApplication>
 #include <QScrollBar>
-#include "Report/GUI/ReportPreviewWidget.hpp"
-#include "Report/GUI/ReportWorkspace.hpp"
-#include "Report/GUI/ReportToolbar.hpp"
-#include "Report/GUI/ReportSettingsCommandText.hpp"
-#include "Report/GUI/ReportSettingsDialog.hpp"
+#include "Report/GUI/Preview/ReportPreviewWidget.hpp"
+#include "Report/GUI/Workspace/ReportWorkspace.hpp"
+#include "Report/GUI/Workspace/ReportToolbar.hpp"
+#include "Report/GUI/Settings/ReportSettingsCommandText.hpp"
+#include "Report/GUI/Settings/ReportSettingsDialog.hpp"
 #include <QDialogButtonBox>
 #include <QLineEdit>
 #include "Report/Interfaces/ReportApplicationInterface.hpp"

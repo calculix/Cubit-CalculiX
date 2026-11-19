@@ -1,0 +1,22 @@
+target_sources(postprocessor_module PRIVATE
+  PostprocessorVectors.svg
+  PostprocessorExplode.svg
+  PostprocessorExplodeMesh.svg
+  PostprocessorCaptureViewport.svg
+  PostprocessorRenderImage.svg
+  PostprocessorAddToReport.svg
+  PostprocessorPlotHistory.svg
+  Postprocessor.svg
+  PostprocessorMinMax.svg
+  PostprocessorAddResultLabel.svg
+  PostprocessorShowLabels.svg
+  PostprocessorIntegrationPoint.svg
+  PostprocessorDeform.svg
+  PostprocessorUndeformed.svg
+  PostprocessorTreeSource.svg
+  PostprocessorTreeIntegrationPoints.svg
+  PostprocessorTreeResults.svg
+  PostprocessorTreeField.svg
+  PostprocessorTreeTables.svg
+  PostprocessorTreeTable.svg
+)

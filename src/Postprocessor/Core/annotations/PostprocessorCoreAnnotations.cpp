@@ -1,4 +1,6 @@
 #include <type_traits>
+#include "Postprocessor/Core/persistence/PostprocessorProjectState.hpp"
+#include "Postprocessor/Core/filters/FilterRuntime.hpp"
 #include <vtkCell.h>
 #include "../application/PostprocessorCore.hpp"
 #include "Framework/Results/ResultsUnits.hpp"

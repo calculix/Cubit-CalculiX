@@ -1,4 +1,5 @@
 #include "PostprocessorApplicationInterface.hpp"
+#include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include <utility>
 void PostprocessorApplicationInterface::set_animation_export_services(AnimationStarter start,
   std::function<void()> cancel,std::function<bool()> active,std::function<std::string()> status)
@@ -18,7 +19,7 @@ bool PostprocessorApplicationInterface::start_animation_capture(
     return false;
   }
   Postprocessor::CaptureSnapshot snapshot;
-  if (!Postprocessor::valid_animation_capture(request,error) || !core.capture_snapshot(request.image,snapshot,error))
+  if (!Postprocessor::valid_animation_capture(request,error) || !core->capture_snapshot(request.image,snapshot,error))
   {
     return false;
   }
@@ -32,10 +33,10 @@ bool PostprocessorApplicationInterface::start_animation_capture(
     snapshot.options.backgroundTop = snapshot.options.backgroundBottom = {1,1,1};
   }
   snapshot.reference_size = capture_reference_size(request.image.target,snapshot.target_id);
-  std::string source = core.session().active_source_id;
+  std::string source = core->session().active_source_id;
   if (!request.source.empty())
   {
-    source = core.source_id_from_name(request.source);
+    source = core->source_id_from_name(request.source);
   }
   Postprocessor::AnimationCapturePlan plan;
   if (!plan.prepare(std::move(snapshot),source,request,error))
@@ -43,7 +44,7 @@ bool PostprocessorApplicationInterface::start_animation_capture(
     return false;
   }
   auto frozen = std::make_shared<PostprocessorApplicationInterface>(providers);
-  frozen->core.install_capture_snapshot(plan.snapshot);
+  frozen->core->install_capture_snapshot(plan.snapshot);
   frozen->captureOptions = plan.snapshot.options;
   return animationStarter(plan,frozen,error);
 }
@@ -78,6 +79,6 @@ bool PostprocessorApplicationInterface::load_animation_sample(const Postprocesso
   {
     return false;
   }
-  core.install_capture_snapshot(frame);
+  core->install_capture_snapshot(frame);
   return true;
 }

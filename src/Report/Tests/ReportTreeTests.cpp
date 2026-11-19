@@ -2,10 +2,10 @@
 #include "ReportTestProgress.hpp"
 #include "Report/Core/ReportCore.hpp"
 #include "Report/Core/ReportConfigurationResolver.hpp"
-#include "Report/GUI/ReportContentTree.hpp"
-#include "Report/GUI/ReportOutlineTree.hpp"
+#include "Report/GUI/Content/ReportContentTree.hpp"
+#include "Report/GUI/Content/ReportOutlineTree.hpp"
 #include "Report/Document/ReportDocumentLayout.hpp"
-#include "Report/GUI/ReportPreviewWindow.hpp"
+#include "Report/GUI/Preview/ReportPreviewWindow.hpp"
 #include <QListWidget>
 #include <QTreeWidgetItemIterator>
 #include <QApplication>

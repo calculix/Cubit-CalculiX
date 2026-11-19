@@ -1,4 +1,5 @@
 #include "../application/PostprocessorCore.hpp"
+#include "Postprocessor/Core/filters/FilterRuntime.hpp"
 #include "CameraOperations.hpp"
 #include "../representations/DisplayDefaults.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"

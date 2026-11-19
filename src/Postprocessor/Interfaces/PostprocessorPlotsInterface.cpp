@@ -1,9 +1,10 @@
 #include <type_traits>
+#include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "PostprocessorApplicationInterface.hpp"
 #include <algorithm>
 bool PostprocessorApplicationInterface::create_plot(const std::string& name,std::string& error)
 {
-  return core.create_plot(name,error);
+  return core->create_plot(name,error);
 }
 bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotName,const std::string& name,
   const std::string& sourceName,const std::optional<DatasetSelector>& selector,Postprocessor::EntityKind kind,
@@ -12,21 +13,21 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
 {
   using namespace Postprocessor;
   error.clear();
-  const auto plot = core.plot_id_from_name(plotName);
+  const auto plot = core->plot_id_from_name(plotName);
   if (plot.empty())
   {
     error = "Create/select a plot first.";
     return false;
   }
-  const auto& state = core.session();
-  const auto source = [&]() -> std::common_type_t<decltype(state.active_source_id), decltype(core.source_id_from_name(sourceName))> {
+  const auto& state = core->session();
+  const auto source = [&]() -> std::common_type_t<decltype(state.active_source_id), decltype(core->source_id_from_name(sourceName))> {
     if (sourceName.empty()) {
       return state.active_source_id;
     } else {
-      return core.source_id_from_name(sourceName);
+      return core->source_id_from_name(sourceName);
     }
   }();
-  const auto data = core.result_data(source);
+  const auto data = core->result_data(source);
   if (!data || id < 0 || (kind == EntityKind::IntegrationPoint && (!ip || *ip < 1 || *ip > 2147483647)))
   {
     error = "The original entity/source is unavailable.";
@@ -58,7 +59,7 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
   else
   {
     ResultFieldGroup group;
-    if (!resolve_result_field(core.field_groups(source,std::nullopt),{fieldName,qualifiers},dataset,
+    if (!resolve_result_field(core->field_groups(source,std::nullopt),{fieldName,qualifiers},dataset,
         component,magnitude,false,group,error))
     {
       return false;
@@ -81,7 +82,7 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
     }
   }
   std::optional<PlotEntityReference> reference;
-  for (const auto& part : core.mesh_datasets(source))
+  for (const auto& part : core->mesh_datasets(source))
   {
     if (dataset && *dataset != part.id)
     {
@@ -123,7 +124,7 @@ bool PostprocessorApplicationInterface::add_plot_entity(const std::string& plotN
   PlotCurveDefinition curve;
   curve.name = name;
   curve.input = *reference;
-  return core.add_plot_curve(plot,curve,error);
+  return core->add_plot_curve(plot,curve,error);
 }
 bool PostprocessorApplicationInterface::add_plot_table(const std::string& plotName,const std::string& name,
   const std::string& sourceName,const std::string& tableName,const std::string& x,const std::string& y,
@@ -131,11 +132,11 @@ bool PostprocessorApplicationInterface::add_plot_table(const std::string& plotNa
   const Postprocessor::TableQualifiers& tableQualifiers,bool field,const Postprocessor::FieldQualifiers& fieldQualifiers,
   const std::vector<Postprocessor::TableFilter>& filters)
 {
-  const auto source = [&]() -> std::common_type_t<decltype(core.session().active_source_id), decltype(core.source_id_from_name(sourceName))> {
+  const auto source = [&]() -> std::common_type_t<decltype(core->session().active_source_id), decltype(core->source_id_from_name(sourceName))> {
     if (sourceName.empty()) {
-      return core.session().active_source_id;
+      return core->session().active_source_id;
     } else {
-      return core.source_id_from_name(sourceName);
+      return core->source_id_from_name(sourceName);
     }
   }();
   std::string key;
@@ -143,7 +144,7 @@ bool PostprocessorApplicationInterface::add_plot_table(const std::string& plotNa
   {
     Postprocessor::ResultFieldGroup selected;
     if (tableQualifiers.global || tableQualifiers.type || tableQualifiers.entry ||
-        !Postprocessor::resolve_result_field(core.field_groups(source,std::nullopt),{tableName,fieldQualifiers},
+        !Postprocessor::resolve_result_field(core->field_groups(source,std::nullopt),{tableName,fieldQualifiers},
           std::nullopt,{},false,false,selected,error))
     {
       if (error.empty())
@@ -173,47 +174,47 @@ bool PostprocessorApplicationInterface::add_plot_table(const std::string& plotNa
   curve.name = name;
   Postprocessor::PlotTableReference reference{source,key,x,y,column,value,field};
   reference.filters = filters;
-  const auto tableData = Postprocessor::result_table_data(core.result_data(source),Postprocessor::TableReference{source,key,field,0});
+  const auto tableData = Postprocessor::result_table_data(core->result_data(source),Postprocessor::TableReference{source,key,field,0});
   if (!Postprocessor::validate_table_filters(tableData,reference.filters,error))
   {
     return false;
   }
   curve.input = std::move(reference);
-  return core.add_plot_curve(core.plot_id_from_name(plotName),curve,error);
+  return core->add_plot_curve(core->plot_id_from_name(plotName),curve,error);
 }
 bool PostprocessorApplicationInterface::change_plot(const std::string& name,const std::string& action,
   const std::string& value,std::string& error)
 {
-  return core.change_plot(core.plot_id_from_name(name),action,value,error);
+  return core->change_plot(core->plot_id_from_name(name),action,value,error);
 }
 bool PostprocessorApplicationInterface::change_plot_curve(const std::string& plot,const std::string& name,
   const std::string& action,std::string& error)
 {
-  return core.change_plot_curve(core.plot_id_from_name(plot),name,action,error);
+  return core->change_plot_curve(core->plot_id_from_name(plot),name,action,error);
 }
 bool PostprocessorApplicationInterface::set_plot_axes(const std::string& name,const Postprocessor::PlotAxes& axes,std::string& error)
 {
-  return core.set_plot_axes(core.plot_id_from_name(name),axes,error);
+  return core->set_plot_axes(core->plot_id_from_name(name),axes,error);
 }
 bool PostprocessorApplicationInterface::plot_data(const std::string& id,Postprocessor::PlotData& output,std::string& error) const
 {
-  return core.plot_data(id,output,error);
+  return core->plot_data(id,output,error);
 }
 bool PostprocessorApplicationInterface::export_plot(const std::string& name,const std::string& path,std::string& error) const
 {
-  const auto id = core.plot_id_from_name(name);
-  const auto found = core.session().plots.find(id);
+  const auto id = core->plot_id_from_name(name);
+  const auto found = core->session().plots.find(id);
   Postprocessor::PlotData data;
-  if (found == core.session().plots.end())
+  if (found == core->session().plots.end())
   {
     error = "The plot is unavailable.";
     return false;
   }
-  return core.plot_data(id,data,error) && Postprocessor::export_plot_csv(found->second,data,path,error);
+  return core->plot_data(id,data,error) && Postprocessor::export_plot_csv(found->second,data,path,error);
 }
 
 bool PostprocessorApplicationInterface::set_plot_label(const std::string& plot,const std::string& target,
   const std::string& value,const std::string& curve,std::string& error)
 {
-  return core.set_plot_label(core.plot_id_from_name(plot),target,value,curve,error);
+  return core->set_plot_label(core->plot_id_from_name(plot),target,value,curve,error);
 }

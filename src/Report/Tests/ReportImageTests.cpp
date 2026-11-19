@@ -5,7 +5,7 @@
 #include "Report/Document/ReportDocumentLayout.hpp"
 #include "Report/Document/ReportPdfExporter.hpp"
 #include "Report/Document/ReportOdtExporter.hpp"
-#include "Report/GUI/ReportSettingsCommandText.hpp"
+#include "Report/GUI/Settings/ReportSettingsCommandText.hpp"
 #include "Framework/Reporting/ReportImageRequest.hpp"
 #include "Framework/Reporting/ReportProfileStoreInterface.hpp"
 #include "Framework/Storage/HDF5Tool.hpp"

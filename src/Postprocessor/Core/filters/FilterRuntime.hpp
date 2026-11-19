@@ -32,12 +32,4 @@ namespace Postprocessor
     const SimResults::Increment& frame,std::size_t dataset,const std::vector<std::size_t>& cells,std::string& error);
   bool evaluate_clip(vtkDataSet* input,const FilterDefinition& filter,std::shared_ptr<vtkDataSet>& output,std::string& error);
   bool evaluate_section(vtkDataSet* input,const FilterDefinition& filter,std::shared_ptr<vtkDataSet>& output,std::string& error);
-  struct CachedFilterOutput
-  {
-    std::uint64_t revision = 0;
-    std::size_t frame = 0;
-    ResultDeformation deformation;
-    std::shared_ptr<const SimResults::VtkResultsData> source;
-    std::shared_ptr<const EvaluatedOutput> output;
-  };
 }

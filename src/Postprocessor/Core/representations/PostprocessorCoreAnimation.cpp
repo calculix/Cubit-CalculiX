@@ -1,3 +1,4 @@
+#include "AnimationRotationRuntime.hpp"
 #include "../application/PostprocessorCore.hpp"
 #include <exception>
 #include <limits>
@@ -88,7 +89,7 @@ namespace Postprocessor
         state.swap(staged);
         if (reanchor)
         {
-          animation_rotation.erase(id);
+          animationRuntime->erase(id);
         }
         ++scene_revision;
         return true;
@@ -143,7 +144,7 @@ namespace Postprocessor
       {
         return true;
       }
-      auto next = animation_rotation[entry.first];
+      auto next = animationRuntime->stage(entry.first);
       if (next.source != source || next.camera_revision != view->second.camera_revision ||
           !same_animation_rotation(next.settings,settings.rotation))
       {
@@ -172,7 +173,7 @@ namespace Postprocessor
         return false;
       }
       next.camera_revision = state.views.at(view_id).camera_revision;
-      animation_rotation[entry.first] = std::move(next);
+      animationRuntime->publish(entry.first,std::move(next));
       return true;
     }
     error = "The animation rotation representation is unavailable.";

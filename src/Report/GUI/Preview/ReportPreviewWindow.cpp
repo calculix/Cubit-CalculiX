@@ -2,7 +2,7 @@
 #include "ReportPreviewWindow.hpp"
 #include <utility>
 #include "ReportPreviewWidget.hpp"
-#include "ReportExportDialog.hpp"
+#include "Report/GUI/Export/ReportExportDialog.hpp"
 #include "Report/Document/ReportDocumentLayout.hpp"
 #include "CubitMessage.hpp"
 #include <QVBoxLayout>

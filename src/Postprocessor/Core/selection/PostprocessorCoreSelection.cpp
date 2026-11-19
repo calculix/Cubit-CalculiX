@@ -1,4 +1,5 @@
 #include <type_traits>
+#include "Postprocessor/Core/sources/SourceRuntime.hpp"
 #include "../application/PostprocessorCore.hpp"
 #include "../representations/ResultMesh.hpp"
 #include <exception>
@@ -206,13 +207,13 @@ namespace Postprocessor
           result.source_name = state.sources.at(entity.source_id).name;
           if (entity.kind == EntityKind::Node && display.increment_index < data->increments.size())
           {
-            const auto source = runtime.find(entity.source_id);
+            const auto* source = source_runtime(entity.source_id);
             std::set<std::int64_t> parents;
             for (const auto& part : result_mesh_parts(data->increments[display.increment_index].dataset.get()))
             {
               auto* ids = part.second->GetCellData()->GetArray("OriginalElementId");
               if (!ids || ids->GetNumberOfComponents() != 1 || ids->GetDataType() == VTK_FLOAT || ids->GetDataType() == VTK_DOUBLE ||
-                  part.second->GetPointData()->HasArray("IntegrationPointId") || source == runtime.end())
+                  part.second->GetPointData()->HasArray("IntegrationPointId") || !source)
               {
                 continue;
               }
@@ -222,7 +223,7 @@ namespace Postprocessor
               {
                 continue;
               }
-              auto& links = source->second.node_links[part.second];
+              auto& links = source->node_links[part.second];
               if (!links)
               {
                 auto candidate = std::shared_ptr<vtkStaticCellLinks>(vtkStaticCellLinks::New(),[](vtkStaticCellLinks* value)

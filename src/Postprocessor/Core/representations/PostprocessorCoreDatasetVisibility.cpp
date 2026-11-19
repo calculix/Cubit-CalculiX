@@ -5,23 +5,13 @@
 
 namespace Postprocessor
 {
-  std::vector<SimResults::Dataset> PostprocessorCore::mesh_datasets(const std::string& source_id) const
-  {
-    const auto loaded = runtime.find(source_id);
-    if (loaded == runtime.end()) {
-      return std::vector<SimResults::Dataset>{};
-    } else {
-      return loaded->second.datasets;
-    }
-  }
-
   bool PostprocessorCore::set_dataset_visibility(const std::string& source_id, const std::string& view_id,
     DatasetVisibilityAction action, std::optional<std::size_t> dataset, std::string& error)
   {
     error.clear();
-    const auto loaded = runtime.find(source_id);
+    const auto first = source_first_mesh_frame(source_id);
     if (source_operation_active || scene_revision == std::numeric_limits<std::uint64_t>::max() ||
-        loaded == runtime.end() || !loaded->second.first_mesh_increment ||
+        !first ||
         state.sources.count(source_id) == 0 || state.views.count(view_id) == 0)
     {
       error = "Dataset visibility requires a loaded mesh source/view and no active source operation.";
@@ -34,7 +24,7 @@ namespace Postprocessor
       error = "Dataset visibility requires a valid action and dataset selector (except Show all).";
       return false;
     }
-    const auto& catalogue = loaded->second.datasets;
+    const auto& catalogue = source_dataset_catalogue(source_id);
     if (dataset && std::none_of(catalogue.begin(),catalogue.end(),[&](const SimResults::Dataset& value)
         {
           return value.id == *dataset;
@@ -53,7 +43,7 @@ namespace Postprocessor
       const bool created = found == staged.representations.end();
       if (created)
       {
-        if (!ensure_source_representation(staged,source_id,view_id,*loaded->second.first_mesh_increment,false,error))
+        if (!ensure_source_representation(staged,source_id,view_id,*first,false,error))
         {
           return false;
         }

@@ -1,0 +1,22 @@
+target_sources(report_module PRIVATE
+  ReportCommands.cpp
+  ReportCommands.hpp
+  ReportConfigureCommand.cpp
+  ReportConfigureCommand.hpp
+  ReportExportCommand.cpp
+  ReportExportCommand.hpp
+  ReportGenerateCommand.cpp
+  ReportGenerateCommand.hpp
+  ReportImageCommand.cpp
+  ReportImageCommand.hpp
+  ReportPreviewCommand.cpp
+  ReportPreviewCommand.hpp
+  ReportProfileCommand.cpp
+  ReportProfileCommand.hpp
+  ReportSourceCommand.cpp
+  ReportSourceCommand.hpp
+  ReportUnitsCommand.cpp
+  ReportUnitsCommand.hpp
+  ReportUpdateCommand.cpp
+  ReportUpdateCommand.hpp
+)

@@ -1,7 +1,7 @@
 #include "ReportGui.hpp"
 #include "ReportIconLoader.hpp"
 #include <utility>
-#include "ReportWorkspace.hpp"
+#include "Report/GUI/Workspace/ReportWorkspace.hpp"
 #include "ReportGuiObserver.hpp"
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
 #include "CubitMessage.hpp"

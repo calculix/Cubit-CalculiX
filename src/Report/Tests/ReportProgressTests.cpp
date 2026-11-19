@@ -4,7 +4,7 @@
 #include "Report/Core/ReportCore.hpp"
 #include "Report/Interfaces/ReportApplicationInterface.hpp"
 #include "Report/Document/ReportDocumentLayout.hpp"
-#include "Report/GUI/ReportWorkspace.hpp"
+#include "Report/GUI/Workspace/ReportWorkspace.hpp"
 #include "CalculiX/Core/reporting/CalculiXReportInputReader.hpp"
 #include <QFile>
 #include <QJsonArray>

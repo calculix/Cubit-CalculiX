@@ -1,4 +1,6 @@
 #include "../representations/ResultColoringUnits.hpp"
+#include "Postprocessor/Core/filters/FilterRuntime.hpp"
+#include "Postprocessor/Core/sources/SourceProjectRuntime.hpp"
 #include "../application/PostprocessorCore.hpp"
 #include "Framework/Interfaces/ResultSourceProviderInterface.hpp"
 #include "../representations/ResultMesh.hpp"
@@ -333,8 +335,8 @@ namespace Postprocessor
             existing->project_id == resolved->project_id && existing->job_id == resolved->job_id &&
             existing->run_identity == resolved->run_identity)
           {
-            const auto loaded = runtime.find(entry.first);
-            if (loaded != runtime.end() && loaded->second.data == published.data)
+            const auto* loaded = source_runtime(entry.first);
+            if (loaded && loaded->data == published.data)
             {
               auto staged = state;
               if (staged.active_source_id != entry.first)
@@ -349,11 +351,11 @@ namespace Postprocessor
               }
               staged.active_source_id = entry.first;
               staged.active_representation_id.clear();
-              if (!prepare_initial_display(staged, entry.first, loaded->second.first_mesh_increment, error))
+              if (!prepare_initial_display(staged, entry.first, loaded->first_mesh_increment, error))
               {
                 return false;
               }
-              if (!loaded->second.first_mesh_increment && !prepare_table(staged,entry.first,published.data,error))
+              if (!loaded->first_mesh_increment && !prepare_table(staged,entry.first,published.data,error))
               {
                 return false;
               }
@@ -411,7 +413,7 @@ namespace Postprocessor
 
       const auto mesh_increment = first_mesh_increment(*published.data);
       auto staged_state = state;
-      auto staged_runtime = runtime;
+      auto staged_runtime = sourceProjectRuntime->sources();
       staged_state.sources.emplace(source_id, std::move(source));
       staged_runtime.emplace(source_id, SourceRuntime{published.data, 1, mesh_increment});
       if (staged_state.active_source_id != source_id)
@@ -442,7 +444,7 @@ namespace Postprocessor
         return false;
       }
       state.swap(staged_state);
-      runtime.swap(staged_runtime);
+      sourceProjectRuntime->replace_sources(staged_runtime);
       next_source_number = number + 1;
       ++scene_revision;
       error.clear();
@@ -477,15 +479,15 @@ namespace Postprocessor
     try
     {
       const auto source = state.sources.find(source_id);
-      const auto loaded = runtime.find(source_id);
+      const auto* loaded = source_runtime(source_id);
 
-      if (source == state.sources.end() || loaded == runtime.end())
+      if (source == state.sources.end() || !loaded)
       {
         error = "The Postprocessor result source is not loaded.";
         return false;
       }
 
-      if (loaded->second.revision == std::numeric_limits<std::uint64_t>::max())
+      if (loaded->revision == std::numeric_limits<std::uint64_t>::max())
       {
         error = "The Postprocessor source revision is exhausted.";
         return false;
@@ -530,8 +532,8 @@ namespace Postprocessor
 
       const auto mesh_increment = first_mesh_increment(*published.data);
       auto staged_state = state;
-      auto stagedAppearanceBindings = saved_bindings;
-      if (loaded->second.data)
+      auto stagedAppearanceBindings = sourceProjectRuntime->bindings();
+      if (loaded->data)
       {
         for (auto& item : staged_state.filters)
         {
@@ -542,7 +544,7 @@ namespace Postprocessor
             {
               if (display.second.input.owner == OutputOwner::Feature && display.second.input.object_id == item.first)
               {
-                item.second.coordinate_unit = filter_coordinate_unit(*loaded->second.data,display.second.increment_index);
+                item.second.coordinate_unit = filter_coordinate_unit(*loaded->data,display.second.increment_index);
                 break;
               }
             }
@@ -550,13 +552,13 @@ namespace Postprocessor
         }
       }
 
-      auto staged_runtime = runtime;
+      auto staged_runtime = sourceProjectRuntime->sources();
       staged_state.sources.at(source_id).reference = std::visit(
         [](const auto& reference) -> SourceReference
         {
           return reference;
         }, published.reference);
-      staged_runtime.at(source_id) = SourceRuntime{published.data, loaded->second.revision + 1, mesh_increment};
+      staged_runtime.at(source_id) = SourceRuntime{published.data, loaded->revision + 1, mesh_increment};
       if (!clear_source_selection(staged_state,source_id,error))
       {
         return false;
@@ -571,11 +573,11 @@ namespace Postprocessor
           std::map<std::size_t,DatasetAppearance> reboundAppearance;
           for (const auto& appearance : definition.dataset_appearance)
           {
-            const auto old = std::find_if(loaded->second.datasets.begin(),loaded->second.datasets.end(),[&](const auto& item)
+            const auto old = std::find_if(loaded->datasets.begin(),loaded->datasets.end(),[&](const auto& item)
             {
               return item.id == appearance.first;
             });
-            if (old == loaded->second.datasets.end())
+            if (old == loaded->datasets.end())
             {
               error = "Appearance has no durable dataset identity during refresh.";
               return false;
@@ -659,12 +661,12 @@ namespace Postprocessor
           }
           if (definition.vectors.field && definition.vectors.field->dataset_id)
           {
-            const auto old = std::find_if(loaded->second.datasets.begin(),loaded->second.datasets.end(),[&](const auto& item)
+            const auto old = std::find_if(loaded->datasets.begin(),loaded->datasets.end(),[&](const auto& item)
             {
               return item.id == *definition.vectors.field->dataset_id;
             });
             std::optional<std::size_t> match;
-            if (old == loaded->second.datasets.end())
+            if (old == loaded->datasets.end())
             {
               error = "Vector dataset has no durable identity during refresh.";
               return false;
@@ -711,13 +713,12 @@ namespace Postprocessor
         }
         ++display;
       }
-      filter_cache.clear();
-      explosion_cache.clear();
-      explosion_references.clear();
-      animation_rotation.clear();
+      invalidate_filter_runtime();
+      invalidate_explosion_runtime();
+      invalidate_animation_runtime();
       state.swap(staged_state);
-      runtime.swap(staged_runtime);
-      saved_bindings.swap(stagedAppearanceBindings);
+      sourceProjectRuntime->replace_sources(staged_runtime);
+      sourceProjectRuntime->replace_bindings(stagedAppearanceBindings);
       ++scene_revision;
       error.clear();
       return true;
@@ -813,7 +814,7 @@ namespace Postprocessor
     try
     {
       auto staged_state = state;
-      auto staged_runtime = runtime;
+      auto staged_runtime = sourceProjectRuntime->sources();
       for (auto item = staged_state.filters.begin(); item != staged_state.filters.end();)
       {
         if (item->second.input.object_id == source_id)
@@ -825,10 +826,9 @@ namespace Postprocessor
           ++item;
         }
       }
-      filter_cache.clear();
-      explosion_cache.clear();
-      explosion_references.clear();
-      animation_rotation.clear();
+      invalidate_filter_runtime();
+      invalidate_explosion_runtime();
+      invalidate_animation_runtime();
 
 
       for (auto display = staged_state.representations.begin(); display != staged_state.representations.end();)
@@ -890,7 +890,7 @@ namespace Postprocessor
       }
       staged_runtime.erase(source_id);
       state.swap(staged_state);
-      runtime.swap(staged_runtime);
+      sourceProjectRuntime->replace_sources(staged_runtime);
       ++scene_revision;
       return true;
     }
@@ -918,10 +918,9 @@ namespace Postprocessor
     SourceOperationGuard guard(source_operation_active);
     try
     {
-      filter_cache.clear();
-      explosion_cache.clear();
-      explosion_references.clear();
-      animation_rotation.clear();
+      invalidate_filter_runtime();
+      invalidate_explosion_runtime();
+      invalidate_animation_runtime();
       PostprocessorSession staged;
       staged.plot_revision = state.plot_revision+1;
       std::uint64_t cameraRevision = 0;
@@ -944,9 +943,7 @@ namespace Postprocessor
       view.fit_request = fitRequest + 1;
       view.selection.revision = selectionRevision + 1;
       state.swap(staged);
-      runtime.clear();
-      saved_bindings.clear();
-      saved_table_frames.clear();
+      sourceProjectRuntime->clear_project();
       // Retain the source ID allocator. Old handles/tokens must not address a
       // newly opened source after reset. Published handles owned elsewhere live on.
       ++scene_revision;
@@ -985,10 +982,9 @@ namespace Postprocessor
       return false;
     }
     state.filters.clear();
-    filter_cache.clear();
-    explosion_cache.clear();
-    explosion_references.clear();
-      animation_rotation.clear();
+    invalidate_filter_runtime();
+    invalidate_explosion_runtime();
+    invalidate_animation_runtime();
     state.representations.clear();
     state.sources.clear();
     for (auto& view : state.views)
@@ -996,9 +992,7 @@ namespace Postprocessor
       view.second.annotations.labels.clear();
       view.second.explosion = ExplosionState{};
     }
-    runtime.clear();
-    saved_bindings.clear();
-    saved_table_frames.clear();
+    sourceProjectRuntime->clear_project();
     state.active_source_id.clear();
     state.active_representation_id.clear();
     ++scene_revision;

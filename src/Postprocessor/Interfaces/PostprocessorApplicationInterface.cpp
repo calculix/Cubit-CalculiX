@@ -1,16 +1,21 @@
 #include "PostprocessorApplicationInterface.hpp"
+#include "Postprocessor/Core/persistence/PostprocessorProjectState.hpp"
+#include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include <algorithm>
 #include <exception>
 #include "Postprocessor/Core/sources/VtkFileSourceProvider.hpp"
 #include "Framework/Interfaces/ResultSourceRegistryInterface.hpp"
 
 bool PostprocessorApplicationInterface::configure_units(const std::string& system, const std::string& quantity, const std::string& unit, std::string& error) {
-  return core.configure_units(system, quantity, unit, error);
+  return core->configure_units(system, quantity, unit, error);
 }
 
 PostprocessorApplicationInterface::PostprocessorApplicationInterface(ResultSourceRegistryInterface& providers)
-  : providers(providers) {
+  : providers(providers), core(std::make_unique<Postprocessor::PostprocessorCore>())
+{
 }
+
+PostprocessorApplicationInterface::~PostprocessorApplicationInterface() = default;
 
 bool PostprocessorApplicationInterface::open_job(
   const std::string& prefix,
@@ -32,35 +37,35 @@ bool PostprocessorApplicationInterface::open_job(
   SimResults::JobSourceReference request;
   request.application_id = resolved.application_id;
   request.job_id = job_id;
-  return core.open_result(*resolved.provider, request, name, error);
+  return core->open_result(*resolved.provider, request, name, error);
 }
 
 const Postprocessor::PostprocessorSession& PostprocessorApplicationInterface::session() const noexcept
 {
-  return core.session();
+  return core->session();
 }
 
 bool PostprocessorApplicationInterface::set_pick_mode(Postprocessor::EntityKind kind, std::string& error) {
-  return core.set_pick_mode(core.session().active_view_id,kind,error);
+  return core->set_pick_mode(core->session().active_view_id,kind,error);
 }
 
 bool PostprocessorApplicationInterface::clear_pick(std::string& error) {
-  return core.clear_pick(core.session().active_view_id,error);
+  return core->clear_pick(core->session().active_view_id,error);
 }
 
 std::optional<Postprocessor::ProbeResult> PostprocessorApplicationInterface::probe(std::string& error) const
 {
-  return core.probe(core.session().active_view_id,error);
+  return core->probe(core->session().active_view_id,error);
 }
 
 bool PostprocessorApplicationInterface::pick_entity(const std::string& name, const DatasetSelector& selector,
   Postprocessor::EntityKind kind, std::int64_t id, std::optional<std::int64_t> ip, std::string& error, std::optional<std::int64_t> owner) {
-  std::string source = core.session().active_source_id;
+  std::string source = core->session().active_source_id;
   if (!name.empty()) {
-    source = core.source_id_from_name(name);
+    source = core->source_id_from_name(name);
   }
   const auto dataset = resolve_dataset(source,selector,error);
-  return dataset && core.pick_entity(core.session().active_view_id,
+  return dataset && core->pick_entity(core->session().active_view_id,
     Postprocessor::EntityReference{source,*dataset,kind,id,ip,owner},error);
 }
 
@@ -69,7 +74,7 @@ std::optional<std::size_t> PostprocessorApplicationInterface::resolve_dataset(co
 {
   error.clear();
   std::optional<std::size_t> found;
-  for (const auto& value : core.mesh_datasets(source)) {
+  for (const auto& value : core->mesh_datasets(source)) {
     const auto* id = std::get_if<std::size_t>(&selector);
     bool matches = false;
     if (id != nullptr) {
@@ -93,39 +98,39 @@ std::optional<std::size_t> PostprocessorApplicationInterface::resolve_dataset(co
 
 bool PostprocessorApplicationInterface::select_source(const std::string& name, std::string& error) {
   error.clear();
-  const auto id = core.source_id_from_name(name);
+  const auto id = core->source_id_from_name(name);
 
   if (id.empty()) {
     error = "Unknown Postprocessor source: " + name;
     return false;
   }
 
-  return core.select_source(id, error);
+  return core->select_source(id, error);
 }
 
 bool PostprocessorApplicationInterface::close_source(const std::string& name, std::string& error) {
   cancel_animation_capture();
   error.clear();
-  const auto id = core.source_id_from_name(name);
+  const auto id = core->source_id_from_name(name);
 
   if (id.empty()) {
     error = "Unknown Postprocessor source: " + name;
     return false;
   }
 
-  return core.close_source(id, error);
+  return core->close_source(id, error);
 }
 
 std::optional<Postprocessor::AnimationDefinition> PostprocessorApplicationInterface::animation(const std::string& name,std::string& error) const
 {
   error.clear();
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty()) {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
-  for (const auto& entry : core.session().representations) {
+  for (const auto& entry : core->session().representations) {
     const auto& display = entry.second;
-    if (core.display_matches_source(display,id,core.session().active_view_id)) {
+    if (core->display_matches_source(display,id,core->session().active_view_id)) {
       return display.animation;
     }
   }
@@ -134,39 +139,39 @@ std::optional<Postprocessor::AnimationDefinition> PostprocessorApplicationInterf
 }
 bool PostprocessorApplicationInterface::advance_animation_rotation(const std::string& name,double seconds,std::string& error)
 {
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty())
   {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
-  return core.advance_animation_rotation(id,core.session().active_view_id,seconds,error);
+  return core->advance_animation_rotation(id,core->session().active_view_id,seconds,error);
 }
 
 bool PostprocessorApplicationInterface::set_animation(const std::string& name,const Postprocessor::AnimationDefinition& animation,std::string& error) {
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty()) {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
-  return core.set_animation(id,core.session().active_view_id,animation,error);
+  return core->set_animation(id,core->session().active_view_id,animation,error);
 }
 
 std::optional<std::array<double,2>> PostprocessorApplicationInterface::all_frame_range(const std::string& source_id,
   const Postprocessor::FieldSelection& selection,std::string& error,
   const std::set<std::size_t>& hidden) const
 {
-  return core.all_frame_range(source_id,selection,error,hidden);
+  return core->all_frame_range(source_id,selection,error,hidden);
 }
 
 std::optional<Postprocessor::ResultColoring> PostprocessorApplicationInterface::coloring(const std::string& name, std::string& error) const
 {
   error.clear();
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty()) {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
-  for (const auto& entry : core.session().representations) {
+  for (const auto& entry : core->session().representations) {
     const auto& display = entry.second;
-    if (core.display_matches_source(display,id,core.session().active_view_id)) {
+    if (core->display_matches_source(display,id,core->session().active_view_id)) {
       return display.coloring;
     }
   }
@@ -176,24 +181,24 @@ std::optional<Postprocessor::ResultColoring> PostprocessorApplicationInterface::
 
 bool PostprocessorApplicationInterface::set_coloring(const std::string& name,
   const Postprocessor::ResultColoring& value, std::string& error) {
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty()) {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
-  return core.set_coloring(id, core.session().active_view_id, value, error);
+  return core->set_coloring(id, core->session().active_view_id, value, error);
 }
 
 std::optional<Postprocessor::ResultDeformation> PostprocessorApplicationInterface::deformation(
   const std::string& name, std::string& error) const
 {
   error.clear();
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty()) {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
-  for (const auto& entry : core.session().representations) {
+  for (const auto& entry : core->session().representations) {
     const auto& display = entry.second;
-    if (core.display_matches_source(display,id,core.session().active_view_id)) {
+    if (core->display_matches_source(display,id,core->session().active_view_id)) {
       return display.deformation;
     }
   }
@@ -203,11 +208,11 @@ std::optional<Postprocessor::ResultDeformation> PostprocessorApplicationInterfac
 
 bool PostprocessorApplicationInterface::set_deformation(const std::string& name,
   const Postprocessor::ResultDeformation& value, std::string& error) {
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty()) {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
-  return core.set_deformation(id,core.session().active_view_id,value,error);
+  return core->set_deformation(id,core->session().active_view_id,value,error);
 }
 
 bool PostprocessorApplicationInterface::deform_auto(const std::string& name, std::string& error) {
@@ -225,19 +230,19 @@ bool PostprocessorApplicationInterface::deform_field(const std::string& name, co
   if (!settings) {
     return false;
   }
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty()) {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
-  const auto data = core.result_data(id);
-  for (const auto& entry : core.session().representations) {
+  const auto data = core->result_data(id);
+  for (const auto& entry : core->session().representations) {
     const auto& display = entry.second;
-    if (!core.display_matches_source(display,id,core.session().active_view_id) ||
+    if (!core->display_matches_source(display,id,core->session().active_view_id) ||
         !data || display.increment_index >= data->increments.size()) {
       continue;
     }
     Postprocessor::ResultFieldGroup match;
-    if (!Postprocessor::resolve_result_field(core.field_groups(id,std::nullopt),{field_name,qualifiers},dataset,
+    if (!Postprocessor::resolve_result_field(core->field_groups(id,std::nullopt),{field_name,qualifiers},dataset,
         {},true,true,match,error)) {
       return false;
     }
@@ -256,83 +261,83 @@ bool PostprocessorApplicationInterface::color_field(const std::string& name, con
   if (!settings) {
     return false;
   }
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty()) {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
-  const auto data = core.result_data(id);
-  for (const auto& entry : core.session().representations) {
+  const auto data = core->result_data(id);
+  for (const auto& entry : core->session().representations) {
     const auto& display = entry.second;
-    if (!core.display_matches_source(display,id,core.session().active_view_id) ||
+    if (!core->display_matches_source(display,id,core->session().active_view_id) ||
         !data || display.increment_index >= data->increments.size()) {
       continue;
     }
     Postprocessor::ResultFieldGroup match;
-    if (!Postprocessor::resolve_result_field(core.field_groups(id,std::nullopt),{field_name,qualifiers},dataset,
+    if (!Postprocessor::resolve_result_field(core->field_groups(id,std::nullopt),{field_name,qualifiers},dataset,
         component,magnitude,false,match,error)) {
       return false;
     }
     settings->field = Postprocessor::FieldSelection{dataset,match.field.array_name,match.field.association,
       component,magnitude,match.key};
-    return core.set_coloring(id,core.session().active_view_id,*settings,error,true);
+    return core->set_coloring(id,core->session().active_view_id,*settings,error,true);
   }
   error = "The source has no current result frame.";
   return false;
 }
 
 bool PostprocessorApplicationInterface::set_frame(const std::string& source_name, std::size_t frame_number, std::string& error) {
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!source_name.empty()) {
-    id = core.source_id_from_name(source_name);
+    id = core->source_id_from_name(source_name);
   }
   if (id.empty() || frame_number == 0) {
     error = "Frame selection requires an opened source and a positive frame number.";
     return false;
   }
-  return core.set_frame(id, core.session().active_view_id, frame_number - 1, error);
+  return core->set_frame(id, core->session().active_view_id, frame_number - 1, error);
 }
 
 std::vector<Postprocessor::ResultFieldGroup> PostprocessorApplicationInterface::field_groups(
   const std::string& source_id,std::optional<std::size_t> current) const
 {
-  return core.field_groups(source_id,current);
+  return core->field_groups(source_id,current);
 }
 
 bool PostprocessorApplicationInterface::frame_has_mesh(const std::string& source_id, std::size_t increment_index) const
 {
-  return core.frame_has_mesh(source_id, increment_index);
+  return core->frame_has_mesh(source_id, increment_index);
 }
 
 bool PostprocessorApplicationInterface::reset(std::string& error) {
   cancel_animation_capture();
-  return core.reset(error);
+  return core->reset(error);
 }
 
 bool PostprocessorApplicationInterface::close_all_sources(std::string& error) {
   cancel_animation_capture();
-  return core.close_all_sources(error);
+  return core->close_all_sources(error);
 }
 
 bool PostprocessorApplicationInterface::set_source_visible(const std::string& name, bool visible, std::string& error) {
-  const auto id = core.source_id_from_name(name);
+  const auto id = core->source_id_from_name(name);
   if (id.empty()) {
     error = "Unknown Postprocessor source: " + name;
     return false;
   }
-  return core.set_source_visible(id, core.session().active_view_id, visible, error);
+  return core->set_source_visible(id, core->session().active_view_id, visible, error);
 }
 
 std::vector<SimResults::Dataset> PostprocessorApplicationInterface::mesh_datasets(const std::string& source_id) const
 {
-  return core.mesh_datasets(source_id);
+  return core->mesh_datasets(source_id);
 }
 
 bool PostprocessorApplicationInterface::set_dataset_visibility(const std::string& name,
   Postprocessor::DatasetVisibilityAction action, const std::optional<DatasetSelector>& selector, std::string& error) {
   error.clear();
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty()) {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
   std::optional<std::size_t> dataset;
   if (selector) {
@@ -341,64 +346,64 @@ bool PostprocessorApplicationInterface::set_dataset_visibility(const std::string
       return false;
     }
   }
-  return core.set_dataset_visibility(id,core.session().active_view_id,action,dataset,error);
+  return core->set_dataset_visibility(id,core->session().active_view_id,action,dataset,error);
 }
 
 bool PostprocessorApplicationInterface::request_camera_fit(std::string& error) {
-  return core.request_camera_fit(core.session().active_view_id, error);
+  return core->request_camera_fit(core->session().active_view_id, error);
 }
 
 bool PostprocessorApplicationInterface::camera_navigation_ready(const std::string& view_id) const noexcept
 {
-  return core.camera_navigation_ready(view_id);
+  return core->camera_navigation_ready(view_id);
 }
 
 bool PostprocessorApplicationInterface::set_camera(const Postprocessor::CameraDefinition& camera, std::string& error) {
-  return core.set_camera(core.session().active_view_id, camera, error);
+  return core->set_camera(core->session().active_view_id, camera, error);
 }
 
 bool PostprocessorApplicationInterface::rotate_camera(double yaw, double pitch, std::string& error) {
-  return core.rotate_camera(core.session().active_view_id, yaw, pitch, error);
+  return core->rotate_camera(core->session().active_view_id, yaw, pitch, error);
 }
 
 bool PostprocessorApplicationInterface::pan_camera(double horizontal, double vertical, std::string& error) {
-  return core.pan_camera(core.session().active_view_id, horizontal, vertical, error);
+  return core->pan_camera(core->session().active_view_id, horizontal, vertical, error);
 }
 
 bool PostprocessorApplicationInterface::zoom_camera(double factor, std::string& error) {
-  return core.zoom_camera(core.session().active_view_id, factor, error);
+  return core->zoom_camera(core->session().active_view_id, factor, error);
 }
 
 std::shared_ptr<const SimResults::VtkResultsData> PostprocessorApplicationInterface::result_data(const std::string& source_id) const
 {
-  return core.result_data(source_id);
+  return core->result_data(source_id);
 }
 
 bool PostprocessorApplicationInterface::source_has_mesh(const std::string& source_id) const noexcept
 {
-  return core.source_has_mesh(source_id);
+  return core->source_has_mesh(source_id);
 }
 
 std::uint64_t PostprocessorApplicationInterface::display_revision() const noexcept
 {
-  return core.display_revision();
+  return core->display_revision();
 }
 
 bool PostprocessorApplicationInterface::visible_bounds(const std::string& view_id, std::array<double, 6>& bounds, std::string& error) const
 {
-  return core.visible_bounds(view_id, bounds, error);
+  return core->visible_bounds(view_id, bounds, error);
 }
 
 bool PostprocessorApplicationInterface::complete_camera_fit(const std::string& view_id, std::uint64_t request,
   std::uint64_t revision, const Postprocessor::CameraDefinition& camera, std::string& error) {
-  return core.complete_camera_fit(view_id, request, revision, camera, error);
+  return core->complete_camera_fit(view_id, request, revision, camera, error);
 }
 
 bool PostprocessorApplicationInterface::initialize_user_options(UserOptionsInterface& store, std::string& error) {
   if (!options.initialize(store, error)) {
     return false;
   }
-  core.set_default_palette(options.current().resultPalette);
+  core->set_default_palette(options.current().resultPalette);
   return true;
 }
 
@@ -429,7 +434,7 @@ bool PostprocessorApplicationInterface::apply_user_options(const UserOptionValue
   if (!options.apply(changes, error)) {
     return false;
   }
-  core.set_default_palette(options.current().resultPalette);
+  core->set_default_palette(options.current().resultPalette);
   return true;
 }
 
@@ -446,7 +451,7 @@ bool PostprocessorApplicationInterface::user_option_values(UserOptionValues& sna
 std::optional<Postprocessor::ProbeResult> PostprocessorApplicationInterface::probe_entity(
   const Postprocessor::EntityReference& entity, std::string& error) const
 {
-  return core.probe_entity(core.session().active_view_id,entity,error);
+  return core->probe_entity(core->session().active_view_id,entity,error);
 }
 
 bool PostprocessorApplicationInterface::open_vtt(const std::string& path, const std::optional<std::string>& name, std::string& error) {
@@ -454,22 +459,22 @@ bool PostprocessorApplicationInterface::open_vtt(const std::string& path, const 
 }
 bool PostprocessorApplicationInterface::open_table(const std::string& source, const std::string& name, bool field, std::string& error,
   const Postprocessor::TableQualifiers& tableQualifiers,const Postprocessor::FieldQualifiers& fieldQualifiers) {
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!source.empty()) {
-    id = core.source_id_from_name(source);
+    id = core->source_id_from_name(source);
   }
-  return core.open_table(id,core.session().active_view_id,name,field,error,tableQualifiers,fieldQualifiers);
+  return core->open_table(id,core->session().active_view_id,name,field,error,tableQualifiers,fieldQualifiers);
 }
 bool PostprocessorApplicationInterface::show_3d(std::string& error) {
-  return core.show_3d(core.session().active_view_id,error);
+  return core->show_3d(core->session().active_view_id,error);
 }
 Postprocessor::ResultTableData PostprocessorApplicationInterface::table_data() const
 {
-  return core.table_data(core.session().active_view_id);
+  return core->table_data(core->session().active_view_id);
 }
 std::vector<Postprocessor::ResultTableDescriptor> PostprocessorApplicationInterface::tables(const std::string& source_id) const
 {
-  const auto data = core.result_data(source_id);
+  const auto data = core->result_data(source_id);
   if (data != nullptr) {
     return Postprocessor::result_tables(*data, std::nullopt);
   }
@@ -478,21 +483,21 @@ std::vector<Postprocessor::ResultTableDescriptor> PostprocessorApplicationInterf
 
 bool PostprocessorApplicationInterface::frame_available(const std::string& source_id, std::size_t index) const
 {
-  const auto view = core.session().views.find(core.session().active_view_id);
-  if (view != core.session().views.end() && view->second.table && view->second.table->source_id == source_id) {
-    const auto data = core.result_data(source_id);
+  const auto view = core->session().views.find(core->session().active_view_id);
+  if (view != core->session().views.end() && view->second.table && view->second.table->source_id == source_id) {
+    const auto data = core->result_data(source_id);
     return data && index < data->increments.size();
   }
-  return core.frame_has_mesh(source_id,index);
+  return core->frame_has_mesh(source_id,index);
 }
 
 bool PostprocessorApplicationInterface::set_category_visible(const std::string& name,
   Postprocessor::DatasetCategory category, bool visible, std::string& error) {
-  std::string id = core.session().active_source_id;
+  std::string id = core->session().active_source_id;
   if (!name.empty()) {
-    id = core.source_id_from_name(name);
+    id = core->source_id_from_name(name);
   }
-  return core.set_category_visible(id,core.session().active_view_id,category,visible,error);
+  return core->set_category_visible(id,core->session().active_view_id,category,visible,error);
 }
 
 bool PostprocessorApplicationInterface::available_jobs(std::vector<SimResults::ResultJobEntry>& output, std::string& error) const
@@ -515,32 +520,32 @@ bool PostprocessorApplicationInterface::open_file(const std::string& prefix, con
   bool opened = false;
   if (prefix == "vtk") {
     Postprocessor::VtkFileSourceProvider provider;
-    opened = core.open_result(provider,request,name,error);
+    opened = core->open_result(provider,request,name,error);
   } else {
     ResolvedResultSourceProvider resolved;
     if (!providers.resolve_result_provider(prefix,resolved,error) || !resolved.provider) {
       return false;
     }
-    opened = core.open_result(*resolved.provider,request,name,error);
+    opened = core->open_result(*resolved.provider,request,name,error);
   }
   return opened;
 }
 bool PostprocessorApplicationInterface::refresh_source(const std::string& name, std::string& error) {
   cancel_animation_capture();
-  const auto id = core.source_id_from_name(name);
-  const auto source = core.session().sources.find(id);
-  if (source == core.session().sources.end()) {
+  const auto id = core->source_id_from_name(name);
+  const auto source = core->session().sources.find(id);
+  if (source == core->session().sources.end()) {
     error = "The result source does not exist.";
     return false;
   }
   if (const auto* files = std::get_if<Postprocessor::FileSourceReference>(&source->second.reference)) {
     if (files->provider_id == "vtk") {
       Postprocessor::VtkFileSourceProvider provider;
-      return core.refresh_result(provider,id,error);
+      return core->refresh_result(provider,id,error);
     }
     ResolvedResultSourceProvider resolved;
     return providers.resolve_result_provider(files->provider_id,resolved,error) && resolved.provider &&
-      core.refresh_result(*resolved.provider,id,error);
+      core->refresh_result(*resolved.provider,id,error);
   }
   const auto* job = std::get_if<Postprocessor::JobSourceReference>(&source->second.reference);
   ResolvedResultSourceProvider resolved;
@@ -550,19 +555,19 @@ bool PostprocessorApplicationInterface::refresh_source(const std::string& name, 
     }
     return false;
   }
-  return core.refresh_result(*resolved.provider,id,error);
+  return core->refresh_result(*resolved.provider,id,error);
 }
 bool PostprocessorApplicationInterface::show_only_source(const std::string& name, std::string& error) {
-  return core.show_only_source(core.source_id_from_name(name),core.session().active_view_id,error);
+  return core->show_only_source(core->source_id_from_name(name),core->session().active_view_id,error);
 }
 
 bool PostprocessorApplicationInterface::readable_field(const std::string& source_id,const Postprocessor::FieldSelection& field,
   Postprocessor::ResultFieldSelector& output,std::string& error) const
 {
-  return Postprocessor::readable_result_field(core.field_groups(source_id,std::nullopt),field,output,error);
+  return Postprocessor::readable_result_field(core->field_groups(source_id,std::nullopt),field,output,error);
 }
 
 bool PostprocessorApplicationInterface::change_table_filter(const std::string& action,const Postprocessor::TableFilter& filter,std::string& error)
 {
-  return core.change_table_filter(core.session().active_view_id,action,filter,error);
+  return core->change_table_filter(core->session().active_view_id,action,filter,error);
 }

@@ -1,4 +1,5 @@
 #include "../application/PostprocessorCore.hpp"
+#include "Postprocessor/Core/filters/FilterRuntime.hpp"
 #include "ResultVectors.hpp"
 #include "ResultColoringUnits.hpp"
 #include <limits>

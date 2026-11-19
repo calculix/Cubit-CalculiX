@@ -209,8 +209,8 @@ and loading both initialize the new settings through Core defaults.
      - 0.0001
      - Dimensionless successive-rule estimate threshold, in (0,1).
    * - integration_max_refinements
-     - 4
-     - Up to 16 subdivisions per unit-cube axis; permitted range is 1 through 5.
+     - 5
+     - Up to 32 subdivisions per unit-cube axis. The permitted range is 1 through 5.
 
 All fields must be finite where applicable. Explicit positive seed radius must
 be less than half an explicit positive seed spacing. The initializer resolves

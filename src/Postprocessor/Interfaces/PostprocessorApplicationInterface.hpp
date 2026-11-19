@@ -2,16 +2,30 @@
 #define POSTPROCESSORAPPLICATIONINTERFACE_HPP
 
 #include "Framework/Interfaces/UserOption.hpp"
-#include "Postprocessor/Core/application/PostprocessorCore.hpp"
+#include "Postprocessor/Core/session/PostprocessorSession.hpp"
+#include "Postprocessor/Core/selection/ResultProbe.hpp"
+#include "Postprocessor/Core/plots/PlotData.hpp"
+#include "Postprocessor/Core/tables/ResultTableSelector.hpp"
 #include "Postprocessor/Core/representations/ResultFieldSelector.hpp"
 #include "Postprocessor/Core/options/PostprocessorUserOptions.hpp"
 #include "Postprocessor/Core/capture/AnimationCapturePlan.hpp"
 
+#include <memory>
 #include <optional>
 #include <functional>
 #include <string>
 #include <variant>
 #include "Framework/Results/ResultJobEntry.hpp"
+
+class vtkPolyData;
+
+namespace Postprocessor
+{
+  class PostprocessorCore;
+  struct EvaluatedOutput;
+  struct PostprocessorProjectState;
+  struct PreparedPostprocessorProject;
+}
 
 class ResultSourceRegistryInterface;
 class ReportSource;
@@ -63,6 +77,7 @@ public:
   bool capture_file(const Postprocessor::CaptureDefinition& request,const std::string& path,std::string& error) const;
   using DatasetSelector = std::variant<std::size_t,std::string>;
   explicit PostprocessorApplicationInterface(ResultSourceRegistryInterface& providers);
+  ~PostprocessorApplicationInterface();
   const SimUnits::WorkspaceUnitContext* captured_units() const noexcept;
   bool configure_units(const std::string& system, const std::string& quantity, const std::string& unit, std::string& error);
   bool read_project_definitions(const std::string& filename, std::string& error);
@@ -204,7 +219,7 @@ private:
   std::optional<Postprocessor::UserOptions> captureOptions;
   std::optional<std::size_t> resolve_dataset(const std::string& source_id, const DatasetSelector& dataset, std::string& error) const;
   ResultSourceRegistryInterface& providers;
-  Postprocessor::PostprocessorCore core;
+  std::unique_ptr<Postprocessor::PostprocessorCore> core;
   std::unique_ptr<Postprocessor::PreparedPostprocessorProject> preparedProject;
   std::unique_ptr<Postprocessor::PostprocessorProjectState> preparedSave;
   Postprocessor::PostprocessorUserOptions options;

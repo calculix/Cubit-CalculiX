@@ -33,7 +33,7 @@ TopologyLevelSetSettings CoreTopologyLevelSet::default_settings()
   settings.seed_spacing = 0.0;
   settings.seed_radius = 0.0;
   settings.integration_tolerance = 1.0e-4;
-  settings.integration_max_refinements = 4;
+  settings.integration_max_refinements = 5;
   return settings;
 }
 

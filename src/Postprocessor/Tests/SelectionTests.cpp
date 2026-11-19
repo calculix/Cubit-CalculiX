@@ -1,4 +1,5 @@
 #include <type_traits>
+#include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "AnnotationTests.hpp"
 #include "PlotTests.hpp"

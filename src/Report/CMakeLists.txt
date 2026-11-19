@@ -1,80 +1,18 @@
 find_package(Qt6 COMPONENTS Svg REQUIRED)
 
 add_library(report_module SHARED
-  Commands/ReportUnitsCommand.cpp
-  Commands/ReportUnitsCommand.hpp
-  Commands/ReportImageCommand.cpp
-  Core/ReportImages.cpp
-  Commands/ReportSourceCommand.cpp Commands/ReportSourceCommand.hpp
-  Commands/ReportCommands.cpp
-  Commands/ReportConfigureCommand.cpp
-  Commands/ReportExportCommand.cpp
-  Commands/ReportGenerateCommand.cpp
-  Commands/ReportPreviewCommand.cpp
-  Commands/ReportProfileCommand.cpp
-  Commands/ReportUpdateCommand.cpp
-  Core/ReportLogo.cpp Core/ReportLogo.hpp
-  Document/ReportFigureCaption.cpp Document/ReportFigureCaption.hpp
-  Document/ReportPageDecoration.cpp Document/ReportPageDecoration.hpp
-  Core/ReportConfigurationResolver.cpp
-  Core/ReportUnitValidation.cpp Core/ReportUnitValidation.hpp
-  Core/ReportCore.cpp
-  Core/ReportProjectPersistence.cpp
-  Core/ReportSession.cpp
-  Core/ReportUserOptions.cpp
-  Document/ReportLayoutBatch.cpp Document/ReportLayoutBatch.hpp
-  Document/ReportDocumentLayout.cpp
-  Document/ReportOdtPackage.cpp Document/ReportOdtPackage.hpp
-  Document/ReportOdtStyles.cpp Document/ReportOdtStyles.hpp
-  Document/ReportOdtExporter.cpp
-  Document/ReportPdfExporter.cpp
-  EventObservers/ReportModelObserver.cpp
-  GUI/ReportCommandText.cpp
-  GUI/ReportOutlineTree.cpp GUI/ReportOutlineTree.hpp
-  GUI/ReportContentTree.cpp
-  GUI/ReportGui.cpp
-  GUI/ReportGuiObserver.cpp
-  GUI/ReportPreviewWidget.cpp
-  GUI/ReportPreviewWindow.cpp
-  GUI/ReportIconLoader.cpp GUI/ReportIconLoader.hpp
-  Icons/Report.svg
-  GUI/ReportMeshQualitySettings.cpp GUI/ReportMeshQualitySettings.hpp
-  GUI/ReportSettingsDialog.cpp
-  GUI/ReportSettingsCommandText.cpp GUI/ReportSettingsCommandText.hpp
-  GUI/ReportWorkspace.cpp
-  GUI/ReportNativeProgress.cpp GUI/ReportNativeProgress.hpp
-  GUI/ReportToolbar.cpp GUI/ReportToolbar.hpp
-  GUI/ReportExportDialog.cpp GUI/ReportExportDialog.hpp
-  Icons/ExportPdf.svg Icons/ExportOdt.svg
-  Interfaces/ReportApplicationInterface.cpp
   ReportModule.cpp
-  Commands/ReportCommands.hpp
-  Commands/ReportConfigureCommand.hpp
-  Commands/ReportExportCommand.hpp
-  Commands/ReportGenerateCommand.hpp
-  Commands/ReportPreviewCommand.hpp
-  Commands/ReportProfileCommand.hpp
-  Commands/ReportUpdateCommand.hpp
-  Core/ReportConfigurationResolver.hpp
-  Core/ReportCore.hpp
-  Core/ReportProjectPersistence.hpp
-  Core/ReportSession.hpp
-  Core/ReportUserOptions.hpp
-  Document/ReportDocumentLayout.hpp
-  Document/ReportOdtExporter.hpp
-  Document/ReportPdfExporter.hpp
-  EventObservers/ReportModelObserver.hpp
-  GUI/ReportCommandText.hpp
-  GUI/ReportContentTree.hpp
-  GUI/ReportGui.hpp
-  GUI/ReportGuiObserver.hpp
-  GUI/ReportPreviewWidget.hpp
-  GUI/ReportPreviewWindow.hpp
-  GUI/ReportSettingsDialog.hpp
-  GUI/ReportWorkspace.hpp
-  Interfaces/ReportApplicationInterface.hpp
   ReportModule.hpp
 )
+
+add_subdirectory(Commands)
+add_subdirectory(Core)
+add_subdirectory(Document)
+add_subdirectory(EventObservers)
+add_subdirectory(GUI)
+add_subdirectory(Icons)
+add_subdirectory(Interfaces)
+
 target_compile_features(report_module PUBLIC cxx_std_17)
 target_include_directories(report_module PUBLIC "${CUBITSIM_SOURCE_ROOT}")
 target_link_libraries(report_module PRIVATE cubitsim_reporting cubitsim_storage cubitsim_model cubiti cubit_util clarogui clarofw Qt6::Widgets Qt6::Svg)

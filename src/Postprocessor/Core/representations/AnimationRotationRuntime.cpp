@@ -1,4 +1,6 @@
 #include "AnimationRotationRuntime.hpp"
+#include "../application/PostprocessorCore.hpp"
+#include <utility>
 #include "../views/CameraOperations.hpp"
 #include <cmath>
 namespace Postprocessor
@@ -31,5 +33,30 @@ namespace Postprocessor
     }
     phase = next;
     return true;
+  }
+
+  AnimationRotationRuntime AnimationRotationPlayback::stage(const std::string& representation)
+  {
+    return anchors[representation];
+  }
+
+  void AnimationRotationPlayback::publish(const std::string& representation,AnimationRotationRuntime anchor)
+  {
+    anchors.at(representation) = std::move(anchor);
+  }
+
+  void AnimationRotationPlayback::erase(const std::string& representation)
+  {
+    anchors.erase(representation);
+  }
+
+  void AnimationRotationPlayback::clear() noexcept
+  {
+    anchors.clear();
+  }
+
+  void PostprocessorCore::invalidate_animation_runtime() noexcept
+  {
+    animationRuntime->clear();
   }
 }

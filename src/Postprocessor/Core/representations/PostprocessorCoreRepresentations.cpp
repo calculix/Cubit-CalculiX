@@ -1,4 +1,5 @@
 #include "ResultColoringUnits.hpp"
+#include "Postprocessor/Core/filters/FilterRuntime.hpp"
 #include <type_traits>
 #include "../application/PostprocessorCore.hpp"
 #include "ResultMesh.hpp"
@@ -10,8 +11,7 @@ namespace Postprocessor
 {
   bool PostprocessorCore::source_has_mesh(const std::string& source_id) const noexcept
   {
-    const auto found = runtime.find(source_id);
-    return found != runtime.end() && found->second.first_mesh_increment.has_value();
+    return source_first_mesh_frame(source_id).has_value();
   }
 
   std::uint64_t PostprocessorCore::display_revision() const noexcept
@@ -86,10 +86,9 @@ namespace Postprocessor
 
   bool PostprocessorCore::frame_has_mesh(const std::string& source_id, std::size_t increment_index) const
   {
-    const auto loaded = runtime.find(source_id);
-    return loaded != runtime.end() && loaded->second.data &&
-      increment_index < loaded->second.data->increments.size() &&
-      !result_meshes(loaded->second.data->increments[increment_index].dataset.get()).empty();
+    const auto data = result_data(source_id);
+    return data && increment_index < data->increments.size() &&
+      !result_meshes(data->increments[increment_index].dataset.get()).empty();
   }
 
   bool PostprocessorCore::set_frame(const std::string& source_id, const std::string& view_id,
@@ -296,8 +295,8 @@ namespace Postprocessor
       error = "The source or target view is not registered.";
       return false;
     }
-    const auto loaded = runtime.find(source_id);
-    if (visible && (loaded == runtime.end() || !loaded->second.first_mesh_increment))
+    const auto first = source_first_mesh_frame(source_id);
+    if (visible && !first)
     {
       error = "The source has no displayable mesh increment.";
       return false;
@@ -325,7 +324,7 @@ namespace Postprocessor
       }
       if (visible && selected.empty())
       {
-        if (!ensure_source_representation(staged,source_id,view_id,*loaded->second.first_mesh_increment,true,error))
+        if (!ensure_source_representation(staged,source_id,view_id,*first,true,error))
         {
           return false;
         }

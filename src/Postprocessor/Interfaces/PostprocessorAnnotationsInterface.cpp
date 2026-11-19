@@ -1,4 +1,5 @@
 #include <type_traits>
+#include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include "PostprocessorApplicationInterface.hpp"
 #include <utility>
 #include <algorithm>
@@ -15,7 +16,7 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
     error = "Origin/association/set requires an explicit field name.";
     return false;
   }
-  const auto& state = core.session();
+  const auto& state = core->session();
   const auto viewId = [&]() -> std::common_type_t<decltype(state.active_view_id), decltype(view)> {
     if (view.empty()) {
       return state.active_view_id;
@@ -23,11 +24,11 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
       return view;
     }
   }();
-  const auto source = [&]() -> std::common_type_t<decltype(state.active_source_id), decltype(core.source_id_from_name(sourceName))> {
+  const auto source = [&]() -> std::common_type_t<decltype(state.active_source_id), decltype(core->source_id_from_name(sourceName))> {
     if (sourceName.empty()) {
       return state.active_source_id;
     } else {
-      return core.source_id_from_name(sourceName);
+      return core->source_id_from_name(sourceName);
     }
   }();
   std::optional<std::size_t> dataset;
@@ -39,11 +40,11 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
       return false;
     }
   }
-  const auto data = core.result_data(source);
+  const auto data = core->result_data(source);
   for (const auto& entry : state.representations)
   {
     const auto& display = entry.second;
-    if (!core.display_matches_source(display,source,viewId) || !data || display.increment_index >= data->increments.size())
+    if (!core->display_matches_source(display,source,viewId) || !data || display.increment_index >= data->increments.size())
     {
       continue;
     }
@@ -52,7 +53,7 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
     {
       field.reset();
       Postprocessor::ResultFieldGroup group;
-      if (!Postprocessor::resolve_result_field(core.field_groups(source,std::nullopt),{fieldName,qualifiers},dataset,
+      if (!Postprocessor::resolve_result_field(core->field_groups(source,std::nullopt),{fieldName,qualifiers},dataset,
           component,magnitude,false,group,error))
       {
         return false;
@@ -80,7 +81,7 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
       return false;
     }
     std::optional<Postprocessor::ResultAnnotation> candidate;
-    for (const auto& part : core.mesh_datasets(source))
+    for (const auto& part : core->mesh_datasets(source))
     {
       if (dataset && part.id != *dataset)
       {
@@ -108,7 +109,7 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
     }
     if (candidate)
     {
-      return core.add_label(viewId,*candidate,assigned,error);
+      return core->add_label(viewId,*candidate,assigned,error);
     }
     error = "No original entity with the requested result was found.";
     return false;
@@ -119,9 +120,9 @@ bool PostprocessorApplicationInterface::add_label(const std::string& view, const
 bool PostprocessorApplicationInterface::change_label(const std::string& view, const std::string& name,
   const std::string& action, const std::string& replacement, const std::array<double,2>& position, std::string& error)
 {
-  return core.change_label([&]() -> std::common_type_t<decltype(core.session().active_view_id), decltype(view)> {
+  return core->change_label([&]() -> std::common_type_t<decltype(core->session().active_view_id), decltype(view)> {
     if (view.empty()) {
-      return core.session().active_view_id;
+      return core->session().active_view_id;
     } else {
       return view;
     }
@@ -129,9 +130,9 @@ bool PostprocessorApplicationInterface::change_label(const std::string& view, co
 }
 bool PostprocessorApplicationInterface::set_labels(const std::string& view, bool extrema, bool visible, std::string& error)
 {
-  return core.set_labels([&]() -> std::common_type_t<decltype(core.session().active_view_id), decltype(view)> {
+  return core->set_labels([&]() -> std::common_type_t<decltype(core->session().active_view_id), decltype(view)> {
     if (view.empty()) {
-      return core.session().active_view_id;
+      return core->session().active_view_id;
     } else {
       return view;
     }
@@ -139,5 +140,5 @@ bool PostprocessorApplicationInterface::set_labels(const std::string& view, bool
 }
 std::vector<Postprocessor::EvaluatedAnnotation> PostprocessorApplicationInterface::annotations(const std::string& view) const
 {
-  return core.annotations(view);
+  return core->annotations(view);
 }

@@ -12,7 +12,7 @@
 #include "Postprocessor/Core/views/CameraOperations.hpp"
 #include <vtkActor.h>
 #include <vtkMapper.h>
-#include "Postprocessor/Core/explosion/ExplosionRuntime.hpp"
+#include "Postprocessor/Core/explosion/ExplosionPulseGeometry.hpp"
 #include "Postprocessor/Core/selection/SelectionState.hpp"
 #include <vtkCamera.h>
 #include <vtkCellArray.h>

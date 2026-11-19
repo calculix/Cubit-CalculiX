@@ -1,4 +1,5 @@
 #include "Postprocessor/Core/application/PostprocessorCore.hpp"
+#include "Postprocessor/Core/filters/FilterRuntime.hpp"
 #include "Postprocessor/Core/plots/PlotAxisUnits.hpp"
 #include "Postprocessor/Core/plots/PlotCodec.hpp"
 #include "Postprocessor/Core/persistence/PostprocessorSessionCodec.hpp"

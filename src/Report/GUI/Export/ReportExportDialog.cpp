@@ -1,6 +1,6 @@
 #include <type_traits>
 #include "ReportExportDialog.hpp"
-#include "ReportCommandText.hpp"
+#include "Report/GUI/Workspace/ReportCommandText.hpp"
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>

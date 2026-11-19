@@ -1,4 +1,5 @@
 #include "PostprocessorCore.hpp"
+#include "Postprocessor/Core/sources/SourceProjectRuntime.hpp"
 #include "../representations/ResultColoringUnits.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include <limits>
@@ -121,13 +122,9 @@ bool Postprocessor::PostprocessorCore::configure_units(const std::string& system
   // Both publications are non-throwing; no global context is changed on failure.
   framework_units().swap_project_state(stagedUnits);
   state.swap(candidate);
-  filter_cache.clear();
-  explosion_cache.clear();
-  explosion_references.clear();
-  for (auto& entry : runtime)
-  {
-    entry.second.all_frame_ranges.clear();
-  }
+  invalidate_filter_runtime();
+  invalidate_explosion_runtime();
+  sourceProjectRuntime->invalidate_color_ranges();
   ++scene_revision;
   return true;
 }

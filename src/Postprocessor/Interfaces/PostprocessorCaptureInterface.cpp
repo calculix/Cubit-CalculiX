@@ -1,4 +1,5 @@
 #include <type_traits>
+#include "Postprocessor/Core/application/PostprocessorCore.hpp"
 #include <utility>
 #include "PostprocessorApplicationInterface.hpp"
 #include "Framework/Reporting/ReportImage.hpp"
@@ -39,7 +40,7 @@ bool PostprocessorApplicationInterface::render_capture(const Postprocessor::Capt
     return false;
   }
   auto frozen = std::make_shared<PostprocessorApplicationInterface>(providers);
-  frozen->core.install_capture_snapshot(snapshot);
+  frozen->core->install_capture_snapshot(snapshot);
   frozen->captureOptions = snapshot.options;
   QByteArray candidate;
   QJsonObject manifest;
@@ -55,7 +56,7 @@ bool PostprocessorApplicationInterface::capture_snapshot(const Postprocessor::Ca
   Postprocessor::CaptureSnapshot& output, std::string& error) const
 {
   Postprocessor::CaptureSnapshot snapshot;
-  if (!core.capture_snapshot(request,snapshot,error))
+  if (!core->capture_snapshot(request,snapshot,error))
   {
     return false;
   }
@@ -83,7 +84,7 @@ bool PostprocessorApplicationInterface::capture_file(const Postprocessor::Captur
 
 const SimUnits::WorkspaceUnitContext* PostprocessorApplicationInterface::captured_units() const noexcept
 {
-  return core.captured_units();
+  return core->captured_units();
 }
 
 bool PostprocessorApplicationInterface::render_report_result(const Postprocessor::CaptureSnapshot& snapshot,
@@ -95,7 +96,7 @@ bool PostprocessorApplicationInterface::render_report_result(const Postprocessor
     return false;
   }
   auto frozen = std::make_shared<PostprocessorApplicationInterface>(providers);
-  frozen->core.install_capture_snapshot(snapshot);
+  frozen->core->install_capture_snapshot(snapshot);
   frozen->captureOptions = snapshot.options;
   QByteArray png;
   ReportImage candidate;

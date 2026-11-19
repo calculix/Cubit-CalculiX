@@ -7,10 +7,14 @@
 #include <functional>
 #include <memory>
 #include <cstdint>
+#include <string>
+#include <vector>
 class ReportApplicationInterface;
 class ReportContentTree;
 class ReportOutlineTree;
 class QTabWidget;
+class QDockWidget;
+class QVBoxLayout;
 class ReportPreviewWidget;
 class ReportPreviewWindow;
 class QComboBox;
@@ -35,6 +39,13 @@ public:
   void workspace_view(WorkspaceView& view);
 
 private:
+  void create_toolbar(const QIcon& pdfIcon, const QIcon& odtIcon);
+  void create_source_controls(QVBoxLayout* outer);
+  void create_preview_controls(QVBoxLayout* outer);
+  void create_content_and_preview(QWidget* host);
+  void create_menu();
+  void refresh_sources(ReportApplicationInterface& active, std::string& error);
+  void refresh_preview(const ReportApplicationInterface& active, const std::string& error);
   void dispatch(const std::string& command, bool quiet = false);
   void profile_action(const std::string& action);
   void choose_source(int index);

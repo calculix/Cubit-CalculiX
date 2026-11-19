@@ -2,6 +2,7 @@
 #include <type_traits>
 #include <utility>
 #include "PostprocessorSectionControls.hpp"
+#include "Postprocessor/Core/filters/FilterRuntime.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/Commands/filters/FilterCommandText.hpp"
 #include "Postprocessor/Commands/plots/PlotCommandText.hpp"

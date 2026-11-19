@@ -219,8 +219,8 @@ clearing edits. Density and level-set forms do not share panel widgets.
      - 0.0001
      - Fraction and derivative refinement tolerance, greater than 0 and less than 1.
    * - ``level_set_integration_max_refinements``
-     - 4
-     - Integer 1--5. Higher limits can significantly increase geometry integration cost.
+     - 5
+     - Integer 1--5. Integration stops when the error estimate meets the tolerance. Additional refinements increase the cost for elements that need them.
 
 The Run tab labels design change according to the latest completed iteration's
 captured method. Level-set field change uses that design's captured field

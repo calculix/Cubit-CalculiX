@@ -70,6 +70,11 @@ private:
   unsigned int pendingExplosionEdits = 0;
   std::uint64_t explosionEditGeneration = 0;
   QPointer<QProgressDialog> animationProgress;
+  void create_toolbars(QMainWindow* host);
+  void create_properties_dock(QMainWindow* host);
+  void create_result_properties_pages();
+  void create_filter_properties_pages();
+  void create_capture_toolbar(QMainWindow* host);
   void animation_capture_dialog();
   void show_animation_progress();
   bool show_properties(const std::string& page,const std::string& source,std::string& error);

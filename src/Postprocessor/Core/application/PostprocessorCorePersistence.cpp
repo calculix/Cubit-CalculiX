@@ -1,4 +1,6 @@
 #include <type_traits>
+#include "Postprocessor/Core/filters/FilterRuntime.hpp"
+#include "Postprocessor/Core/sources/SourceProjectRuntime.hpp"
 #include "PostprocessorCore.hpp"
 #include "../persistence/PostprocessorSessionCodec.hpp"
 #include <algorithm>
@@ -96,11 +98,11 @@ namespace Postprocessor
 {
   std::string PostprocessorCore::source_unavailable_reason(const std::string& id) const
   {
-    const auto found = runtime.find(id);
-    if (found == runtime.end()) {
+    const auto* found = source_runtime(id);
+    if (!found) {
       return "Result source is unresolved.";
     } else {
-      return found->second.unavailable_reason;
+      return found->unavailable_reason;
     }
   }
   bool PostprocessorCore::capture_project(PostprocessorProjectState& output, std::string& error) const
@@ -117,17 +119,17 @@ namespace Postprocessor
       project.session = state;
       for (auto& item : project.session.sources)
       {
-        const auto loaded = runtime.find(item.first);
-        if (loaded == runtime.end())
+        const auto* loaded = source_runtime(item.first);
+        if (!loaded)
         {
           continue;
         }
-        project.catalogues[item.first] = loaded->second.datasets;
+        project.catalogues[item.first] = loaded->datasets;
         if (auto* job = std::get_if<JobSourceReference>(&item.second.reference))
         {
-          if (loaded->second.data)
+          if (loaded->data)
           {
-            job->result_identity = loaded->second.data->result_identity;
+            job->result_identity = loaded->data->result_identity;
           }
         }
       }
@@ -138,11 +140,11 @@ namespace Postprocessor
         if (item.second.table)
         {
           const auto data = result_data(item.second.table->source_id);
-          const auto saved = saved_table_frames.find(item.first);
+          const auto saved = sourceProjectRuntime->table_frames().find(item.first);
           if (data) {
             project.table_frames[item.first] = frame_reference(*data,item.second.table->frame);
           } else {
-            if (saved == saved_table_frames.end()) {
+            if (saved == sourceProjectRuntime->table_frames().end()) {
               project.table_frames[item.first] = SavedFrameReference{};
             } else {
               project.table_frames[item.first] = saved->second;
@@ -154,25 +156,25 @@ namespace Postprocessor
       {
         auto& display = item.second;
         display.animation.playing = false;
-        const auto loaded = runtime.find(output_source(display.input));
-        const auto previous = saved_bindings.find(item.first);
+        const auto* loaded = source_runtime(output_source(display.input));
+        const auto previous = sourceProjectRuntime->bindings().find(item.first);
         auto binding = [&]() -> std::common_type_t<decltype(SavedRepresentationBinding{}), decltype(previous->second)> {
-          if (previous == saved_bindings.end()) {
+          if (previous == sourceProjectRuntime->bindings().end()) {
             return SavedRepresentationBinding{};
           } else {
             return previous->second;
           }
         }();
-        if (loaded != runtime.end() && loaded->second.data)
+        if (loaded && loaded->data)
         {
-          const auto& data = *loaded->second.data;
+          const auto& data = *loaded->data;
           binding = {};
           binding.frame = frame_reference(data,display.increment_index);
-          if (previous != saved_bindings.end())
+          if (previous != sourceProjectRuntime->bindings().end())
           {
             for (const auto& saved : previous->second.appearance)
             {
-              if (!find_dataset(loaded->second.datasets,saved.dataset))
+              if (!find_dataset(loaded->datasets,saved.dataset))
               {
                 binding.appearance.push_back(saved);
               }
@@ -180,7 +182,7 @@ namespace Postprocessor
           }
           for (const auto& appearance : display.dataset_appearance)
           {
-            const auto reference = dataset_reference(loaded->second.datasets,appearance.first);
+            const auto reference = dataset_reference(loaded->datasets,appearance.first);
             if (!reference)
             {
               error = "Appearance dataset identity is unavailable.";
@@ -190,7 +192,7 @@ namespace Postprocessor
           }
           for (auto id : display.hidden_datasets)
           {
-            const auto reference = dataset_reference(loaded->second.datasets,id);
+            const auto reference = dataset_reference(loaded->datasets,id);
             if (!reference)
             {
               error = "A hidden dataset no longer has a durable catalogue identity.";
@@ -200,7 +202,7 @@ namespace Postprocessor
           }
           if (display.coloring.field && display.coloring.field->dataset_id)
           {
-            binding.color_dataset = dataset_reference(loaded->second.datasets,*display.coloring.field->dataset_id);
+            binding.color_dataset = dataset_reference(loaded->datasets,*display.coloring.field->dataset_id);
             if (!binding.color_dataset)
             {
               error = "Color dataset identity is unavailable.";
@@ -209,7 +211,7 @@ namespace Postprocessor
           }
           if (display.vectors.field && display.vectors.field->dataset_id)
           {
-            binding.vector_dataset = dataset_reference(loaded->second.datasets,*display.vectors.field->dataset_id);
+            binding.vector_dataset = dataset_reference(loaded->datasets,*display.vectors.field->dataset_id);
             if (!binding.vector_dataset)
             {
               error = "Vector dataset identity is unavailable.";
@@ -218,7 +220,7 @@ namespace Postprocessor
           }
           if (display.deformation.field && display.deformation.field->dataset_id)
           {
-            binding.deformation_dataset = dataset_reference(loaded->second.datasets,*display.deformation.field->dataset_id);
+            binding.deformation_dataset = dataset_reference(loaded->datasets,*display.deformation.field->dataset_id);
             if (!binding.deformation_dataset)
             {
               error = "Deformation dataset identity is unavailable.";
@@ -427,7 +429,7 @@ namespace Postprocessor
       }
     }
     std::uint64_t sourceRevision = 0;
-    for (const auto& source : runtime)
+    for (const auto& source : sourceProjectRuntime->sources())
     {
       sourceRevision = std::max(sourceRevision,source.second.revision);
     }
@@ -470,14 +472,11 @@ namespace Postprocessor
     }
     // Every allocation and validation is complete before publishing containers.
     next_source_number = next;
-    filter_cache.clear();
-    explosion_cache.clear();
-    explosion_references.clear();
-      animation_rotation.clear();
+    invalidate_filter_runtime();
+    invalidate_explosion_runtime();
+    invalidate_animation_runtime();
     state.swap(prepared.definitions.session);
-    runtime.swap(prepared.runtime);
-    saved_bindings.swap(prepared.definitions.bindings);
-    saved_table_frames.swap(prepared.definitions.table_frames);
+    sourceProjectRuntime->restore_project(prepared);
     ++scene_revision;
     return true;
   }
