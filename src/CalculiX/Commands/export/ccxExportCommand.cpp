@@ -1,4 +1,5 @@
 #include "ccxExportCommand.hpp"
+#include "Core/connections/CalculiXConnectionsInterface.hpp"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -18,7 +19,7 @@
 #include "Framework/Core/materials/FrameworkMaterialsInterface.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "ProgressTool.hpp"
 #include "AppUtil.hpp"
 #include <fstream>
@@ -97,12 +98,12 @@ bool ccxExportCommand::execute(CubitCommandData &data) {
   if (!overwrite) {
     #ifdef WIN32
       if (_access(filename.c_str(), 0) == 0) {
-        PRINT_ERROR("Output File already exists!\n");
+        TOPOLOGY_ERROR("Output File already exists!\n");
         return false;
       }
     #else
       if (access(filename.c_str(), F_OK) == 0) {
-        PRINT_ERROR("Output File already exists!\n");
+        TOPOLOGY_ERROR("Output File already exists!\n");
         return false;
       }
     #endif
@@ -111,7 +112,7 @@ bool ccxExportCommand::execute(CubitCommandData &data) {
   // Get the MeshExport interface from CubitInterface
   iface = dynamic_cast<MeshExportInterface*>(CubitInterface::get_interface("MeshExport"));
   if(!iface) {
-    PRINT_ERROR("Unable to get mesh export interface.\n");
+    TOPOLOGY_ERROR("Unable to get mesh export interface.\n");
     return false;
   }
 
@@ -123,13 +124,13 @@ bool ccxExportCommand::execute(CubitCommandData &data) {
 
   std::string unitError;
   if (!CalculiXUnitsInterface().validate_export(unitError)) {
-    PRINT_ERROR("Unit validation failed: %s\n", unitError.c_str());
+    TOPOLOGY_ERROR("Unit validation failed: %s\n", unitError.c_str());
     return false;
   }
   std::string materialError;
   FrameworkMaterialsInterface materials("calculix", MaterialValueSpace::Solver);
   if (!materials.validate_materials(materialError)) {
-    PRINT_ERROR("Material validation failed: %s\n", materialError.c_str());
+    TOPOLOGY_ERROR("Material validation failed: %s\n", materialError.c_str());
     return false;
   }
 
@@ -150,7 +151,7 @@ bool ccxExportCommand::execute(CubitCommandData &data) {
     bool result = false;
     if (opened) {
       ccx_export_iface.trace_export("export.write_file.enter");
-      result = write_file(output_file, iface, topology_id, iteration_id);
+      result = write_file(output_file, iface, topology_id, iteration_id, filename);
       ccx_export_iface.trace_export("export.write_file.leave");
     }
     ccx_export_iface.trace_export("export.file_close.enter");
@@ -165,11 +166,11 @@ bool ccxExportCommand::execute(CubitCommandData &data) {
   }
   catch (const std::exception& error) {
     ccx_export_iface.trace_export("export.execute.exception");
-    PRINT_ERROR("CCX input export '%s' failed: %s\n", filename.c_str(), error.what());
+    TOPOLOGY_ERROR("CCX input export '%s' failed: %s\n", filename.c_str(), error.what());
   }
   catch (...) {
     ccx_export_iface.trace_export("export.execute.unexpected_exception");
-    PRINT_ERROR("CCX input export '%s' failed with an unexpected exception.\n", filename.c_str());
+    TOPOLOGY_ERROR("CCX input export '%s' failed with an unexpected exception.\n", filename.c_str());
   }
   return false;
 }
@@ -180,13 +181,13 @@ bool ccxExportCommand::open_file(const std::string& file, std::ofstream& output_
   return true;
 }
 
-bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterface *iface, int topology_id, int iteration_id) {
+bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterface *iface, int topology_id, int iteration_id, const std::string& filename) {
   CalculiXExportInterface ccx_export_iface;
   CalculiXTopologyInterface ccx_topology_iface;
   SimUnits::WorkspaceUnitContext unitContext;
   std::string unitError;
   if (!framework_units().workspace_context("calculix", unitContext, unitError)) {
-    PRINT_ERROR("Cannot export units: %s\n", unitError.c_str());
+    TOPOLOGY_ERROR("Cannot export units: %s\n", unitError.c_str());
     return false;
   }
   output_file << "** CUBIT_SIM_PROJECT=" << framework_materials().project_id() << "\n";
@@ -195,14 +196,14 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
 
   bool result;
   if (!output_file.good()) {
-    PRINT_ERROR("Unable to write the output file.\n");
+    TOPOLOGY_ERROR("Unable to write the output file.\n");
     return false;
   }
 
   const bool normal_export = topology_id == -1 && iteration_id == -1;
 
   if (!normal_export && (topology_id <= 0 || iteration_id < 1)) {
-    PRINT_ERROR("Invalid topology export selection.\n");
+    TOPOLOGY_ERROR("Invalid topology export selection.\n");
     return false;
   }
 
@@ -223,11 +224,11 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
       if (!(CubitInterface::is_meshed(entity_type_list[i],entity_id_list[ii]))) {
         if (entity_type_list[i]=="volume") {
           if (!(CubitInterface::is_sheet_body(entity_id_list[ii]))) {
-            PRINT_WARNING("\nEvery Entity has to be meshed before export!\n");
+            TOPOLOGY_WARNING("\nEvery Entity has to be meshed before export!\n");
             return false;
           }
         }else{
-          PRINT_WARNING("\nEvery Entity has to be meshed before export!\n");
+          TOPOLOGY_WARNING("\nEvery Entity has to be meshed before export!\n");
           return false;
         }
       }
@@ -236,7 +237,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   }
 
   if (progressbar == nullptr) {
-    PRINT_ERROR("The CCX export progress tool is unavailable.\n");
+    TOPOLOGY_ERROR("The CCX export progress tool is unavailable.\n");
     return false;
   }
   const char* stage = "opening export data";
@@ -247,13 +248,13 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
       try {
         ccx_export_iface.trace_export("export.interrupted_cleanup.enter");
         if (!ccx_export_iface.clean_export()) {
-          PRINT_ERROR("Failed to clean up interrupted CCX export data.\n");
+          TOPOLOGY_ERROR("Failed to clean up interrupted CCX export data.\n");
         }
         ccx_export_iface.trace_export("export.interrupted_cleanup.leave");
       }
       catch (...) {
         ccx_export_iface.trace_export("export.interrupted_cleanup.exception");
-        PRINT_ERROR("Exception while cleaning up interrupted CCX export data.\n");
+        TOPOLOGY_ERROR("Exception while cleaning up interrupted CCX export data.\n");
       }
     }
     if (progress_started) {
@@ -264,7 +265,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
       }
       catch (...) {
         ccx_export_iface.trace_export("export.interrupted_progress_end.exception");
-        PRINT_ERROR("Unable to end the CCX export progress display.\n");
+        TOPOLOGY_ERROR("Unable to end the CCX export progress display.\n");
       }
     }
   });
@@ -293,9 +294,9 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
       const bool cleanup_ok = ccx_export_iface.clean_export();
       progress_started = false;
       progressbar->end();
-      PRINT_ERROR("Export stopped: trajectory preparation failed.\n");
+      TOPOLOGY_ERROR("Export stopped: trajectory preparation failed.\n");
       if (!cleanup_ok) {
-        PRINT_ERROR("Failed to clean up prepared export data.\n");
+        TOPOLOGY_ERROR("Failed to clean up prepared export data.\n");
       }
       return false;
     }
@@ -304,18 +305,24 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
     // Initialize the exporter
     stage = "initializing the mesh exporter";
     if (!iface->initialize_export()) {
-      PRINT_ERROR("Unable to initialize the CCX mesh exporter.\n");
+      TOPOLOGY_ERROR("Unable to initialize the CCX mesh exporter.\n");
       return false;
     }
 
     // Write the nodes
+    std::string discrete_elements;
+    std::string connection_cards;
     stage = "write_nodes";
-    result = result && write_nodes(output_file, iface);
+    result = result && write_nodes(output_file, iface, filename, discrete_elements, connection_cards);
     progressbar->step();
 
     // Write the elements/connectivity
     stage = "write_connectivity";
     result = result && write_connectivity(output_file, iface);
+    if (result)
+    {
+      output_file << discrete_elements;
+    }
     progressbar->step();
 
     // Write the blocks
@@ -349,6 +356,10 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
     result = result && write_physicalconstants(output_file);
     progressbar->step();
     stage = "write_constraints";
+    if (result)
+    {
+      output_file << connection_cards;
+    }
     result = result && write_constraints(output_file);
     progressbar->step();
     stage = "write_surfaceinteractions";
@@ -383,7 +394,7 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
     const bool cleanup_ok = ccx_export_iface.clean_export();
     ccx_export_iface.trace_export("export.cleanup.leave");
     if (!cleanup_ok) {
-      PRINT_ERROR("Failed to clean up prepared export data.\n");
+      TOPOLOGY_ERROR("Failed to clean up prepared export data.\n");
     }
     ccx_export_iface.trace_export("export.final_progress_step.enter");
     progressbar->step();
@@ -409,11 +420,11 @@ bool ccxExportCommand::write_file(std::ofstream& output_file, MeshExportInterfac
   }
   catch (const std::exception& error) {
     ccx_export_iface.trace_export("export.write_file.exception");
-    PRINT_ERROR("CCX input export failed during %s: %s\n", stage, error.what());
+    TOPOLOGY_ERROR("CCX input export failed during %s: %s\n", stage, error.what());
   }
   catch (...) {
     ccx_export_iface.trace_export("export.write_file.unexpected_exception");
-    PRINT_ERROR("CCX input export failed during %s with an unexpected exception.\n", stage);
+    TOPOLOGY_ERROR("CCX input export failed during %s with an unexpected exception.\n", stage);
   }
   return false;
 }
@@ -423,13 +434,13 @@ bool ccxExportCommand::close_file(std::ofstream& output_file) {
   return true;
 }
 
-bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterface *iface) {
+bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterface *iface, const std::string& filename, std::string& discrete_elements, std::string& connection_cards) {
   int max_node_id = -1;
   // Fetch and output the coordinates
   int number_nodes = iface->get_num_nodes();
 
   if(!number_nodes) {
-    PRINT_WARNING("No nodes in model...\n");
+    TOPOLOGY_WARNING("No nodes in model...\n");
     return false;
   }
 
@@ -468,17 +479,24 @@ bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterfac
   std::string unitError;
   SimUnits::QuantityUnit length;
   if (!framework_units().quantity("length", length, unitError)) {
-    PRINT_ERROR("Cannot export node coordinates: %s\n", unitError.c_str());
+    TOPOLOGY_ERROR("Cannot export node coordinates: %s\n", unitError.c_str());
     return false;
   }
   for (auto* coordinates : {&xcoords, &ycoords, &zcoords}) {
     for (double& coordinate : *coordinates) {
       double canonical = 0.0;
       if (!framework_units().geometry_to_si(coordinate, canonical, unitError) || !framework_units().to_solver(canonical, length.dimension, "calculix", coordinate, unitError)) {
-        PRINT_ERROR("Cannot export node coordinates: %s\n", unitError.c_str());
+        TOPOLOGY_ERROR("Cannot export node coordinates: %s\n", unitError.c_str());
         return false;
       }
     }
+  }
+
+  std::string generated_nodes;
+  if (!CalculiXConnectionsInterface().prepare_export(node_ids, filename, generated_nodes, discrete_elements, connection_cards, unitError))
+  {
+    TOPOLOGY_ERROR("Cannot export Connections: %s\n", unitError.c_str());
+    return false;
   }
 
   // sorting of the vectors
@@ -491,7 +509,7 @@ bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterfac
 
   // Write out the coordinates
   for(int i = 0; i < number_nodes; i++) {
-    output_file.precision(6);
+    output_file.precision(discrete_elements.empty() ? 6 : 12);
     output_file << std::scientific;
     output_file << vect_sort[i].first << ",  " <<
                    xcoords[vect_sort[i].second] << ",  " <<
@@ -499,9 +517,9 @@ bool ccxExportCommand::write_nodes(std::ofstream& output_file,MeshExportInterfac
                    zcoords[vect_sort[i].second] << "\n";
   }
 
-  output_file << "** \n";
+  output_file << generated_nodes << "** \n";
 
-  return true;
+  return output_file.good();
 }
 
 bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportInterface *iface) {
@@ -575,7 +593,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
             const int num_nodes = iface->get_connectivity(handles[ii], conn);
 
             if (num_nodes <= 0 || static_cast<std::size_t>(num_nodes) > conn.size()) {
-              PRINT_ERROR("Invalid connectivity for element %d.\n", ids[ii]);
+              TOPOLOGY_ERROR("Invalid connectivity for element %d.\n", ids[ii]);
               return false;
             }
 
@@ -585,7 +603,7 @@ bool ccxExportCommand::write_connectivity(std::ofstream& output_file,MeshExportI
               const std::size_t source = ElementNodeOrdering::cubit_source_index(static_cast<int>(element_type[0]), static_cast<std::size_t>(j));
 
               if (source >= static_cast<std::size_t>(num_nodes)) {
-                PRINT_ERROR("Invalid node ordering for element %d.\n", ids[ii]);
+                TOPOLOGY_ERROR("Invalid node ordering for element %d.\n", ids[ii]);
                 return false;
               }
 
@@ -863,14 +881,14 @@ bool ccxExportCommand::write_materials(std::ofstream& output_file, int topology_
   const std::string export_data = ccx_materials_iface.get_material_export_data(topology_id, iteration_id);
 
   if (export_data.empty()) {
-    PRINT_ERROR("Export stopped: material export failed.\n");
+    TOPOLOGY_ERROR("Export stopped: material export failed.\n");
     return false;
   }
 
   output_file << export_data;
 
   if (!output_file.good()) {
-    PRINT_ERROR("Failed to write materials to the output file.\n");
+    TOPOLOGY_ERROR("Failed to write materials to the output file.\n");
     return false;
   }
 
@@ -884,14 +902,14 @@ bool ccxExportCommand::write_sections(std::ofstream& output_file, int topology_i
   const std::string export_data = ccx_sections_iface.get_section_export_data(topology_id, iteration_id);
 
   if (export_data.empty()) {
-    PRINT_ERROR("Export stopped: section export failed.\n");
+    TOPOLOGY_ERROR("Export stopped: section export failed.\n");
     return false;
   }
 
   output_file << export_data;
 
   if (!output_file.good()) {
-    PRINT_ERROR("Failed to write sections to the output file.\n");
+    TOPOLOGY_ERROR("Failed to write sections to the output file.\n");
     return false;
   }
 
@@ -978,7 +996,7 @@ bool ccxExportCommand::write_steps(std::ofstream& output_file) {
     data = ccx_steps_iface.get_step_export_data();
   }
   catch (const std::exception& error) {
-    PRINT_ERROR("Failed exporting step data: %s\n", error.what());
+    TOPOLOGY_ERROR("Failed exporting step data: %s\n", error.what());
     return false;
   }
   catch (const char* error) {
@@ -986,19 +1004,19 @@ bool ccxExportCommand::write_steps(std::ofstream& output_file) {
     if (error != nullptr) {
       message = error;
     }
-    PRINT_ERROR("Failed exporting step data: %s\n", message.c_str());
+    TOPOLOGY_ERROR("Failed exporting step data: %s\n", message.c_str());
     return false;
   }
   catch (...) {
-    PRINT_ERROR("Failed exporting step data: unknown exception type.\n");
+    TOPOLOGY_ERROR("Failed exporting step data: unknown exception type.\n");
     return false;
   }
 
   if (data.empty()) {
     if (ccx_topology_iface.is_topology_adjoint_export()) {
-      PRINT_ERROR("Unable to export the topology adjoint step.\n");
+      TOPOLOGY_ERROR("Unable to export the topology adjoint step.\n");
     } else {
-      PRINT_ERROR("Unable to export step data.\n");
+      TOPOLOGY_ERROR("Unable to export step data.\n");
     }
 
     return false;

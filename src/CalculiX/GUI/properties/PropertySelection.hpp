@@ -52,6 +52,11 @@ enum class PropertyFeature
   HBCs,
   Topology,
   TopologyIteration,
+  ReferencePoint,
+  RigidBody,
+  Joint,
+  PointMass,
+  Spring,
 };
 
 struct PropertySelection

@@ -1,13 +1,13 @@
 #include "Core/CalculiXCore.hpp"
 #include "CoreTopology.hpp"
 #include "CoreTopologyEvaluation.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CalculiXCore::evaluate_topology_compliance(int topology_id, int iteration_id, const std::map<int, double>& energies)
 {
   if (!topology || !mat)
   {
-    PRINT_ERROR("Invalid topology compliance evaluation request.\n");
+    TOPOLOGY_ERROR("Invalid topology compliance evaluation request.\n");
     return false;
   }
 
@@ -18,7 +18,7 @@ bool CalculiXCore::evaluate_topology_displacement(int topology_id, int iteration
 {
   if (!topology || !mat || !jobs)
   {
-    PRINT_ERROR("Invalid topology displacement evaluation request.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement evaluation request.\n");
     return false;
   }
 
@@ -29,7 +29,7 @@ bool CalculiXCore::evaluate_topology_displacement_projected_residual(int topolog
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -40,7 +40,7 @@ bool CalculiXCore::evaluate_topology_compliance_oc_residual(int topology_id, int
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 

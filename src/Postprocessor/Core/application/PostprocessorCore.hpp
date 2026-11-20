@@ -165,7 +165,8 @@ namespace Postprocessor
       ResultSourceProviderInterface& provider,
       const SimResults::ResultSourceReference& request,
       const std::optional<std::string>& name,
-      std::string& error);
+      std::string& error,
+      std::optional<int> topology_iteration = std::nullopt);
 
     // Preserves source ID/name and active context; replaces resolved provenance
     // and runtime data and increments the revision only after full validation.
@@ -173,7 +174,8 @@ namespace Postprocessor
     bool refresh_result(
       ResultSourceProviderInterface& provider,
       const std::string& source_id,
-      std::string& error);
+      std::string& error,
+      std::optional<double> topology_threshold = std::nullopt);
 
     // Selects a registered source, clearing stale active representation context.
     bool select_source(const std::string& source_id, std::string& error);

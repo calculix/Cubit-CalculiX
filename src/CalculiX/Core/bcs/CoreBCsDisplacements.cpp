@@ -1,3 +1,4 @@
+#include "Core/connections/CalculiXConnectionsInterface.hpp"
 #include "CubitMessage.hpp"
 #include "Core/units/CalculiXPhysicalModelUnits.hpp"
 #include "Core/interactions/CalculiXInteractionsInterface.hpp"
@@ -29,7 +30,7 @@ bool CoreBCsDisplacements::get_solver_boundaries(int id, CalculiXDofUnits::Bound
     return false;
   }
   std::set<int> rotationNodes;
-  if (!CalculiXInteractionsInterface().get_rotation_node_ids(rotationNodes, error))
+  if (!CalculiXConnectionsInterface().get_rotation_node_ids(rotationNodes, error))
   {
     return false;
   }

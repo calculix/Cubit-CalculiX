@@ -9,8 +9,6 @@ target_sources(calculix_gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateEquationFromGroupPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateEquationPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateEquationPanel.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateRigidBodyPanel.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateRigidBodyPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateTieFromCubitContactPairPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateTieFromCubitContactPairPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsCreateTiePanel.cpp
@@ -19,8 +17,6 @@ target_sources(calculix_gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsDeletePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsModifyEquationPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsModifyEquationPanel.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsModifyRigidBodyPanel.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsModifyRigidBodyPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsModifyTiePanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsModifyTiePanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConstraintsTree.cpp

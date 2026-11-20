@@ -6,6 +6,7 @@
 #include "../representations/ResultMesh.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <exception>
 #include <filesystem>
 #include <limits>
@@ -129,7 +130,7 @@ namespace
     }
     for (const auto& dataset : datasets)
     {
-      if (category(dataset) != selectedCategory)
+      if (dataset.initially_hidden || category(dataset) != selectedCategory)
       {
         display.hidden_datasets.insert(dataset.id);
       }
@@ -239,6 +240,7 @@ namespace
 
       if (resolved == nullptr || resolved->application_id != requested->application_id ||
           resolved->project_id != requested->project_id || resolved->job_id != requested->job_id ||
+          resolved->topology_threshold != requested->topology_threshold ||
           resolved->run_identity.empty() || published.data->job_id != resolved->job_id ||
           published.data->run_identity != resolved->run_identity ||
           (!refresh && !requested->run_identity.empty() && requested->run_identity != resolved->run_identity))
@@ -282,7 +284,8 @@ namespace Postprocessor
     ResultSourceProviderInterface& provider,
     const SimResults::ResultSourceReference& request,
     const std::optional<std::string>& name,
-    std::string& error)
+    std::string& error,
+    std::optional<int> topology_iteration)
   {
     error.clear();
 
@@ -322,6 +325,22 @@ namespace Postprocessor
         return false;
       }
 
+      std::optional<std::size_t> requestedFrame;
+      if (topology_iteration)
+      {
+        const auto& frames = published.data->increments;
+        const auto found = std::find_if(frames.begin(),frames.end(),[&](const auto& frame)
+        {
+          return frame.topology_iteration == *topology_iteration && !result_meshes(frame.dataset.get()).empty();
+        });
+        if (found == frames.end())
+        {
+          error = "The requested topology iteration has no completed result frame.";
+          return false;
+        }
+        requestedFrame = static_cast<std::size_t>(found-frames.begin());
+      }
+
       // Opening an already retained job snapshot without a name selects it.
       // Explicit names still request independently retained sources. A newer
       // run never silently replaces an older source with the same job name.
@@ -333,10 +352,11 @@ namespace Postprocessor
           const auto* existing = std::get_if<JobSourceReference>(&entry.second.reference);
           if (resolved && existing && existing->application_id == resolved->application_id &&
             existing->project_id == resolved->project_id && existing->job_id == resolved->job_id &&
-            existing->run_identity == resolved->run_identity)
+            existing->topology_threshold == resolved->topology_threshold && existing->run_identity == resolved->run_identity)
           {
             const auto* loaded = source_runtime(entry.first);
-            if (loaded && loaded->data == published.data)
+            if (loaded && loaded->data && (loaded->data == published.data ||
+                (resolved->topology_threshold && loaded->data->result_identity == published.data->result_identity)))
             {
               auto staged = state;
               if (staged.active_source_id != entry.first)
@@ -351,9 +371,24 @@ namespace Postprocessor
               }
               staged.active_source_id = entry.first;
               staged.active_representation_id.clear();
-              if (!prepare_initial_display(staged, entry.first, loaded->first_mesh_increment, error))
+              auto displayFrame = loaded->first_mesh_increment;
+              if (requestedFrame)
+              {
+                displayFrame = requestedFrame;
+              }
+              if (!prepare_initial_display(staged, entry.first, displayFrame, error))
               {
                 return false;
+              }
+              if (requestedFrame)
+              {
+                auto& display = staged.representations.at(staged.active_representation_id);
+                display.increment_index = *requestedFrame;
+                display.animation.playing = false;
+                if (!clear_source_selection(staged,entry.first,error))
+                {
+                  return false;
+                }
               }
               if (!loaded->first_mesh_increment && !prepare_table(staged,entry.first,published.data,error))
               {
@@ -428,7 +463,12 @@ namespace Postprocessor
       }
       staged_state.active_source_id = source_id;
       staged_state.active_representation_id.clear();
-      if (!prepare_initial_display(staged_state, source_id, mesh_increment, error))
+      auto displayFrame = mesh_increment;
+      if (requestedFrame)
+      {
+        displayFrame = requestedFrame;
+      }
+      if (!prepare_initial_display(staged_state, source_id, displayFrame, error))
       {
         return false;
       }
@@ -465,7 +505,8 @@ namespace Postprocessor
   bool PostprocessorCore::refresh_result(
     ResultSourceProviderInterface& provider,
     const std::string& source_id,
-    std::string& error)
+    std::string& error,
+    std::optional<double> topology_threshold)
   {
     error.clear();
 
@@ -515,6 +556,79 @@ namespace Postprocessor
       }
 
       SimResults::PublishedResultSource published;
+      if (topology_threshold)
+      {
+        auto* job = std::get_if<JobSourceReference>(&request);
+        if (!job || !job->topology_threshold || !loaded->data || !std::isfinite(*topology_threshold) ||
+            *topology_threshold < 0 || *topology_threshold > 1)
+        {
+          error = "A loaded topology source and a cutoff in [0,1] are required.";
+          return false;
+        }
+        if (job->topology_threshold == topology_threshold)
+        {
+          return true;
+        }
+        if (!provider.repartition_topology(*job,*topology_threshold,published,error))
+        {
+          return false;
+        }
+        job->topology_threshold = topology_threshold;
+        if (!validate_publication(request,published,true,error))
+        {
+          return false;
+        }
+        const auto* resolved = std::get_if<JobSourceReference>(&published.reference);
+        const auto& data = *published.data;
+        if (resolved->topology_last_iteration != job->topology_last_iteration ||
+            data.increments.size() != loaded->data->increments.size() || data.datasets.size() != loaded->datasets.size())
+        {
+          error = "Changing the cutoff must preserve the open topology series.";
+          return false;
+        }
+        for (std::size_t i = 0; i < data.increments.size(); ++i)
+        {
+          const auto& old = loaded->data->increments[i];
+          const auto& current = data.increments[i];
+          if (old.topology_iteration != current.topology_iteration || old.topology_job != current.topology_job || !current.dataset)
+          {
+            error = "Changing the cutoff would replace a topology iteration.";
+            return false;
+          }
+        }
+        for (std::size_t i = 0; i < data.datasets.size(); ++i)
+        {
+          const auto& old = loaded->datasets[i];
+          const auto& current = data.datasets[i];
+          if (old.id != current.id || old.name != current.name || old.kind != current.kind || old.model_id != current.model_id)
+          {
+            error = "Changing the cutoff would replace the topology dataset identities.";
+            return false;
+          }
+        }
+        auto staged = state;
+        if (!clear_source_selection(staged,source_id,error))
+        {
+          return false;
+        }
+        staged.sources.at(source_id).reference = *resolved;
+        for (auto& entry : staged.representations)
+        {
+          if (output_source(entry.second.input) == source_id)
+          {
+            entry.second.animation.playing = false;
+          }
+        }
+        auto runtime = sourceProjectRuntime->sources();
+        runtime.at(source_id) = SourceRuntime{published.data,loaded->revision + 1,first_mesh_increment(data)};
+        invalidate_filter_runtime();
+        invalidate_explosion_runtime();
+        invalidate_animation_runtime();
+        state.swap(staged);
+        sourceProjectRuntime->replace_sources(runtime);
+        ++scene_revision;
+        return true;
+      }
 
       if (!provider.refresh(request, published, error))
       {
@@ -569,7 +683,23 @@ namespace Postprocessor
         if (output_source(definition.input) == source_id)
         {
           definition.animation.playing = false;
+          const auto previousHidden = definition.hidden_datasets;
           definition.hidden_datasets.clear();
+          if (const auto* job = std::get_if<SimResults::JobSourceReference>(&published.reference); job && job->topology_threshold)
+          {
+            for (const auto& dataset : published.data->datasets)
+            {
+              const auto old = std::find_if(loaded->datasets.begin(),loaded->datasets.end(),[&](const auto& item)
+              {
+                return item.name == dataset.name && item.kind == dataset.kind && item.model_id == dataset.model_id;
+              });
+              if ((old == loaded->datasets.end() && dataset.initially_hidden) ||
+                  (old != loaded->datasets.end() && previousHidden.count(old->id)))
+              {
+                definition.hidden_datasets.insert(dataset.id);
+              }
+            }
+          }
           std::map<std::size_t,DatasetAppearance> reboundAppearance;
           for (const auto& appearance : definition.dataset_appearance)
           {

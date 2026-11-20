@@ -4,7 +4,7 @@
 #include "Core/loads/CoreLoadsTrajectoryHeatflux.hpp"
 #include "Core/loads/CoreLoadsTrajectoryBodyHeatfluxSphere.hpp"
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <algorithm>
 #include <map>
 #include <vector>
@@ -15,13 +15,13 @@ bool append_surface_heatflux(CoreLoadsTrajectoryHeatflux& loads, CoreBlocks* blo
 {
   if (loads.get_loads_data_id_from_load_id(subload_id) < 0)
   {
-    PRINT_ERROR("Missing surface heat flux trajectory data.\n");
+    TOPOLOGY_ERROR("Missing surface heat flux trajectory data.\n");
     return false;
   }
 
   if (!blocks)
   {
-    PRINT_ERROR("Block core is not initialized.\n");
+    TOPOLOGY_ERROR("Block core is not initialized.\n");
     return false;
   }
 
@@ -47,7 +47,7 @@ bool append_surface_heatflux(CoreLoadsTrajectoryHeatflux& loads, CoreBlocks* blo
   {
     if (face_id <= 0)
     {
-      PRINT_ERROR("Invalid trajectory face ID %d.\n", face_id);
+      TOPOLOGY_ERROR("Invalid trajectory face ID %d.\n", face_id);
       return false;
     }
 
@@ -56,7 +56,7 @@ bool append_surface_heatflux(CoreLoadsTrajectoryHeatflux& loads, CoreBlocks* blo
 
     if (key.size() != 3 && key.size() != 4)
     {
-      PRINT_ERROR("Invalid connectivity for trajectory face %d.\n", face_id);
+      TOPOLOGY_ERROR("Invalid connectivity for trajectory face %d.\n", face_id);
       return false;
     }
 
@@ -65,7 +65,7 @@ bool append_surface_heatflux(CoreLoadsTrajectoryHeatflux& loads, CoreBlocks* blo
 
     if (owners == face_owners.end())
     {
-      PRINT_ERROR(
+      TOPOLOGY_ERROR(
           "Trajectory face %d has no hex, tet or wedge owner "
           "in the analysis blocks.\n",
           face_id);
@@ -82,7 +82,7 @@ bool append_body_heatflux_sphere(CoreLoadsTrajectoryBodyHeatfluxSphere& loads, i
 {
   if (loads.get_loads_data_id_from_load_id(subload_id) < 0)
   {
-    PRINT_ERROR("Missing body heat flux sphere trajectory data.\n");
+    TOPOLOGY_ERROR("Missing body heat flux sphere trajectory data.\n");
     return false;
   }
 
@@ -97,7 +97,7 @@ bool append_body_heatflux_sphere(CoreLoadsTrajectoryBodyHeatfluxSphere& loads, i
       {
         if (element_id <= 0)
         {
-          PRINT_ERROR("Invalid trajectory target element %d.\n", element_id);
+          TOPOLOGY_ERROR("Invalid trajectory target element %d.\n", element_id);
           return false;
         }
 
@@ -116,7 +116,7 @@ bool CoreTopologyTrajectoryPreservation::append(CoreLoadsTrajectory* trajectorie
   {
     if (!trajectories)
     {
-      PRINT_ERROR("Trajectory core is not initialized.\n");
+      TOPOLOGY_ERROR("Trajectory core is not initialized.\n");
       return false;
     }
 
@@ -124,7 +124,7 @@ bool CoreTopologyTrajectoryPreservation::append(CoreLoadsTrajectory* trajectorie
 
     if (index < 0 || trajectories->loads_data[index].size() < 3)
     {
-      PRINT_ERROR("Missing trajectory load %d.\n", trajectory_id);
+      TOPOLOGY_ERROR("Missing trajectory load %d.\n", trajectory_id);
       return false;
     }
 
@@ -136,7 +136,7 @@ bool CoreTopologyTrajectoryPreservation::append(CoreLoadsTrajectory* trajectorie
     {
       if (!trajectories->heatflux)
       {
-        PRINT_ERROR("Missing surface heat flux trajectory data.\n");
+        TOPOLOGY_ERROR("Missing surface heat flux trajectory data.\n");
         return false;
       }
 
@@ -149,7 +149,7 @@ bool CoreTopologyTrajectoryPreservation::append(CoreLoadsTrajectory* trajectorie
     {
       if (type != 2 || !trajectories->bodyheatfluxsphere)
       {
-        PRINT_ERROR("Invalid trajectory load type for %d.\n", trajectory_id);
+        TOPOLOGY_ERROR("Invalid trajectory load type for %d.\n", trajectory_id);
         return false;
       }
 

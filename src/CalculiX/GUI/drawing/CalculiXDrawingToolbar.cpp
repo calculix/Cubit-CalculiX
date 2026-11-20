@@ -110,6 +110,7 @@ CalculiXDrawingToolbar::CalculiXDrawingToolbar(QWidget* parent)
   };
   addGroup(DrawGroup::BoundaryConditions, tr("BCs"), "BCsTree", "bcs");
   addGroup(DrawGroup::Loads, tr("Loads"), "LoadsTree", "loads");
+  addGroup(DrawGroup::Connections, tr("Connections"), "Connections", "connections");
   addGroup(DrawGroup::Constraints, tr("Constraints"), "ConstraintsTree", "constraints");
   addGroup(DrawGroup::Orientations, tr("Orientations"), "OrientationsTree", "orientations");
   addSeparator();

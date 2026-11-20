@@ -1,0 +1,20 @@
+target_sources(calculix_commands PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxPointMassCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxPointMassCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSpringCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxSpringCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiscreteCommandInput.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DiscreteCommandInput.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxDistributingAttachmentCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxDistributingAttachmentCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxConnectionHistoryCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxConnectionHistoryCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxJointCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxJointCreateCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxReferencePointCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxReferencePointCreateCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxRigidBodyCreateCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxRigidBodyCreateCommand.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxConnectionDeleteCommand.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ccxConnectionDeleteCommand.hpp
+)

@@ -1,3 +1,4 @@
+#include "Core/connections/CoreConnectionsPersistence.hpp"
 #include "Core/application/CalculiXModelSchema.hpp"
 #include "Core/CalculiXCore.hpp"
 #include "Core/drawing/CoreDraw.hpp"
@@ -208,7 +209,7 @@ bool CalculiXCore::read_cub(std::string filename)
     return false;
   }
   //Constraints
-  if (!CoreInteractionsPersistence::read(cubTool, *constraints))
+  if (!CoreConnectionsPersistence::read(cubTool, connections) || !CoreInteractionsPersistence::read(cubTool, *constraints))
   {
     return false;
   }
@@ -540,7 +541,7 @@ bool CalculiXCore::save_cub(std::string filename)
     return false;
   }
   //Constraints
-  if (!CoreInteractionsPersistence::write(cubTool, *constraints))
+  if (!CoreConnectionsPersistence::write(cubTool, connections) || !CoreInteractionsPersistence::write(cubTool, *constraints))
   {
     return false;
   }

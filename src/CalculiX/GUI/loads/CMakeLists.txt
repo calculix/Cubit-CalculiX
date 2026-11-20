@@ -1,4 +1,6 @@
 target_sources(calculix_gui PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/ForceTargetWidget.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ForceTargetWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsTrajectoryPropertiesWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsTrajectoryPropertiesWidget.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LoadsBodyHeatfluxPropertiesWidget.cpp

@@ -17,6 +17,7 @@ and interpretation of results. The initial chapter covers topology.
    cgal
    topology-solver
    job-monitor
+   connections
 
 Planned coverage
 ----------------

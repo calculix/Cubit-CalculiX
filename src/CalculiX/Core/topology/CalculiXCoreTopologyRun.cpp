@@ -3,13 +3,13 @@
 #include "CoreTopologyOptimization.hpp"
 #include "CoreTopologyModelValidation.hpp"
 #include <QScopedValueRollback>
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 int CalculiXCore::start_topology_iteration(int topology_id, int iteration_id)
 {
   if (!topologyoptimization)
   {
-    PRINT_ERROR("Topology optimization core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology optimization core is not initialized.\n");
     return -1;
   }
 
@@ -23,7 +23,7 @@ bool CalculiXCore::create_topology_adjoint_job(int topology_id, int iteration_id
 
   if (!topologyoptimization)
   {
-    PRINT_ERROR("Topology optimization core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology optimization core is not initialized.\n");
     return false;
   }
 
@@ -34,7 +34,7 @@ int CalculiXCore::run_topology_iteration(int topology_id, int iteration_id)
 {
   if (!topologyoptimization)
   {
-    PRINT_ERROR("Topology optimization controller is not initialized.\n");
+    TOPOLOGY_ERROR("Topology optimization controller is not initialized.\n");
     return -1;
   }
 
@@ -76,7 +76,7 @@ bool CalculiXCore::prepare_topology_run(int topology_id)
 {
   if (!topologyoptimization)
   {
-    PRINT_ERROR("Topology optimization core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology optimization core is not initialized.\n");
     return false;
   }
 
@@ -91,7 +91,7 @@ bool CalculiXCore::build_topology_adjoint_load(int topology_id, int iteration_id
 
   if (!topologyoptimization)
   {
-    PRINT_ERROR("Topology optimization core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology optimization core is not initialized.\n");
     return false;
   }
 
@@ -112,19 +112,19 @@ bool CalculiXCore::begin_topology_run(int topology_id)
 {
   if (topology_animation_active())
   {
-    PRINT_ERROR("Finish or cancel the topology GIF export before starting topology.\n");
+    TOPOLOGY_ERROR("Finish or cancel the topology GIF export before starting topology.\n");
     return false;
   }
 
   if (!topology || !mat || !sections || !jobs || !steps || !historyoutputs || !me_iface)
   {
-    PRINT_ERROR("Topology run cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology run cores are not initialized.\n");
     return false;
   }
 
   if (checking_jobs)
   {
-    PRINT_ERROR("Job results are being processed. Try again shortly.\n");
+    TOPOLOGY_ERROR("Job results are being processed. Try again shortly.\n");
     return false;
   }
 

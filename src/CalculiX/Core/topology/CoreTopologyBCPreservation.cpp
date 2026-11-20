@@ -2,7 +2,7 @@
 #include "Core/bcs/CoreBCsDisplacements.hpp"
 #include "Core/bcs/CoreBCsTemperatures.hpp"
 #include "Core/mesh/CoreMeshQuery.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <cstddef>
 
 namespace
@@ -18,7 +18,7 @@ bool append_nodesets(BCs& bcs, MeshExportInterface& mesh, const std::set<int>& b
 
     if (index < 0 || bcs.bcs_data[index].size() < minimum_columns)
     {
-      PRINT_ERROR("Missing %s BC %d.\n", bc_name, bc_id);
+      TOPOLOGY_ERROR("Missing %s BC %d.\n", bc_name, bc_id);
       return false;
     }
 
@@ -26,7 +26,7 @@ bool append_nodesets(BCs& bcs, MeshExportInterface& mesh, const std::set<int>& b
 
     if (!mesh_query.check_nodeset_exists(nodeset_id))
     {
-      PRINT_ERROR("Nodeset %d referenced by %s BC %d does not exist.\n", nodeset_id, bc_name, bc_id);
+      TOPOLOGY_ERROR("Nodeset %d referenced by %s BC %d does not exist.\n", nodeset_id, bc_name, bc_id);
       return false;
     }
 

@@ -56,9 +56,11 @@ selected solver keywords, not a GUI label alone.
 Constraints
 -------------
 
-``CoreConstraints`` uses a main type table and subtype tables for rigid-body,
-tie, equation and grouped-equation definitions. Rigid-body references distinguish
-target mesh selection, reference node/vertex and rotational node/vertex. Ties
+Connections owns rigid bodies, their reference points and joints. The export
+plan writes auxiliary nodes and a run mapping for history and drawing.
+See :doc:`../user/connections` for authoring and journal commands.
+
+``CoreConstraints`` owns ties, equations and grouped equations. Ties
 refer to master/slave selections and tolerance data. Equations store node/DOF/
 coefficient terms; grouped equations expand relationships into solver terms.
 
@@ -105,3 +107,26 @@ persistence and export together. Verify the exact generated keyword placement
 against the versioned solver reference. Test empty assignments, deleted targets,
 multiple steps and incompatible analyses. An input accepted by Cubit's parser
 has not yet been validated by CalculiX.
+
+Connection export and result identity
+-------------------------------------
+
+The Connections model owns geometry references and feature IDs. Its HDF5
+records contain the placement, attachment and endpoint definitions. Node
+numbers are assigned independently for every exported deck. The connection
+exporter resolves each attachment against the exported mesh, reserves its
+private set names and writes both control-node roles before emitting the rigid
+body and joint cards. History requests use those same singleton sets.
+
+The exported INP carries connection records in comment lines. They include the
+RP ID and name, body ID and name, REF and ROT node IDs, whether each node was
+generated, and the reference location in solver units. A joint record identifies
+its type, endpoints and axis. The INP reader checks each pair against the rigid
+body card and singleton node sets. The job record preserves this mapping so a
+later rename or remesh cannot change the meaning of a completed run.
+
+When linking a current mesh, only solver-generated nodes from the run map can
+augment it. An occupied ID forces the normal input-deck fallback. Projection
+onto Cubit skips generated nodes and rotational control values. The VTK
+converter uses role and step/increment identity to label histories, and
+preserves the archived endpoint location and axis for visualization.

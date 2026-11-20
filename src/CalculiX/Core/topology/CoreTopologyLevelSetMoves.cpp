@@ -1,5 +1,5 @@
 #include "CoreTopologyLevelSetMoves.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -34,7 +34,7 @@ bool CoreTopologyLevelSetMoves::evaluate(int source_iteration, const Field& olde
 
   if (&applied_scale == &state.scale || &applied_scale == &next.scale)
   {
-    PRINT_ERROR("Level-set move scale output must not alias its state.\n");
+    TOPOLOGY_ERROR("Level-set move scale output must not alias its state.\n");
     return false;
   }
   applied_scale = 1.0;
@@ -45,7 +45,7 @@ bool CoreTopologyLevelSetMoves::evaluate(int source_iteration, const Field& olde
       !std::isfinite(state.scale) || state.scale < minimum_scale || state.scale > 1.0 ||
       !valid_field(current))
   {
-    PRINT_ERROR("Invalid level-set move-control state or field.\n");
+    TOPOLOGY_ERROR("Invalid level-set move-control state or field.\n");
     return false;
   }
   if ((source_iteration == 1 && !previous.empty()) ||
@@ -53,7 +53,7 @@ bool CoreTopologyLevelSetMoves::evaluate(int source_iteration, const Field& olde
       (source_iteration >= 2 && (!valid_field(previous) || previous.size() != current.size())) ||
       (source_iteration >= 3 && (!valid_field(older) || older.size() != current.size())))
   {
-    PRINT_ERROR("Incomplete level-set move-control history.\n");
+    TOPOLOGY_ERROR("Incomplete level-set move-control history.\n");
     return false;
   }
 
@@ -66,7 +66,7 @@ bool CoreTopologyLevelSetMoves::evaluate(int source_iteration, const Field& olde
     if ((source_iteration >= 2 && (previous[index][0] != row[0] || previous[index][2] != row[2])) ||
         (source_iteration >= 3 && (older[index][0] != row[0] || older[index][2] != row[2])))
     {
-      PRINT_ERROR("Level-set move-control node domains changed.\n");
+      TOPOLOGY_ERROR("Level-set move-control node domains changed.\n");
       return false;
     }
     if (source_iteration < 3 || row[2] == 1.0)
@@ -88,7 +88,7 @@ bool CoreTopologyLevelSetMoves::evaluate(int source_iteration, const Field& olde
     const double cosine = product / (std::sqrt(current_norm_squared) * std::sqrt(previous_norm_squared));
     if (!std::isfinite(cosine))
     {
-      PRINT_ERROR("Invalid level-set update-direction correlation.\n");
+      TOPOLOGY_ERROR("Invalid level-set update-direction correlation.\n");
       return false;
     }
     if (cosine <= reversal_threshold)

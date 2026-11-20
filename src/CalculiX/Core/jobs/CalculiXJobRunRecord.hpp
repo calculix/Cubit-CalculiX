@@ -4,6 +4,7 @@
 #include <memory>
 #include "Framework/MeshQuality/MeshQualitySnapshot.hpp"
 #include <map>
+#include "Core/connections/ConnectionRunMap.hpp"
 
 class CalculiXJobRunRecord
 {
@@ -17,6 +18,7 @@ public:
   bool read_input_units(const std::string& filename, std::string& error);
   std::string materialProjectId;
   std::map<std::string, int> materialIds;
+  ConnectionRunMap connections;
   std::string unitSystem;
   // Emitted solver-step ordinal -> established abscissa quantity.
   std::map<int, std::string> step_axis_quantities;

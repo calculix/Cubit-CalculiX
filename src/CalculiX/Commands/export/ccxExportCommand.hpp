@@ -35,7 +35,7 @@ protected:
   //! \param[in] topology_id the topology case ID, or -1 for a normal export
   //! \param[in] iteration_id the one-based topology iteration ID, or -1 for a normal export
   //! \return true if file write succeeded
-  bool write_file(std::ofstream& output_file, MeshExportInterface *iface, int topology_id, int iteration_id);
+  bool write_file(std::ofstream& output_file, MeshExportInterface *iface, int topology_id, int iteration_id, const std::string& filename);
 
   //! \brief close the file
   //! \param output_file the file stream that is used for writing
@@ -48,7 +48,7 @@ protected:
   //! \return true if file write succeeded
   bool write_connectivity(std::ofstream& output_file,MeshExportInterface *iface);
 
-  bool write_nodes(std::ofstream& output_file,MeshExportInterface *iface);
+  bool write_nodes(std::ofstream& output_file,MeshExportInterface *iface, const std::string& filename, std::string& discrete_elements, std::string& connection_cards);
   //bool write_blocks(std::ofstream& output_file,MeshExportInterface *iface);
   bool write_nodesets(std::ofstream& output_file,MeshExportInterface *iface);
   bool write_sidesets(std::ofstream& output_file,MeshExportInterface *iface);

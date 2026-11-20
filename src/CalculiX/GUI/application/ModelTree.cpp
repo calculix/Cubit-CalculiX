@@ -547,6 +547,11 @@ bool ModelTree::selectDrawingEntity(const CalculiXDrawSelection& selection)
     case DrawFeature::Orientation: feature = PropertyFeature::Orientation; break;
     case DrawFeature::Equation:
     case DrawFeature::EquationGroup: feature = PropertyFeature::Constraint; break;
+    case DrawFeature::ReferencePoint: feature = PropertyFeature::ReferencePoint; break;
+    case DrawFeature::RigidBody: feature = PropertyFeature::RigidBody; break;
+    case DrawFeature::PointMass: feature = PropertyFeature::PointMass; break;
+    case DrawFeature::Spring: feature = PropertyFeature::Spring; break;
+    case DrawFeature::Joint: feature = PropertyFeature::Joint; break;
     case DrawFeature::Topology: return false;
   }
   QTreeWidgetItem* match = nullptr;

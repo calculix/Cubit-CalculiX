@@ -19,6 +19,7 @@ void ReportWorkspace::create_toolbar(const QIcon& pdfIcon, const QIcon& odtIcon)
 void ReportWorkspace::create_menu()
 {
   menu = new QMenu(tr("Report"), this);
+  menu->addAction(treeDock->toggleViewAction());
   connect(menu->addAction(tr("Open preview / Export")), &QAction::triggered, this, [this]() {
     dispatch("report preview");
   });

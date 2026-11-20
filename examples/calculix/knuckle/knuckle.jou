@@ -96,8 +96,10 @@ create vertex location on surface 174  center
 mesh vertex all
 
 #constraints
-ccx create constraint rigid body nodeset 1 ref 181 rot 182
-ccx create constraint rigid body nodeset 2 ref 183 rot 184
+ccx create rp 1 name "Control 1" vertex 181 rotation_vertex 182
+ccx create rigid body 1 name "Attachment 1" nodeset 1 rp 1
+ccx create rp 2 name "Control 2" vertex 183 rotation_vertex 184
+ccx create rigid body 2 name "Attachment 2" nodeset 2 rp 2
 
 #surface interaction
 ccx create surfaceinteraction name "surface_interaction" linear slopeK 1e+7 sigmaINF 1 c0 1e-3

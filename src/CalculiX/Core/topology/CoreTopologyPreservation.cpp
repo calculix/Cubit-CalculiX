@@ -5,7 +5,7 @@
 #include "Core/mesh/CoreMeshQuery.hpp"
 #include "MeshExportInterface.hpp"
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <algorithm>
 #include <set>
 #include <string>
@@ -18,7 +18,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
 
   if (collection == materials.topology_material_data.end())
   {
-    PRINT_ERROR("Material collection for topology %d not found.\n", topology_id);
+    TOPOLOGY_ERROR("Material collection for topology %d not found.\n", topology_id);
     return false;
   }
 
@@ -46,7 +46,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
 
   if (!exists)
   {
-    PRINT_ERROR("Invalid topology set type %d, ID %d.\n", set_type, set_id);
+    TOPOLOGY_ERROR("Invalid topology set type %d, ID %d.\n", set_type, set_id);
     return false;
   }
 
@@ -73,7 +73,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
 
       if (!CubitInterface::get_element_exists(global_id))
       {
-        PRINT_ERROR("Topology element %d does not exist.\n", global_id);
+        TOPOLOGY_ERROR("Topology element %d does not exist.\n", global_id);
         return false;
       }
 
@@ -88,7 +88,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
 
       if ((entity != "hex" && entity != "tet" && entity != "wedge") || local_id <= 0)
       {
-        PRINT_ERROR("Invalid topology volume element %d.\n", global_id);
+        TOPOLOGY_ERROR("Invalid topology volume element %d.\n", global_id);
         return false;
       }
 
@@ -97,7 +97,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
 
       if (connectivity.empty())
       {
-        PRINT_ERROR("Missing connectivity for topology element %d.\n", global_id);
+        TOPOLOGY_ERROR("Missing connectivity for topology element %d.\n", global_id);
         return false;
       }
 
@@ -111,7 +111,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
       }
     }
 
-    PRINT_INFO(
+    TOPOLOGY_INFO(
         "Topology %d: nodeset %d contains %zu nodes "
         "and selects %zu preserved elements.\n",
         topology_id, set_id, selected_nodes.size(), resolved.size());
@@ -149,7 +149,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
 
       if (nodes.size() != expected)
       {
-        PRINT_ERROR("Invalid %s connectivity in sideset %d.\n", entity.c_str(), set_id);
+        TOPOLOGY_ERROR("Invalid %s connectivity in sideset %d.\n", entity.c_str(), set_id);
         return false;
       }
 
@@ -158,7 +158,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
       if (nodes.front() <= 0 ||
           std::adjacent_find(nodes.begin(), nodes.end()) != nodes.end())
       {
-        PRINT_ERROR("Invalid face nodes in sideset %d.\n", set_id);
+        TOPOLOGY_ERROR("Invalid face nodes in sideset %d.\n", set_id);
         return false;
       }
 
@@ -186,7 +186,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
     if (!CubitInterface::get_sideset_curves(set_id).empty() ||
         !CubitInterface::get_sideset_edges(set_id).empty())
     {
-      PRINT_ERROR("Topology preservation requires surface, quad or tri members in sideset %d; curve/edge members are unsupported.\n", set_id);
+      TOPOLOGY_ERROR("Topology preservation requires surface, quad or tri members in sideset %d; curve/edge members are unsupported.\n", set_id);
       return false;
     }
 
@@ -215,7 +215,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
 
       if (!CubitInterface::get_element_exists(global_id))
       {
-        PRINT_ERROR("Topology element %d does not exist.\n", global_id);
+        TOPOLOGY_ERROR("Topology element %d does not exist.\n", global_id);
         return false;
       }
 
@@ -231,7 +231,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
 
       if (local_id <= 0 || layout == face_corners.end())
       {
-        PRINT_ERROR("Invalid topology volume element %d.\n", global_id);
+        TOPOLOGY_ERROR("Invalid topology volume element %d.\n", global_id);
         return false;
       }
 
@@ -250,7 +250,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
 
       if (connectivity.size() != expected)
       {
-        PRINT_ERROR("Invalid corner connectivity for topology element %d.\n", global_id);
+        TOPOLOGY_ERROR("Invalid corner connectivity for topology element %d.\n", global_id);
         return false;
       }
 
@@ -274,7 +274,7 @@ bool CoreTopologyPreservation::get_set_element_ids(const CoreMaterials& material
       }
     }
 
-    PRINT_INFO("Topology %d: sideset %d contains %zu mesh faces and selects %zu preserved volume elements.\n", topology_id, set_id, selected_faces.size(), resolved.size());
+    TOPOLOGY_INFO("Topology %d: sideset %d contains %zu mesh faces and selects %zu preserved volume elements.\n", topology_id, set_id, selected_faces.size(), resolved.size());
   }
 
   element_ids.assign(resolved.begin(), resolved.end());
@@ -293,7 +293,7 @@ bool CoreTopologyPreservation::collect_step_references(CoreSteps& steps, std::ma
   {
     if (step.size() < 7)
     {
-      PRINT_ERROR("Invalid step data.\n");
+      TOPOLOGY_ERROR("Invalid step data.\n");
       return false;
     }
 
@@ -305,7 +305,7 @@ bool CoreTopologyPreservation::collect_step_references(CoreSteps& steps, std::ma
 
       if (load.size() < 3 || load[1] < 1 || load[1] > 10 || load[2] <= 0)
       {
-        PRINT_ERROR("Invalid step load reference.\n");
+        TOPOLOGY_ERROR("Invalid step load reference.\n");
         return false;
       }
 
@@ -320,7 +320,7 @@ bool CoreTopologyPreservation::collect_step_references(CoreSteps& steps, std::ma
 
       if (bc.size() < 3 || (bc[1] != 1 && bc[1] != 2) || bc[2] <= 0)
       {
-        PRINT_ERROR("Invalid step boundary condition reference.\n");
+        TOPOLOGY_ERROR("Invalid step boundary condition reference.\n");
         return false;
       }
 
@@ -363,7 +363,7 @@ bool CoreTopologyPreservation::build_set_rows(const TopologyCase& configuration,
   {
     if (group.first < 1 || group.first > 3)
     {
-      PRINT_ERROR("Invalid topology preserved set type %d.\n", group.first);
+      TOPOLOGY_ERROR("Invalid topology preserved set type %d.\n", group.first);
       return false;
     }
 
@@ -371,7 +371,7 @@ bool CoreTopologyPreservation::build_set_rows(const TopologyCase& configuration,
     {
       if (set_id <= 0)
       {
-        PRINT_ERROR("Invalid topology preserved set ID %d.\n", set_id);
+        TOPOLOGY_ERROR("Invalid topology preserved set ID %d.\n", set_id);
         return false;
       }
 

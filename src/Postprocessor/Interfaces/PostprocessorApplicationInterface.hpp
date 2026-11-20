@@ -91,6 +91,7 @@ public:
   bool open_file(const std::string& prefix, const std::vector<std::string>& paths,
     const std::optional<std::string>& name, std::string& error);
   bool refresh_source(const std::string& name, std::string& error);
+  bool set_topology_threshold(const std::string& name, double threshold, std::string& error);
   bool show_only_source(const std::string& name, std::string& error);
   bool open_vtt(const std::string& path, const std::optional<std::string>& name, std::string& error);
   bool open_table(const std::string& source, const std::string& name, bool field, std::string& error,
@@ -112,7 +113,8 @@ public:
     const std::string& prefix,
     int job_id,
     const std::optional<std::string>& name,
-    std::string& error);
+    std::string& error, std::optional<double> topology_threshold = std::nullopt,
+    std::optional<int> topology_iteration = std::nullopt);
 
   const Postprocessor::PostprocessorSession& session() const noexcept;
   std::string suggested_filter_name(Postprocessor::FilterKind kind) const;

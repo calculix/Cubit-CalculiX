@@ -3,7 +3,7 @@
 #include "CoreTopologyLevelSet.hpp"
 #include "CoreTopologyLevelSetGeometry.hpp"
 #include "CoreTopologyStructs.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -16,7 +16,7 @@ bool CoreTopologyLevelSetInitialization::resolve_settings(const TopologyLevelSet
   characteristic_length = 0.0;
   if (!CoreTopologyLevelSet::validate_settings(requested) || element_volumes.empty())
   {
-    PRINT_ERROR("Level-set length resolution requires valid settings and Cubit volumes.\n");
+    TOPOLOGY_ERROR("Level-set length resolution requires valid settings and Cubit volumes.\n");
     return false;
   }
   double total = 0.0;
@@ -24,7 +24,7 @@ bool CoreTopologyLevelSetInitialization::resolve_settings(const TopologyLevelSet
   {
     if (entry.first <= 0 || !std::isfinite(entry.second) || entry.second <= 0.0)
     {
-      PRINT_ERROR("Invalid Cubit element volume for level-set initialization.\n");
+      TOPOLOGY_ERROR("Invalid Cubit element volume for level-set initialization.\n");
       return false;
     }
     total += entry.second;
@@ -32,7 +32,7 @@ bool CoreTopologyLevelSetInitialization::resolve_settings(const TopologyLevelSet
   const double h = std::cbrt(total / static_cast<double>(element_volumes.size()));
   if (!std::isfinite(total) || !std::isfinite(h) || h <= 0.0)
   {
-    PRINT_ERROR("Invalid characteristic length for level-set initialization.\n");
+    TOPOLOGY_ERROR("Invalid characteristic length for level-set initialization.\n");
     return false;
   }
   auto candidate = requested;
@@ -50,7 +50,7 @@ bool CoreTopologyLevelSetInitialization::resolve_settings(const TopologyLevelSet
   }
   if (!CoreTopologyLevelSet::validate_settings(candidate) || candidate.regularization_length <= 0.0 || candidate.seed_spacing <= 0.0 || candidate.seed_radius <= 0.0)
   {
-    PRINT_ERROR("Unable to resolve consistent positive level-set lengths.\n");
+    TOPOLOGY_ERROR("Unable to resolve consistent positive level-set lengths.\n");
     return false;
   }
   resolved = candidate;
@@ -63,7 +63,7 @@ bool CoreTopologyLevelSetInitialization::initialize(const TopologyLevelSetSettin
   design = {};
   if (!std::isfinite(void_ratio) || void_ratio <= 0.0 || void_ratio >= 1.0 || preserved.size() != element_volumes.size())
   {
-    PRINT_ERROR("Invalid level-set initialization domain or void ratio.\n");
+    TOPOLOGY_ERROR("Invalid level-set initialization domain or void ratio.\n");
     return false;
   }
   TopologyLevelSetDesign candidate;
@@ -77,7 +77,7 @@ bool CoreTopologyLevelSetInitialization::initialize(const TopologyLevelSetSettin
     const auto flag = preserved.find(entry.first);
     if (flag == preserved.end())
     {
-      PRINT_ERROR("Missing level-set preservation flag for element %d.\n", entry.first);
+      TOPOLOGY_ERROR("Missing level-set preservation flag for element %d.\n", entry.first);
       return false;
     }
     std::string type;
@@ -93,7 +93,7 @@ bool CoreTopologyLevelSetInitialization::initialize(const TopologyLevelSetSettin
       const auto inserted = coordinates.emplace(nodes[node], points[node]);
       if (!inserted.second && inserted.first->second != points[node])
       {
-        PRINT_ERROR("Cubit mesh changed during level-set initialization.\n");
+        TOPOLOGY_ERROR("Cubit mesh changed during level-set initialization.\n");
         return false;
       }
       if (flag->second)
@@ -104,7 +104,7 @@ bool CoreTopologyLevelSetInitialization::initialize(const TopologyLevelSetSettin
   }
   if (coordinates.empty() || coordinates.size() == candidate.fixed_nodes.size())
   {
-    PRINT_ERROR("Level-set preservation leaves no free nodal design variables.\n");
+    TOPOLOGY_ERROR("Level-set preservation leaves no free nodal design variables.\n");
     return false;
   }
   auto lower = coordinates.begin()->second;
@@ -140,7 +140,7 @@ bool CoreTopologyLevelSetInitialization::initialize(const TopologyLevelSetSettin
   }
   if (anchor <= 0)
   {
-    PRINT_ERROR("Unable to locate a finite free level-set seed anchor.\n");
+    TOPOLOGY_ERROR("Unable to locate a finite free level-set seed anchor.\n");
     return false;
   }
   bool transition = false;
@@ -160,7 +160,7 @@ bool CoreTopologyLevelSetInitialization::initialize(const TopologyLevelSetSettin
       const double scaled = (distance - candidate.settings.seed_radius) / candidate.settings.seed_radius;
       if (!std::isfinite(scaled))
       {
-        PRINT_ERROR("Invalid periodic level-set seed distance.\n");
+        TOPOLOGY_ERROR("Invalid periodic level-set seed distance.\n");
         return false;
       }
       value = (std::max)(-1.0, (std::min)(1.0, scaled));

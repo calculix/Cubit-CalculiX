@@ -1,3 +1,4 @@
+#include "Core/connections/CalculiXConnectionsInterface.hpp"
 #include <type_traits>
 #include "CalculiXDrawLabels.hpp"
 #include "CalculiXDrawInterface.hpp"
@@ -80,8 +81,8 @@ bool CalculiXDrawLabels::read(DrawEntityKey entityKey, DrawLabelData& output, st
       data.typeName = "Force";
       data.name = settings.name;
       data.amplitude = settings.amplitude;
-      targetKind = "nodeset";
-      targetId = settings.nodeset;
+      targetKind = settings.referencePoint ? "rp" : "nodeset";
+      targetId = settings.referencePoint ? std::to_string(settings.referencePoint) : settings.nodeset;
       data.values = {{"FX", settings.component1}, {"FY", settings.component2}, {"FZ", settings.component3}, {"MX", settings.component4}, {"MY", settings.component5}, {"MZ", settings.component6}};
       break;
     }
@@ -296,6 +297,15 @@ bool CalculiXDrawLabels::read(DrawEntityKey entityKey, DrawLabelData& output, st
     if (targetKind == "block")
     {
       nodes(data, mesh.get_block_node_ids(id));
+    }
+    else if (targetKind == "rp")
+    {
+      std::array<double, 3> point;
+      if (!CalculiXConnectionsInterface().point_position(id, point, error))
+      {
+        return false;
+      }
+      data.anchors.push_back({point[0], point[1], point[2]});
     }
     else
     {

@@ -1,12 +1,15 @@
 #ifndef CUBITSIM_RESULTSOURCEREFERENCE_HPP
 #define CUBITSIM_RESULTSOURCEREFERENCE_HPP
 
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
 
 namespace SimResults
 {
+  inline constexpr double default_topology_threshold = 0.5;
+
   struct JobSourceReference
   {
     std::string application_id;
@@ -18,6 +21,9 @@ namespace SimResults
     // execution must not silently replace an already published snapshot.
     std::string run_identity;
     std::string result_identity; // Durable content/link fingerprint; independent of conversion tokens.
+    // When set, job_id addresses a topology case in the same provider.
+    std::optional<double> topology_threshold;
+    int topology_last_iteration = 0; // Saved snapshot boundary for restore.
   };
 
   struct FileSourceReference

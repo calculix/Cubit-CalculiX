@@ -24,6 +24,7 @@ public:
   // loads_data[0][4] nodeset_id
   // loads_data[0][5] force_id
   // loads_data[0][6] name_id
+  // loads_data[0][7] reference point ID (zero for a nodeset target)
 
   std::vector<std::vector<std::string>> time_delay_data;
   // time_delay_data[0][0] time_delay_id
@@ -44,7 +45,7 @@ public:
   bool reset(); // delete all data and initialize afterwards
   bool check_initialized(); // check if object is initialized
   bool create_load(std::vector<std::string> options, std::vector<double> options2); // adds new load
-  bool add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int nodeset_id, int force_id, int name_id); // adds new load to loads_data
+  bool add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int nodeset_id, int force_id, int name_id, int rp_id = 0); // adds new load to loads_data
   bool modify_load(int load_id, std::vector<std::string> options, std::vector<double> options2, std::vector<int> options_marker); // modify plugin-owned load data
   bool delete_load(int load_id); // deletes load from loads_data
   bool add_time_delay(std::string time_delay_id, std::string time_delay_value); // adds new time delay to time_delay_data

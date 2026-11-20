@@ -202,3 +202,21 @@ proposal has not settled, the summary still reports ``Converged: NO``. See
 
 See :doc:`../commands/topology` for command syntax and
 :doc:`../tutorials/index` for complete journals.
+
+Topology Console
+----------------
+
+Open **Console** next to **Run** in Topology Management. The log follows the
+selected case and labels messages with the iteration and the physical or
+adjoint job when available. It includes optimizer messages, solver output,
+input preparation, FRD/DAT diagnostics and VTK conversion messages for the
+case's jobs. The individual Job Monitor still displays each job's solver
+output. Ordinary jobs use their existing message path.
+
+Use **Follow latest** to scroll to incoming messages. Clear the checkbox to
+inspect earlier lines. **Copy** copies the selection or the displayed log if
+nothing is selected. The latest 4,000 lines per case are kept in memory. Starting
+a fresh run clears the previous log. Logs are session data and are not saved
+with the model. Cubit still reports command status and a short topology failure
+summary. Messages emitted by Cubit itself follow Cubit's normal output path.
+The Console uses the existing refresh timer and solver readers.

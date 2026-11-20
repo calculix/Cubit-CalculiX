@@ -98,6 +98,7 @@ void PostprocessorSourceControls::refresh()
 {
   std::string application;
   int job = -1;
+  bool topology = false;
   const int previous = [&]() -> int {
     if (sources->currentData().isValid()) {
       return sources->currentData().toInt();
@@ -109,6 +110,7 @@ void PostprocessorSourceControls::refresh()
   {
     application = entries[previous].reference.application_id;
     job = entries[previous].reference.job_id;
+    topology = entries[previous].reference.topology_threshold.has_value();
   }
   std::string error;
   std::vector<SimResults::ResultJobEntry> current;
@@ -132,11 +134,17 @@ void PostprocessorSourceControls::refresh()
       sources->addItem(QString::fromUtf8(entry.application_name.c_str()),-1);
       model->item(sources->count()-1)->setEnabled(false);
     }
-    sources->addItem(QString::fromUtf8(entry.job_name.c_str())+tr(" — Job %1").arg(entry.reference.job_id),static_cast<int>(index));
+    QString label = tr(" — Job %1");
+    if (entry.reference.topology_threshold)
+    {
+      label = tr(" — Topology %1");
+    }
+    sources->addItem(QString::fromUtf8(entry.job_name.c_str())+label.arg(entry.reference.job_id),static_cast<int>(index));
     auto* item = model->item(sources->count()-1);
     item->setEnabled(entry.available);
     item->setToolTip(QString::fromUtf8(entry.unavailable_reason.c_str()));
-    if (entry.reference.application_id == application && entry.reference.job_id == job)
+    if (entry.reference.application_id == application && entry.reference.job_id == job &&
+        entry.reference.topology_threshold.has_value() == topology)
     {
       selected = sources->count()-1;
     }

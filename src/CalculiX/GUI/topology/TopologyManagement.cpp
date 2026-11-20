@@ -1,5 +1,6 @@
 #include <type_traits>
 #include "TopologyManagement.hpp"
+#include "TopologyConsoleTab.hpp"
 #include "TopologyManagementDensitySettingsWidget.hpp"
 #include "TopologyManagementLevelSetSettingsWidget.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
@@ -93,7 +94,7 @@ TopologyManagement::TopologyManagement(JobsMonitor* monitor, QWidget* parent)
   rightLayout->addWidget(heading);
   tabs = new QTabWidget(right);
   rightLayout->addWidget(tabs, 1);
-  const QStringList names = {"Settings", "Preserved sets", "Run", "Iterations", "GIF", "Alpha wrap"};
+  const QStringList names = {"Settings", "Preserved sets", "Run", "Console", "Iterations", "GIF", "Alpha wrap"};
   for (const auto& name : names)
   {
     tabs->addTab(new QWidget(tabs), name);
@@ -101,6 +102,10 @@ TopologyManagement::TopologyManagement(JobsMonitor* monitor, QWidget* parent)
   createSettingsTab(tabs->widget(SettingsTab));
   createPreservationTab(tabs->widget(PreservationTab));
   createRunTab(tabs->widget(RunTab));
+  auto* consoleLayout = new QVBoxLayout(tabs->widget(ConsoleTab));
+  consoleLayout->setContentsMargins(0,0,0,0);
+  consoleTab = new TopologyConsoleTab(tabs->widget(ConsoleTab));
+  consoleLayout->addWidget(consoleTab);
   createIterationsTab(tabs->widget(IterationsTab));
   createAnimationTab(tabs->widget(AnimationTab));
   createWrapTab(tabs->widget(WrapTab));
@@ -130,6 +135,10 @@ TopologyManagement::TopologyManagement(JobsMonitor* monitor, QWidget* parent)
     if (index != IterationsTab)
     {
       pausePlayback();
+    }
+    if (index == ConsoleTab)
+    {
+      refreshConsole();
     }
     if (index == PreservationTab)
     {
@@ -340,6 +349,10 @@ void TopologyManagement::refresh()
   {
     loadSettings();
   }
+  if (tabs->currentIndex() == ConsoleTab)
+  {
+    refreshConsole();
+  }
   updateControls();
   const bool running = currentTopologyId > 0 && core.get_topology_run_state(currentTopologyId) == "running";
   const bool settingsEditable = (creating || currentTopologyId > 0) && !running && !animation_was_active;
@@ -541,4 +554,14 @@ void TopologyManagement::invalidateTopology(int topology_id)
   const int selected = currentTopologyId;
   clear(false);
   currentTopologyId = selected;
+}
+
+void TopologyManagement::refreshConsole()
+{
+  int topology = currentTopologyId;
+  if (creating)
+  {
+    topology = -1;
+  }
+  consoleTab->refresh(topology);
 }

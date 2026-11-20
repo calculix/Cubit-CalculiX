@@ -1,3 +1,4 @@
+#include "Core/connections/CoreConnectionsCleanup.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "Core/drawing/CoreDraw.hpp"
 #include "Core/CalculiXCore.hpp"
@@ -95,6 +96,7 @@ bool CalculiXCore::reset() {
   cb->reset();
   mat->reset(); // Reset topology material data.
   sections->reset();
+  connections = CoreConnections{};
   constraints->reset();
   surfaceinteractions->reset();
   contactpairs->reset();
@@ -180,6 +182,11 @@ std::string CalculiXCore::autocleanup() {
 
   // SECTIONS
   if (CoreSectionsCleanup::cleanup(*sections, *mat, *cb, orientations, log)) {
+    print_log = true;
+  }
+
+  if (CoreConnectionsCleanup::cleanup(connections, log))
+  {
     print_log = true;
   }
 

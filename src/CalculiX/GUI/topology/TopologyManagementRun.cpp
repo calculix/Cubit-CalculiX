@@ -1,5 +1,6 @@
 #include <type_traits>
 #include "TopologyManagement.hpp"
+#include "Core/results/CalculiXResultsInterface.hpp"
 #include "Core/drawing/CalculiXDrawInterface.hpp"
 #include <string>
 #include <QString>
@@ -85,7 +86,17 @@ void TopologyManagement::createRunTab(QWidget* tab)
   layout->addWidget(wait);
   layout->addWidget(note);
   layout->addLayout(buttons);
-  layout->addWidget(runMonitorButton);
+  auto* resultsRow = new QHBoxLayout;
+  resultsRow->addWidget(runMonitorButton);
+  runResultsButton = new QPushButton(tr("Open Results"),this);
+  runResultsButton->setObjectName("CalculiX.Topology.Run.OpenResults");
+  runResultsButton->setToolTip(tr("Open the completed iterations in the Postprocessor."));
+  resultsRow->addWidget(runResultsButton);
+  layout->addLayout(resultsRow);
+  connect(runResultsButton,&QPushButton::clicked,this,[this]()
+  {
+    openTopologyResults(false);
+  });
 
   QObject::connect(runButton, &QPushButton::clicked, this, [this]()
   {
@@ -114,6 +125,7 @@ void TopologyManagement::updateControls()
   waitButton->setEnabled(false);
   killButton->setEnabled(false);
   runMonitorButton->setEnabled(false);
+  runResultsButton->setEnabled(topologyResultsAvailable());
   wait->setEnabled(false);
   if (currentTopologyId <= 0 || creating)
   {
@@ -192,6 +204,32 @@ void TopologyManagement::execute(const QString& action)
   }
   submitCommand(command);
   updateControls();
+}
+
+bool TopologyManagement::topologyResultsAvailable() const
+{
+  return !creating && currentTopologyId > 0 && loaded_case == currentTopologyId && !rows.empty() &&
+    !animation_was_active && !CalculiXResultsInterface().is_vtk_build_active();
+}
+
+void TopologyManagement::openTopologyResults(bool selectedIteration)
+{
+  if (!topologyResultsAvailable())
+  {
+    return;
+  }
+  auto command = QStringLiteral("post open ccx topology %1").arg(currentTopologyId);
+  if (selectedIteration)
+  {
+    const int iteration = iterations->currentData().toInt();
+    if (rows.count(iteration) == 0)
+    {
+      return;
+    }
+    command += QStringLiteral(" iteration %1").arg(iteration);
+  }
+  pausePlayback();
+  submitCommand(command);
 }
 
 void TopologyManagement::openActiveJob()

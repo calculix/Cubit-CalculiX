@@ -31,6 +31,9 @@ public:
   static std::vector<std::vector<double>> mult_matrix_scalar(std::vector<std::vector<double>> mat_a, double scalar);
   static std::vector<std::vector<double>> add_matrix(std::vector<std::vector<double>> mat_a, std::vector<std::vector<double>> mat_b);
   static std::vector<double> mult_matrix_vector(std::vector<std::vector<double>> mat, std::vector<double> vec);
+  static bool pointMass(DrawingGeometry& geometry, const std::vector<double>& endpoint, double size);
+  static bool spring(DrawingGeometry& geometry, const std::vector<double>& first, const std::vector<double>& second,
+    bool grounded, double size);
   static bool arrow(DrawingGeometry& geometry, std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size);
   static bool flatArrow(DrawingGeometry& geometry, std::vector<double> start_point, std::vector<double> direction, bool from_start_point, std::string color, double size);
   static bool displacement(DrawingGeometry& geometry, std::vector<double> coord, DrawingSymbolComponent component, std::string color, double size);

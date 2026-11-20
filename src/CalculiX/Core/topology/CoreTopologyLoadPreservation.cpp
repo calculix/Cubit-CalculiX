@@ -4,7 +4,7 @@
 #include "Core/loads/CoreLoadsHeatfluxes.hpp"
 #include "Core/mesh/CoreMeshQuery.hpp"
 #include "Core/loads/CoreLoadsBodyHeatflux.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <algorithm>
 
 bool CoreTopologyLoadPreservation::append_set_loads(const std::vector<std::vector<int>>& rows, const std::set<int>& load_ids, int set_type, const char* load_name, std::map<int, std::set<int>>& sets)
@@ -18,7 +18,7 @@ bool CoreTopologyLoadPreservation::append_set_loads(const std::vector<std::vecto
 
     if (row == rows.end() || row->size() < 5 || (*row)[4] <= 0)
     {
-      PRINT_ERROR("Missing or invalid %s load %d.\n", load_name, load_id);
+      TOPOLOGY_ERROR("Missing or invalid %s load %d.\n", load_name, load_id);
       return false;
     }
 
@@ -36,7 +36,7 @@ bool CoreTopologyLoadPreservation::append_body_heatflux(CoreLoadsBodyHeatflux& l
 
     if (load_index < 0)
     {
-      PRINT_ERROR("Body heat flux load %d does not exist.\n", load_id);
+      TOPOLOGY_ERROR("Body heat flux load %d does not exist.\n", load_id);
       return false;
     }
 
@@ -44,7 +44,7 @@ bool CoreTopologyLoadPreservation::append_body_heatflux(CoreLoadsBodyHeatflux& l
 
     if (load.size() < 6 || (load[5] != 1 && load[5] != 2))
     {
-      PRINT_ERROR("Invalid body heat flux selection.\n");
+      TOPOLOGY_ERROR("Invalid body heat flux selection.\n");
       return false;
     }
 
@@ -52,7 +52,7 @@ bool CoreTopologyLoadPreservation::append_body_heatflux(CoreLoadsBodyHeatflux& l
 
     if (index < 0 || loads.element_data[index].size() < 2)
     {
-      PRINT_ERROR("Missing body heat flux selection data.\n");
+      TOPOLOGY_ERROR("Missing body heat flux selection data.\n");
       return false;
     }
 
@@ -65,7 +65,7 @@ bool CoreTopologyLoadPreservation::append_body_heatflux(CoreLoadsBodyHeatflux& l
 
       if (id <= 0)
       {
-        PRINT_ERROR("Invalid body heat flux target ID %d.\n", id);
+        TOPOLOGY_ERROR("Invalid body heat flux target ID %d.\n", id);
         return false;
       }
 
@@ -96,7 +96,7 @@ bool append_mesh_loads(Loads& loads, MeshExportInterface& mesh, const std::set<i
 
     if (index < 0 || loads.loads_data[index].size() < 7)
     {
-      PRINT_ERROR("Missing or invalid %s load %d.\n", load_name, load_id);
+      TOPOLOGY_ERROR("Missing or invalid %s load %d.\n", load_name, load_id);
       return false;
     }
 
@@ -117,7 +117,7 @@ bool append_mesh_loads(Loads& loads, MeshExportInterface& mesh, const std::set<i
       } else {
         entity = "Sideset";
       }
-      PRINT_ERROR("%s %d referenced by %s %d does not exist.\n", entity, set_id, load_name, load_id);
+      TOPOLOGY_ERROR("%s %d referenced by %s %d does not exist.\n", entity, set_id, load_name, load_id);
       return false;
     }
 
@@ -130,7 +130,16 @@ bool append_mesh_loads(Loads& loads, MeshExportInterface& mesh, const std::set<i
 
 bool CoreTopologyLoadPreservation::append_loads(CoreLoadsForces& loads, MeshExportInterface& mesh, const std::set<int>& load_ids, std::map<int, std::set<int>>& sets)
 {
-  return append_mesh_loads(loads, mesh, load_ids, 2, "force", sets);
+  auto nodeset_loads = load_ids;
+  for (const auto& row : loads.loads_data)
+  {
+    if (row.size() > 7 && row[7] > 0)
+    {
+      // The rigid attachment already contributes its members to interaction preservation.
+      nodeset_loads.erase(row[0]);
+    }
+  }
+  return append_mesh_loads(loads, mesh, nodeset_loads, 2, "force", sets);
 }
 
 bool CoreTopologyLoadPreservation::append_loads(CoreLoadsPressures& loads, MeshExportInterface& mesh, const std::set<int>& load_ids, std::map<int, std::set<int>>& sets)

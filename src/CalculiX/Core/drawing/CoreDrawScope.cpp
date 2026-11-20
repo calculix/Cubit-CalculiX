@@ -1,3 +1,4 @@
+#include "Core/connections/CalculiXConnectionsInterface.hpp"
 #include <type_traits>
 #include "Core/drawing/CalculiXDrawingAdapter.hpp"
 #include "Core/export/CoreCustomLines.hpp"
@@ -284,7 +285,7 @@ bool force(CalculiXCore& core, Conditions& conditions, int id, int step, std::st
   }
   conditions.beginCard("CLOAD", data.operation == "new");
   const std::string components[] = {data.component1, data.component2, data.component3, data.component4, data.component5, data.component6};
-  for (int node : CubitInterface::get_nodeset_nodes_inclusive(std::stoi(data.nodeset)))
+  auto add = [&](const std::string& target, const std::vector<double>& location)
   {
     for (int axis = 0; axis < 6; ++axis)
     {
@@ -295,7 +296,7 @@ bool force(CalculiXCore& core, Conditions& conditions, int id, int step, std::st
       }
       Condition condition;
       condition.owner = {DrawFeature::Force, id};
-      condition.point = coordinate(node);
+      condition.point = location;
       condition.direction.assign(3, 0);
       condition.direction[axis % 3] = 1;
       condition.value = value;
@@ -306,7 +307,23 @@ bool force(CalculiXCore& core, Conditions& conditions, int id, int step, std::st
       } else {
         condition.color = "seagreen";
       }
-      conditions.put("CLOAD", std::to_string(node) + ":" + std::to_string(axis + 1), condition, true);
+      conditions.put("CLOAD", target + ":" + std::to_string(axis + 1), condition, true);
+    }
+  };
+  if (data.referencePoint > 0)
+  {
+    std::array<double, 3> point;
+    if (!CalculiXConnectionsInterface().point_position(data.referencePoint, point, error))
+    {
+      return false;
+    }
+    add("rp " + std::to_string(data.referencePoint), {point[0], point[1], point[2]});
+  }
+  else
+  {
+    for (int node : CubitInterface::get_nodeset_nodes_inclusive(std::stoi(data.nodeset)))
+    {
+      add(std::to_string(node), coordinate(node));
     }
   }
   return true;
@@ -527,6 +544,26 @@ bool CoreDrawScope::resolveModel(CalculiXCore& core, ResolvedDrawScope& result, 
   for (int id : CoreIdSelection::collect_ids(core.orientations->orientations_data))
   {
     result.entities.push_back({DrawFeature::Orientation, id});
+  }
+  for (const auto& entry : core.connections.points())
+  {
+    result.entities.push_back({DrawFeature::ReferencePoint, entry.first});
+  }
+  for (const auto& entry : core.connections.bodies())
+  {
+    result.entities.push_back({DrawFeature::RigidBody, entry.first});
+  }
+  for (const auto& entry : core.connections.joints())
+  {
+    result.entities.push_back({DrawFeature::Joint, entry.first});
+  }
+  for (const auto& entry : core.connections.point_masses())
+  {
+    result.entities.push_back({DrawFeature::PointMass, entry.first});
+  }
+  for (const auto& entry : core.connections.springs())
+  {
+    result.entities.push_back({DrawFeature::Spring, entry.first});
   }
   for (int id : core.constraints->get_equation_ids())
   {
@@ -904,6 +941,26 @@ bool CoreDrawScope::resolveStep(CalculiXCore& core, int stepId, double size, Res
     for (int id : CoreIdSelection::collect_ids(core.orientations->orientations_data))
     {
       result.entities.push_back({DrawFeature::Orientation, id});
+    }
+    for (const auto& entry : core.connections.points())
+    {
+      result.entities.push_back({DrawFeature::ReferencePoint, entry.first});
+    }
+    for (const auto& entry : core.connections.bodies())
+    {
+      result.entities.push_back({DrawFeature::RigidBody, entry.first});
+    }
+    for (const auto& entry : core.connections.joints())
+    {
+      result.entities.push_back({DrawFeature::Joint, entry.first});
+    }
+    for (const auto& entry : core.connections.point_masses())
+    {
+      result.entities.push_back({DrawFeature::PointMass, entry.first});
+    }
+    for (const auto& entry : core.connections.springs())
+    {
+      result.entities.push_back({DrawFeature::Spring, entry.first});
     }
     for (int id : core.constraints->get_equation_ids())
     {

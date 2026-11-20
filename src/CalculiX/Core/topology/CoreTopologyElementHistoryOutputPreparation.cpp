@@ -2,7 +2,7 @@
 #include "CoreTopologyHistoryOutputAssignment.hpp"
 #include "Core/steps/CoreHistoryOutputs.hpp"
 #include "Core/steps/CoreSteps.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <algorithm>
 #include <cstddef>
 #include <vector>
@@ -13,7 +13,7 @@ bool CoreTopologyElementHistoryOutputPreparation::ensure(CoreHistoryOutputs& out
 
   if (key_it == outputs.element_keys.end())
   {
-    PRINT_ERROR("Unknown element history output key '%s'.\n", key.c_str());
+    TOPOLOGY_ERROR("Unknown element history output key '%s'.\n", key.c_str());
     return false;
   }
 
@@ -96,7 +96,7 @@ bool CoreTopologyElementHistoryOutputPreparation::ensure(CoreHistoryOutputs& out
   {
     if (output.size() < 4)
     {
-      PRINT_ERROR("Invalid history output data.\n");
+      TOPOLOGY_ERROR("Invalid history output data.\n");
       return false;
     }
 
@@ -129,7 +129,7 @@ bool CoreTopologyElementHistoryOutputPreparation::ensure(CoreHistoryOutputs& out
 
       if (output_id >= 0)
       {
-        PRINT_ERROR("Unexpected history output creation result.\n");
+        TOPOLOGY_ERROR("Unexpected history output creation result.\n");
         return false;
       }
 
@@ -138,7 +138,7 @@ bool CoreTopologyElementHistoryOutputPreparation::ensure(CoreHistoryOutputs& out
 
     if (output_id < 0)
     {
-      PRINT_ERROR("Automatic history output creation failed.\n");
+      TOPOLOGY_ERROR("Automatic history output creation failed.\n");
       return false;
     }
 
@@ -161,7 +161,7 @@ bool CoreTopologyElementHistoryOutputPreparation::ensure(CoreHistoryOutputs& out
 
   if (index < 0)
   {
-    PRINT_ERROR("Automatic history output configuration failed.\n");
+    TOPOLOGY_ERROR("Automatic history output configuration failed.\n");
     return false;
   }
 
@@ -195,13 +195,13 @@ bool CoreTopologyElementHistoryOutputPreparation::ensure(CoreHistoryOutputs& out
 
   if (index < 0 || outputs.element_data[index][key_column] != key || outputs.element_data[index][4] == "ONLY")
   {
-    PRINT_ERROR("History output %d does not provide element %s values.\n", output_id, key.c_str());
+    TOPOLOGY_ERROR("History output %d does not provide element %s values.\n", output_id, key.c_str());
     return false;
   }
 
   if (tensor_output && (outputs.element_data[index][5] != "YES" || outputs.element_data[index][2] != "1"))
   {
-    PRINT_ERROR("History output %d does not provide global element %s values at every increment.\n", output_id, key.c_str());
+    TOPOLOGY_ERROR("History output %d does not provide global element %s values at every increment.\n", output_id, key.c_str());
     return false;
   }
 
@@ -214,16 +214,16 @@ bool CoreTopologyElementHistoryOutputPreparation::ensure(CoreHistoryOutputs& out
 
   if (created)
   {
-    PRINT_INFO("Automatically created history output %d for block %d with key %s.\n", output_id, block_id, key.c_str());
+    TOPOLOGY_INFO("Automatically created history output %d for block %d with key %s.\n", output_id, block_id, key.c_str());
   }
   else if (missing_key || totals_only || needs_tensor_settings)
   {
-    PRINT_INFO("Automatically configured history output %d to provide element %s values.\n", output_id, key.c_str());
+    TOPOLOGY_INFO("Automatically configured history output %d to provide element %s values.\n", output_id, key.c_str());
   }
 
   if (needs_assignment)
   {
-    PRINT_INFO("Automatically assigned history output %d to step %d.\n", output_id, step_id);
+    TOPOLOGY_INFO("Automatically assigned history output %d to step %d.\n", output_id, step_id);
   }
 
   return true;

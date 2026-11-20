@@ -1,12 +1,12 @@
 #include "Core/CalculiXCore.hpp"
 #include "CoreTopologyIteration.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CalculiXCore::set_topology_iteration_displacement(int topology_id, int iteration_id, double displacement, int node_id)
 {
   if (!topology)
   {
-    PRINT_ERROR("Invalid topology displacement measurement.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement measurement.\n");
     return false;
   }
 
@@ -17,7 +17,7 @@ bool CalculiXCore::mark_topology_iteration_completed(int topology_id, int iterat
 {
   if (!topology || !jobs)
   {
-    PRINT_ERROR("Invalid topology iteration completion request.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration completion request.\n");
     return false;
   }
 
@@ -28,7 +28,7 @@ bool CalculiXCore::set_topology_iteration_factors(int topology_id, int iteration
 {
   if (!topology || !mat)
   {
-    PRINT_ERROR("Topology/material cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology/material cores are not initialized.\n");
     return false;
   }
 
@@ -39,7 +39,7 @@ bool CalculiXCore::select_topology_iteration(int topology_id, int iteration_id)
 {
   if (!topology || !mat || !jobs)
   {
-    PRINT_ERROR("Invalid topology iteration selection request.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration selection request.\n");
     return false;
   }
 

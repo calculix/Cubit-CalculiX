@@ -12,7 +12,7 @@
 #include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "Core/results/CalculiXResultsInterface.hpp"
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "loadUserOptions.hpp"
 #include "StopWatch.hpp"
 
@@ -101,7 +101,7 @@ bool CoreResultsFrd::read_file(const std::string& path)
 {
   if (is_initialized || path.empty())
   {
-    PRINT_ERROR("Detached FRD reader requires a fresh instance and a file path.\n");
+    TOPOLOGY_ERROR("Detached FRD reader requires a fresh instance and a file path.\n");
     return false;
   }
   job_id = 0;
@@ -125,7 +125,7 @@ bool CoreResultsFrd::read_single()
   int currentline = 0;
   std::string log;
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
 
   std::string frdline = "";
   std::vector<std::string> frd_array;
@@ -249,7 +249,7 @@ bool CoreResultsFrd::read_single()
         log.append(frd_array[i] + " ");
       }
       log.append("\n");
-      PRINT_INFO("%s", log.c_str());
+      TOPOLOGY_INFO("%s", log.c_str());
       */
     }
   }
@@ -308,7 +308,7 @@ bool CoreResultsFrd::read_parallel()
   std::string log;
   //log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " using " + std::to_string(max_threads) + " threads \n";
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
 
   std::string frdline = "";
   std::vector<std::string> frd_array;
@@ -469,7 +469,7 @@ bool CoreResultsFrd::read_parallel()
     if (number_of_nodes < max_threads)
     {
       log = "More threads reading available than nodes in frd. Reduce number of threads for the converter!\n";
-      PRINT_INFO("%s", log.c_str());
+      TOPOLOGY_INFO("%s", log.c_str());
       return false;
     }
     
@@ -530,7 +530,7 @@ bool CoreResultsFrd::read_parallel()
 
     log = "Reading nodes finished!\n";
     
-    PRINT_INFO("%s", log.c_str());
+    TOPOLOGY_INFO("%s", log.c_str());
 
     // reading elements
     progressbar->start(0,100,"Reading Elements from FRD");
@@ -543,7 +543,7 @@ bool CoreResultsFrd::read_parallel()
     if (number_of_lines < max_threads*2)
     {
       log = "More threads reading available than elements in frd. Reduce number of threads for the converter!\n";
-      PRINT_INFO("%s", log.c_str());
+      TOPOLOGY_INFO("%s", log.c_str());
       return false;
     }
     
@@ -640,7 +640,7 @@ bool CoreResultsFrd::read_parallel()
 
     log = "Reading elements finished!\n";
     //StopWatch.tick("element finished");
-    PRINT_INFO("%s", log.c_str());
+    TOPOLOGY_INFO("%s", log.c_str());
 
     // reading result blocks
     current_read_mode = 3; // start with results blocks
@@ -711,7 +711,7 @@ bool CoreResultsFrd::read_parallel()
     {
       std::string log = "Something went wrong while reading the headers! Reach out to devs!\n";
       log.append("result_block_components.size() " + std::to_string(result_block_components.size()) + " != frd_arrays.size() " + std::to_string(frd_arrays.size()) + "\n");
-      PRINT_INFO("%s", log.c_str());
+      TOPOLOGY_INFO("%s", log.c_str());
       return false;
     }
 
@@ -846,12 +846,12 @@ bool CoreResultsFrd::read_parallel_boost()
   StopWatch stopwatch;
   if (!is_initialized || !progressbar)
   {
-    PRINT_ERROR("FRD reader is not initialized.\n");
+    TOPOLOGY_ERROR("FRD reader is not initialized.\n");
     return false;
   }
   if (ccx_uo.mConverterThreads < 1)
   {
-    PRINT_ERROR("FRD reader requires at least one converter thread.\n");
+    TOPOLOGY_ERROR("FRD reader requires at least one converter thread.\n");
     return false;
   }
   if (job_id > 0)
@@ -859,12 +859,12 @@ bool CoreResultsFrd::read_parallel_boost()
     const auto job_data = ccx_jobs_iface.get_job_data(job_id);
     if (job_data.size() <= 3)
     {
-      PRINT_ERROR("Cannot obtain FRD job status.\n");
+      TOPOLOGY_ERROR("Cannot obtain FRD job status.\n");
       return false;
     }
     if (job_data[3] == "1")
     {
-      PRINT_ERROR("Cannot read FRD results while the job is running.\n");
+      TOPOLOGY_ERROR("Cannot read FRD results while the job is running.\n");
       return false;
     }
   }
@@ -872,13 +872,13 @@ bool CoreResultsFrd::read_parallel_boost()
   std::ifstream file(std::filesystem::u8path(filepath), std::ios::binary);
   if (!file.is_open())
   {
-    PRINT_ERROR("Cannot open FRD file: %s\n", filepath.c_str());
+    TOPOLOGY_ERROR("Cannot open FRD file: %s\n", filepath.c_str());
     return false;
   }
   FrdReadState state;
   if (!ResultsReaderPipeline::file_size(file, state.file_size))
   {
-    PRINT_ERROR("Cannot determine FRD file size.\n");
+    TOPOLOGY_ERROR("Cannot determine FRD file size.\n");
     return false;
   }
 
@@ -919,19 +919,19 @@ bool CoreResultsFrd::read_parallel_boost()
         result_block_components.resize(size);
         result_block_data.resize(size);
         result_block_node_data.resize(size);
-        PRINT_WARNING("Discarded incomplete trailing FRD result block.\n");
+        TOPOLOGY_WARNING("Discarded incomplete trailing FRD result block.\n");
       }
       success = finalize_boost_results();
       phases.finalize_ns += ResultReadTimings::elapsed(finalize_begin);
     }
     catch (const std::exception& error)
     {
-      PRINT_ERROR("FRD finalization failed: %s\n", error.what());
+      TOPOLOGY_ERROR("FRD finalization failed: %s\n", error.what());
       success = false;
     }
     catch (...)
     {
-      PRINT_ERROR("Unexpected FRD finalization failure.\n");
+      TOPOLOGY_ERROR("Unexpected FRD finalization failure.\n");
       success = false;
     }
   }
@@ -940,11 +940,11 @@ bool CoreResultsFrd::read_parallel_boost()
     const bool has_results = std::any_of(result_block_data.begin(), result_block_data.end(), [](const auto& block) { return !block.empty(); });
     if (!has_results)
     {
-      PRINT_INFO("FRD file contains no results: %s\n", filepath.c_str());
+      TOPOLOGY_INFO("FRD file contains no results: %s\n", filepath.c_str());
     }
     else if (!state.found_end_marker)
     {
-      PRINT_WARNING("FRD end marker is missing; only completed result blocks were accepted.\n");
+      TOPOLOGY_WARNING("FRD end marker is missing; only completed result blocks were accepted.\n");
     }
     progressbar->percent(1.0);
   }
@@ -1006,7 +1006,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       {
         if (line_status != ResultsReaderPipeline::LineStatus::End)
         {
-          PRINT_ERROR("Cannot read FRD results: I/O error or line exceeds 64 KiB.\n");
+          TOPOLOGY_ERROR("Cannot read FRD results: I/O error or line exceeds 64 KiB.\n");
           return false;
         }
         if (current_read_mode == 4)
@@ -1028,7 +1028,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
 
     if (raw.size() > ResultsReaderPipeline::max_line_bytes)
     {
-      PRINT_ERROR("FRD line %zu exceeds the supported line size.\n", state.line_number);
+      TOPOLOGY_ERROR("FRD line %zu exceeds the supported line size.\n", state.line_number);
       return false;
     }
     if (raw.find_first_not_of(" \t\r\n\f\v") == std::string::npos)
@@ -1055,7 +1055,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     {
       if (state.data_id < 0 || state.components.empty())
       {
-        PRINT_ERROR("FRD result row has no component definition at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("FRD result row has no component definition at line %zu.\n", state.line_number);
         return false;
       }
       if (state.logical_record.empty())
@@ -1065,13 +1065,13 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       if (state.logical_record.size() > ResultsReaderPipeline::max_batch_bytes ||
         raw.size() + 1 > ResultsReaderPipeline::max_batch_bytes - state.logical_record.size())
       {
-        PRINT_ERROR("FRD logical record exceeds the batch byte limit at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("FRD logical record exceeds the batch byte limit at line %zu.\n", state.line_number);
         return false;
       }
       const auto status = CoreResultsFrdFormat::append(raw, state.components.size(), state.logical_record);
       if (status == CoreResultsFrdFormat::RecordStatus::Invalid)
       {
-        PRINT_ERROR("Invalid FRD logical record at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid FRD logical record at line %zu.\n", state.line_number);
         return false;
       }
       if (status == CoreResultsFrdFormat::RecordStatus::Ready)
@@ -1080,7 +1080,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
           ResultsReaderPipeline::result_row_storage(state.components.size(), 2);
         if (record_bytes > ResultsReaderPipeline::max_batch_bytes)
         {
-          PRINT_ERROR("FRD decoded record exceeds the batch byte limit at line %zu.\n", state.record_line);
+          TOPOLOGY_ERROR("FRD decoded record exceeds the batch byte limit at line %zu.\n", state.record_line);
           return false;
         }
         if (!batch.records.empty() && batch_bytes + record_bytes > ResultsReaderPipeline::max_batch_bytes)
@@ -1097,7 +1097,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     }
     if (!state.logical_record.empty())
     {
-      PRINT_ERROR("Incomplete FRD logical record before line %zu.\n", state.line_number);
+      TOPOLOGY_ERROR("Incomplete FRD logical record before line %zu.\n", state.line_number);
       return false;
     }
 
@@ -1133,7 +1133,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     auto fields = split_line(std::string(raw));
     if (fields.empty() || fields.size() > ResultsReaderPipeline::max_fields)
     {
-      PRINT_ERROR("Invalid FRD record at line %zu.\n", state.line_number);
+      TOPOLOGY_ERROR("Invalid FRD record at line %zu.\n", state.line_number);
       return false;
     }
     check_mode(fields);
@@ -1148,7 +1148,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     {
       if (fields[0] == "1UMAT" && fields.size() < 2)
       {
-        PRINT_ERROR("Invalid FRD material header at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid FRD material header at line %zu.\n", state.line_number);
         return false;
       }
       if (!read_header(fields))
@@ -1160,7 +1160,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     {
       if (fields[0] == "-1" && (fields.size() < 5 || !ResultsReaderPipeline::ids_fit(nodes.size(), 1)))
       {
-        PRINT_ERROR("Invalid FRD node or node index overflow at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid FRD node or node index overflow at line %zu.\n", state.line_number);
         return false;
       }
       if (!read_node(fields))
@@ -1177,12 +1177,12 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       }
       if (element_fields[0] == "-2" && elements.empty())
       {
-        PRINT_ERROR("FRD connectivity has no element at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("FRD connectivity has no element at line %zu.\n", state.line_number);
         return false;
       }
       if (element_fields[0] == "-1" && !ResultsReaderPipeline::ids_fit(elements.size(), 1))
       {
-        PRINT_ERROR("FRD element index overflow at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("FRD element index overflow at line %zu.\n", state.line_number);
         return false;
       }
       if (!read_element(element_fields))
@@ -1216,7 +1216,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       }
       if (parameter && (fields.size() != 2 || !ResultReadNumbers::integer(fields[1], *parameter)))
       {
-        PRINT_ERROR("Invalid FRD analysis parameter at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid FRD analysis parameter at line %zu.\n", state.line_number);
         return false;
       }
       if (fields[0] == "100CL" && raw.size() >= 75)
@@ -1225,7 +1225,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         int increment = -1;
         if (!CoreResultsFrdFormat::loadcase(raw, time, increment, state.analysis.type))
         {
-          PRINT_ERROR("Unsupported binary FRD or invalid analysis header at line %zu. Use ASCII output.\n", state.line_number);
+          TOPOLOGY_ERROR("Unsupported binary FRD or invalid analysis header at line %zu. Use ASCII output.\n", state.line_number);
           return false;
         }
         total_times.push_back(time);
@@ -1235,12 +1235,12 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       }
       if ((fields[0] == "1PSTEP" && fields.size() < 4) || (fields[0] == "100CL" && fields.size() < 6) || (fields[0] == "-4" && fields.size() < 2))
       {
-        PRINT_ERROR("Incomplete FRD parameter header at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Incomplete FRD parameter header at line %zu.\n", state.line_number);
         return false;
       }
       if (fields[0] == "-4" && !ResultsReaderPipeline::ids_fit(result_blocks.size(), 1))
       {
-        PRINT_ERROR("FRD result block index overflow.\n");
+        TOPOLOGY_ERROR("FRD result block index overflow.\n");
         return false;
       }
       if (!read_parameter_header(fields))
@@ -1259,7 +1259,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     {
       if (fields[0] != "-5" || fields.size() < 2)
       {
-        PRINT_ERROR("Unsupported FRD result record at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Unsupported FRD result record at line %zu.\n", state.line_number);
         return false;
       }
       if (!read_nodal_result_block(fields))
@@ -1272,7 +1272,7 @@ bool CoreResultsFrd::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       }
       if (state.components.size() > ResultsReaderPipeline::max_batch_bytes / (sizeof(double) + sizeof(std::string)))
       {
-        PRINT_ERROR("FRD result has too many components.\n");
+        TOPOLOGY_ERROR("FRD result has too many components.\n");
         return false;
       }
     }
@@ -1294,7 +1294,7 @@ bool CoreResultsFrd::read_raw_node(std::string_view line, std::size_t source_lin
       !ResultsReaderPipeline::ids_fit(nodes.size(), 1) ||
       !ResultsReaderPipeline::ids_fit(nodes_coords.size(), 1))
   {
-    PRINT_ERROR("Invalid FRD node or node index overflow at line %zu.\n", source_line);
+    TOPOLOGY_ERROR("Invalid FRD node or node index overflow at line %zu.\n", source_line);
     return false;
   }
   const int coordinate_index = static_cast<int>(nodes_coords.size());
@@ -1316,7 +1316,7 @@ bool CoreResultsFrd::read_raw_element_header(std::string_view line, std::size_t 
       !ResultReadNumbers::integer(line.substr(23), material) ||
       !ResultsReaderPipeline::ids_fit(elements.size(), 1))
   {
-    PRINT_ERROR("Invalid FRD element header or element index overflow at line %zu.\n", source_line);
+    TOPOLOGY_ERROR("Invalid FRD element header or element index overflow at line %zu.\n", source_line);
     return false;
   }
   elements.push_back({identifier, type, -1, material});
@@ -1329,7 +1329,7 @@ bool CoreResultsFrd::read_raw_connectivity(std::string_view line, std::size_t so
   std::size_t count = 0;
   if (elements.empty() || !ResultReadNumbers::fields(line, fields, count) || count < 2 || fields[0] != "-2")
   {
-    PRINT_ERROR("Invalid FRD connectivity at line %zu.\n", source_line);
+    TOPOLOGY_ERROR("Invalid FRD connectivity at line %zu.\n", source_line);
     return false;
   }
   std::vector<int> connectivity;
@@ -1339,7 +1339,7 @@ bool CoreResultsFrd::read_raw_connectivity(std::string_view line, std::size_t so
     int identifier = 0;
     if (!ResultReadNumbers::integer(fields[i], identifier))
     {
-      PRINT_ERROR("Invalid FRD connectivity integer at line %zu.\n", source_line);
+      TOPOLOGY_ERROR("Invalid FRD connectivity integer at line %zu.\n", source_line);
       return false;
     }
     connectivity.push_back(identifier);
@@ -1349,7 +1349,7 @@ bool CoreResultsFrd::read_raw_connectivity(std::string_view line, std::size_t so
   {
     if (!ResultsReaderPipeline::ids_fit(elements_connectivity.size(), 1))
     {
-      PRINT_ERROR("FRD connectivity index overflow at line %zu.\n", source_line);
+      TOPOLOGY_ERROR("FRD connectivity index overflow at line %zu.\n", source_line);
       return false;
     }
     element[2] = static_cast<int>(elements_connectivity.size());
@@ -1359,7 +1359,7 @@ bool CoreResultsFrd::read_raw_connectivity(std::string_view line, std::size_t so
   {
     if (element[2] < 0 || static_cast<std::size_t>(element[2]) >= elements_connectivity.size())
     {
-      PRINT_ERROR("Invalid FRD connectivity index at line %zu.\n", source_line);
+      TOPOLOGY_ERROR("Invalid FRD connectivity index at line %zu.\n", source_line);
       return false;
     }
     auto& stored = elements_connectivity[static_cast<std::size_t>(element[2])];
@@ -1533,12 +1533,12 @@ bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& st
       {
         if (!file.eof())
         {
-          PRINT_ERROR("Cannot read FRD results: I/O error or line exceeds 64 KiB.\n");
+          TOPOLOGY_ERROR("Cannot read FRD results: I/O error or line exceeds 64 KiB.\n");
           return false;
         }
         if (current_read_mode == 4)
         {
-          PRINT_ERROR("FRD result block is incomplete at end of file.\n");
+          TOPOLOGY_ERROR("FRD result block is incomplete at end of file.\n");
           return false;
         }
         state.finished = true;
@@ -1550,7 +1550,7 @@ bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& st
 
     if (raw.size() > ResultsReaderPipeline::max_line_bytes)
     {
-      PRINT_ERROR("FRD line %zu exceeds the supported line size.\n", state.line_number);
+      TOPOLOGY_ERROR("FRD line %zu exceeds the supported line size.\n", state.line_number);
       return false;
     }
     if (raw.find_first_not_of(" \t\r\n\f\v") == std::string::npos)
@@ -1561,7 +1561,7 @@ bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& st
     auto fields = split_line(raw);
     if (fields.empty() || fields.size() > ResultsReaderPipeline::max_fields)
     {
-      PRINT_ERROR("Invalid FRD record at line %zu.\n", state.line_number);
+      TOPOLOGY_ERROR("Invalid FRD record at line %zu.\n", state.line_number);
       return false;
     }
     const bool result_row = current_read_mode == 4 && fields[0] == "-1";
@@ -1580,7 +1580,7 @@ bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& st
     {
       if (state.data_id < 0 || state.components.empty())
       {
-        PRINT_ERROR("FRD result row has no component definition at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("FRD result row has no component definition at line %zu.\n", state.line_number);
         return false;
       }
       if (batch.lines.empty())
@@ -1607,7 +1607,7 @@ bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& st
     {
       if (fields[0] == "1UMAT" && fields.size() < 2)
       {
-        PRINT_ERROR("Invalid FRD material header at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid FRD material header at line %zu.\n", state.line_number);
         return false;
       }
       if (!read_header(fields))
@@ -1619,7 +1619,7 @@ bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& st
     {
       if (fields[0] == "-1" && (fields.size() < 5 || !ResultsReaderPipeline::ids_fit(nodes.size(), 1)))
       {
-        PRINT_ERROR("Invalid FRD node or node index overflow at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid FRD node or node index overflow at line %zu.\n", state.line_number);
         return false;
       }
       if (!read_node(fields))
@@ -1636,12 +1636,12 @@ bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& st
       }
       if (element_fields[0] == "-2" && elements.empty())
       {
-        PRINT_ERROR("FRD connectivity has no element at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("FRD connectivity has no element at line %zu.\n", state.line_number);
         return false;
       }
       if (element_fields[0] == "-1" && !ResultsReaderPipeline::ids_fit(elements.size(), 1))
       {
-        PRINT_ERROR("FRD element index overflow at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("FRD element index overflow at line %zu.\n", state.line_number);
         return false;
       }
       if (!read_element(element_fields))
@@ -1653,12 +1653,12 @@ bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& st
     {
       if ((fields[0] == "1PSTEP" && fields.size() < 4) || (fields[0] == "100CL" && fields.size() < 6) || (fields[0] == "-4" && fields.size() < 2))
       {
-        PRINT_ERROR("Incomplete FRD parameter header at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Incomplete FRD parameter header at line %zu.\n", state.line_number);
         return false;
       }
       if (fields[0] == "-4" && !ResultsReaderPipeline::ids_fit(result_blocks.size(), 1))
       {
-        PRINT_ERROR("FRD result block index overflow.\n");
+        TOPOLOGY_ERROR("FRD result block index overflow.\n");
         return false;
       }
       if (!read_parameter_header(fields))
@@ -1676,7 +1676,7 @@ bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& st
     {
       if (fields[0] != "-5" || fields.size() < 2)
       {
-        PRINT_ERROR("Unsupported FRD result record at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Unsupported FRD result record at line %zu.\n", state.line_number);
         return false;
       }
       if (!read_nodal_result_block(fields))
@@ -1689,7 +1689,7 @@ bool CoreResultsFrd::read_next_boost_batch(std::ifstream& file, FrdReadState& st
       }
       if (state.components.size() > ResultsReaderPipeline::max_fields)
       {
-        PRINT_ERROR("FRD result has too many components.\n");
+        TOPOLOGY_ERROR("FRD result has too many components.\n");
         return false;
       }
     }
@@ -1748,14 +1748,14 @@ bool CoreResultsFrd::append_boost_batch(FrdParsedBatch& batch)
 {
   if (batch.data_id < 0 || static_cast<std::size_t>(batch.data_id) >= result_block_data.size())
   {
-    PRINT_ERROR("Invalid FRD result destination.\n");
+    TOPOLOGY_ERROR("Invalid FRD result destination.\n");
     return false;
   }
   auto& values = result_block_data[batch.data_id];
   auto& mapping = result_block_node_data[batch.data_id];
   if (batch.values.size() != batch.node_data.size() || !ResultsReaderPipeline::ids_fit(values.size(), batch.values.size()))
   {
-    PRINT_ERROR("Invalid FRD batch size or result index overflow.\n");
+    TOPOLOGY_ERROR("Invalid FRD batch size or result index overflow.\n");
     return false;
   }
   const int offset = static_cast<int>(values.size());
@@ -1774,14 +1774,14 @@ bool CoreResultsFrd::finalize_boost_results()
   // No mesh/results is valid when no FRD output was requested.
   if (!ResultsReaderPipeline::ids_fit(0, nodes.size()))
   {
-    PRINT_ERROR("FRD exceeds the supported node index range.\n");
+    TOPOLOGY_ERROR("FRD exceeds the supported node index range.\n");
     return false;
   }
   for (const auto& element : elements)
   {
     if (element[2] < 0 || static_cast<std::size_t>(element[2]) >= elements_connectivity.size() || elements_connectivity[element[2]].empty())
     {
-      PRINT_ERROR("FRD element %d has incomplete connectivity.\n", element[0]);
+      TOPOLOGY_ERROR("FRD element %d has incomplete connectivity.\n", element[0]);
       return false;
     }
   }
@@ -2064,7 +2064,7 @@ bool CoreResultsFrd::read_nodes_thread(int start,int end,int data_start, int thr
       /*      
       std::string log;
       log = std::to_string(start)+ " -- " + std::to_string(ic) + " -- " + std::to_string(end) + " -- " + std::to_string(data_start+id) +  " \n";
-      PRINT_INFO("%s", log.c_str());
+      TOPOLOGY_INFO("%s", log.c_str());
       */
       this->progress[thread_id] = this->progress[thread_id] + 1;
     }else if (ic>end)
@@ -2090,7 +2090,7 @@ std::vector<std::string> CoreResultsFrd::split_element_line(const std::string& f
 
   if (frdline.size() < 24)
   {
-    PRINT_ERROR("Incomplete FRD element header.\n");
+    TOPOLOGY_ERROR("Incomplete FRD element header.\n");
     return {};
   }
 
@@ -2110,7 +2110,7 @@ std::vector<std::string> CoreResultsFrd::split_element_line(const std::string& f
 
     if (!(stream >> value) || !(stream >> std::ws).eof())
     {
-      PRINT_ERROR("Invalid integer field %zu in FRD element header.\n",
+      TOPOLOGY_ERROR("Invalid integer field %zu in FRD element header.\n",
                   i);
       return {};
     }
@@ -2877,7 +2877,7 @@ bool CoreResultsFrd::print_data()
     }
   }
 
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
   return true;
 }
 

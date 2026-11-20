@@ -161,7 +161,7 @@ bool CalculiXStepsInterface::modify_step(int step_id, int modify_type, std::vect
 }
 
 bool CalculiXStepsInterface::delete_step(int step_id) {
-  return ccx_core.steps->delete_step(step_id);
+  return ccx_core.delete_step(step_id);
 }
 
 bool CalculiXStepsInterface::step_add_loads(int step_id, int load_type, std::vector<int> load_ids) {

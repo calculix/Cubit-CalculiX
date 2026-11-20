@@ -4,7 +4,7 @@
 #include "Core/steps/CoreSteps.hpp"
 #include "Core/mesh/CoreMeshQuery.hpp"
 #include "ScientificNumber.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <cstddef>
 #include <set>
 #include <sstream>
@@ -21,7 +21,7 @@ std::string CoreTopologyAdjointStepExport::get_export(const CoreTopologyAdjointS
 
   if (data.steps.steps_data.empty())
   {
-    PRINT_ERROR("No analysis step is available for the adjoint solve.\n");
+    TOPOLOGY_ERROR("No analysis step is available for the adjoint solve.\n");
     return "";
   }
 
@@ -29,7 +29,7 @@ std::string CoreTopologyAdjointStepExport::get_export(const CoreTopologyAdjointS
 
   if (final_step.size() < 9)
   {
-    PRINT_ERROR("Invalid final analysis step data.\n");
+    TOPOLOGY_ERROR("Invalid final analysis step data.\n");
     return "";
   }
 
@@ -37,7 +37,7 @@ std::string CoreTopologyAdjointStepExport::get_export(const CoreTopologyAdjointS
 
   if (step_definition.empty())
   {
-    PRINT_ERROR("Unable to export the final analysis step definition.\n");
+    TOPOLOGY_ERROR("Unable to export the final analysis step definition.\n");
     return "";
   }
 
@@ -47,7 +47,7 @@ std::string CoreTopologyAdjointStepExport::get_export(const CoreTopologyAdjointS
   std::string error;
   if (!data.steps.get_step_axis_quantity(final_step[0], axisQuantity, error))
   {
-    PRINT_ERROR("Cannot export adjoint step axis: %s\n", error.c_str());
+    TOPOLOGY_ERROR("Cannot export adjoint step axis: %s\n", error.c_str());
     return {};
   }
   if (!axisQuantity.empty())
@@ -82,13 +82,13 @@ std::string CoreTopologyAdjointStepExport::get_export(const CoreTopologyAdjointS
 
   if (!data.fieldoutputs)
   {
-    PRINT_ERROR("Field output core is not initialized.\n");
+    TOPOLOGY_ERROR("Field output core is not initialized.\n");
     return "";
   }
 
   if (!data.historyoutputs)
   {
-    PRINT_ERROR("History output core is not initialized.\n");
+    TOPOLOGY_ERROR("History output core is not initialized.\n");
     return "";
   }
 

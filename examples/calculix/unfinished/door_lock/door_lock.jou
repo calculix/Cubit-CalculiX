@@ -121,8 +121,10 @@ ccx modify material 1 activate card elastic
 ccx create section solid block all material 1
 
 #rigid body
-ccx create constraint rigid body nodeset 2 ref 449 rot 450
-ccx create constraint rigid body nodeset 3 ref 451 rot 452
+ccx create rp 1 name "Control 1" vertex 449 rotation_vertex 450
+ccx create rigid body 1 name "Attachment 1" nodeset 2 rp 1
+ccx create rp 2 name "Control 2" vertex 451 rotation_vertex 452
+ccx create rigid body 2 name "Attachment 2" nodeset 3 rp 2
 
 # surface interaction
 #ccx create surfaceinteraction name "hard_contact" hard

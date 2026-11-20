@@ -84,7 +84,32 @@ namespace
           category = "Sections";
         }
       }
-      result.push_back({key, name, category, global, type, occurrence, false, set, output});
+      if (type == "PointMassHistory" || type == "SpringHistory")
+      {
+        category = type == "PointMassHistory" ? "Point masses" : "Springs";
+      }
+      if (type == "JointHistory")
+      {
+        category = "Joints";
+      }
+      auto group = set;
+      auto channel = output;
+      const auto point = metadata(table.get(), "ReferencePoint");
+      if (!point.empty())
+      {
+        category = "Reference points";
+        group = point + " (RP " + metadata(table.get(), "ReferencePointId") + ")";
+        const bool rotation = metadata(table.get(), "ReferencePointRole") == "Rotation";
+        if (output == "displacements")
+        {
+          channel = rotation ? "Rotation" : "Translation";
+        }
+        else if (output == "forces")
+        {
+          channel = rotation ? "Endpoint moment" : "Endpoint force";
+        }
+      }
+      result.push_back({key, name, category, global, type, occurrence, false, group, channel});
     }
     return result;
   }

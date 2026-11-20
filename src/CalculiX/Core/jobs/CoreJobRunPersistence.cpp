@@ -262,6 +262,7 @@ bool writeRecord(HDF5Tool& file, const std::string& path, const CalculiXJobRunRe
   }
   metadata["material_project"] = QString::fromStdString(record.materialProjectId);
   metadata["material_ids"] = materialIds;
+  metadata["connections"] = record.connections.json();
   metadata["unit_system"] = QString::fromStdString(record.unitSystem);
   QJsonObject axes;
   for (const auto& axis : record.step_axis_quantities)
@@ -317,6 +318,10 @@ bool readRecord(HDF5Tool& file, const std::string& path, CalculiXJobRunRecord& r
       return false;
     }
     record.materialIds.emplace(material.key().toStdString(), id);
+  }
+  if (!record.connections.restore(metadata.value("connections").toObject(), error))
+  {
+    return false;
   }
   record.unitSystem = metadata.value("unit_system").toString().toStdString();
   record.step_axis_quantities.clear();

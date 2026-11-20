@@ -10,6 +10,7 @@
 
 struct TopologyOptions;
 class JobsMonitor;
+class TopologyConsoleTab;
 class QStackedWidget;
 class TopologyManagementDensitySettingsWidget;
 class TopologyManagementLevelSetSettingsWidget;
@@ -65,7 +66,7 @@ private:
   };
 
 
-  enum Tab { SettingsTab, PreservationTab, RunTab, IterationsTab, AnimationTab, WrapTab };
+  enum Tab { SettingsTab, PreservationTab, RunTab, ConsoleTab, IterationsTab, AnimationTab, WrapTab };
   int currentTopologyId = -1;
   bool creating = false;
   bool refreshing = false;
@@ -121,6 +122,12 @@ private:
   void createSettingsTab(QWidget* tab);
   void createPreservationTab(QWidget* tab);
   void createRunTab(QWidget* tab);
+  void refreshConsole();
+  void openTopologyResults(bool selectedIteration);
+  bool topologyResultsAvailable() const;
+  QPushButton* runResultsButton = nullptr;
+  QPushButton* iterationResultsButton = nullptr;
+  TopologyConsoleTab* consoleTab = nullptr;
   void createIterationsTab(QWidget* tab);
   void createAnimationTab(QWidget* tab);
   void createWrapTab(QWidget* tab);

@@ -89,6 +89,7 @@ namespace SimResults
     std::string material_project;
     // Native block RGB in [0,1], frozen with the result source, independent of fields.
     std::optional<std::array<double,3>> solid_color;
+    bool initially_hidden = false;
   };
 
   struct Increment
@@ -113,6 +114,8 @@ namespace SimResults
     std::shared_ptr<vtkDataObject> dataset;
     std::vector<std::shared_ptr<vtkTable>> tables;
     std::vector<ResultsTableMetadata> table_metadata;
+    int topology_iteration = -1;
+    int topology_job = -1;
   };
 
   /** Complete, solver-independent result. No reader/model pointers are retained.

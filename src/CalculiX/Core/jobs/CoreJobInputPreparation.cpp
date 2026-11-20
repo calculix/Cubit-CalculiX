@@ -2,20 +2,20 @@
 #include "CoreJobExportContext.hpp"
 #include "Core/topology/CoreTopology.hpp"
 #include "Core/topology/CoreTopologyQuery.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <QScopedValueRollback>
 
 bool CoreJobInputPreparation::prepare(const CoreTopology* topology, CoreJobExportContext& active_context, int job_id, const std::string& filename, const std::function<bool(const std::string&)>& execute_command)
 {
   if (job_id <= 0 || filename.empty() || filename.find_first_of("\"\r\n") != std::string::npos)
   {
-    PRINT_ERROR("Invalid job input request.\n");
+    TOPOLOGY_ERROR("Invalid job input request.\n");
     return false;
   }
 
   if (active_context.job_id > 0)
   {
-    PRINT_ERROR("A job input export is already active.\n");
+    TOPOLOGY_ERROR("A job input export is already active.\n");
     return false;
   }
 
@@ -25,7 +25,7 @@ bool CoreJobInputPreparation::prepare(const CoreTopology* topology, CoreJobExpor
 
   if (!topology)
   {
-    PRINT_ERROR("Invalid job topology context query.\n");
+    TOPOLOGY_ERROR("Invalid job topology context query.\n");
     return false;
   }
 
@@ -54,11 +54,11 @@ bool CoreJobInputPreparation::prepare(const CoreTopology* topology, CoreJobExpor
 
   command += " overwrite";
 
-  PRINT_INFO("Job %d: preparing input %s.\n", job_id, filename.c_str());
+  TOPOLOGY_INFO("Job %d: preparing input %s.\n", job_id, filename.c_str());
   if (!execute_command(command))
   {
     return false;
   }
-  PRINT_INFO("Job %d: input export completed.\n", job_id);
+  TOPOLOGY_INFO("Job %d: input export completed.\n", job_id);
   return true;
 }

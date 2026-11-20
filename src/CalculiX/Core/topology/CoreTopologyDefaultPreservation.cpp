@@ -10,7 +10,7 @@
 #include "Core/loads/CoreLoadsFilm.hpp"
 #include "Core/loads/CoreLoadsRadiation.hpp"
 #include "Core/loads/CoreLoadsSurfaceTraction.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CoreTopologyDefaultPreservation::collect(const CoreTopologyPreservationData& data, std::map<int, std::set<int>>& default_sets, std::set<int>& default_elements)
 {
@@ -78,7 +78,7 @@ bool CoreTopologyDefaultPreservation::collect(const CoreTopologyPreservationData
   {
     if (!data.blocks)
     {
-      PRINT_ERROR("Block core is not initialized.\n");
+      TOPOLOGY_ERROR("Block core is not initialized.\n");
       return false;
     }
 

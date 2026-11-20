@@ -2,7 +2,7 @@
 #include "CoreTopologyResults.hpp"
 #include "CoreTopologyDisplacementResults.hpp"
 #include "CoreTopologyTensorResults.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CalculiXCore::read_topology_job_displacements(int job_id, std::map<int, std::array<double, 3>>& displacements)
 {
@@ -10,7 +10,7 @@ bool CalculiXCore::read_topology_job_displacements(int job_id, std::map<int, std
 
   if (!results || !jobs || !topology || !mat)
   {
-    PRINT_ERROR("Topology displacement results require a completed job.\n");
+    TOPOLOGY_ERROR("Topology displacement results require a completed job.\n");
     return false;
   }
 
@@ -29,7 +29,7 @@ bool CalculiXCore::read_topology_displacement(int topology_id, int iteration_id,
 
   if (!topology || !results || !jobs || !me_iface)
   {
-    PRINT_ERROR("Topology displacement interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology displacement interfaces are not initialized.\n");
     return false;
   }
 
@@ -42,13 +42,13 @@ bool CalculiXCore::read_topology_job_element_tensors(int job_id, const std::stri
 
   if (key != "S" && key != "ME")
   {
-    PRINT_ERROR("Topology tensor reader supports S and ME only.\n");
+    TOPOLOGY_ERROR("Topology tensor reader supports S and ME only.\n");
     return false;
   }
 
   if (!topology || !mat || !results || !jobs)
   {
-    PRINT_ERROR("Topology tensor results require a completed job.\n");
+    TOPOLOGY_ERROR("Topology tensor results require a completed job.\n");
     return false;
   }
 
@@ -61,7 +61,7 @@ bool CalculiXCore::read_topology_element_energies(int topology_id, int iteration
 
   if (!topology || !mat || !results || !jobs)
   {
-    PRINT_ERROR("Invalid topology energy query.\n");
+    TOPOLOGY_ERROR("Invalid topology energy query.\n");
     return false;
   }
 

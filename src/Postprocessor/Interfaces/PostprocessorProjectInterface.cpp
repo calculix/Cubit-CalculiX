@@ -68,7 +68,8 @@ bool PostprocessorApplicationInterface::resolve_project_sources(std::string& err
         {
           const auto* actual = std::get_if<SimResults::JobSourceReference>(&publication.reference);
           available = actual && actual->application_id == job->application_id && actual->project_id == job->project_id &&
-            actual->job_id == job->job_id && !job->result_identity.empty() && actual->result_identity == job->result_identity &&
+            actual->job_id == job->job_id && actual->topology_threshold == job->topology_threshold &&
+            actual->topology_last_iteration == job->topology_last_iteration && !job->result_identity.empty() && actual->result_identity == job->result_identity &&
             publication.data->result_identity == job->result_identity;
         }
         else

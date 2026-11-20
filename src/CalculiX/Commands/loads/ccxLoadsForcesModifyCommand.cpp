@@ -5,6 +5,7 @@
 #include "Core/loads/CalculiXLoadsInterface.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
 #include "CubitInterface.hpp"
+#include "Core/connections/CalculiXConnectionsInterface.hpp"
 #include "CubitMessage.hpp"
 
 ccxLoadsForcesModifyCommand::ccxLoadsForcesModifyCommand()
@@ -17,7 +18,7 @@ std::vector<std::string> ccxLoadsForcesModifyCommand::get_syntax()
 {
   std::vector<std::string> syntax_list;
   std::string syntax = "ccx modify force <value:label='force id',help='<force id>'> ";
-  syntax.append("[nodeset <value:label='nodeset id',help='<nodeset id>'>] ");
+  syntax.append("[{nodeset <value:label='nodeset id'> | rp <value:label='rp id'>}] ");
 
   for (int dof = 1; dof <= 6; dof++)
   {
@@ -36,7 +37,7 @@ std::vector<std::string> ccxLoadsForcesModifyCommand::get_syntax()
 std::vector<std::string> ccxLoadsForcesModifyCommand::get_syntax_help()
 {
   std::vector<std::string> help(1);
-  help[0] = "ccx modify force <force id> [nodeset <nodeset id>] ";
+  help[0] = "ccx modify force <force id> [{nodeset <id> | rp <id>}] ";
   help[0].append("[dof_1 <value>] [dof_2 <value>] [dof_3 <value>] ");
   help[0].append("[dof_4 <value>] [dof_5 <value>] [dof_6 <value>] ");
   help[0].append("[op {mod | new}] [amplitude <amplitude id>] ");
@@ -57,11 +58,12 @@ bool ccxLoadsForcesModifyCommand::execute(CubitCommandData &data)
   CalculiXLoadsInterface ccx_loads_iface;
   CalculiXMeshInterface ccx_mesh_iface;
 
-  std::vector<std::string> options(5);
+  std::vector<std::string> options(6);
   std::vector<double> options2(6, 0.0);
   std::vector<int> options_marker(11, 0);
   int force_id = -1;
-  int nodeset_id = -1;
+  int nodeset_id = 0;
+  int rp_id = 0;
   int amplitude_id = -1;
   double timedelay_value = 0.0;
 
@@ -88,14 +90,26 @@ bool ccxLoadsForcesModifyCommand::execute(CubitCommandData &data)
     options[2] = ccx_application_iface.to_string_scientific(timedelay_value);
     options_marker[2] = 1;
   }
-  if (data.get_value("nodeset id", nodeset_id))
+  if (data.get_value("rp id", rp_id))
+  {
+    if (!CalculiXConnectionsInterface().has_point(rp_id))
+    {
+      PRINT_ERROR("Reference point %d does not exist.\n", rp_id);
+      return false;
+    }
+  }
+  else if (data.get_value("nodeset id", nodeset_id))
   {
     if (!ccx_mesh_iface.check_nodeset_exists(nodeset_id))
     {
       PRINT_ERROR("Nodeset %d does not exist.\n", nodeset_id);
       return false;
     }
+  }
+  if (rp_id > 0 || nodeset_id > 0)
+  {
     options[3] = std::to_string(nodeset_id);
+    options[5] = std::to_string(rp_id);
     options_marker[3] = 1;
   }
   for (size_t i = 0; i < options2.size(); i++)

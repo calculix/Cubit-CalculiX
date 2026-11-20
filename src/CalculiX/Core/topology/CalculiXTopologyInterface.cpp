@@ -11,7 +11,7 @@
 
 #include "Core/topology/CoreTopology.hpp"
 #include "Core/materials/CoreMaterials.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "Core/loadCalculiXCore.hpp"
 
 bool CalculiXTopologyInterface::run_topology(int topology_id, bool wait)
@@ -60,7 +60,7 @@ int CalculiXTopologyInterface::run_topology_iteration(int topology_id, int itera
 {
   if (!ccx_core.topologyoptimization)
   {
-    PRINT_ERROR("Topology optimization controller is not initialized.\n");
+    TOPOLOGY_ERROR("Topology optimization controller is not initialized.\n");
     return -1;
   }
 
@@ -71,7 +71,7 @@ bool CalculiXTopologyInterface::create_topology(int topology_id, const TopologyO
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -82,7 +82,7 @@ bool CalculiXTopologyInterface::modify_topology(int topology_id, const TopologyO
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -93,7 +93,7 @@ bool CalculiXTopologyInterface::delete_topology(int topology_id)
 {
   if (!ccx_core.topology || !ccx_core.jobs)
   {
-    PRINT_ERROR("Topology or job core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology or job core is not initialized.\n");
     return false;
   }
 
@@ -113,7 +113,7 @@ bool CalculiXTopologyInterface::reset_preserved_sets(int topology_id)
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -124,7 +124,7 @@ bool CalculiXTopologyInterface::add_preserved_sets(int topology_id, int set_type
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -135,7 +135,7 @@ bool CalculiXTopologyInterface::remove_preserved_sets(int topology_id, int set_t
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -148,13 +148,13 @@ bool CalculiXTopologyInterface::get_topology_set_element_ids(int topology_id, in
 
   if (!ccx_core.mat || !ccx_core.me_iface)
   {
-    PRINT_ERROR("Topology mesh/material interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology mesh/material interfaces are not initialized.\n");
     return false;
   }
 
   if (!ccx_core.cb)
   {
-    PRINT_ERROR("Block core is not initialized.\n");
+    TOPOLOGY_ERROR("Block core is not initialized.\n");
     return false;
   }
 
@@ -165,7 +165,7 @@ bool CalculiXTopologyInterface::initialize_topology(int topology_id, const std::
 {
   if (!ccx_core.mat || !ccx_core.sections || !ccx_core.cb || !ccx_core.me_iface)
   {
-    PRINT_ERROR("Topology initialization interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology initialization interfaces are not initialized.\n");
     return false;
   }
 
@@ -176,7 +176,7 @@ std::vector<std::vector<int>> CalculiXTopologyInterface::get_topology_element_pr
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return {};
   }
 
@@ -187,7 +187,7 @@ bool CalculiXTopologyInterface::set_topology_iteration_factors(int topology_id, 
 {
   if (!ccx_core.topology || !ccx_core.mat)
   {
-    PRINT_ERROR("Topology/material cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology/material cores are not initialized.\n");
     return false;
   }
 
@@ -198,7 +198,7 @@ bool CalculiXTopologyInterface::check_topology_material_assignment(int topology_
 {
   if (!ccx_core.mat)
   {
-    PRINT_ERROR("Topology material core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology material core is not initialized.\n");
     return false;
   }
 
@@ -209,7 +209,7 @@ std::string CalculiXTopologyInterface::get_topology_material_name(int topology_i
 {
   if (!ccx_core.mat)
   {
-    PRINT_ERROR("Topology material core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology material core is not initialized.\n");
     return "";
   }
 
@@ -220,7 +220,7 @@ bool CalculiXTopologyInterface::get_topology_group_material_name(int topology_id
 {
   if (!ccx_core.mat)
   {
-    PRINT_ERROR("Topology material core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology material core is not initialized.\n");
     return false;
   }
 
@@ -231,7 +231,7 @@ std::vector<double> CalculiXTopologyInterface::get_topology_parameters(int topol
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return {};
   }
 
@@ -243,7 +243,7 @@ bool CalculiXTopologyInterface::get_topology_settings(int topology_id, TopologyO
   if (!ccx_core.topology)
   {
     options = {};
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -254,7 +254,7 @@ int CalculiXTopologyInterface::get_topology_iteration_job_id(int topology_id, in
 {
   if (!ccx_core.topology || !ccx_core.jobs)
   {
-    PRINT_ERROR("Invalid topology iteration query.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration query.\n");
     return -1;
   }
 
@@ -265,7 +265,7 @@ int CalculiXTopologyInterface::get_topology_iteration_adjoint_job_id(int topolog
 {
   if (!ccx_core.topology || !ccx_core.jobs)
   {
-    PRINT_ERROR("Invalid topology adjoint job query.\n");
+    TOPOLOGY_ERROR("Invalid topology adjoint job query.\n");
     return -1;
   }
 
@@ -276,7 +276,7 @@ std::vector<std::vector<std::string>> CalculiXTopologyInterface::get_topology_it
 {
   if (!ccx_core.topology || !ccx_core.jobs)
   {
-    PRINT_ERROR("Topology/job cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology/job cores are not initialized.\n");
     return {};
   }
 
@@ -287,7 +287,7 @@ bool CalculiXTopologyInterface::select_topology_iteration(int topology_id, int i
 {
   if (!ccx_core.topology || !ccx_core.mat || !ccx_core.jobs)
   {
-    PRINT_ERROR("Invalid topology iteration selection request.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration selection request.\n");
     return false;
   }
 
@@ -298,7 +298,7 @@ std::string CalculiXTopologyInterface::get_topology_run_state(int topology_id)
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return "";
   }
 
@@ -329,7 +329,7 @@ std::vector<std::vector<double>> CalculiXTopologyInterface::get_topology_iterati
 {
   if (!ccx_core.topology || !ccx_core.mat || !ccx_core.jobs)
   {
-    PRINT_ERROR("Invalid topology element-data request.\n");
+    TOPOLOGY_ERROR("Invalid topology element-data request.\n");
     return {};
   }
 

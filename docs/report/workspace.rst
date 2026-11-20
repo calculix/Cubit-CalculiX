@@ -17,8 +17,7 @@ Generate a report using the CalculiX template and its default profile::
    sim workspace report
    report ccx job 1
 
-The Source dropdown lists current models and jobs published by registered
-workspace providers. Entries show names rather than requiring command prefixes
+The Source dropdown lists jobs published by registered workspace providers. Entries show names rather than requiring command prefixes
 or manually entered IDs. Running jobs and missing job decks are disabled with
 an explanation. Selection is preserved by source identity when the list refreshes.
 
@@ -39,9 +38,10 @@ instance. Failure preserves the previous report. Notes retain their stable
 section associations. Different jobs and the current model keep separate reports.
 Model-only reports have no associated solver results.
 
-The Source dropdown is the only report navigator. Stored reports remain listed
-and selectable when their input files/provider sources are unavailable; Generate
-and Update are disabled for those entries. Refresh does not submit commands.
+Stored job reports remain listed in the Source dropdown when their input files
+or providers are unavailable. Generate and Update are disabled for those jobs.
+Use the commands above to open or generate a current-model report. Refreshing
+the dropdown does not submit commands.
 
 Generation updates the central preview. Open preview / Export opens the separate
 preview window. Both viewers display continuously stacked pages with vertical
@@ -281,7 +281,9 @@ preparation when the Report GUI is available; headless generation stays possible
 Content and Outline
 -------------------
 
-The left dock has two tabs. Content groups the template's existing checkboxes
+**Report content** opens on the left in a new or undocked Report layout. Use
+**Report > Report content** to reopen it after closing it. The dock has two tabs.
+Content groups the template's existing checkboxes
 under Document, Model, Analysis steps, Model and setup images, and Postprocessor.
 Header/footer options, requested outputs and per-step images have nested groups.
 Group checkboxes apply one atomic settings command; partial selections are shown

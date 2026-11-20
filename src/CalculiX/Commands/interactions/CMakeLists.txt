@@ -7,12 +7,6 @@ target_sources(calculix_commands PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintEquationCreateFromCoincidentNodesCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintEquationModifyCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintEquationModifyCommand.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintRigidBody2CreateCommand.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintRigidBody2CreateCommand.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintRigidBodyCreateCommand.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintRigidBodyCreateCommand.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintRigidBodyModifyCommand.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintRigidBodyModifyCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintTieCreateCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintTieCreateCommand.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxConstraintTieCreateFromCubitContactPairCommand.cpp

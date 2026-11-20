@@ -1,5 +1,7 @@
 target_sources(calculix_gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagement.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyConsoleTab.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/TopologyConsoleTab.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagement.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementSettings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/TopologyManagementPreservation.cpp

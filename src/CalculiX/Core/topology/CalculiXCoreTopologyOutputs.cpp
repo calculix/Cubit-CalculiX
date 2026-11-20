@@ -5,13 +5,13 @@
 #include "CoreTopologyFieldOutputPreparation.hpp"
 #include "Core/mesh/CoreBlocks.hpp"
 #include "Core/mesh/CoreMeshQuery.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CalculiXCore::prepare_topology_history_outputs(int topology_id, const std::set<int>& block_ids)
 {
   if (!topology || !steps || !historyoutputs)
   {
-    PRINT_ERROR("Topology history output cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology history output cores are not initialized.\n");
     return false;
   }
 
@@ -36,7 +36,7 @@ bool CalculiXCore::ensure_topology_element_history_output(int topology_id, int s
 {
   if (!historyoutputs || !steps || !cb || !cb->check_block_exists(block_id))
   {
-    PRINT_ERROR("Invalid topology history output request.\n");
+    TOPOLOGY_ERROR("Invalid topology history output request.\n");
     return false;
   }
 
@@ -52,7 +52,7 @@ bool CalculiXCore::ensure_topology_displacement_field_output(int topology_id, in
 {
   if (!fieldoutputs || !steps)
   {
-    PRINT_ERROR("Topology field output interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology field output interfaces are not initialized.\n");
     return false;
   }
 
@@ -68,7 +68,7 @@ bool CalculiXCore::ensure_topology_node_history_output(int topology_id, int step
 {
   if (!historyoutputs || !steps || !me_iface || !CoreMeshQuery(*me_iface).check_nodeset_exists(nodeset_id))
   {
-    PRINT_ERROR("Invalid topology history output request.\n");
+    TOPOLOGY_ERROR("Invalid topology history output request.\n");
     return false;
   }
 

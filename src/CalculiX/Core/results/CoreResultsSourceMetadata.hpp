@@ -2,6 +2,7 @@
 #define CORERESULTSSOURCEMETADATA_HPP
 #include <QJsonObject>
 #include <map>
+#include "Core/connections/ConnectionRunMap.hpp"
 #include <string>
 class CalculiXJobRunRecord;
 class CoreResultsSourceMetadata {
@@ -10,6 +11,7 @@ public:
   explicit CoreResultsSourceMetadata(const CalculiXJobRunRecord& record);
   QJsonObject to_json() const;
   static bool from_json(const QJsonObject& value, CoreResultsSourceMetadata& output, std::string& error);
+  ConnectionRunMap connections;
   std::string unitSystem;
   std::map<int, std::string> step_axis_quantities;
   std::string launchId;

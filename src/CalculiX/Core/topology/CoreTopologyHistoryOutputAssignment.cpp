@@ -1,6 +1,6 @@
 #include "CoreTopologyHistoryOutputAssignment.hpp"
 #include "Core/steps/CoreSteps.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <algorithm>
 #include <cstddef>
 
@@ -12,7 +12,7 @@ bool CoreTopologyHistoryOutputAssignment::collect_ids(CoreSteps& steps, int step
 
   if (step_index < 0 || steps.steps_data[step_index].size() < 8)
   {
-    PRINT_ERROR("Missing step %d.\n", step_id);
+    TOPOLOGY_ERROR("Missing step %d.\n", step_id);
     return false;
   }
 
@@ -22,7 +22,7 @@ bool CoreTopologyHistoryOutputAssignment::collect_ids(CoreSteps& steps, int step
   {
     if (index < 0 || static_cast<std::size_t>(index) >= steps.historyoutputs_data.size())
     {
-      PRINT_ERROR("Invalid step history output assignment.\n");
+      TOPOLOGY_ERROR("Invalid step history output assignment.\n");
       return false;
     }
 
@@ -30,7 +30,7 @@ bool CoreTopologyHistoryOutputAssignment::collect_ids(CoreSteps& steps, int step
 
     if (assignment.size() < 2)
     {
-      PRINT_ERROR("Invalid step history output assignment.\n");
+      TOPOLOGY_ERROR("Invalid step history output assignment.\n");
       return false;
     }
 
@@ -63,7 +63,7 @@ bool CoreTopologyHistoryOutputAssignment::ensure_assigned(CoreSteps& steps, int 
     {
       if (index < 0 || static_cast<std::size_t>(index) >= steps.historyoutputs_data.size())
       {
-        PRINT_ERROR("Invalid step history output assignment.\n");
+        TOPOLOGY_ERROR("Invalid step history output assignment.\n");
         return false;
       }
 
@@ -78,7 +78,7 @@ bool CoreTopologyHistoryOutputAssignment::ensure_assigned(CoreSteps& steps, int 
 
   if (!assigned)
   {
-    PRINT_ERROR("History output %d was not assigned to step %d.\n", output_id, step_id);
+    TOPOLOGY_ERROR("History output %d was not assigned to step %d.\n", output_id, step_id);
     return false;
   }
 

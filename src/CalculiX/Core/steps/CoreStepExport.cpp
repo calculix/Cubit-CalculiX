@@ -1,4 +1,11 @@
 #include "CoreStepExport.hpp"
+#include "Core/connections/CoreConnections.hpp"
+#include "Core/connections/CoreDiscreteElementExport.hpp"
+#include "Core/loads/CoreLoadsForces.hpp"
+#include "Core/units/CalculiXPhysicalModelUnits.hpp"
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QJsonArray>
 #include "CoreSteps.hpp"
 #include "CoreStepLoadExport.hpp"
 #include "CoreStepBCExport.hpp"
@@ -7,6 +14,7 @@
 #include "Core/mesh/CoreSidesetFaces.hpp"
 #include "CubitMessage.hpp"
 
+#include <set>
 #include <vector>
 
 std::string CoreStepExport::get_export(const CoreStepExportData& data)
@@ -51,6 +59,46 @@ std::string CoreStepExport::get_export(const CoreStepExportData& data)
       return {};
     }
 
+    if (!data.connections.attachments().empty())
+    {
+      auto forces = data.loadsforces;
+      if (!forces.unit_view && !CalculiXPhysicalModelUnits::convert(forces,CalculiXUnitView::Solver,error))
+      {
+        PRINT_ERROR("%s\n",error.c_str());
+        return {};
+      }
+      for (int link : load_ids)
+      {
+        const auto& assignment = data.steps.loads_data.at(link);
+        if (assignment[1] != 1)
+        {
+          continue;
+        }
+        const int index = forces.get_loads_data_id_from_load_id(assignment[2]);
+        if (index < 0 || forces.loads_data[index].size() < 8)
+        {
+          continue;
+        }
+        const auto& record = forces.loads_data[index];
+        for (const auto& entry : data.connections.attachments())
+        {
+          if (entry.second.point != record[7])
+          {
+            continue;
+          }
+          const auto& values = forces.force_data.at(forces.get_force_data_id_from_force_id(record[5]));
+          QJsonArray components;
+          for (int i = 1; i <= 6; ++i)
+          {
+            components.append(values.at(i));
+          }
+          const auto name = forces.name_data.at(forces.get_name_data_id_from_name_id(record[6])).at(1);
+          QJsonObject json{{"attachment",entry.first},{"step",solverStep},{"load",record[0]},{"name",QString::fromStdString(name)},
+            {"parameters",QString::fromStdString(forces.get_load_parameter_export(record[0]))},{"components",components}};
+          lines.push_back("** CUBIT_SIM_DA_LOAD " + QJsonDocument(json).toJson(QJsonDocument::Compact).toBase64().toStdString());
+        }
+      }
+    }
     const auto bc_ids = data.steps.get_bc_data_ids_from_bcs_id(step[6]);
 
     if (!CoreStepBCExport::append(data.steps, data.bcsdisplacements, data.customlines, data.mesh, bc_ids, lines) ||
@@ -60,6 +108,57 @@ std::string CoreStepExport::get_export(const CoreStepExportData& data)
     }
 
     CoreStepOutputExport::append_history(data.steps, data.historyoutputs, step[7], lines);
+    if (step[3] == 2 || step[3] == 6 || step[3] == 7 || step[3] == 8)
+    {
+      for (const auto& entry : data.connections.attachments())
+      {
+        const auto& a = entry.second;
+        const int history = data.connections.points().at(a.point).history_step;
+        if (history != -1 && history != step[0])
+        {
+          continue;
+        }
+        const auto prefix = "CCX_DA_" + std::to_string(a.id);
+        if (a.resultant)
+        {
+          lines.push_back("*SECTION PRINT,NAME=" + prefix + "_FACE,SURFACE=" + prefix + "_FACE");
+          lines.push_back("SOF");
+        }
+        if (a.mean)
+        {
+          lines.push_back("*NODE PRINT,NSET=" + prefix + "_NODES");
+          lines.push_back("U");
+        }
+      }
+      std::set<int> joint_points;
+      for (const auto& entry : data.connections.joints())
+      {
+        const auto& joint = entry.second;
+        if (joint.history_step == -1 || joint.history_step == step[0])
+        {
+          joint_points.insert(joint.point_a);
+          joint_points.insert(joint.point_b);
+        }
+      }
+      for (const auto& entry : data.connections.bodies())
+      {
+        const auto& point = data.connections.points().at(entry.second.point);
+        if (point.history_step == -1 || point.history_step == step[0] || joint_points.count(point.id))
+        {
+          const auto prefix = "*NODE PRINT,NSET=CCX_RP_" + std::to_string(point.id);
+          for (const auto* suffix : {"_REF", "_ROT"})
+          {
+            lines.push_back(prefix + suffix + ",GLOBAL=YES");
+            lines.push_back("U, RF");
+          }
+        }
+      }
+    }
+    if (CoreDiscreteElementExport::needs_history(data.connections, step[0], step[3]))
+    {
+      lines.push_back("*NODE PRINT,NSET=" + CoreDiscreteElementExport::history_set(solverStep) + ",GLOBAL=YES");
+      lines.push_back("U");
+    }
     CoreStepOutputExport::append_field(data.steps, data.fieldoutputs, step[8], lines);
 
     const auto before = data.customlines.get_customline_data("BEFORE", "STEP_END", step[0]);

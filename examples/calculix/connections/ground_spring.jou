@@ -1,0 +1,28 @@
+#!cubit
+reset
+# With lateral translations fixed, a 10 N force acts at the spring node.
+# The solid translates by 0.05 mm in X for k = 200 N/mm.
+create brick x 10 y 10 z 10
+block 1 add volume 1
+nodeset 1 add volume 1
+nodeset 1 name "Lateral"
+nodeset 2 add vertex 1
+nodeset 2 name "Loaded"
+ccx units system "N-mm-s"
+ccx units geometry unit "mm"
+ccx create material "Steel"
+ccx modify material 1 card elastic model iso
+ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"
+ccx modify material 1 activate card elastic
+ccx create spring 1 name "X support" from vertex 1 to ground direction x stiffness 200 unit "N/mm"
+ccx create displacement nodeset 1 dof_2 0 dof_3 0
+ccx create force nodeset 2 dof_1 10
+ccx create step name "Extension" static
+ccx step 1 add bc displacement 1
+ccx step 1 add load force 1
+ccx create section solid block 1 material 1
+block 1 element type HEX8
+volume all size 5
+mesh volume all
+ccx create job name "ground_spring"
+ccx run job 1

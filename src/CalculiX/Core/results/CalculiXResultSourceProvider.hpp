@@ -22,6 +22,9 @@ public:
     SimResults::PublishedResultSource& output,
     std::string& error) override;
 
+  bool repartition_topology(const SimResults::JobSourceReference& current, double threshold,
+    SimResults::PublishedResultSource& output, std::string& error) override;
+
 private:
   // Explicit snapshot requests are matched against retained converted data only.
   // Refresh deliberately reloads current files instead of matching the old token.

@@ -1,3 +1,5 @@
+add_subdirectory(topology)
+
 target_sources(calculix_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsSourceMetadata.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsSourceMetadata.hpp
@@ -26,6 +28,8 @@ target_sources(calculix_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsProject.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreResultsProject.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/vtk/CoreResultsVtkStructs.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/vtk/CoreDiscreteElementHistory.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/vtk/CoreDiscreteElementHistory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/vtk/CoreResultsVtkConverter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/vtk/CoreResultsVtkConverter.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/vtk/CoreResultsVtkPipeline.hpp

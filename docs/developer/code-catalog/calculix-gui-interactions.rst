@@ -22,10 +22,6 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/GUI/interactions/ConstraintsCreateEquationPanel.hpp <../../../src/CalculiX/GUI/interactions/ConstraintsCreateEquationPanel.hpp>`
      - ``ConstraintsCreateEquationPanel``
-   * - :download:`src/CalculiX/GUI/interactions/ConstraintsCreateRigidBodyPanel.cpp <../../../src/CalculiX/GUI/interactions/ConstraintsCreateRigidBodyPanel.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/GUI/interactions/ConstraintsCreateRigidBodyPanel.hpp <../../../src/CalculiX/GUI/interactions/ConstraintsCreateRigidBodyPanel.hpp>`
-     - ``ConstraintsCreateRigidBodyPanel``
    * - :download:`src/CalculiX/GUI/interactions/ConstraintsCreateTieFromCubitContactPairPanel.cpp <../../../src/CalculiX/GUI/interactions/ConstraintsCreateTieFromCubitContactPairPanel.cpp>`
      - ``Implementation / integration``
    * - :download:`src/CalculiX/GUI/interactions/ConstraintsCreateTieFromCubitContactPairPanel.hpp <../../../src/CalculiX/GUI/interactions/ConstraintsCreateTieFromCubitContactPairPanel.hpp>`
@@ -42,10 +38,6 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/GUI/interactions/ConstraintsModifyEquationPanel.hpp <../../../src/CalculiX/GUI/interactions/ConstraintsModifyEquationPanel.hpp>`
      - ``ConstraintsModifyEquationPanel``
-   * - :download:`src/CalculiX/GUI/interactions/ConstraintsModifyRigidBodyPanel.cpp <../../../src/CalculiX/GUI/interactions/ConstraintsModifyRigidBodyPanel.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/GUI/interactions/ConstraintsModifyRigidBodyPanel.hpp <../../../src/CalculiX/GUI/interactions/ConstraintsModifyRigidBodyPanel.hpp>`
-     - ``ConstraintsModifyRigidBodyPanel``
    * - :download:`src/CalculiX/GUI/interactions/ConstraintsModifyTiePanel.cpp <../../../src/CalculiX/GUI/interactions/ConstraintsModifyTiePanel.cpp>`
      - ``Implementation / integration``
    * - :download:`src/CalculiX/GUI/interactions/ConstraintsModifyTiePanel.hpp <../../../src/CalculiX/GUI/interactions/ConstraintsModifyTiePanel.hpp>`

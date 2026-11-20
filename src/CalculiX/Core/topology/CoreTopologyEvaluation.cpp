@@ -3,14 +3,14 @@
 #include "CoreTopologyQuery.hpp"
 #include "Core/materials/CoreMaterials.hpp"
 #include "Core/jobs/CoreJobs.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <cmath>
 
 bool CoreTopologyEvaluation::evaluate_compliance(CoreTopology& topology, const CoreMaterials& materials, int topology_id, int iteration_id, const std::map<int, double>& energies)
 {
   if (iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology compliance evaluation request.\n");
+    TOPOLOGY_ERROR("Invalid topology compliance evaluation request.\n");
     return false;
   }
 
@@ -18,7 +18,7 @@ bool CoreTopologyEvaluation::evaluate_compliance(CoreTopology& topology, const C
 
   if (collection == materials.topology_material_data.end())
   {
-    PRINT_ERROR("Topology material data is missing.\n");
+    TOPOLOGY_ERROR("Topology material data is missing.\n");
     return false;
   }
 
@@ -26,7 +26,7 @@ bool CoreTopologyEvaluation::evaluate_compliance(CoreTopology& topology, const C
 
   if (factors == collection->second.iteration_factors.end())
   {
-    PRINT_ERROR("Topology iteration stiffness factors are missing.\n");
+    TOPOLOGY_ERROR("Topology iteration stiffness factors are missing.\n");
     return false;
   }
 
@@ -42,7 +42,7 @@ bool CoreTopologyEvaluation::evaluate_displacement(CoreTopology& topology, const
 {
   if (iteration_id < 1 || !std::isfinite(value) || value < 0.0 || node_id <= 0)
   {
-    PRINT_ERROR("Invalid topology displacement evaluation request.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement evaluation request.\n");
     return false;
   }
 
@@ -50,7 +50,7 @@ bool CoreTopologyEvaluation::evaluate_displacement(CoreTopology& topology, const
 
   if (physical_job <= 0 || jobs.get_job_status(physical_job) != 2)
   {
-    PRINT_ERROR("Completed physical results are required for displacement evaluation.\n");
+    TOPOLOGY_ERROR("Completed physical results are required for displacement evaluation.\n");
     return false;
   }
 
@@ -60,7 +60,7 @@ bool CoreTopologyEvaluation::evaluate_displacement(CoreTopology& topology, const
 
     if (adjoint_job <= 0 || jobs.get_job_status(adjoint_job) != 2)
     {
-      PRINT_ERROR("Completed adjoint results are required for displacement evaluation.\n");
+      TOPOLOGY_ERROR("Completed adjoint results are required for displacement evaluation.\n");
       return false;
     }
   }
@@ -69,13 +69,13 @@ bool CoreTopologyEvaluation::evaluate_displacement(CoreTopology& topology, const
 
   if (collection == materials.topology_material_data.end() || collection->second.element_base_material.empty())
   {
-    PRINT_ERROR("Topology material data is missing.\n");
+    TOPOLOGY_ERROR("Topology material data is missing.\n");
     return false;
   }
 
   if (element_integrals.size() != collection->second.element_base_material.size())
   {
-    PRINT_ERROR("Incomplete topology displacement integrals.\n");
+    TOPOLOGY_ERROR("Incomplete topology displacement integrals.\n");
     return false;
   }
 
@@ -83,7 +83,7 @@ bool CoreTopologyEvaluation::evaluate_displacement(CoreTopology& topology, const
   {
     if (element_integrals.count(assignment.first) == 0)
     {
-      PRINT_ERROR("Missing displacement integral for element %d.\n", assignment.first);
+      TOPOLOGY_ERROR("Missing displacement integral for element %d.\n", assignment.first);
       return false;
     }
   }
@@ -92,7 +92,7 @@ bool CoreTopologyEvaluation::evaluate_displacement(CoreTopology& topology, const
 
   if (factors == collection->second.iteration_factors.end())
   {
-    PRINT_ERROR("Topology iteration stiffness factors are missing.\n");
+    TOPOLOGY_ERROR("Topology iteration stiffness factors are missing.\n");
     return false;
   }
 

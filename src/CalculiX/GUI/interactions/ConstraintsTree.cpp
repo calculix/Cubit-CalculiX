@@ -3,7 +3,6 @@
 #include "ConstraintsDeletePanel.hpp"
 #include "ConstraintsModifyEquationPanel.hpp"
 #include "ConstraintsModifyTiePanel.hpp"
-#include "ConstraintsModifyRigidBodyPanel.hpp"
 #include "CubitMessage.hpp"
 #include "TaskPanel.hpp"
 #include "ConstraintsTree.hpp"
@@ -165,7 +164,7 @@ void ConstraintsTree::populateContextMenu(
 
   if (clickedItem == this)
   {
-    addPanelAction(menu, "Create Constraint", host, "CCXConstraintsCreateRigidBody");
+    addPanelAction(menu, "Create Constraint", host, "CCXConstraintsCreateTie");
     return;
   }
 
@@ -174,7 +173,7 @@ void ConstraintsTree::populateContextMenu(
     return;
   }
 
-  addPanelAction(menu, "Create Constraint", host, "CCXConstraintsCreateRigidBody");
+  addPanelAction(menu, "Create Constraint", host, "CCXConstraintsCreateTie");
   {
     auto* action = menu.addAction("Modify Constraint");
     QObject::connect(action, &QAction::triggered, &menu, [selectedId, &host]()
@@ -211,7 +210,6 @@ void ConstraintsTree::open_modify(int id, ModelTree& host)
   QString marker;
   switch (settings.type)
   {
-    case 1: marker = "CCXConstraintsModifyRigidBody"; break;
     case 2: marker = "CCXConstraintsModifyTie"; break;
     case 3: marker = "CCXConstraintsModifyEquation"; break;
     default:
@@ -222,14 +220,6 @@ void ConstraintsTree::open_modify(int id, ModelTree& host)
 
   for (auto* widget : host.cmdpanel->findChildren<QWidget*>())
   {
-    if (auto* panel = dynamic_cast<ConstraintsModifyRigidBodyPanel*>(widget))
-    {
-      if (settings.type == 1)
-      {
-        panel->setConstraint(id);
-        return;
-      }
-    }
     if (auto* panel = dynamic_cast<ConstraintsModifyTiePanel*>(widget))
     {
       if (settings.type == 2)

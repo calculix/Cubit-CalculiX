@@ -1,3 +1,4 @@
+#include "Core/connections/CalculiXConnectionsInterface.hpp"
 #include "CubitMessage.hpp"
 #include "Core/units/CalculiXPhysicalModelUnits.hpp"
 #include "Core/units/CalculiXDofUnits.hpp"
@@ -55,13 +56,18 @@ bool CoreLoadsForces::create_load(std::vector<std::string> options, std::vector<
 
   // options: op mode, amplitude, time delay, nodeset, name
   // options2: force/moment components for dofs 1..6
-  if (options.size() != 5 || options2.size() != 6) {
+  if ((options.size() != 5 && options.size() != 6) || options2.size() != 6) {
     return false;
   }
 
   int op_mode = std::stoi(options[0]);
   int amplitude_id = std::stoi(options[1]);
   int nodeset_id = std::stoi(options[3]);
+  const int rp_id = options.size() == 6 ? std::stoi(options[5]) : 0;
+  if (rp_id < 0 || (rp_id > 0 && (nodeset_id != 0 || !CalculiXConnectionsInterface().has_point(rp_id))))
+  {
+    return false;
+  }
   int load_id = 1;
   int time_delay_id = 1;
   int force_id = 1;
@@ -83,11 +89,11 @@ bool CoreLoadsForces::create_load(std::vector<std::string> options, std::vector<
   add_time_delay(std::to_string(time_delay_id), options[2]);
   add_force(double(force_id), options2[0], options2[1], options2[2], options2[3], options2[4], options2[5]);
   add_name(std::to_string(name_id), options[4]);
-  return add_load(load_id, op_mode, amplitude_id, time_delay_id, nodeset_id, force_id, name_id);
+  return add_load(load_id, op_mode, amplitude_id, time_delay_id, nodeset_id, force_id, name_id, rp_id);
 }
 
-bool CoreLoadsForces::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int nodeset_id, int force_id, int name_id) {
-  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, nodeset_id, force_id, name_id};
+bool CoreLoadsForces::add_load(int load_id, int op_mode, int amplitude_id, int time_delay_id, int nodeset_id, int force_id, int name_id, int rp_id) {
+  std::vector<int> v = {load_id, op_mode, amplitude_id, time_delay_id, nodeset_id, force_id, name_id, rp_id};
   loads_data.push_back(v);
   return true;
 }
@@ -103,7 +109,7 @@ bool CoreLoadsForces::modify_load(int load_id, std::vector<std::string> options,
   }
 
   // markers: op, amplitude, delay, nodeset, dofs 1..6, name
-  if (options.size() != 5 || options2.size() != 6 || options_marker.size() != 11) {
+  if ((options.size() != 5 && options.size() != 6) || options2.size() != 6 || options_marker.size() != 11) {
     return false;
   }
 
@@ -131,6 +137,13 @@ bool CoreLoadsForces::modify_load(int load_id, std::vector<std::string> options,
   }
   if (options_marker[3] == 1) {
     nodeset_id = std::stoi(options[3]);
+    const int rp_id = options.size() == 6 ? std::stoi(options[5]) : 0;
+    if (rp_id < 0 || (rp_id > 0 && (nodeset_id != 0 || !CalculiXConnectionsInterface().has_point(rp_id))))
+    {
+      return false;
+    }
+    loads_data[loads_data_id].resize(8);
+    loads_data[loads_data_id][7] = rp_id;
   }
 
   loads_data[loads_data_id][1] = op_mode;
@@ -298,6 +311,39 @@ std::string CoreLoadsForces::get_load_export(int load_id) {
     return "";
   }
 
+  std::string str_temp = "*CLOAD";
+  str_temp.append(get_load_parameter_export(load_id));
+  str_temp.append("\n");
+  const auto& record = loads_data[loads_data_id];
+  if (record.size() > 7 && record[7] > 0)
+  {
+    const int rp = record[7];
+    const auto bodies = CalculiXConnectionsInterface().bodies();
+    const auto attachments = CalculiXConnectionsInterface().attachments();
+    const auto found = std::find_if(attachments.begin(),attachments.end(),[rp](const auto& a) { return a.point == rp; });
+    const bool distributed = found != attachments.end();
+    if (!distributed && std::none_of(bodies.begin(), bodies.end(), [rp](const auto& body) { return body.point == rp; }))
+    {
+      PRINT_ERROR("Cannot export force %d: reference point %d needs a rigid or distributing attachment.\n", load_id, rp);
+      return {};
+    }
+    const auto prefix = "CCX_RP_" + std::to_string(rp);
+    for (int i = 0; i < 6; ++i)
+    {
+      const double value = force_data[force_data_id][i + 1];
+      if (value != 0)
+      {
+        if (distributed && i >= 3 && !(found->moments & (1 << (i-3))))
+        {
+          PRINT_ERROR("Force %d requests a disabled moment on distributing attachment %d.\n",load_id,found->id);
+          return {};
+        }
+        str_temp += prefix + (distributed || i < 3 ? "_REF," : "_ROT,") + std::to_string(distributed ? i+1 : i%3+1) + "," +
+          ccx_application_iface.to_string_scientific(value) + "\n";
+      }
+    }
+    return str_temp;
+  }
   int nodeset_id = loads_data[loads_data_id][4];
   if (!ccx_mesh_iface.check_nodeset_exists(nodeset_id)) {
     return "";
@@ -308,12 +354,9 @@ std::string CoreLoadsForces::get_load_export(int load_id) {
     return "";
   }
 
-  std::string str_temp = "*CLOAD";
-  str_temp.append(get_load_parameter_export(load_id));
-  str_temp.append("\n");
   std::set<int> rotationNodes;
   std::string error;
-  if (!CalculiXInteractionsInterface().get_rotation_node_ids(rotationNodes, error))
+  if (!CalculiXConnectionsInterface().get_rotation_node_ids(rotationNodes, error))
   {
     PRINT_ERROR("Cannot export force %d: %s\n", load_id, error.c_str());
     return {};
@@ -426,7 +469,8 @@ bool CoreLoadsForces::get_settings(int id, LoadsForcesSettings& settings, std::s
   } else {
     settings.operation = "mod";
   }
-  settings.nodeset = SettingsRead::text((*record)[4]);
+  settings.referencePoint = record->size() > 7 ? (*record)[7] : 0;
+  settings.nodeset = settings.referencePoint ? "" : SettingsRead::text((*record)[4]);
   settings.component1 = SettingsRead::field(force_data, (*record)[5], 1, error);
   settings.component2 = SettingsRead::field(force_data, (*record)[5], 2, error);
   settings.component3 = SettingsRead::field(force_data, (*record)[5], 3, error);

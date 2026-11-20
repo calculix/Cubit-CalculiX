@@ -1,4 +1,6 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreExportNodeAllocator.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreExportNodeAllocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CustomLinesSettings.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreCsvWriter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreCsvWriter.hpp

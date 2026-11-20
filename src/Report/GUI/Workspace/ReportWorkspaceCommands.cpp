@@ -17,6 +17,7 @@
 #include <QSignalBlocker>
 #include <QStandardItemModel>
 #include <QTimer>
+#include <algorithm>
 #include <utility>
 
 namespace
@@ -45,7 +46,7 @@ void ReportWorkspace::create_source_controls(QVBoxLayout* outer)
   auto* sourceRow = new QHBoxLayout();
   sources = new QComboBox(this);
   sources->setObjectName("ReportSourceSelector");
-  sources->setPlaceholderText(tr("Choose a model or job"));
+  sources->setPlaceholderText(tr("Choose a job"));
   sources->setMinimumContentsLength(25);
   sourceRow->addWidget(new QLabel(tr("Source"), this));
   sourceRow->addWidget(sources, 3);
@@ -157,17 +158,24 @@ void ReportWorkspace::choose_source(int index) {
   }
 }
 
-void ReportWorkspace::generate() {
-  if (!sources->currentData().isValid()) {
+void ReportWorkspace::generate()
+{
+  const auto active = application.lock();
+  if (!active)
+  {
     return;
   }
-  const int index = sources->currentData().toInt();
-  if (index < 0 || index >= static_cast<int>(entries.size()) || !entries[index].available) {
+  const auto& request = active->configuration_request();
+  const auto entry = std::find_if(entries.begin(),entries.end(),[&](const auto& candidate)
+  {
+    return candidate.available && sameSource(candidate.request,request);
+  });
+  if (entry == entries.end())
+  {
     return;
   }
-  // Profile selection already loads its settings through a command. Generate
-  // uses the current configuration, including edits made after loading it.
-  dispatch(sourceCommand(entries[index].request, false));
+  // The current configuration includes any edits made after choosing a source.
+  dispatch(sourceCommand(entry->request,false));
 }
 
 void ReportWorkspace::profile_action(const std::string& action) {
@@ -198,6 +206,7 @@ void ReportWorkspace::refresh_sources(ReportApplicationInterface& active, std::s
   if (!sourcesAvailable) {
     entries.clear();
   }
+  const ReportSourceEntry* current = nullptr;
   {
     QSignalBlocker guard(sources);
     sources->clear();
@@ -205,6 +214,14 @@ void ReportWorkspace::refresh_sources(ReportApplicationInterface& active, std::s
     int selected = -1;
     for (std::size_t index = 0; index < entries.size(); ++index) {
       const auto& entry = entries[index];
+      if (sameSource(entry.request,request))
+      {
+        current = &entry;
+      }
+      if (entry.request.kind == "model")
+      {
+        continue;
+      }
       if (group != entry.workspace_label) {
         group = entry.workspace_label;
         sources->addItem(QString::fromStdString(group), -1);
@@ -223,13 +240,8 @@ void ReportWorkspace::refresh_sources(ReportApplicationInterface& active, std::s
     }
     sources->setCurrentIndex(selected);
   }
-  int sourceIndex = -1;
-  if (sources->currentData().isValid()) {
-    sourceIndex = sources->currentData().toInt();
-  }
-  const bool sourceReady = sourcesAvailable && sourceIndex >= 0 && sourceIndex < static_cast<int>(entries.size()) &&
-    (entries[sourceIndex].available || entries[sourceIndex].has_report) && sameSource(entries[sourceIndex].request, request);
-  const bool canRegenerate = sourceReady && entries[sourceIndex].available;
+  const bool sourceReady = sourcesAvailable && current && (current->available || current->has_report);
+  const bool canRegenerate = sourceReady && current->available;
   generateButton->setEnabled(canRegenerate);
   settingsButton->setEnabled(sourceReady);
   profileButton->setEnabled(sourceReady);

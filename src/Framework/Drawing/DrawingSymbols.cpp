@@ -1,3 +1,5 @@
+#include <utility>
+#include <algorithm>
 #include "DrawingSymbols.hpp"
 #include <cmath>
 
@@ -698,4 +700,84 @@ bool DrawingSymbols::equationNode(DrawingGeometry& geometry, std::vector<double>
       }
     }
     return true;
+}
+
+bool DrawingSymbols::pointMass(DrawingGeometry& geometry, const std::vector<double>& endpoint, double size)
+{
+  if (!std::isfinite(size) || size <= 0.0 || !geometry.point(endpoint, "red"))
+  {
+    return false;
+  }
+  // Draw the weight below its attachment. These offsets have display scale only.
+  auto top = endpoint;
+  top[2] -= 0.55 * size;
+  if (!geometry.line(endpoint, top, "yellow"))
+  {
+    return false;
+  }
+  const double half = 0.4 * size;
+  std::vector<std::vector<double>> upper, lower;
+  for (const auto& xy : {std::pair<int,int>{-1,-1}, {1,-1}, {1,1}, {-1,1}})
+  {
+    upper.push_back({top[0] + xy.first * half, top[1] + xy.second * half, top[2]});
+    lower.push_back({upper.back()[0], upper.back()[1], top[2] - 2.0 * half});
+  }
+  for (std::size_t i = 0; i < upper.size(); ++i)
+  {
+    const auto next = (i + 1) % upper.size();
+    if (!geometry.line(upper[i], upper[next], "yellow") || !geometry.line(lower[i], lower[next], "yellow") ||
+        !geometry.line(upper[i], lower[i], "yellow"))
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool DrawingSymbols::spring(DrawingGeometry& geometry, const std::vector<double>& first, const std::vector<double>& second,
+  bool grounded, double size)
+{
+  if (!std::isfinite(size) || size <= 0.0 || second.size() != 3 || !geometry.point(first, "red"))
+  {
+    return false;
+  }
+  const std::vector<double> span{second[0] - first[0], second[1] - first[1], second[2] - first[2]};
+  const double length = std::hypot(span[0], span[1], span[2]);
+  if (!std::isfinite(length) || length == 0.0)
+  {
+    return length == 0.0;
+  }
+  const std::vector<double> direction{span[0] / length, span[1] / length, span[2] / length};
+  std::vector<double> normal{0, 0, 1};
+  if (std::abs(direction[2]) > 0.9)
+  {
+    normal = {0, 1, 0};
+  }
+  const auto lateral = unit_vector(cross_product(direction, normal));
+  const double width = std::min(0.5 * size, 0.12 * length);
+  const auto position = [&](double fraction, double offset)
+  {
+    return std::vector<double>{first[0] + span[0]*fraction + lateral[0]*offset,
+      first[1] + span[1]*fraction + lateral[1]*offset, first[2] + span[2]*fraction + lateral[2]*offset};
+  };
+  auto previous = first;
+  for (int i = 1; i < 10; ++i)
+  {
+    const double offset = i == 1 || i == 9 ? 0.0 : (i % 2 == 0 ? width : -width);
+    auto current = position(0.1*i, offset);
+    if (!geometry.line(previous, current, "yellow"))
+    {
+      return false;
+    }
+    previous = std::move(current);
+  }
+  if (!geometry.line(previous, second, "yellow"))
+  {
+    return false;
+  }
+  if (grounded)
+  {
+    return geometry.line(position(1.0,-1.5*width), position(1.0,1.5*width), "yellow");
+  }
+  return geometry.point(second, "red");
 }

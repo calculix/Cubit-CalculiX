@@ -1,0 +1,31 @@
+#!cubit
+reset
+# Cantilever carrying an additional 2 kg at its free end.
+create brick x 100 y 10 z 10
+block 1 add volume 1
+#!python
+ends = sorted(cubit.get_entities("surface"), key=lambda face: cubit.get_center_point("surface", face)[0])
+cubit.cmd(f"nodeset 1 add surface {ends[0]}")
+cubit.cmd(f'ccx create rigid body 1 name "End plate" surface {ends[-1]} center')
+#!cubit
+nodeset 1 name "Fixed"
+ccx units system "N-mm-s"
+ccx units geometry unit "mm"
+ccx create material "Steel"
+ccx modify material 1 card elastic model iso
+ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"
+ccx modify material 1 activate card elastic
+ccx modify material 1 card density model default
+ccx modify material 1 card density row 1 values 7850 273.15 unit "SI"
+ccx modify material 1 activate card density
+ccx create point mass 1 name "Motor" rp 1 mass 2 unit "kg"
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0
+ccx create step name "Modes" frequency
+ccx modify step 1 frequency eigenfrequencies 3
+ccx step 1 add bc displacement 1
+ccx create section solid block 1 material 1
+block 1 element type HEX8
+volume all size 5
+mesh volume all
+ccx create job name "rigid_rp_point_mass"
+ccx run job 1

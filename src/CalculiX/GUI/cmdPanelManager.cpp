@@ -70,12 +70,17 @@ void cmdPanelManager::clear()
     my_markers.push_back("CCXSectionsModifyBeam");
     my_markers.push_back("CCXSectionsModifyMembrane");
     my_markers.push_back("CCXSectionsDelete");
-    my_markers.push_back("CCXConstraintsCreateRigidBody");
+    my_markers.push_back("Connections");
+    my_markers.push_back("ReferencePoint");
+    my_markers.push_back("RigidBody");
+  my_markers.push_back("PointMass");
+  my_markers.push_back("Spring");
+  my_markers.push_back("DistributingAttachment");
+    my_markers.push_back("Joint");
     my_markers.push_back("CCXConstraintsCreateTie");
     my_markers.push_back("CCXConstraintsCreateTieFromCubitContactPair");
     my_markers.push_back("CCXConstraintsCreateEquation");
     my_markers.push_back("CCXConstraintsCreateEquationFromGroup");
-    my_markers.push_back("CCXConstraintsModifyRigidBody");
     my_markers.push_back("CCXConstraintsModifyTie");
     my_markers.push_back("CCXConstraintsModifyEquation");
     my_markers.push_back("CCXConstraintsDelete");
@@ -304,6 +309,30 @@ void cmdPanelManager::initialize_from_code()
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXSectionsModifyMembrane"));
 
   //##############################
+  root_node = model->getMarkedNode("CCX");
+  node = model->addNode("Connections", root_node);
+  model->setNodeMarker(node, "Connections");
+  node->setIcon(ccx_gui_resources_iface.getIcon("Connections"));
+  root_node = node;
+  node = model->addNode("Reference point", root_node);
+  model->setNodeMarker(node, "ReferencePoint");
+  node->setIcon(ccx_gui_resources_iface.getIcon("ReferencePoint"));
+  node = model->addNode("Rigid body", root_node);
+  model->setNodeMarker(node, "RigidBody");
+  node->setIcon(ccx_gui_resources_iface.getIcon("RigidBody"));
+  node = model->addNode("Point mass", root_node);
+  model->setNodeMarker(node, "PointMass");
+  node->setIcon(ccx_gui_resources_iface.getIcon("PointMass"));
+  node = model->addNode("Spring", root_node);
+  model->setNodeMarker(node, "Spring");
+  node->setIcon(ccx_gui_resources_iface.getIcon("Spring"));
+  node = model->addNode("Distributing attachment", root_node);
+  model->setNodeMarker(node, "DistributingAttachment");
+  node->setIcon(ccx_gui_resources_iface.getIcon("Connections"));
+  node = model->addNode("Joint", root_node);
+  model->setNodeMarker(node, "Joint");
+  node->setIcon(ccx_gui_resources_iface.getIcon("Joint"));
+
   // add Constraints Nodes
   root_node = model->getMarkedNode("CCX");
   node = model->addNode("Constraints", root_node);
@@ -325,9 +354,6 @@ void cmdPanelManager::initialize_from_code()
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsUtility"));
 
   root_node = model->getMarkedNode("CCXConstraintsCreate");
-  node = model->addNode("Rigid Body", root_node);
-  model->setNodeMarker(node, "CCXConstraintsCreateRigidBody");
-  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsCreateRigidBody"));
   node = model->addNode("Tie", root_node);
   model->setNodeMarker(node, "CCXConstraintsCreateTie");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsCreateTie"));
@@ -335,9 +361,6 @@ void cmdPanelManager::initialize_from_code()
   model->setNodeMarker(node, "CCXConstraintsCreateEquation");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsCreateEquation"));
   root_node = model->getMarkedNode("CCXConstraintsModify");
-  node = model->addNode("Rigid Body", root_node);
-  model->setNodeMarker(node, "CCXConstraintsModifyRigidBody");
-  node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsModifyRigidBody"));
   node = model->addNode("Tie", root_node);
   model->setNodeMarker(node, "CCXConstraintsModifyTie");
   node->setIcon(ccx_gui_resources_iface.getIcon("CCXConstraintsModifyTie"));
@@ -964,12 +987,17 @@ void cmdPanelManager::associate_panels_with_nodes()
   my_markers.push_back("CCXSectionsModifyBeam");
   my_markers.push_back("CCXSectionsModifyMembrane");
   my_markers.push_back("CCXSectionsDelete");
-  my_markers.push_back("CCXConstraintsCreateRigidBody");
+  my_markers.push_back("Connections");
+  my_markers.push_back("ReferencePoint");
+  my_markers.push_back("RigidBody");
+  my_markers.push_back("PointMass");
+  my_markers.push_back("Spring");
+  my_markers.push_back("DistributingAttachment");
+  my_markers.push_back("Joint");
   my_markers.push_back("CCXConstraintsCreateTie");
   my_markers.push_back("CCXConstraintsCreateTieFromCubitContactPair");
   my_markers.push_back("CCXConstraintsCreateEquation");
   my_markers.push_back("CCXConstraintsCreateEquationFromGroup");
-  my_markers.push_back("CCXConstraintsModifyRigidBody");
   my_markers.push_back("CCXConstraintsModifyTie");
   my_markers.push_back("CCXConstraintsModifyEquation");
   my_markers.push_back("CCXConstraintsDelete");

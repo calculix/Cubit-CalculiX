@@ -12,7 +12,7 @@
 #include "Core/results/vtk/CoreResultsVtkConverter.hpp"
 #include "Framework/Results/VtkResultsExporter.hpp"
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -47,7 +47,7 @@ namespace
     std::string error;
     if (!inputMetadata.read_input_units(inputPath.u8string(), error))
     {
-      PRINT_WARNING("Cannot read result unit metadata from the companion INP: %s\n", error.c_str());
+      TOPOLOGY_WARNING("Cannot read result unit metadata from the companion INP: %s\n", error.c_str());
       return {};
     }
     if (inputMetadata.unitSystem.empty() && inputMetadata.step_axis_quantities.empty())
@@ -75,14 +75,14 @@ namespace
     if (!predatesResults(inputPath) ||
         !CoreResultsVtkLink::match_input_mesh(frd, inputPath.u8string(), inputFiles, error))
     {
-      PRINT_WARNING("Result units remain unknown: the companion INP must predate the outputs and match the FRD mesh. %s\n", error.c_str());
+      TOPOLOGY_WARNING("Result units remain unknown: the companion INP must predate the outputs and match the FRD mesh. %s\n", error.c_str());
       return {};
     }
     for (const auto& file : inputFiles)
     {
       if (!predatesResults(fs::path(file)))
       {
-        PRINT_WARNING("Result units remain unknown: an input file is newer than the outputs or its timestamp could not be read: %s\n", file.c_str());
+        TOPOLOGY_WARNING("Result units remain unknown: an input file is newer than the outputs or its timestamp could not be read: %s\n", file.c_str());
         return {};
       }
     }
@@ -90,9 +90,10 @@ namespace
     // The companion deck supplies units and axes only. A mesh and timestamp
     // match cannot establish an archived launch or project material identity.
     CoreResultsSourceMetadata metadata;
+    metadata.connections = std::move(inputMetadata.connections);
     metadata.unitSystem = std::move(inputMetadata.unitSystem);
     metadata.step_axis_quantities = std::move(inputMetadata.step_axis_quantities);
-    PRINT_INFO("Loaded result unit and step-axis metadata from companion INP: %s\n", inputPath.u8string().c_str());
+    TOPOLOGY_INFO("Loaded result unit and step-axis metadata from companion INP: %s\n", inputPath.u8string().c_str());
     return metadata;
   }
 }
@@ -211,6 +212,7 @@ bool CoreResults::delete_result(int job_id) {
 }
 
 bool CoreResults::load_result(int job_id) {
+  const CoreTopologyConsole log(CoreTopologyConsole::job_context(job_id));
   if (!can_change_readers()) {
     return false;
   }
@@ -230,19 +232,27 @@ bool CoreResults::load_result(int job_id) {
   } else {
     //log = "Loading results for Job ID " + std::to_string(results_data[results_data_id][1]) + " \n";
     //PRINT_INFO("%s", log.c_str());
-    if (!frd_data[frd_data_id].read()) {
+    std::shared_ptr<const CalculiXJobRunRecord> loadedRun;
+    std::string metadataError;
+    const bool archived = CalculiXJobsInterface().get_run_record(job_id, loadedRun, metadataError) && loadedRun;
+    std::error_code fileError;
+    const bool discreteDatOnly = archived && !loadedRun->connections.discrete.empty() &&
+      !std::filesystem::exists(std::filesystem::u8path(frd_data[frd_data_id].filepath),fileError) && !fileError;
+    if (discreteDatOnly)
+    {
+      frd_data[frd_data_id].clear();
+    }
+    else if (!frd_data[frd_data_id].read()) {
       log = "Can't read FRD! \n";
-      PRINT_ERROR("%s", log.c_str());
+      TOPOLOGY_ERROR("%s", log.c_str());
       return false;
     }
     if (!dat_data[dat_data_id].read()) {
       log = "Can't read DAT! \n";
-      PRINT_ERROR("%s", log.c_str());
+      TOPOLOGY_ERROR("%s", log.c_str());
       return false;
     }
-    std::shared_ptr<const CalculiXJobRunRecord> loadedRun;
-    std::string metadataError;
-    if (CalculiXJobsInterface().get_run_record(job_id, loadedRun, metadataError) && loadedRun) {
+    if (archived) {
       source_metadata.emplace(job_id, CoreResultsSourceMetadata(*loadedRun));
     }
     else
@@ -267,8 +277,9 @@ SimResults::ConversionStatus CoreResults::get_vtk_status(int job_id) const
 }
 
 bool CoreResults::prepare_vtk_plan(int job_id, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& plan) {
+  const CoreTopologyConsole log(CoreTopologyConsole::job_context(job_id));
   if (vtk_build_active) {
-    PRINT_ERROR("A VTK result build is already active.\n");
+    TOPOLOGY_ERROR("A VTK result build is already active.\n");
     return false;
   }
   QScopedValueRollback<bool> guard(vtk_build_active, true);
@@ -281,7 +292,7 @@ bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions&
   CalculiXJobsInterface jobs;
   const auto job = jobs.get_job_data(job_id);
   if (get_results_data_id_from_job_id(job_id) < 0 || frd_id < 0 || dat_id < 0 || static_cast<std::size_t>(frd_id) >= frd_data.size() || static_cast<std::size_t>(dat_id) >= dat_data.size() || job.size() < 4 || job[3] == "1") {
-    PRINT_ERROR("Cannot plan VTK results for a missing or running job.\n");
+    TOPOLOGY_ERROR("Cannot plan VTK results for a missing or running job.\n");
     return false;
   }
   vtk_status[job_id] = SimResults::ConversionStatus::Planning;
@@ -295,7 +306,8 @@ bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions&
       sourceSystem = sourceMetadata->second.unitSystem;
     }
 
-    if (!linker.prepare(job_id, frd_data[frd_id], dat_data[dat_id], job[1] + ".inp", options, plan, sourceSystem))
+    if (!linker.prepare(job_id, frd_data[frd_id], dat_data[dat_id], job[1] + ".inp", options, plan, sourceSystem,
+        sourceMetadata == source_metadata.end() ? nullptr : &sourceMetadata->second.connections))
     {
       vtk_status[job_id] = SimResults::ConversionStatus::Failed;
       return false;
@@ -313,6 +325,7 @@ bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions&
     const auto metadata = source_metadata.find(job_id);
     if (metadata != source_metadata.end()) {
       const auto* record = &metadata->second;
+      plan.mesh.connections = record->connections;
       plan.source_units.system = record->unitSystem;
       plan.step_axis_quantities = record->step_axis_quantities;
       plan.solver_launch_id = record->launchId;
@@ -321,7 +334,7 @@ bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions&
         SimUnits::QuantityUnit length;
         SimUnits::QuantityUnit time;
         if (!framework_units().system_unit(record->unitSystem, "length", length, metadataError) || !framework_units().system_unit(record->unitSystem, "time", time, metadataError)) {
-          PRINT_ERROR("Cannot read recorded result units: %s\n", metadataError.c_str());
+          TOPOLOGY_ERROR("Cannot read recorded result units: %s\n", metadataError.c_str());
           vtk_status[job_id] = SimResults::ConversionStatus::Failed;
           return false;
         }
@@ -356,7 +369,7 @@ bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions&
     }
     for (auto& element : plan.mesh.elements) {
       const auto raw = solverMaterials.find(element.id);
-      if (raw == solverMaterials.end()) {
+      if (raw == solverMaterials.end() || plan.mesh.connections.discrete.count(element.id)) {
         continue;
       }
       element.solver_material_id = raw->second;
@@ -365,12 +378,12 @@ bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions&
   }
   catch (const std::exception& error) {
     vtk_status[job_id] = SimResults::ConversionStatus::Failed;
-    PRINT_ERROR("VTK planning failed: %s\n", error.what());
+    TOPOLOGY_ERROR("VTK planning failed: %s\n", error.what());
     return false;
   }
   catch (...) {
     vtk_status[job_id] = SimResults::ConversionStatus::Failed;
-    PRINT_ERROR("Unexpected VTK planning failure.\n");
+    TOPOLOGY_ERROR("Unexpected VTK planning failure.\n");
     return false;
   }
   vtk_status[job_id] = SimResults::ConversionStatus::Planned;
@@ -380,7 +393,7 @@ bool CoreResults::prepare_vtk_plan_impl(int job_id, const CoreResultsVtkOptions&
 bool CoreResults::can_change_readers() const
 {
   if (vtk_build_active) {
-    PRINT_ERROR("Cannot modify result readers while VTK planning/conversion is active.\n");
+    TOPOLOGY_ERROR("Cannot modify result readers while VTK planning/conversion is active.\n");
     return false;
   }
   return true;
@@ -406,8 +419,9 @@ bool CoreResults::cancel_vtk_build() {
 }
 
 bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& options) {
+  const CoreTopologyConsole log(CoreTopologyConsole::job_context(job_id));
   if (vtk_build_active) {
-    PRINT_ERROR("A VTK result build is already active.\n");
+    TOPOLOGY_ERROR("A VTK result build is already active.\n");
     return false;
   }
   QScopedValueRollback<bool> guard(vtk_build_active, true);
@@ -419,7 +433,7 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
     if (resolved.workers == 0) {
       if (ccx_uo.mConverterThreads < 1) {
         vtk_status[job_id] = SimResults::ConversionStatus::Failed;
-        PRINT_ERROR("VTK conversion requires at least one converter thread.\n");
+        TOPOLOGY_ERROR("VTK conversion requires at least one converter thread.\n");
         return false;
       }
       resolved.workers = static_cast<std::size_t>(ccx_uo.mConverterThreads);
@@ -437,7 +451,7 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
     ProgressTool* progress = CubitInterface::app_util().get()->progress_tool();
     if (!progress) {
       vtk_status[job_id] = SimResults::ConversionStatus::Failed;
-      PRINT_ERROR("VTK conversion progress service is unavailable.\n");
+      TOPOLOGY_ERROR("VTK conversion progress service is unavailable.\n");
       return false;
     }
     progress->start(0, 100, "Building VTK Result Datasets");
@@ -465,14 +479,14 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
     if (!converter.build(frd_data[frd_id], dat_data[dat_id], plan, vtk_cancelled, poll, converted, error, &timings)) {
       if (error.empty() && vtk_cancelled.load(std::memory_order_relaxed)) {
         vtk_status[job_id] = SimResults::ConversionStatus::Cancelled;
-        PRINT_INFO("VTK result build cancelled.\n");
+        TOPOLOGY_INFO("VTK result build cancelled.\n");
       }
       else {
         vtk_status[job_id] = SimResults::ConversionStatus::Failed;
         if (error.empty()) {
           error = "unknown conversion error";
         }
-        PRINT_ERROR("VTK result build failed: %s\n", error.c_str());
+        TOPOLOGY_ERROR("VTK result build failed: %s\n", error.c_str());
       }
       return false;
     }
@@ -482,19 +496,19 @@ bool CoreResults::build_vtk_result(int job_id, const CoreResultsVtkOptions& opti
     vtk_status[job_id] = SimResults::ConversionStatus::Complete;
     CalculiXJobsInterface().set_job_conversion(job_id, 1);
     const double conversion_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - conversion_begin).count();
-    PRINT_INFO("Duration of VTK conversion (Boost, %zu threads) [ms]: %.3f\n", resolved.workers, conversion_ms);
-    PRINT_INFO("VTK conversion phases [ms]: planning/linking %.3f, geometry %.3f, field mapping %.3f, IP displacement %.3f, tables %.3f, finalize %.3f.\n",
+    TOPOLOGY_INFO("Duration of VTK conversion (Boost, %zu threads) [ms]: %.3f\n", resolved.workers, conversion_ms);
+    TOPOLOGY_INFO("VTK conversion phases [ms]: planning/linking %.3f, geometry %.3f, field mapping %.3f, IP displacement %.3f, tables %.3f, finalize %.3f.\n",
       planning_ms, timings.geometry_ms, timings.fields_ms, timings.ip_displacement_ms, timings.tables_ms, timings.finalize_ms);
     return true;
   }
   catch (const std::exception& error) {
     vtk_status[job_id] = SimResults::ConversionStatus::Failed;
-    PRINT_ERROR("VTK result build failed: %s\n", error.what());
+    TOPOLOGY_ERROR("VTK result build failed: %s\n", error.what());
     return false;
   }
   catch (...) {
     vtk_status[job_id] = SimResults::ConversionStatus::Failed;
-    PRINT_ERROR("Unexpected VTK result build failure.\n");
+    TOPOLOGY_ERROR("Unexpected VTK result build failure.\n");
     return false;
   }
 }
@@ -519,12 +533,12 @@ std::string CoreResults::get_vtk_export_path(int job_id) const
 
 bool CoreResults::export_vtk_result(int job_id, const std::string& destination) {
   if (vtk_build_active) {
-    PRINT_ERROR("A VTK result operation is already active.\n");
+    TOPOLOGY_ERROR("A VTK result operation is already active.\n");
     return false;
   }
   const auto result = get_vtk_result(job_id);
   if (!result || get_vtk_status(job_id) != SimResults::ConversionStatus::Complete) {
-    PRINT_ERROR("Build a complete VTK result before exporting job %d.\n", job_id);
+    TOPOLOGY_ERROR("Build a complete VTK result before exporting job %d.\n", job_id);
     return false;
   }
   QScopedValueRollback<bool> guard(vtk_build_active, true);
@@ -533,14 +547,14 @@ bool CoreResults::export_vtk_result(int job_id, const std::string& destination) 
   try {
     std::string target = destination;
     if (ccx_uo.mConverterThreads < 1) {
-      PRINT_ERROR("VTK export requires at least one converter thread.\n");
+      TOPOLOGY_ERROR("VTK export requires at least one converter thread.\n");
       return false;
     }
     if (target.empty()) {
       CalculiXJobsInterface jobs;
       const auto job = jobs.get_job_data(job_id);
       if (job.size() < 2) {
-        PRINT_ERROR("Cannot find the VTK export path for job %d.\n", job_id);
+        TOPOLOGY_ERROR("Cannot find the VTK export path for job %d.\n", job_id);
         return false;
       }
       const auto token = std::chrono::steady_clock::now().time_since_epoch().count();
@@ -553,17 +567,17 @@ bool CoreResults::export_vtk_result(int job_id, const std::string& destination) 
       static_cast<std::size_t>(ccx_uo.mConverterThreads), [&](double) {
         return !vtk_cancelled.load(std::memory_order_relaxed);
       }, &workers_used)) {
-      PRINT_ERROR("VTK export for job %d failed: %s\n", job_id, error.c_str());
+      TOPOLOGY_ERROR("VTK export for job %d failed: %s\n", job_id, error.c_str());
       return false;
     }
     vtk_exports[job_id] = index;
     const double export_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - export_begin).count();
-    PRINT_INFO("Duration of VTK export (%zu threads) [ms]: %.3f\n", workers_used, export_ms);
-    PRINT_INFO("VTK result exported to %s\n", index.c_str());
+    TOPOLOGY_INFO("Duration of VTK export (%zu threads) [ms]: %.3f\n", workers_used, export_ms);
+    TOPOLOGY_INFO("VTK result exported to %s\n", index.c_str());
     return true;
   }
   catch (const std::exception& failure) {
-    PRINT_ERROR("VTK export for job %d failed: %s\n", job_id, failure.what());
+    TOPOLOGY_ERROR("VTK export for job %d failed: %s\n", job_id, failure.what());
     return false;
   }
 }
@@ -592,7 +606,7 @@ bool CoreResults::project_result(int job_id, int step, int totalincrement,double
   const auto metadata = source_metadata.find(job_id);
   if (metadata == source_metadata.end() || metadata->second.unitSystem.empty())
   {
-    PRINT_ERROR("Cannot project displacements without recorded result units.\n");
+    TOPOLOGY_ERROR("Cannot project displacements without recorded result units.\n");
     return false;
   }
   std::string log;
@@ -609,8 +623,8 @@ bool CoreResults::project_result(int job_id, int step, int totalincrement,double
     } else {
       log = "Project results for Job ID " + std::to_string(results_data[results_data_id][1]) + " for total increment " + std::to_string(totalincrement) + " \n";
     }
-    PRINT_INFO("%s", log.c_str());
-    if (!projector.init(&frd_data[frd_data_id]) ||
+    TOPOLOGY_INFO("%s", log.c_str());
+    if (!projector.init(&frd_data[frd_data_id], metadata->second.connections) ||
         !projector.project(step, totalincrement, scale, metadata->second.unitSystem))
     {
       return false;

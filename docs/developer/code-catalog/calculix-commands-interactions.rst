@@ -28,18 +28,6 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Commands/interactions/ccxConstraintEquationModifyCommand.hpp <../../../src/CalculiX/Commands/interactions/ccxConstraintEquationModifyCommand.hpp>`
      - ``ccxConstraintEquationModifyCommand``
-   * - :download:`src/CalculiX/Commands/interactions/ccxConstraintRigidBody2CreateCommand.cpp <../../../src/CalculiX/Commands/interactions/ccxConstraintRigidBody2CreateCommand.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/Commands/interactions/ccxConstraintRigidBody2CreateCommand.hpp <../../../src/CalculiX/Commands/interactions/ccxConstraintRigidBody2CreateCommand.hpp>`
-     - ``ccxConstraintRigidBody2CreateCommand``
-   * - :download:`src/CalculiX/Commands/interactions/ccxConstraintRigidBodyCreateCommand.cpp <../../../src/CalculiX/Commands/interactions/ccxConstraintRigidBodyCreateCommand.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/Commands/interactions/ccxConstraintRigidBodyCreateCommand.hpp <../../../src/CalculiX/Commands/interactions/ccxConstraintRigidBodyCreateCommand.hpp>`
-     - ``ccxConstraintRigidBodyCreateCommand``
-   * - :download:`src/CalculiX/Commands/interactions/ccxConstraintRigidBodyModifyCommand.cpp <../../../src/CalculiX/Commands/interactions/ccxConstraintRigidBodyModifyCommand.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/Commands/interactions/ccxConstraintRigidBodyModifyCommand.hpp <../../../src/CalculiX/Commands/interactions/ccxConstraintRigidBodyModifyCommand.hpp>`
-     - ``ccxConstraintRigidBodyModifyCommand``
    * - :download:`src/CalculiX/Commands/interactions/ccxConstraintTieCreateCommand.cpp <../../../src/CalculiX/Commands/interactions/ccxConstraintTieCreateCommand.cpp>`
      - ``Implementation / integration``
    * - :download:`src/CalculiX/Commands/interactions/ccxConstraintTieCreateCommand.hpp <../../../src/CalculiX/Commands/interactions/ccxConstraintTieCreateCommand.hpp>`

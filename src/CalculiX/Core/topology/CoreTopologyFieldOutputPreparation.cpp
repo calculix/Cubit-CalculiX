@@ -1,7 +1,7 @@
 #include "CoreTopologyFieldOutputPreparation.hpp"
 #include "Core/steps/CoreFieldOutputs.hpp"
 #include "Core/steps/CoreSteps.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <algorithm>
 #include <cstddef>
 #include <set>
@@ -12,7 +12,7 @@ bool CoreTopologyFieldOutputPreparation::ensure_displacement(CoreFieldOutputs& o
 
   if (key == outputs.node_keys.end())
   {
-    PRINT_ERROR("Displacement field output key U is unavailable.\n");
+    TOPOLOGY_ERROR("Displacement field output key U is unavailable.\n");
     return false;
   }
 
@@ -21,7 +21,7 @@ bool CoreTopologyFieldOutputPreparation::ensure_displacement(CoreFieldOutputs& o
 
   if (step_index < 0 || steps.steps_data[step_index].size() < 9)
   {
-    PRINT_ERROR("Missing or invalid step %d.\n", step_id);
+    TOPOLOGY_ERROR("Missing or invalid step %d.\n", step_id);
     return false;
   }
 
@@ -31,7 +31,7 @@ bool CoreTopologyFieldOutputPreparation::ensure_displacement(CoreFieldOutputs& o
   {
     if (index < 0 || static_cast<std::size_t>(index) >= steps.fieldoutputs_data.size() || steps.fieldoutputs_data[index].size() < 2)
     {
-      PRINT_ERROR("Invalid field output assignment for step %d.\n", step_id);
+      TOPOLOGY_ERROR("Invalid field output assignment for step %d.\n", step_id);
       return false;
     }
 
@@ -139,18 +139,18 @@ bool CoreTopologyFieldOutputPreparation::ensure_displacement(CoreFieldOutputs& o
 
     if (output_id < 0)
     {
-      PRINT_ERROR("Unable to identify the created topology field output.\n");
+      TOPOLOGY_ERROR("Unable to identify the created topology field output.\n");
       return false;
     }
 
-    PRINT_INFO("Automatically created field output %d for topology displacement results.\n", output_id);
+    TOPOLOGY_INFO("Automatically created field output %d for topology displacement results.\n", output_id);
   }
 
   const int node_index = compatible_node(output_id);
 
   if (node_index < 0)
   {
-    PRINT_ERROR("Invalid topology displacement field output.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement field output.\n");
     return false;
   }
 
@@ -164,14 +164,14 @@ bool CoreTopologyFieldOutputPreparation::ensure_displacement(CoreFieldOutputs& o
       return false;
     }
 
-    PRINT_INFO("Automatically configured field output %d for global displacement results.\n", output_id);
+    TOPOLOGY_INFO("Automatically configured field output %d for global displacement results.\n", output_id);
   }
 
   const int configured_index = compatible_node(output_id);
 
   if (configured_index < 0 || outputs.node_data[configured_index][5] != "YES" || outputs.node_data[configured_index][2] != "1" || outputs.node_data[configured_index][key_column] != "U")
   {
-    PRINT_ERROR("Topology displacement field output configuration failed.\n");
+    TOPOLOGY_ERROR("Topology displacement field output configuration failed.\n");
     return false;
   }
 
@@ -199,11 +199,11 @@ bool CoreTopologyFieldOutputPreparation::ensure_displacement(CoreFieldOutputs& o
 
     if (!assigned)
     {
-      PRINT_ERROR("Topology displacement field output assignment failed.\n");
+      TOPOLOGY_ERROR("Topology displacement field output assignment failed.\n");
       return false;
     }
 
-    PRINT_INFO("Automatically assigned field output %d to step %d.\n", output_id, step_id);
+    TOPOLOGY_INFO("Automatically assigned field output %d to step %d.\n", output_id, step_id);
   }
 
   return true;

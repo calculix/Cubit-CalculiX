@@ -6,7 +6,7 @@
 
 CoreDrawScene::CoreDrawScene()
 {
-  for (auto group : {DrawGroup::BoundaryConditions, DrawGroup::Loads, DrawGroup::Constraints, DrawGroup::Orientations, DrawGroup::Topology})
+  for (auto group : {DrawGroup::BoundaryConditions, DrawGroup::Loads, DrawGroup::Constraints, DrawGroup::Connections, DrawGroup::Orientations, DrawGroup::Topology})
   {
     state.groups.emplace(group, DrawGroupState{});
   }
@@ -57,7 +57,7 @@ void CoreDrawScene::clearAll()
   labels.clear();
   selection = {};
   state = CalculiXDrawState{};
-  for (auto group : {DrawGroup::BoundaryConditions, DrawGroup::Loads, DrawGroup::Constraints, DrawGroup::Orientations, DrawGroup::Topology})
+  for (auto group : {DrawGroup::BoundaryConditions, DrawGroup::Loads, DrawGroup::Constraints, DrawGroup::Connections, DrawGroup::Orientations, DrawGroup::Topology})
   {
     state.groups.emplace(group, DrawGroupState{});
   }

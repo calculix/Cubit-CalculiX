@@ -21,22 +21,7 @@ std::vector<std::vector<std::string>> CoreInteractionsTreeData::get_constraints_
 
     std::string name;
 
-    if (constraint[1] == 1)
-    {
-      std::string entity;
-
-      if ((*data)[1] == "1")
-      {
-        entity = "Nodeset ";
-      }
-      else if ((*data)[1] == "2")
-      {
-        entity = "Block ";
-      }
-
-      name = "Rigid Body (" + entity + (*data)[2] + "| v_ref " + (*data)[3] + "| v_rot " + (*data)[4] + ")";
-    }
-    else if (constraint[1] == 2)
+    if (constraint[1] == 2)
     {
       name = "TIE (" + (*data)[1] + ")";
     }

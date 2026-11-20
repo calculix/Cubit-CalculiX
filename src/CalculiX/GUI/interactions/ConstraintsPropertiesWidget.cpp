@@ -33,16 +33,6 @@ bool ConstraintsPropertiesWidget::setConstraint(int id)
   auto* typeGroup = addGroup("classification", "Classification", PropertySection::Classification);
   switch (settings.type)
   {
-    case 1:
-    {
-      addValue(typeGroup, "Subtype", "Rigid body");
-      auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
-      addReference(assignment, PropertyReferenceKind::Block, "Block", QString::fromStdString(settings.block));
-      addReference(assignment, PropertyReferenceKind::Nodeset, "Nodeset", QString::fromStdString(settings.nodeset));
-      addReference(assignment, PropertyReferenceKind::Vertex, "Reference vertex", QString::fromStdString(settings.reference));
-      addReference(assignment, PropertyReferenceKind::Vertex, CalculiXUnitPresentation::title("Rotation vertex", "angle"), QString::fromStdString(settings.rotation));
-      break;
-    }
     case 2:
     {
       addValue(typeGroup, "Subtype", "Tie");

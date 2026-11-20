@@ -2,7 +2,7 @@
 #include "CoreTopologyTrace.hpp"
 #include "AppUtil.hpp"
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "ProgressTool.hpp"
 
 #include <algorithm>
@@ -90,7 +90,7 @@ bool CoreTopologyProgress::finish()
   }
   if (completed != total)
   {
-    PRINT_ERROR("Topology progress finished before all elements were processed.\n");
+    TOPOLOGY_ERROR("Topology progress finished before all elements were processed.\n");
     return false;
   }
   if (progress)
@@ -120,7 +120,7 @@ bool CoreTopologyProgress::check_interrupt()
   if (stopped)
   {
     interrupted = true;
-    PRINT_ERROR("Topology calculation interrupted.\n");
+    TOPOLOGY_ERROR("Topology calculation interrupted.\n");
     return false;
   }
   return true;

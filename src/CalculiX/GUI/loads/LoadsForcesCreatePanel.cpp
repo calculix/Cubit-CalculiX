@@ -1,3 +1,4 @@
+#include "ForceTargetWidget.hpp"
 #include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "LoadsForcesCreatePanel.hpp"
 #include <QString>
@@ -55,7 +56,7 @@ LoadsForcesCreatePanel::LoadsForcesCreatePanel(QWidget *parent) :
   label_10->setFixedWidth(labelWidth);
   label_11->setFixedWidth(labelWidth);
   label_1->setText("Name");
-  label_2->setText("Nodeset ID");
+  label_2->setText("Target");
   label_3->setText("Force X");
   label_4->setText("Force Y");
   label_5->setText("Force Z");
@@ -66,7 +67,7 @@ LoadsForcesCreatePanel::LoadsForcesCreatePanel(QWidget *parent) :
   label_10->setText("Amplitude ID");
   label_11->setText("Time Delay");
   lineEdit_1 = new QLineEdit();
-  lineEdit_2 = new QLineEdit();
+  target = new ForceTargetWidget(this);
   lineEdit_3 = new QLineEdit();
   lineEdit_4 = new QLineEdit();
   lineEdit_5 = new QLineEdit();
@@ -114,7 +115,7 @@ LoadsForcesCreatePanel::LoadsForcesCreatePanel(QWidget *parent) :
   HBoxLayout_1->addWidget(label_1);
   HBoxLayout_1->addWidget(lineEdit_1);
   HBoxLayout_2->addWidget(label_2);
-  HBoxLayout_2->addWidget(lineEdit_2);
+  HBoxLayout_2->addWidget(target);
   HBoxLayout_3->addWidget(label_3);
   HBoxLayout_3->addWidget(lineEdit_3);
   HBoxLayout_4->addWidget(label_4);
@@ -160,7 +161,7 @@ void LoadsForcesCreatePanel::on_pushButton_apply_clicked(bool)
   QStringList commands;
   QString command = "";
 
-  if (!lineEdit_2->text().trimmed().isEmpty() &&
+  if (!target->idText().trimmed().isEmpty() &&
       !lineEdit_3->text().trimmed().isEmpty() &&
       !lineEdit_4->text().trimmed().isEmpty() &&
       !lineEdit_5->text().trimmed().isEmpty() &&
@@ -168,7 +169,7 @@ void LoadsForcesCreatePanel::on_pushButton_apply_clicked(bool)
       !lineEdit_7->text().trimmed().isEmpty() &&
       !lineEdit_8->text().trimmed().isEmpty())
   {
-    command.append("ccx create force nodeset " + lineEdit_2->text());
+    command.append("ccx create force " + target->keyword() + " " + target->idText());
     command.append(" dof_1 " + lineEdit_3->text());
     command.append(" dof_2 " + lineEdit_4->text());
     command.append(" dof_3 " + lineEdit_5->text());
@@ -197,7 +198,7 @@ void LoadsForcesCreatePanel::on_pushButton_apply_clicked(bool)
   {
     commands.push_back(command);
     lineEdit_1->setText("");
-    lineEdit_2->setText("");
+    target->setTarget(0, {});
     lineEdit_3->setText("0");
     lineEdit_4->setText("0");
     lineEdit_5->setText("0");
@@ -213,4 +214,9 @@ void LoadsForcesCreatePanel::on_pushButton_apply_clicked(bool)
   {
     GuiSendCmd::gui_cmd(commands[int(i)]);
   }
+}
+
+void LoadsForcesCreatePanel::setReferencePoint(int id)
+{
+  target->setTarget(id, {});
 }

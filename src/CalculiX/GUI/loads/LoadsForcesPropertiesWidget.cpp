@@ -24,7 +24,14 @@ bool LoadsForcesPropertiesWidget::setForce(int id)
   auto* general = addIdentity("Force", settings.id);
   addEditableName(general, id, QString::fromStdString(settings.name));
   auto* assignment = addGroup("assignment", "Assignment", PropertySection::Assignment);
-  addReference(assignment, PropertyReferenceKind::Nodeset, "Nodeset", QString::fromStdString(settings.nodeset));
+  if (settings.referencePoint > 0)
+  {
+    addValue(assignment, "Reference point", QString::number(settings.referencePoint));
+  }
+  else
+  {
+    addReference(assignment, PropertyReferenceKind::Nodeset, "Nodeset", QString::fromStdString(settings.nodeset));
+  }
   auto* components = addGroup("components", "Components", PropertySection::Data);
   addValue(components, CalculiXUnitPresentation::title("Force X", "force"), QString::fromStdString(settings.component1));
   addValue(components, CalculiXUnitPresentation::title("Force Y", "force"), QString::fromStdString(settings.component2));

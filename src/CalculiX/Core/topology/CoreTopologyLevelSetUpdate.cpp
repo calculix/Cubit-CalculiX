@@ -5,7 +5,7 @@
 #include "CoreTopologyLevelSetGeometry.hpp"
 #include "CoreTopologyLevelSetGeometryCache.hpp"
 #include "CoreTopologyStructs.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "Eigen/Sparse"
 #include <QScopeGuard>
 #include <algorithm>
@@ -36,7 +36,7 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
 {
   if (source.node_values.size() > static_cast<std::size_t>((std::numeric_limits<int>::max)()))
   {
-    PRINT_ERROR("Too many level-set nodes for sparse operator indexing.\n");
+    TOPOLOGY_ERROR("Too many level-set nodes for sparse operator indexing.\n");
     return false;
   }
   const int count = static_cast<int>(source.node_values.size());
@@ -54,13 +54,13 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
     if (objective == evaluation.compliance_derivatives.end() || volume == evaluation.volume_fraction_derivatives.end() ||
         !std::isfinite(objective->second) || !std::isfinite(volume->second))
     {
-      PRINT_ERROR("Incomplete/non-finite level-set update derivatives.\n");
+      TOPOLOGY_ERROR("Incomplete/non-finite level-set update derivatives.\n");
       return false;
     }
     const bool fixed = source.fixed_nodes.count(node.first) != 0;
     if (fixed && (objective->second != 0.0 || volume->second != 0.0))
     {
-      PRINT_ERROR("Fixed level-set nodes must have zero feasible derivatives.\n");
+      TOPOLOGY_ERROR("Fixed level-set nodes must have zero feasible derivatives.\n");
       return false;
     }
     problem.indices.emplace(node.first, index);
@@ -97,7 +97,7 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
       const auto first = problem.indices.find(nodes[a]);
       if (first == problem.indices.end())
       {
-        PRINT_ERROR("Cubit connectivity changed during level-set operator assembly.\n");
+        TOPOLOGY_ERROR("Cubit connectivity changed during level-set operator assembly.\n");
         return false;
       }
       const int row = first->second;
@@ -107,20 +107,20 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
         const auto second = problem.indices.find(nodes[b]);
         if (second == problem.indices.end())
         {
-          PRINT_ERROR("Missing level-set graph node.\n");
+          TOPOLOGY_ERROR("Missing level-set graph node.\n");
           return false;
         }
         const double distance = std::hypot(coordinates[a][0] - coordinates[b][0], coordinates[a][1] - coordinates[b][1], coordinates[a][2] - coordinates[b][2]);
         if (!std::isfinite(distance) || distance <= 0.0)
         {
-          PRINT_ERROR("Coincident/non-finite nodes in the level-set regularization graph.\n");
+          TOPOLOGY_ERROR("Coincident/non-finite nodes in the level-set regularization graph.\n");
           return false;
         }
         const double ratio = source.settings.regularization_length / distance;
         const double weight = (normalized_volume / pairs) * ratio * ratio;
         if (!std::isfinite(weight) || weight < 0.0)
         {
-          PRINT_ERROR("Invalid level-set graph regularization weight.\n");
+          TOPOLOGY_ERROR("Invalid level-set graph regularization weight.\n");
           return false;
         }
         const int column = second->second;
@@ -137,20 +137,20 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
   {
     if (!std::isfinite(problem.mass[node]) || problem.mass[node] <= 0.0)
     {
-      PRINT_ERROR("Invalid level-set proximal mass.\n");
+      TOPOLOGY_ERROR("Invalid level-set proximal mass.\n");
       return false;
     }
     const double regularization_diagonal = problem.qp.matrix.coeff(node, node);
     problem.qp.matrix.coeffRef(node, node) += problem.mass[node];
     if (problem.qp.matrix.coeff(node, node) <= regularization_diagonal)
     {
-      PRINT_ERROR("Level-set graph scaling loses the positive proximal mass.\n");
+      TOPOLOGY_ERROR("Level-set graph scaling loses the positive proximal mass.\n");
       return false;
     }
     problem.qp.right[node] += problem.mass[node] * problem.qp.origin[node];
     if (!std::isfinite(problem.qp.right[node]))
     {
-      PRINT_ERROR("Non-finite normalized level-set objective derivative.\n");
+      TOPOLOGY_ERROR("Non-finite normalized level-set objective derivative.\n");
       return false;
     }
   }
@@ -160,14 +160,14 @@ bool build_problem(const TopologyLevelSetDesign& source, const TopologyLevelSetE
   {
     if (!std::isfinite(problem.qp.diagonal[row]) || problem.qp.diagonal[row] <= 0.0)
     {
-      PRINT_ERROR("Invalid level-set QP diagonal.\n");
+      TOPOLOGY_ERROR("Invalid level-set QP diagonal.\n");
       return false;
     }
     for (Sparse::InnerIterator entry(problem.qp.matrix, row); entry; ++entry)
     {
       if (!std::isfinite(entry.value()))
       {
-        PRINT_ERROR("Non-finite level-set sparse operator.\n");
+        TOPOLOGY_ERROR("Non-finite level-set sparse operator.\n");
         return false;
       }
     }
@@ -188,7 +188,7 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
   const auto report_timing = qScopeGuard([&]()
   {
     const double total_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
-    PRINT_INFO("Level-set iteration %d proposal [ms]: source geometry %.3f; graph assembly %.3f; QP solve %.3f; total %.3f; status %s.\n",
+    TOPOLOGY_INFO("Level-set iteration %d proposal [ms]: source geometry %.3f; graph assembly %.3f; QP solve %.3f; total %.3f; status %s.\n",
       source.iteration_id, source_geometry_ms, assembly_ms, qp_ms, total_ms, [&]() -> const char* {
         if (succeeded) {
           return "complete";
@@ -209,7 +209,7 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
       evaluation.volume_fraction_derivatives.size() != source.node_values.size() ||
       !std::isfinite(source.objective_scale) || source.objective_scale < 0.0)
   {
-    PRINT_ERROR("Invalid solved source data or target for level-set update.\n");
+    TOPOLOGY_ERROR("Invalid solved source data or target for level-set update.\n");
     return false;
   }
   if (!source_cache)
@@ -227,12 +227,12 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
   if (std::abs(prepared.volume.volume_fraction - evaluation.volume_fraction) > controls.volume_tolerance ||
       std::abs(prepared.volume.total_volume - evaluation.total_volume) / evaluation.total_volume > controls.volume_tolerance)
   {
-    PRINT_ERROR("Level-set source evaluation disagrees with the current geometry.\n");
+    TOPOLOGY_ERROR("Level-set source evaluation disagrees with the current geometry.\n");
     return false;
   }
   if (prepared.volume.minimum_design_volume_fraction > target_volume_fraction + controls.volume_tolerance)
   {
-    PRINT_ERROR("Level-set target volume is below the fully pinned-element lower bound.\n");
+    TOPOLOGY_ERROR("Level-set target volume is below the fully pinned-element lower bound.\n");
     return false;
   }
   const double objective_scale = [&]() -> double {
@@ -270,7 +270,7 @@ bool CoreTopologyLevelSetUpdate::build_proposal(const TopologyLevelSetDesign& so
   const double predicted_change = problem.qp.volume.dot(direction);
   if (!direction.allFinite() || !std::isfinite(ordinary_residual) || !std::isfinite(predicted_change))
   {
-    PRINT_ERROR("Invalid level-set proposal direction.\n");
+    TOPOLOGY_ERROR("Invalid level-set proposal direction.\n");
     return false;
   }
   TopologyLevelSetProposal candidate;
@@ -312,7 +312,7 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
   const auto report_timing = qScopeGuard([&]()
   {
     const double total_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
-    PRINT_INFO("Level-set update after iteration %d acceptance [ms]: source geometry %.3f; trial geometry %.3f; total %.3f; status %s.\n",
+    TOPOLOGY_INFO("Level-set update after iteration %d acceptance [ms]: source geometry %.3f; trial geometry %.3f; total %.3f; status %s.\n",
       source_iteration, source_geometry_ms, trial_geometry_ms, total_ms, [&]() -> const char* {
         if (succeeded) {
           return "complete";
@@ -322,12 +322,12 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
       }());
     if (succeeded)
     {
-      PRINT_INFO("Level-set update after iteration %d acceptance: trials %d; backtracking reductions %d; accepted scale %.9g.\n",
+      TOPOLOGY_INFO("Level-set update after iteration %d acceptance: trials %d; backtracking reductions %d; accepted scale %.9g.\n",
         source_iteration, trial_count, backtracking_reductions, accepted_scale);
     }
     else
     {
-      PRINT_INFO("Level-set update after iteration %d acceptance: trials %d; backtracking reductions %d; no accepted scale.\n",
+      TOPOLOGY_INFO("Level-set update after iteration %d acceptance: trials %d; backtracking reductions %d; no accepted scale.\n",
         source_iteration, trial_count, backtracking_reductions);
     }
   });
@@ -336,7 +336,7 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
       &factors == &next.node_values || &factors == &next.element_solid_fractions || &factors == &source.volume.density_sensitivities ||
       &factors == &next.volume.density_sensitivities || &diagnostics == &source.incoming_update || &diagnostics == &next.incoming_update || &diagnostics == &proposal.diagnostics)
   {
-    PRINT_ERROR("Level-set acceptance outputs must not alias input records or each other.\n");
+    TOPOLOGY_ERROR("Level-set acceptance outputs must not alias input records or each other.\n");
     return false;
   }
   next = {};
@@ -344,7 +344,7 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
   diagnostics = {};
   if (!std::isfinite(initial_step_scale) || initial_step_scale <= 0.0 || initial_step_scale > 1.0)
   {
-    PRINT_ERROR("Invalid initial level-set acceptance scale.\n");
+    TOPOLOGY_ERROR("Invalid initial level-set acceptance scale.\n");
     return false;
   }
   const auto controls = CoreTopologyLevelSet::default_update_controls();
@@ -358,7 +358,7 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
       !std::isfinite(proposal.diagnostics.qp_stationarity_residual) || proposal.diagnostics.qp_stationarity_residual < 0.0 || proposal.diagnostics.qp_stationarity_residual > controls.qp_tolerance ||
       !std::isfinite(proposal.diagnostics.volume_multiplier) || proposal.diagnostics.volume_multiplier < 0.0)
   {
-    PRINT_ERROR("Invalid or stale level-set proposal.\n");
+    TOPOLOGY_ERROR("Invalid or stale level-set proposal.\n");
     return false;
   }
   auto prepared = source;
@@ -373,7 +373,7 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
   if (std::abs(source_volume - proposal.source_volume_fraction) > controls.volume_tolerance ||
       prepared.volume.minimum_design_volume_fraction > target_volume_fraction + controls.volume_tolerance)
   {
-    PRINT_ERROR("Level-set proposal no longer matches the source volume/target.\n");
+    TOPOLOGY_ERROR("Level-set proposal no longer matches the source volume/target.\n");
     return false;
   }
   double ordinary_residual = 0.0;
@@ -399,7 +399,7 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
     if (value == proposal.node_values.end() || volume == proposal.volume_fraction_derivatives.end() ||
         !std::isfinite(value->second) || value->second < lower || value->second > upper || !std::isfinite(volume->second) || (fixed && volume->second != 0.0))
     {
-      PRINT_ERROR("Invalid level-set proposal field/bounds.\n");
+      TOPOLOGY_ERROR("Invalid level-set proposal field/bounds.\n");
       return false;
     }
     ordinary_residual = (std::max)(ordinary_residual, std::abs(value->second - node.second));
@@ -407,7 +407,7 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
   if (!std::isfinite(proposal.diagnostics.ordinary_proposal_residual) ||
       std::abs(ordinary_residual - proposal.diagnostics.ordinary_proposal_residual) > controls.qp_tolerance)
   {
-    PRINT_ERROR("Level-set proposal residual disagrees with its field.\n");
+    TOPOLOGY_ERROR("Level-set proposal residual disagrees with its field.\n");
     return false;
   }
   const double objective_scale = proposal.objective_scale;
@@ -446,7 +446,7 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
     }
     if (!std::isfinite(linear_change))
     {
-      PRINT_ERROR("Non-finite accepted-field linearized volume change.\n");
+      TOPOLOGY_ERROR("Non-finite accepted-field linearized volume change.\n");
       return false;
     }
     ++trial_count;
@@ -500,7 +500,7 @@ bool CoreTopologyLevelSetUpdate::accept_proposal(const TopologyLevelSetDesign& s
     }
     scale *= 0.5;
   }
-  PRINT_ERROR("Level-set backtracking could not produce a volume-feasible or volume-reducing step.\n");
+  TOPOLOGY_ERROR("Level-set backtracking could not produce a volume-feasible or volume-reducing step.\n");
   return false;
 }
 
@@ -512,7 +512,7 @@ bool CoreTopologyLevelSetUpdate::build_update(const TopologyLevelSetDesign& sour
       &factors == &evaluation.compliance_derivatives || &factors == &evaluation.volume_derivatives || &factors == &evaluation.volume_fraction_derivatives ||
       &diagnostics == &source.incoming_update || &diagnostics == &next.incoming_update)
   {
-    PRINT_ERROR("Level-set update outputs must not alias source records.\n");
+    TOPOLOGY_ERROR("Level-set update outputs must not alias source records.\n");
     return false;
   }
   next = {};

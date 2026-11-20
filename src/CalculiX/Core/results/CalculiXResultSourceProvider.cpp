@@ -1,4 +1,5 @@
 #include "CalculiXResultSourceProvider.hpp"
+#include "topology/CalculiXTopologyResultSource.hpp"
 #include "CalculiXResultsInterface.hpp"
 #include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "vtk/CoreResultsVtkStructs.hpp"
@@ -29,6 +30,10 @@ bool CalculiXResultSourceProvider::open(
     return files && CoreResultsExternalSource().open(*files,output,error);
   }
 
+  if (job->topology_threshold)
+  {
+    return CalculiXTopologyResultSource::load(*this,*job,false,output,error);
+  }
   return load_job(*job, false, output, error);
 }
 
@@ -45,6 +50,12 @@ bool CalculiXResultSourceProvider::refresh(
     return open(current,output,error);
   }
 
+  if (job->topology_threshold)
+  {
+    auto latest = *job;
+    latest.run_identity.clear();
+    return CalculiXTopologyResultSource::load(*this,latest,false,output,error);
+  }
   return load_job(*job, true, output, error);
 }
 
@@ -171,6 +182,10 @@ bool CalculiXResultSourceProvider::restore(const SimResults::ResultSourceReferen
     return CoreResultsExternalSource().open(*files,output,error,true);
   }
   const auto* job = std::get_if<SimResults::JobSourceReference>(&request);
+  if (job && job->topology_threshold)
+  {
+    return CalculiXTopologyResultSource::load(*this,*job,true,output,error);
+  }
   if (!job || job->application_id != "calculix" || job->job_id <= 0 || job->result_identity.empty() || !job->project_id.empty())
   {
     error = "The saved CalculiX reference has no supported durable result identity.";
@@ -227,6 +242,12 @@ bool CalculiXResultSourceProvider::restore(const SimResults::ResultSourceReferen
   }
 }
 
+bool CalculiXResultSourceProvider::repartition_topology(const SimResults::JobSourceReference& current,
+  double threshold, SimResults::PublishedResultSource& output, std::string& error)
+{
+  return CalculiXTopologyResultSource::load(*this,current,true,output,error,threshold);
+}
+
 bool CalculiXResultSourceProvider::available_jobs(std::vector<SimResults::ResultJobEntry>& output, std::string& error) const
 {
   CalculiXJobsInterface jobs;
@@ -271,6 +292,7 @@ bool CalculiXResultSourceProvider::available_jobs(std::vector<SimResults::Result
     }
     entries.push_back(std::move(entry));
   }
+  CalculiXTopologyResultSource::append_catalogue(entries);
   output = std::move(entries);
   error.clear();
   return true;

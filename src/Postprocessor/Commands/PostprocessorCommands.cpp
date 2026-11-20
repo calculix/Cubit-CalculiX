@@ -16,6 +16,7 @@
 #include "selection/PostPickCommand.hpp"
 #include "selection/PostProbeCommand.hpp"
 #include "sources/PostOpenCommand.hpp"
+#include "sources/PostTopologyThresholdCommand.hpp"
 #include "sources/PostRefreshCommand.hpp"
 #include "results/PostFrameCommand.hpp"
 #include "results/PostAnimationCommand.hpp"
@@ -45,7 +46,7 @@ PostprocessorCommands::PostprocessorCommands(std::weak_ptr<PostprocessorApplicat
 
 std::vector<std::string> PostprocessorCommands::command_keys() const
 {
-  return {"PostVectorLegendCommand", "PostExplodeCommand", "PostDisplayCommand", "PostViewToolsCommand", "PostUnitsCommand", "PostClipCommand", "PostSectionCommand", "PostThresholdCommand", "PostFilterCommand", "PostCaptureCommand", "PostCaptureAnimationCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostVectorCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
+  return {"PostVectorLegendCommand", "PostExplodeCommand", "PostDisplayCommand", "PostViewToolsCommand", "PostUnitsCommand", "PostClipCommand", "PostSectionCommand", "PostThresholdCommand", "PostFilterCommand", "PostCaptureCommand", "PostCaptureAnimationCommand", "PostPlotCommand", "PostLabelCommand", "PostLabelsCommand", "PostTableCommand", "PostViewTypeCommand", "PostPickCommand", "PostProbeCommand", "PostDeformCommand", "PostVectorCommand", "PostAnimationCommand", "PostColorCommand", "PostLegendCommand", "PostFrameCommand", "PostOpenCommand", "PostTopologyThresholdCommand", "PostRefreshCommand", "PostListCommand", "PostSelectCommand", "PostCloseCommand", "PostUserOptionsCommand",
     "PostShowCommand", "PostHideCommand", "PostViewFitCommand", "PostViewCameraCommand",
     "PostViewRotateCommand", "PostViewPanCommand", "PostViewZoomCommand"};
 }
@@ -158,6 +159,10 @@ CubitCommand* PostprocessorCommands::create_command(const std::string& key) {
     return new PostUserOptionsCommand(application);
   }
 
+  if (key == "PostTopologyThresholdCommand")
+  {
+    return new PostTopologyThresholdCommand(application);
+  }
   if (key == "PostOpenCommand") {
     return new PostOpenCommand(application);
   }

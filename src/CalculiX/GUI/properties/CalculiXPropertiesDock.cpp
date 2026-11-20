@@ -1,5 +1,6 @@
 #include <type_traits>
 #include "CalculiXPropertiesDock.hpp"
+#include "GUI/connections/DiscreteConnectionProperties.hpp"
 #include "PropertyTreeWidget.hpp"
 #include "CubitMessage.hpp"
 #include <QHBoxLayout>
@@ -289,6 +290,20 @@ void CalculiXPropertiesDock::showSelection(const PropertySelection& selection)
       }
       auto* widget = static_cast<SectionsPropertiesWidget*>(cached);
       loaded = widget->setSection(requested.id);
+      active = widget;
+      break;
+    }
+    case PropertyFeature::PointMass:
+    case PropertyFeature::Spring:
+    {
+      auto& cached = widgets[requested.feature];
+      if (cached == nullptr)
+      {
+        cached = new DiscreteConnectionProperties(pages);
+        pages->addWidget(cached);
+      }
+      auto* widget = static_cast<DiscreteConnectionProperties*>(cached);
+      loaded = widget->load(requested.feature,requested.id);
       active = widget;
       break;
     }

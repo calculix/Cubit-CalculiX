@@ -1,9 +1,18 @@
 Job monitor
 ===========
 
-The monitor retains the live plots and solver console, and presents the solver's
-STA and CVG records as read-only tables. These tables inspect solver progress;
-opening converted result datasets remains the purpose of the Results button.
+The Job Monitor has four tabs: **Live Monitor**, **Console Output**,
+**Convergence (CVG)** and **Status (STA)**. Use **Load** to load and convert job
+results. **Results** opens the converted job as a Postprocessor source. Switch
+to the Postprocessor workspace to inspect fields and DAT section tables or
+create history plots. See :doc:`../postprocessor/tables` and
+:doc:`../postprocessor/plots`.
+
+The FRD, DAT and DAT Section tabs and their ``ccx result csv job`` and
+``ccx result plot job`` command forms have been removed. Update journals that
+call those commands. The Postprocessor exports plot samples to CSV. Use the
+existing CalculiX Python result queries for scripted access to raw FRD, DAT
+and section records.
 
 Status (STA)
 ------------

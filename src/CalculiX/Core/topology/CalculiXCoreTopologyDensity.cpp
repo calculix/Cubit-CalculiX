@@ -2,19 +2,19 @@
 #include "CoreTopology.hpp"
 #include "CoreTopologyDensity.hpp"
 #include "CoreTopologyOptimization.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CalculiXCore::set_topology_iteration_densities(int topology_id, int iteration_id, const std::map<int, double>& densities, int source_iteration)
 {
   if (!topology || !mat)
   {
-    PRINT_ERROR("Topology/material cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology/material cores are not initialized.\n");
     return false;
   }
 
   if (!cb)
   {
-    PRINT_ERROR("Block core is not initialized.\n");
+    TOPOLOGY_ERROR("Block core is not initialized.\n");
     return false;
   }
 
@@ -30,7 +30,7 @@ bool CalculiXCore::filter_topology_density_sensitivities(int topology_id, int it
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -43,7 +43,7 @@ bool CalculiXCore::build_topology_density_update(int topology_id, int source_ite
 
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -56,7 +56,7 @@ bool CalculiXCore::check_topology_density_convergence(int topology_id, int previ
 
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 

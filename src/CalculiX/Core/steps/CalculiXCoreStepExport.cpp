@@ -56,7 +56,8 @@ std::string CalculiXCore::get_step_export_data()
     *loadssurfacetraction,
     *loadsbodyheatflux,
     sideset_faces,
-    *me_iface
+    *me_iface,
+    connections
   };
 
   return CoreStepExport::get_export(data);

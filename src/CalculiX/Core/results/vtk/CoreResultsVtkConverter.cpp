@@ -1,4 +1,6 @@
+#include <cctype>
 #include "CoreResultsVtkConverter.hpp"
+#include "CoreDiscreteElementHistory.hpp"
 #include "Core/results/CoreResultsUnits.hpp"
 #include "CoreResultsVtkElements.hpp"
 #include "CoreResultsVtkPipeline.hpp"
@@ -265,7 +267,10 @@ namespace
               error = "Invalid integration-point group identifier.";
               return false;
             }
-            domain.points.push_back({mapping[0], static_cast<int>(row[1])});
+            if (!plan.mesh.connections.joint_elements.count(mapping[0]))
+            {
+              domain.points.push_back({mapping[0], static_cast<int>(row[1])});
+            }
           }
         }
       }
@@ -1093,6 +1098,32 @@ namespace
 
   // DAT nodal histories retain one row per source record. The XYZ norm uses
   // only a recognized physical vector triplet; no averaging is performed.
+  void attachment_metadata(vtkTable* table, const DistributedResultBinding& attachment, const std::string& name)
+  {
+    auto* metadata = table->GetFieldData();
+    text(metadata, "ReferencePoint", attachment.point_name);
+    text(metadata, "ReferencePointId", std::to_string(attachment.point));
+    text(metadata, "SetName", "CCX_DA_" + std::to_string(attachment.id));
+    text(metadata, "TableName", name);
+    text(metadata, "TableType", "DistributingHistory");
+    text(metadata, "Field", "DistributingHistory");
+    text(metadata, "CoordinateSystem", "Global");
+  }
+
+  void append_scalar(vtkTable* table, const std::string& name, double value)
+  {
+    auto column = vtkDoubleArray::SafeDownCast(table->GetColumnByName(name.c_str()));
+    if (column)
+    {
+      column->InsertNextValue(value);
+      return;
+    }
+    auto added = vtkSmartPointer<vtkDoubleArray>::New();
+    added->SetName(name.c_str());
+    added->InsertNextValue(value);
+    table->AddColumn(added);
+  }
+
   bool nodal_history_table(const CoreResultsDat& dat, const CoreResultsVtkPlan& plan,
     const CoreResultsVtkFieldPlan& field, SimResults::Increment& increment,
     CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error)
@@ -1114,7 +1145,23 @@ namespace
     }
     const auto& mapping = dat.result_block_c1_data[field.source_data];
     const auto& values = dat.result_block_data[field.source_data];
-    const auto count = mapping.size();
+    std::vector<std::size_t> physical_rows;
+    const auto& hidden = plan.mesh.connections.joint_nodes;
+    if (!hidden.empty())
+    {
+      for (std::size_t i = 0; i < mapping.size(); ++i)
+      {
+        if (mapping[i].empty() || !hidden.count(mapping[i][0]))
+        {
+          physical_rows.push_back(i);
+        }
+      }
+      if (physical_rows.empty())
+      {
+        return true;
+      }
+    }
+    const auto count = hidden.empty() ? mapping.size() : physical_rows.size();
     const auto vector = spatial_vector_components(field.field);
     if (!fits(count, field.field.components.size() + 4, error))
     {
@@ -1170,7 +1217,8 @@ namespace
           {
             return true;
           }
-          const auto& row = mapping[i];
+          const auto source_index = hidden.empty() ? i : physical_rows[i];
+          const auto& row = mapping[source_index];
           if (row.size() < 3 || row[0] <= 0 || row[2] != 1 || row[1] < 0 ||
               static_cast<std::size_t>(row[1]) >= values.size() || values[row[1]].size() != output.size())
           {
@@ -1178,7 +1226,7 @@ namespace
             return false;
           }
           const auto& source = values[row[1]];
-          record_ids[i] = static_cast<vtkTypeInt64>(i);
+          record_ids[i] = static_cast<vtkTypeInt64>(source_index);
           node_ids[i] = row[0];
           valid[i] = 1;
           for (std::size_t component = 0; component < output.size(); ++component)
@@ -1204,8 +1252,86 @@ namespace
     {
       table->GetColumn(column)->Modified();
     }
+    if (vector && vector_name(field.field.set_name) == "CCX_DISCRETE_STEP_" + std::to_string(increment.step) &&
+        (vector_name(field.field.name) == "DISPLACEMENTS" || vector_name(field.field.name) == "U") &&
+        std::any_of(plan.mesh.connections.discrete.begin(),plan.mesh.connections.discrete.end(),[&](const auto& entry)
+        {
+          return entry.second.history.count(increment.step) != 0;
+        }))
+    {
+      std::map<int,CoreDiscreteElementHistory::Sample> samples;
+      for (std::size_t i = 0; i < count; ++i)
+      {
+        if (!valid[i])
+        {
+          continue;
+        }
+        const CoreDiscreteElementHistory::Sample sample{output[(*vector)[0]][i],output[(*vector)[1]][i],output[(*vector)[2]][i]};
+        if (!samples.emplace(static_cast<int>(node_ids[i]),sample).second)
+        {
+          error = "Duplicate displacement for a point mass or spring endpoint.";
+          return false;
+        }
+      }
+      for (const auto& entry : plan.mesh.connections.discrete)
+      {
+        const auto& feature = entry.second;
+        const auto columns = CoreDiscreteElementHistory::evaluate(feature,increment.step,samples);
+        if (columns.empty())
+        {
+          continue;
+        }
+        auto history = vtkSmartPointer<vtkTable>::New();
+        for (const auto& column : columns)
+        {
+          append_scalar(history,column.first,column.second);
+        }
+        auto* metadata = history->GetFieldData();
+        const bool mass = feature.type == "MASS";
+        const std::string kind = mass ? "PointMassHistory" : "SpringHistory";
+        text(metadata,"TableName",mass ? "Displacement" : "Spring response");
+        text(metadata,"TableType",kind);
+        text(metadata,"Field",kind);
+        text(metadata,"TableScope","Increment");
+        text(metadata,"Source","DAT");
+        text(metadata,"FeatureId",std::to_string(feature.id));
+        text(metadata,"SetName",feature.name + (mass ? " (Point mass " : " (Spring ") + std::to_string(feature.id) + ")");
+        text(metadata,"Step",std::to_string(increment.step));
+        text(metadata,"Increment",std::to_string(increment.increment));
+        text(metadata,"RunIdentity",plan.run_identity);
+        timestamp(history,increment.time);
+        increment.tables.push_back(own(history));
+      }
+      return true;
+    }
     auto* metadata = table->GetFieldData();
     text(metadata, "TableName", field.field.name);
+    for (const auto& entry : plan.mesh.connections.points)
+    {
+      const auto& point = entry.second;
+      const std::string prefix = "CCX_RP_" + std::to_string(point.id);
+      std::string set = field.field.set_name;
+      std::transform(set.begin(), set.end(), set.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+      const bool rotation = set == prefix + "_ROT";
+      if (!rotation && set != prefix + "_REF")
+      {
+        continue;
+      }
+      const int expected = rotation ? point.rot : point.ref;
+      if (std::any_of(mapping.begin(), mapping.end(), [expected](const auto& row) { return row[0] != expected; }))
+      {
+        error = "RP history contains unexpected node IDs.";
+        return false;
+      }
+      if (!point.history.contains(increment.step))
+      {
+        return true;
+      }
+      text(metadata, "ReferencePoint", point.name);
+      text(metadata, "ReferencePointId", std::to_string(point.id));
+      text(metadata, "ReferencePointRole", rotation ? "Rotation" : "Translation");
+      break;
+    }
     text(metadata, "TableType", "NodalHistory");
     text(metadata, "TableScope", "Increment");
     text(metadata, "ResultKind", "NodalHistory");
@@ -1228,9 +1354,248 @@ namespace
     text(metadata, "Mode", std::to_string(increment.mode));
     text(metadata, "NodalDiameter", std::to_string(increment.nodal_diameter));
     text(metadata, "Subcase", std::to_string(increment.subcase));
+    for (const auto& entry : plan.mesh.connections.distributed)
+    {
+      const auto& attachment = entry.second;
+      if (vector_name(field.field.set_name) != "CCX_DA_" + std::to_string(attachment.id) + "_NODES" ||
+          (vector_name(field.field.name) != "DISPLACEMENTS" && vector_name(field.field.name) != "U"))
+      {
+        continue;
+      }
+      std::array<double,3> mean{};
+      std::set<int> seen;
+      double sum = 0;
+      for (std::size_t i = 0; i < count; ++i)
+      {
+        const auto weight = attachment.weights.find(static_cast<int>(node_ids[i]));
+        if (!vector || !valid[i] || weight == attachment.weights.end() || !seen.insert(static_cast<int>(node_ids[i])).second)
+        {
+          error = "Invalid surface displacement samples for " + attachment.name;
+          return false;
+        }
+        sum += weight->second;
+        for (std::size_t axis = 0; axis < 3; ++axis)
+        {
+          mean[axis] += weight->second * output[(*vector)[axis]][i];
+        }
+      }
+      if (seen.size() != attachment.weights.size() || !(sum > 0))
+      {
+        error = "Incomplete surface displacement samples for " + attachment.name;
+        return false;
+      }
+      auto reduced = vtkSmartPointer<vtkTable>::New();
+      reduced->GetFieldData()->DeepCopy(metadata);
+      attachment_metadata(reduced, attachment, "Mean surface displacement");
+      text(reduced->GetFieldData(), "Reduction", "Area-weighted mean");
+      for (std::size_t axis = 0; axis < 3; ++axis)
+      {
+        append_scalar(reduced, std::string("Mean displacement ") + "XYZ"[axis], mean[axis] / sum);
+      }
+      table = reduced;
+      break;
+    }
     timestamp(table, increment.time);
     increment.tables.push_back(own(table));
     return true;
+  }
+
+  using JointVector = std::array<double,3>;
+  using JointSampleKey = std::pair<std::string,bool>;
+  using JointSamples = std::map<JointSampleKey,JointVector>;
+
+  JointSamples joint_samples(const CoreResultsDat& dat, const CoreResultsVtkIncrementPlan& increment)
+  {
+    JointSamples samples;
+    std::set<std::pair<std::string,bool>> ambiguous;
+    for (const auto& field : increment.table_fields)
+    {
+      const auto layout = spatial_vector_components(field.field);
+      const auto name = vector_name(field.field.name);
+      const bool force = name == "FORCES" || name == "RF";
+      if (field.field.source != "DAT" || !layout || (!force && name != "DISPLACEMENTS" && name != "U"))
+      {
+        continue;
+      }
+      if (field.source_data < 0 || static_cast<size_t>(field.source_data) >= dat.result_block_c1_data.size() ||
+          static_cast<size_t>(field.source_data) >= dat.result_block_data.size())
+      {
+        continue;
+      }
+      const auto& rows = dat.result_block_c1_data[field.source_data];
+      if (rows.size() != 1 || rows.front().size() < 3 || rows.front()[2] != 1 || rows.front()[1] < 0 ||
+          static_cast<size_t>(rows.front()[1]) >= dat.result_block_data[field.source_data].size())
+      {
+        continue;
+      }
+      const auto& values = dat.result_block_data[field.source_data][rows[0][1]];
+      if (values.size() != field.field.components.size())
+      {
+        continue;
+      }
+      const auto key = std::make_pair(vector_name(field.field.set_name),force);
+      JointVector sample{values[(*layout)[0]],values[(*layout)[1]],values[(*layout)[2]]};
+      if (!samples.emplace(key,sample).second)
+      {
+        ambiguous.insert(key);
+      }
+    }
+    for (const auto& key : ambiguous)
+    {
+      samples.erase(key);
+    }
+    return samples;
+  }
+
+  bool current_joint_axis(const JointResultBinding& joint, const JointSamples& samples, JointVector& axis)
+  {
+    axis = joint.axis;
+    if (!joint.guide)
+    {
+      return true;
+    }
+    const auto key = std::make_pair(vector_name("CCX_RP_" + std::to_string(joint.b) + "_ROT"), false);
+    const auto sample = samples.find(key);
+    if (sample == samples.end())
+    {
+      return false;
+    }
+    const auto& w = sample->second;
+    const double angle = std::hypot(w[0], w[1], w[2]);
+    if (angle > 0)
+    {
+      const JointVector n{w[0]/angle, w[1]/angle, w[2]/angle};
+      const double projection = n[0]*axis[0] + n[1]*axis[1] + n[2]*axis[2];
+      for (int i = 0; i < 3; ++i)
+      {
+        const int j = (i+1)%3;
+        const int k = (i+2)%3;
+        axis[i] = joint.axis[i]*std::cos(angle) + (n[j]*joint.axis[k]-n[k]*joint.axis[j])*std::sin(angle)
+          + n[i]*projection*(1-std::cos(angle));
+      }
+    }
+    return true;
+  }
+
+  std::array<double,4> joint_quaternion(const JointVector& rotation)
+  {
+    const double angle = std::hypot(rotation[0],rotation[1],rotation[2]);
+    const double scale = angle > 0 ? std::sin(angle/2)/angle : 0.5;
+    return {std::cos(angle/2),rotation[0]*scale,rotation[1]*scale,rotation[2]*scale};
+  }
+
+  double joint_twist(const JointVector& a, const JointVector& b, const JointVector& axis)
+  {
+    // Relative orientation in B's frame: conjugate(qB) times qA.
+    const auto p = joint_quaternion(a);
+    const auto q = joint_quaternion(b);
+    const double w = q[0]*p[0]+q[1]*p[1]+q[2]*p[2]+q[3]*p[3];
+    const double norm = std::hypot(axis[0],axis[1],axis[2]);
+    double axial = 0;
+    for (int i = 0; i < 3; ++i)
+    {
+      const int j = 1+(i+1)%3;
+      const int k = 1+(i+2)%3;
+      axial += (q[0]*p[i+1]-p[0]*q[i+1]-q[j]*p[k]+q[k]*p[j])*(axis[i]/norm);
+    }
+    return std::remainder(2*std::atan2(axial,w),2*std::acos(-1.));
+  }
+
+  void joint_history_tables(const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, std::size_t index,
+    SimResults::Increment& increment)
+  {
+    if (plan.mesh.connections.joints.empty())
+    {
+      return;
+    }
+    const auto samples = joint_samples(dat,plan.increments[index]);
+    for (const auto& entry : plan.mesh.connections.joints)
+    {
+      const auto& joint = entry.second;
+      if (!joint.history.contains(increment.step))
+      {
+        continue;
+      }
+      auto table = vtkSmartPointer<vtkTable>::New();
+      const auto scalar = [&](const std::string& name, double value)
+      {
+        auto column = vtkSmartPointer<vtkDoubleArray>::New();
+        column->SetName(name.c_str());
+        column->InsertNextValue(value);
+        table->AddColumn(column);
+      };
+      for (bool rotation : {false,true})
+      {
+        for (bool force : {false,true})
+        {
+          JointVector relative{};
+          std::array<JointVector,2> rotations{};
+          bool complete = true;
+          for (int side : {0,1})
+          {
+            const int id = side == 0 ? joint.a : joint.b;
+            if (id == 0)
+            {
+              continue;
+            }
+            const auto set = "CCX_RP_" + std::to_string(id) + (rotation ? "_ROT" : "_REF");
+            auto key = std::make_pair(vector_name(set),force);
+            auto sample = samples.find(key);
+            if (sample == samples.end())
+            {
+              complete = false;
+              continue;
+            }
+            if (rotation && !force)
+            {
+              rotations[side] = sample->second;
+            }
+            const std::string quantity = rotation ? (force ? "Moment" : "Rotation") : (force ? "Force" : "Translation");
+            for (int i = 0; i < 3; ++i)
+            {
+              scalar(std::string(side == 0 ? "A " : "B ") + quantity + " " + "XYZ"[i],sample->second[i]);
+              relative[i] += (side == 0 ? 1 : -1) * sample->second[i];
+            }
+          }
+          if (!complete || force || (joint.type != "revolute" && joint.type != "prismatic" && joint.type != "cylindrical"))
+          {
+            continue;
+          }
+          if ((rotation && joint.type == "prismatic") || (!rotation && joint.type == "revolute"))
+          {
+            continue;
+          }
+          if (rotation && !joint.helper_elements.isEmpty())
+          {
+            scalar("Relative axial angle",joint_twist(rotations[0],rotations[1],joint.axis));
+            continue;
+          }
+          JointVector axis;
+          if (!current_joint_axis(joint,samples,axis))
+          {
+            continue;
+          }
+          const double value = (relative[0]*axis[0] + relative[1]*axis[1] + relative[2]*axis[2]) / std::hypot(axis[0],axis[1],axis[2]);
+          scalar(rotation ? "Relative axial angle" : "Relative axial travel", value);
+        }
+      }
+      if (table->GetNumberOfColumns() == 0)
+      {
+        continue;
+      }
+      auto* metadata = table->GetFieldData();
+      text(metadata,"TableName","Joint history");
+      text(metadata,"TableType","JointHistory");
+      text(metadata,"TableScope","Increment");
+      text(metadata,"Field","JointHistory");
+      text(metadata,"Source","DAT");
+      text(metadata,"SetName",joint.name + " (Joint " + std::to_string(joint.id) + ")");
+      text(metadata,"Step",std::to_string(increment.step));
+      text(metadata,"Increment",std::to_string(increment.increment));
+      text(metadata,"RunIdentity",plan.run_identity);
+      timestamp(table,increment.time);
+      increment.tables.push_back(own(table));
+    }
   }
 
   bool field_tables(const CoreResultsFrd& frd, const CoreResultsDat& dat, const CoreResultsVtkPlan& plan,
@@ -1254,6 +1619,7 @@ namespace
         }
         ++completed;
       }
+      joint_history_tables(dat,plan,i,result.increments[i]);
     }
     return true;
   }
@@ -1388,6 +1754,59 @@ namespace
   }
 
   bool tables(const CoreResultsDat& dat, const CoreResultsVtkPlan& plan, SimResults::VtkResultsData& result, CoreResultsVtkPipeline& pipeline, const Poll& poll, std::string& error) {
+    std::map<std::string,const DistributedResultBinding*> surfaces;
+    for (const auto& entry : plan.mesh.connections.distributed)
+    {
+      surfaces.emplace("CCX_DA_" + std::to_string(entry.first) + "_FACE", &entry.second);
+    }
+    std::map<std::size_t,std::pair<const DistributedResultBinding*,int>> section_bindings;
+    for (const auto& mapping : dat.result_section)
+    {
+      if (mapping.size() < 2 || mapping[1] < 0 || mapping[0] < 0 ||
+          static_cast<std::size_t>(mapping[0]) >= dat.result_section_set.size())
+      {
+        continue;
+      }
+      const auto attachment = surfaces.find(vector_name(dat.result_section_set[mapping[0]]));
+      if (attachment != surfaces.end())
+      {
+        section_bindings.emplace(mapping[1],std::make_pair(attachment->second,mapping.size() > 2 ? mapping[2] : -1));
+      }
+    }
+    std::map<int,vtkSmartPointer<vtkTable>> resultants;
+    for (const auto& entry : plan.mesh.connections.distributed)
+    {
+      const auto& attachment = entry.second;
+      for (const auto& value : attachment.prescribed)
+      {
+        const auto load = value.toObject();
+        auto table = vtkSmartPointer<vtkTable>::New();
+        const auto components = load.value("components").toArray();
+        if (components.size() != 6)
+        {
+          error = "Invalid prescribed load components for " + attachment.name;
+          return false;
+        }
+        auto title = "Prescribed load " + std::to_string(load.value("load").toInt()) +
+          " / " + load.value("name").toString().toStdString() + " / Step " + std::to_string(load.value("step").toInt());
+        const auto parameters = load.value("parameters").toString().trimmed().toStdString();
+        if (!parameters.empty())
+        {
+          title += " " + parameters;
+        }
+        attachment_metadata(table, attachment, title);
+        for (int i = 0; i < 6; ++i)
+        {
+          if (!components[i].isDouble() || !std::isfinite(components[i].toDouble()))
+          {
+            error = "Invalid prescribed load value for " + attachment.name;
+            return false;
+          }
+          append_scalar(table, std::string(i < 3 ? "Force " : "Moment ") + "XYZ"[i % 3], components[i].toDouble());
+        }
+        result.tables.push_back(own(table));
+      }
+    }
     for (std::size_t i = 0; i < plan.tables.size(); ++i) {
       if (poll && !poll(0.965 + 0.015 * static_cast<double>(i) / std::max<std::size_t>(1, plan.tables.size()))) {
         return false;
@@ -1416,6 +1835,38 @@ namespace
         if (source.source_data >= dat.result_section_data.size()) {
           error = "Stale DAT section table plan.";
           return false;
+        }
+        const auto& row = dat.result_section_data[source.source_data];
+        const auto binding = section_bindings.find(source.source_data);
+        if (binding != section_bindings.end())
+        {
+          const auto& a = *binding->second.first;
+          if (row.size() < 8)
+          {
+            error = "Incomplete surface resultant for " + a.name;
+            return false;
+          }
+          auto& history = resultants[a.id];
+          if (!history)
+          {
+            history = vtkSmartPointer<vtkTable>::New();
+            attachment_metadata(history, a, "Surface resultant about RP");
+          }
+          append_scalar(history, "Time", row[0]);
+          append_scalar(history, "Increment", row[1]);
+          if (binding->second.second > 0)
+          {
+            append_scalar(history, "Step", binding->second.second);
+          }
+          for (int i = 0; i < 3; ++i)
+          {
+            const int j = (i + 1) % 3;
+            const int k = (i + 2) % 3;
+            append_scalar(history, std::string("Force ") + "XYZ"[i], row[2+i]);
+            append_scalar(history, std::string("Moment ") + "XYZ"[i],
+              row[5+i] - a.position[j]*row[2+k] + a.position[k]*row[2+j]);
+          }
+          continue;
         }
         section.push_back(dat.result_section_data[source.source_data]);
         rows = &section;
@@ -1476,6 +1927,10 @@ namespace
       }
       result.tables.push_back(own(table));
     }
+    for (const auto& entry : resultants)
+    {
+      result.tables.push_back(own(entry.second));
+    }
     return true;
   }
 }
@@ -1533,7 +1988,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
         });
       });
     if ((!plan.external_source && plan.job_id <= 0) || plan.job_id < 0 ||
-        (!tablesOnly && (plan.mesh.nodes.empty() || plan.mesh.elements.empty()))) {
+        (!tablesOnly && (plan.mesh.nodes.empty() || (plan.mesh.elements.empty() && plan.mesh.connections.discrete.empty())))) {
       error = "Invalid or empty VTK conversion plan.";
       return false;
     }
@@ -1555,7 +2010,7 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
     const bool has_blocks = std::any_of(plan.mesh.groups.begin(), plan.mesh.groups.end(), [](const CoreResultsVtkGroup& group) {
       return group.kind == Kind::Block;
     });
-    if (!has_blocks) {
+    if (!has_blocks && !plan.mesh.elements.empty()) {
       base.name = "Mesh";
       base.kind = Kind::Block;
       base.ids.reserve(plan.mesh.elements.size());
@@ -1564,13 +2019,76 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
       }
       groups.push_back(&base);
     }
-    for (const auto& group : plan.mesh.groups) {
+    std::set<int> helpers;
+    std::set<std::string> control_sets;
+    for (const auto& entry : plan.mesh.connections.distributed)
+    {
+      helpers.insert(entry.second.ref);
+      control_sets.insert("CCX_RP_" + std::to_string(entry.second.point) + "_REF");
+      control_sets.insert("CCX_DA_" + std::to_string(entry.first) + "_NODES");
+    }
+    for (const auto& entry : plan.mesh.connections.discrete)
+    {
+      for (const auto& step : entry.second.history)
+      {
+        control_sets.insert("CCX_DISCRETE_STEP_" + std::to_string(step.first));
+      }
+    }
+    std::vector<CoreResultsVtkGroup> point_groups;
+    for (const auto& entry : plan.mesh.connections.points)
+    {
+      const auto& point = entry.second;
+      const auto prefix = "CCX_RP_" + std::to_string(point.id);
+      control_sets.insert(prefix + "_REF");
+      control_sets.insert(prefix + "_ROT");
+      helpers.insert(point.rot);
+      if (find_entity(plan.mesh.nodes, point.ref))
+      {
+        CoreResultsVtkGroup group;
+        group.name = "RP " + std::to_string(point.id) + " / " + point.name;
+        group.kind = Kind::Nodeset;
+        group.ids.push_back(point.ref);
+        point_groups.push_back(std::move(group));
+      }
+    }
+    for (const auto& item : plan.mesh.connections.joint_nodes)
+    {
+      helpers.insert(item.first);
+    }
+    std::map<std::string, const JointResultBinding*> joint_markers;
+    for (const auto& entry : plan.mesh.connections.joints)
+    {
+      const auto& joint = entry.second;
+      const auto endpoint = plan.mesh.connections.points.find(joint.a);
+      if (endpoint != plan.mesh.connections.points.end() && find_entity(plan.mesh.nodes, endpoint->second.ref))
+      {
+        CoreResultsVtkGroup group;
+        group.kind = Kind::Nodeset;
+        group.name = "Joint " + std::to_string(joint.id) + " / " + joint.name;
+        group.ids.push_back(endpoint->second.ref);
+        joint_markers.emplace(group.name, &joint);
+        point_groups.push_back(std::move(group));
+      }
+    }
+    for (const auto& group : plan.mesh.groups)
+    {
+      if ((group.kind != Kind::Nodeset && group.kind != Kind::DatNodes) || !control_sets.count(vector_name(group.name)))
+      {
+        groups.push_back(&group);
+      }
+    }
+    for (const auto& group : point_groups)
+    {
       groups.push_back(&group);
     }
     // Preserve result nodes which have no FE connectivity. With a collection
     // they get a compact vertex dataset; a single-grid result gets vertex cells
     // below. Do not silently lose reference-point output during compaction.
-    std::set<int> referenced;
+    std::set<int> referenced = helpers;
+    for (const auto& group : point_groups)
+    {
+      referenced.insert(group.ids.begin(), group.ids.end());
+    }
     for (const auto& element : plan.mesh.elements) {
       referenced.insert(element.connectivity.begin(), element.connectivity.end());
     }
@@ -1607,7 +2125,17 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
         }
       }
       std::vector<Cell> cells;
-      if (!domain_cells(plan, dat, *groups[i], domain, cells, error) || !prepare_shapes(plan, domain, shapes, error)) {
+      const auto* spatial_group = groups[i];
+      CoreResultsVtkGroup filtered;
+      if (!helpers.empty() && (spatial_group->kind == Kind::Nodeset || spatial_group->kind == Kind::DatNodes) &&
+          std::any_of(spatial_group->ids.begin(), spatial_group->ids.end(), [&](int id) { return helpers.count(id) != 0; }))
+      {
+        filtered = *spatial_group;
+        filtered.ids.erase(std::remove_if(filtered.ids.begin(), filtered.ids.end(),
+          [&](int id) { return helpers.count(id) != 0; }), filtered.ids.end());
+        spatial_group = &filtered;
+      }
+      if (!domain_cells(plan, dat, *spatial_group, domain, cells, error) || !prepare_shapes(plan, domain, shapes, error)) {
         return false;
       }
       if (groups[i] == &base && plan.layout == SimResults::DatasetLayout::SingleGrid) {
@@ -1623,6 +2151,19 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
       };
       if (!geometry(plan, domain, cells, shapes, pipeline, progress, error)) {
         return false;
+      }
+      const auto marker = joint_markers.find(domain.metadata.name);
+      if (marker != joint_markers.end() && !domain.source_group)
+      {
+        const auto& joint = *marker->second;
+        auto* metadata = domain.geometry->GetFieldData();
+        text(metadata, "JointId", std::to_string(joint.id));
+        text(metadata, "JointType", joint.type);
+        auto axis = vtkSmartPointer<vtkDoubleArray>::New();
+        axis->SetName(joint.guide ? "ReferenceJointAxis" : "JointAxis");
+        axis->SetNumberOfComponents(3);
+        axis->InsertNextTuple(joint.axis.data());
+        metadata->AddArray(axis);
       }
       result->datasets.push_back(domain.metadata);
       domains.push_back(std::move(domain));
@@ -1657,9 +2198,28 @@ bool CoreResultsVtkConverter::build(const CoreResultsFrd& frd, const CoreResults
       destination.nodal_diameter = source.nodal_diameter;
       destination.subcase = source.subcase;
       destination.source_parameters = source.source_parameters;
-      for (const auto& domain : domains) {
+      JointSamples axis_samples;
+      if (!joint_markers.empty())
+      {
+        axis_samples = joint_samples(dat,source);
+      }
+      for (const auto& domain : domains)
+      {
         auto grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
         grid->ShallowCopy(domain.geometry);
+        const auto marker = joint_markers.find(domain.metadata.name);
+        if (marker != joint_markers.end() && !domain.source_group && marker->second->guide)
+        {
+          JointVector orientation;
+          if (current_joint_axis(*marker->second,axis_samples,orientation))
+          {
+            auto axis = vtkSmartPointer<vtkDoubleArray>::New();
+            axis->SetName("JointAxis");
+            axis->SetNumberOfComponents(3);
+            axis->InsertNextTuple(orientation.data());
+            grid->GetFieldData()->AddArray(axis);
+          }
+        }
         timestamp(grid, source.time);
         text(grid->GetFieldData(), "AnalysisType", std::to_string(source.analysis_type));
         text(grid->GetFieldData(), "Mode", std::to_string(source.mode));

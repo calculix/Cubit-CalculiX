@@ -2,7 +2,7 @@
 #include "CoreTopology.hpp"
 #include "CoreTopologyModelPreparation.hpp"
 #include "CoreTopologyDefaultPreservation.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CalculiXCore::collect_topology_run_sections(int topology_id, std::vector<int>& section_ids, std::set<int>& block_ids)
 {
@@ -11,13 +11,13 @@ bool CalculiXCore::collect_topology_run_sections(int topology_id, std::vector<in
 
   if (!topology || !mat || !sections || !jobs || !steps || !historyoutputs || !me_iface)
   {
-    PRINT_ERROR("Topology run cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology run cores are not initialized.\n");
     return false;
   }
 
   if (topology->topology_cases.find(topology_id) == topology->topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -33,13 +33,13 @@ bool CalculiXCore::initialize_topology_run_design(int topology_id, const std::ve
 {
   if (!topology || !mat || !sections)
   {
-    PRINT_ERROR("Topology initialization cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology initialization cores are not initialized.\n");
     return false;
   }
 
   if (!cb || !me_iface)
   {
-    PRINT_ERROR("Topology initialization interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology initialization interfaces are not initialized.\n");
     return false;
   }
 
@@ -49,7 +49,7 @@ bool CalculiXCore::initialize_topology_run_design(int topology_id, const std::ve
     !loadsgravity || !loadscentrifugal ||
     !loadsfilm || !loadsradiation || !loadssurfacetraction || !loadsbodyheatflux)
   {
-    PRINT_ERROR("Topology preservation cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology preservation cores are not initialized.\n");
     return false;
   }
 
@@ -80,7 +80,7 @@ bool CalculiXCore::initialize_topology(int topology_id, const std::vector<int>& 
 {
   if (!mat || !sections || !cb || !me_iface)
   {
-    PRINT_ERROR("Topology initialization interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology initialization interfaces are not initialized.\n");
     return false;
   }
 

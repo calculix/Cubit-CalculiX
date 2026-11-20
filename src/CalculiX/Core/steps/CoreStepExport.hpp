@@ -3,6 +3,7 @@
 
 #include <string>
 
+class CoreConnections;
 class CoreSteps;
 class CoreCustomLines;
 class CoreBCsDisplacements;
@@ -40,6 +41,7 @@ struct CoreStepExportData
   CoreLoadsBodyHeatflux& loadsbodyheatflux;
   CoreSidesetFaces& sideset_faces;
   MeshExportInterface& mesh;
+  const CoreConnections& connections;
 };
 
 class CoreStepExport

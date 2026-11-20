@@ -49,7 +49,19 @@ bool CoreLoadsPersistence::read(HDF5Tool& file, CoreLoadsForces& forces) {
       PRINT_ERROR("Cannot read CalculiX LoadsForces: %s\n", file.last_error().c_str());
       return false;
     }
-    if (!(PersistenceTable::keyedRows(saved_loads_data, 7))) {
+    for (auto& row : saved_loads_data)
+    {
+      if (row.size() == 7)
+      {
+        row.push_back(0);
+      }
+      if (row.size() != 8 || row[7] < 0 || (row[7] > 0 && row[4] != 0))
+      {
+        PRINT_ERROR("Invalid force target record.\n");
+        return false;
+      }
+    }
+    if (!(PersistenceTable::keyedRows(saved_loads_data, 8))) {
       PRINT_ERROR("Cannot read CalculiX LoadsForces: loads_data has incomplete rows.\n");
       return false;
     }
@@ -110,7 +122,7 @@ bool CoreLoadsPersistence::write(HDF5Tool& file, const CoreLoadsForces& forces) 
   try
   {
 
-    if (!(PersistenceTable::keyedRows(forces.loads_data, 7))) {
+    if (!(PersistenceTable::keyedRows(forces.loads_data, 8))) {
       PRINT_ERROR("Cannot write CalculiX LoadsForces: loads_data has incomplete rows.\n");
       return false;
     }

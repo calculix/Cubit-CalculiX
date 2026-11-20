@@ -734,7 +734,17 @@ void PostprocessorWorkspace::add_job(const SimResults::ResultJobEntry& job) {
       })) {
     return;
   }
-  submit(QStringLiteral("post open ")+QString::fromStdString(job.command_prefix)+" job "+QString::number(job.reference.job_id));
+  QString kind = " job ";
+  if (job.reference.topology_threshold)
+  {
+    kind = " topology ";
+  }
+  auto command = QStringLiteral("post open ")+QString::fromStdString(job.command_prefix)+kind+QString::number(job.reference.job_id);
+  if (job.reference.topology_threshold)
+  {
+    command += " threshold "+QString::number(*job.reference.topology_threshold,'g',17);
+  }
+  submit(command);
   QTimer::singleShot(0,this,[this]() {
     sourceControls->refresh();
     panelRevision.reset();

@@ -66,9 +66,12 @@ create vertex on surface 6
 mesh vertex all
 
 
-ccx create constraint rigid body nodeset 1 ref 13 rot 14
-ccx create constraint rigid body nodeset 2 ref 15 rot 16
-ccx create constraint rigid body nodeset 3 ref 17 rot 18
+ccx create rp 1 name "Control 1" vertex 13 rotation_vertex 14
+ccx create rigid body 1 name "Attachment 1" nodeset 1 rp 1
+ccx create rp 2 name "Control 2" vertex 15 rotation_vertex 16
+ccx create rigid body 2 name "Attachment 2" nodeset 2 rp 2
+ccx create rp 3 name "Control 3" vertex 17 rotation_vertex 18
+ccx create rigid body 3 name "Attachment 3" nodeset 3 rp 3
 
 nodeset 4 add vertex 13
 ccx create displacement nodeset 4 dof_1 0 dof_2 0 dof_3 0
@@ -85,7 +88,7 @@ nodes = cubit.get_nodeset_nodes_inclusive(3)
 load_disp = -2*(cubit.vertex(17).coordinates()[1] - cubit.vertex(13).coordinates()[1])
 load_forc = 2
 cubit.cmd(f"nodeset 8 add vertex 17")
-cubit.cmd(f"ccx create force nodeset 8 dof_1 0 dof_2 {-(load_forc)} dof_3 0 dof_4 0 dof_5 0 dof_6 0")
+cubit.cmd(f"ccx create force rp 3 dof_1 0 dof_2 {-(load_forc)} dof_3 0 dof_4 0 dof_5 0 dof_6 0")
 cubit.cmd(f"nodeset 9 add vertex 17")
 cubit.cmd(f"ccx create displacement nodeset 9 dof_2 {load_disp}")
 #!cubit
@@ -126,8 +129,7 @@ for i in range(int(1/delta_t)):
  cubit.cmd(f"ccx modify step {current_step} parameter perturbation_yes")
  cubit.cmd(f"ccx modify step {current_step} buckle solver pardiso bucklingfactors 5 accuracy 1e-8")
  #we will use a force with the current load factor (time)
- cubit.cmd(f"nodeset 10 add vertex 17")
- cubit.cmd(f"ccx create force nodeset 10 dof_1 0 dof_2 {-(load_forc * current_time)} dof_3 0 dof_4 0 dof_5 0 dof_6 0")
+ cubit.cmd(f"ccx create force rp 3 dof_1 0 dof_2 {-(load_forc * current_time)} dof_3 0 dof_4 0 dof_5 0 dof_6 0")
  #cubit.cmd(f"nodeset 11 add vertex 17")
  #cubit.cmd(f"ccx create force nodeset 11 dof_1 0 dof_2 -1 dof_3 0 dof_4 0 dof_5 0 dof_6 0")
  #cubit.cmd(f"nodeset 12 add vertex 17")

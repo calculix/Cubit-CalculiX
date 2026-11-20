@@ -19,6 +19,7 @@
 #include <QSpacerItem>
 #include <QTableWidget>
 #include <QLineEdit>
+class ForceTargetWidget;
 class LoadsForcesModifyPanel : public QWidget
 {
   Q_OBJECT
@@ -71,7 +72,7 @@ private:
   QLabel* label_11;
   QLineEdit* lineEdit_0;
   QLineEdit* lineEdit_1;
-  QLineEdit* lineEdit_2;
+  ForceTargetWidget* target;
   QLineEdit* lineEdit_3;
   QLineEdit* lineEdit_4;
   QLineEdit* lineEdit_5;

@@ -225,7 +225,12 @@ PostprocessorResultsTree::PostprocessorResultsTree(std::function<void(const QStr
         {
           group = add->addMenu(QString::fromUtf8(job.application_name.c_str()));
         }
-        auto* action = group->addAction(QString::fromUtf8(job.job_name.c_str())+tr(" — Job %1").arg(job.reference.job_id));
+        QString label = tr(" — Job %1");
+        if (job.reference.topology_threshold)
+        {
+          label = tr(" — Topology %1");
+        }
+        auto* action = group->addAction(QString::fromUtf8(job.job_name.c_str())+label.arg(job.reference.job_id));
         action->setEnabled(job.available);
         action->setToolTip(QString::fromUtf8(job.unavailable_reason.c_str()));
         jobActions.emplace(action,index);
@@ -1189,7 +1194,8 @@ void PostprocessorResultsTree::refresh(const Postprocessor::PostprocessorSession
           category = group;
         }
         auto* parent = category;
-        if (table.category == "History outputs" && !table.set_name.empty())
+        if ((table.category == "History outputs" || table.category == "Reference points" || table.category == "Joints" ||
+             table.category == "Point masses" || table.category == "Springs") && !table.set_name.empty())
         {
           auto*& set = sets[{table.category,table.set_name}];
           if (!set)

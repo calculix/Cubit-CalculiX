@@ -1,13 +1,13 @@
 #include "Core/CalculiXCore.hpp"
 #include "CoreTopology.hpp"
 #include "CoreTopologyQuery.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 std::vector<std::vector<std::string>> CalculiXCore::get_topology_iteration_data(int topology_id)
 {
   if (!topology || !jobs)
   {
-    PRINT_ERROR("Topology/job cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology/job cores are not initialized.\n");
     return {};
   }
 
@@ -18,7 +18,7 @@ std::string CalculiXCore::get_topology_run_state(int topology_id)
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return "";
   }
 
@@ -49,7 +49,7 @@ std::vector<std::vector<double>> CalculiXCore::get_topology_iteration_element_da
 {
   if (!topology || !mat || !jobs)
   {
-    PRINT_ERROR("Invalid topology element-data request.\n");
+    TOPOLOGY_ERROR("Invalid topology element-data request.\n");
     return {};
   }
 
@@ -60,7 +60,7 @@ std::vector<std::vector<double>> CalculiXCore::get_topology_iteration_sensitivit
 {
   if (!topology || !mat || !jobs)
   {
-    PRINT_ERROR("Topology sensitivity query cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology sensitivity query cores are not initialized.\n");
     return {};
   }
 
@@ -106,7 +106,7 @@ bool CalculiXCore::get_job_topology_context(int job_id, int& topology_id, int& i
 
   if (!topology)
   {
-    PRINT_ERROR("Invalid job topology context query.\n");
+    TOPOLOGY_ERROR("Invalid job topology context query.\n");
     return false;
   }
 
@@ -117,7 +117,7 @@ int CalculiXCore::get_topology_adjoint_job_source(int topology_id, int iteration
 {
   if (!topology || !jobs)
   {
-    PRINT_ERROR("Invalid topology adjoint job request.\n");
+    TOPOLOGY_ERROR("Invalid topology adjoint job request.\n");
     return -1;
   }
 
@@ -128,7 +128,7 @@ int CalculiXCore::get_topology_iteration_job_id(int topology_id, int iteration_i
 {
   if (!topology || !jobs)
   {
-    PRINT_ERROR("Invalid topology iteration query.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration query.\n");
     return -1;
   }
 
@@ -139,7 +139,7 @@ int CalculiXCore::get_topology_iteration_adjoint_job_id(int topology_id, int ite
 {
   if (!topology || !jobs)
   {
-    PRINT_ERROR("Invalid topology adjoint job query.\n");
+    TOPOLOGY_ERROR("Invalid topology adjoint job query.\n");
     return -1;
   }
 
@@ -150,7 +150,7 @@ std::vector<std::vector<double>> CalculiXCore::get_topology_iteration_level_set_
 {
   if (!topology || !jobs)
   {
-    PRINT_ERROR("Topology/job cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology/job cores are not initialized.\n");
     return {};
   }
   return CoreTopologyQuery::get_iteration_level_set_field_data(*topology, *jobs, topology_id, iteration_id);

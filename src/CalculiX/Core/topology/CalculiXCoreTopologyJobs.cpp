@@ -1,6 +1,6 @@
 #include "Core/CalculiXCore.hpp"
 #include "CoreTopologyJobs.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "Core/application/CoreObserver.hpp"
 #include "Core/application/CalculiXApplicationInterface.hpp"
 
@@ -8,7 +8,7 @@ bool CalculiXCore::reset_topology_run(int topology_id)
 {
   if (!topology || !jobs)
   {
-    PRINT_ERROR("Topology or job core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology or job core is not initialized.\n");
     return false;
   }
 
@@ -24,7 +24,7 @@ bool CalculiXCore::delete_topology(int topology_id)
 {
   if (!topology || !jobs)
   {
-    PRINT_ERROR("Topology or job core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology or job core is not initialized.\n");
     return false;
   }
 
@@ -40,7 +40,7 @@ int CalculiXCore::create_topology_iteration_job(int topology_id, int iteration_i
 {
   if (!topology || !mat || !jobs)
   {
-    PRINT_ERROR("Invalid topology iteration job request.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration job request.\n");
     return -1;
   }
 
@@ -58,7 +58,7 @@ bool CalculiXCore::register_topology_adjoint_job(int topology_id, int iteration_
 
   if (!topology || !jobs)
   {
-    PRINT_ERROR("Invalid topology adjoint job request.\n");
+    TOPOLOGY_ERROR("Invalid topology adjoint job request.\n");
     return false;
   }
 

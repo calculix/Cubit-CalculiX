@@ -34,30 +34,6 @@ changing a path. External utility implementations are excluded.
      - ``Implementation / integration``
    * - :download:`src/CalculiX/GUI/jobs/JobsMonitor.hpp <../../../src/CalculiX/GUI/jobs/JobsMonitor.hpp>`
      - ``JobsMonitor``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorDAT.cpp <../../../src/CalculiX/GUI/jobs/JobsMonitorDAT.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorDAT.hpp <../../../src/CalculiX/GUI/jobs/JobsMonitorDAT.hpp>`
-     - ``JobsMonitorDAT``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorDATPlot.cpp <../../../src/CalculiX/GUI/jobs/JobsMonitorDATPlot.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorDATPlot.hpp <../../../src/CalculiX/GUI/jobs/JobsMonitorDATPlot.hpp>`
-     - ``JobsMonitorDATPlot``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorDATSection.cpp <../../../src/CalculiX/GUI/jobs/JobsMonitorDATSection.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorDATSection.hpp <../../../src/CalculiX/GUI/jobs/JobsMonitorDATSection.hpp>`
-     - ``JobsMonitorDATSection``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorDATSectionPlot.cpp <../../../src/CalculiX/GUI/jobs/JobsMonitorDATSectionPlot.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorDATSectionPlot.hpp <../../../src/CalculiX/GUI/jobs/JobsMonitorDATSectionPlot.hpp>`
-     - ``JobsMonitorDATSectionPlot``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorFRD.cpp <../../../src/CalculiX/GUI/jobs/JobsMonitorFRD.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorFRD.hpp <../../../src/CalculiX/GUI/jobs/JobsMonitorFRD.hpp>`
-     - ``JobsMonitorFRD``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorFRDPlot.cpp <../../../src/CalculiX/GUI/jobs/JobsMonitorFRDPlot.cpp>`
-     - ``Implementation / integration``
-   * - :download:`src/CalculiX/GUI/jobs/JobsMonitorFRDPlot.hpp <../../../src/CalculiX/GUI/jobs/JobsMonitorFRDPlot.hpp>`
-     - ``JobsMonitorFRDPlot``
    * - :download:`src/CalculiX/GUI/jobs/JobsMonitorLiveMonitor.cpp <../../../src/CalculiX/GUI/jobs/JobsMonitorLiveMonitor.cpp>`
      - ``Implementation / integration``
    * - :download:`src/CalculiX/GUI/jobs/JobsMonitorLiveMonitor.hpp <../../../src/CalculiX/GUI/jobs/JobsMonitorLiveMonitor.hpp>`

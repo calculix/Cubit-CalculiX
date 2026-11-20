@@ -170,3 +170,64 @@ iteration's computed element stiffness factors to it.
 For a command sequence with explicit iteration IDs, see
 :doc:`../commands/topology-results`. For persistence and validation details,
 see :doc:`../developer/topology-results`.
+
+
+Postprocessor iteration series
+------------------------------
+
+The Postprocessor source dropdown lists each CalculiX topology case once.
+Physical iteration jobs and adjoint jobs remain available in CalculiX, and you
+can still open a child explicitly with ``post open ccx job <id>``. A case
+without completed physical evaluations is disabled in the source catalogue.
+
+Open a topology case from the Postprocessor or use::
+
+  post open ccx topology 1
+  post open ccx topology 1 threshold 0.65 name "Beam at 0.65"
+
+Use **Open Results** beside **Job monitor** on the Topology Management **Run**
+tab to open the case series. **Open Results** on **Iterations** opens the same
+series at the selected completed iteration. These actions work for completed
+iterations of a stopped case. The incomplete iteration of a killed job is
+excluded. The Iterations action submits ``post open ccx topology 1 iteration 7``
+for case 1, iteration 7.
+
+Each completed physical evaluation contributes its final converted solver
+frame. The frame selector shows the original iteration and job IDs. Plots use
+iteration as the series parameter. Failed, running and unevaluated iterations
+are omitted; iteration numbers retain their original gaps. If a completed
+iteration cannot be converted or its topology elements cannot be matched, opening
+or refreshing reports the affected iteration and leaves existing sources intact.
+
+The default cutoff is 0.5. Under Blocks / Element sets, **Retained / <block>**
+and **Removed / <block>** are separate, directly selectable datasets. Retained
+sets start visible and Removed sets start hidden. Preserved elements and elements
+at or above the cutoff are retained, matching the CalculiX preview. Geometry
+outside the design domain and auxiliary solver datasets are available separately
+and start hidden. The split affects the Postprocessor display datasets.
+
+To change the split on an open source, select the topology source in **Sources /
+Results**. In the **Properties** dock, enter the **Retention cutoff** and click
+**Apply**. The current frame, camera and Retained/Removed visibility are preserved.
+Playback pauses while the updated geometry is published. Apply changes the sets
+for all frames already in the source. Use Refresh separately to add newly
+completed iterations. The same cutoff change can be journaled::
+
+  post topology threshold 0.65 source "Topology 1 / simple_beam"
+
+If the original results or topology design records cannot be verified, the
+command reports an error and keeps the open source at its previous cutoff.
+
+**Topology Density** is the stored element design variable for density
+iterations. For level-set iterations, **Topology Level-Set Coefficient** is a
+nodal field and **Topology Solid Fraction** is the element field used for the
+split. **Topology Applied Stiffness Factor** is the applied solver factor, and
+**Topology Preserved** is the preservation flag resolved by the topology run.
+Ordinary solver fields remain available on the split datasets.
+
+Use ``post refresh "Topology 1 / simple_beam"`` to include newly completed
+iterations for the same case and cutoff. Project restore verifies the contributing
+results and topology values through the saved last iteration before publishing a
+snapshot. Refresh verifies the previous frames before appending new ones and
+preserves set visibility by dataset identity. Open a new source after a rerun
+if the earlier results changed.

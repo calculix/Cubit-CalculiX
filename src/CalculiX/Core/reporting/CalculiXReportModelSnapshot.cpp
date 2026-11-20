@@ -1,3 +1,4 @@
+#include "CalculiX/Core/connections/CalculiXConnectionsInterface.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "CalculiXReportDomainSettings.hpp"
 #include "CalculiX/Core/units/CalculiXDomainUnits.hpp"
@@ -358,6 +359,28 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     groups["ccx.model.sections"].tables.push_back(std::move(table));
   }
 
+  CalculiXConnectionsInterface connections;
+  for (const auto& body : connections.bodies())
+  {
+    ReportTable table;
+    table.title = "Connections / Rigid body " + std::to_string(body.id);
+    table.columns = {"Property", "Value", "Unit"};
+    field(table, "Name", body.name);
+    field(table, "Attachment", body.geometry + " " + std::to_string(body.entity));
+    field(table, "Reference point ID", body.point);
+    groups["ccx.model.interactions"].tables.push_back(std::move(table));
+  }
+  for (const auto& joint : connections.joints())
+  {
+    ReportTable table;
+    table.title = "Connections / Joint " + std::to_string(joint.id);
+    table.columns = {"Property", "Value", "Unit"};
+    field(table, "Name", joint.name);
+    field(table, "Type", joint.type);
+    field(table, "Endpoint A", joint.point_a);
+    field(table, "Endpoint B", joint.point_b == 0 ? std::string("Ground") : std::to_string(joint.point_b));
+    groups["ccx.model.interactions"].tables.push_back(std::move(table));
+  }
   for (const auto& row : interactions.get_constraints_tree_data()) {
     ConstraintsSettings settings;
     if (!domainSettings.get(rowId(row), settings, error)) {
@@ -367,7 +390,7 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
     table.title = "Constraints / " + std::to_string(rowId(row));
     table.columns = {"Property", "Value", "Unit"};
     std::set<int> rotationNodes;
-    if (!settings.terms.empty() && !interactions.get_rotation_node_ids(rotationNodes, error))
+    if (!settings.terms.empty() && !CalculiXConnectionsInterface().get_rotation_node_ids(rotationNodes, error))
     {
       return false;
     }
@@ -721,7 +744,7 @@ bool CalculiXReportModelSnapshot::collect(const ReportRequest& request, const Re
       return false;
     }
     field(table, "Operation", settings.operation);
-    field(table, "Nodeset", settings.nodeset);
+    field(table, settings.referencePoint ? "Reference point" : "Nodeset", settings.referencePoint ? std::to_string(settings.referencePoint) : settings.nodeset);
     if (!physicalField(table, "Force X", jsonValue(settings.component1), "force", error))
     {
       return false;

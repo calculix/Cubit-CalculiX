@@ -1,4 +1,5 @@
 #include "PostprocessorProperties.hpp"
+#include "PostprocessorTopologyCutoffControls.hpp"
 #include "Postprocessor/Interfaces/PostprocessorApplicationInterface.hpp"
 #include "Postprocessor/GUI/Selection/PostprocessorProbeProperties.hpp"
 
@@ -35,6 +36,8 @@ PostprocessorProperties::PostprocessorProperties(std::weak_ptr<PostprocessorAppl
   information->addRow(tr("Name"),name);
   information->addRow(tr("Source"),origin);
   contents->addLayout(information);
+  topologyCutoff = new PostprocessorTopologyCutoffControls(submit,content);
+  contents->addWidget(topologyCutoff);
   probe = new PostprocessorProbeProperties(application,content);
   contents->addWidget(probe);
   appearance = new PostprocessorAppearanceControls(application,std::move(submit),content);
@@ -52,12 +55,21 @@ void PostprocessorProperties::show_source(const Postprocessor::DataSource* sourc
   origin->clear();
 
   bool showProbe = false;
+  std::size_t frames = 0;
   if (const auto app = application.lock())
   {
+    if (source)
+    {
+      if (const auto data = app->result_data(source->id))
+      {
+        frames = data->increments.size();
+      }
+    }
     const auto view = app->session().views.find(app->session().active_view_id);
     showProbe = source && view != app->session().views.end() && view->second.selection.entity &&
       view->second.selection.entity->source_id == source->id;
   }
+  topologyCutoff->show_source(source,frames);
   probe->setVisible(showProbe);
   if (showProbe)
   {
@@ -76,6 +88,10 @@ void PostprocessorProperties::show_source(const Postprocessor::DataSource* sourc
 
     if constexpr (std::is_same_v<Reference, Postprocessor::JobSourceReference>)
     {
+      if (reference.topology_threshold)
+      {
+        return QString::fromStdString(reference.application_id) + " topology " + QString::number(reference.job_id);
+      }
       return QString::fromStdString(reference.application_id) + " job " + QString::number(reference.job_id);
     }
     else if constexpr (std::is_same_v<Reference, Postprocessor::FileSourceReference>)

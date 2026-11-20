@@ -4,6 +4,8 @@ target_sources(postprocessor_module PRIVATE
   PostprocessorColorControls.hpp
   PostprocessorDisplayProperties.cpp
   PostprocessorDisplayProperties.hpp
+  PostprocessorTopologyCutoffControls.cpp
+  PostprocessorTopologyCutoffControls.hpp
   PostprocessorProperties.cpp
   PostprocessorProperties.hpp
 )

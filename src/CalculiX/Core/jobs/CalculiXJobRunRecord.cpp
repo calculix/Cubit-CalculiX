@@ -41,6 +41,7 @@ bool CalculiXJobRunRecord::read_input_units(const std::string& filename, std::st
     return false;
   }
 
+  connections = std::move(candidate.connections);
   materialProjectId = std::move(candidate.materialProjectId);
   materialIds = std::move(candidate.materialIds);
   unitSystem = std::move(candidate.unitSystem);
@@ -58,6 +59,7 @@ bool CalculiXJobRunRecord::read_input_units(std::string& error)
   // their provenance directly, so validate it below without clearing it.
   if (file != input.files.end())
   {
+    connections = {};
     materialProjectId.clear();
     materialIds.clear();
     unitSystem.clear();
@@ -67,6 +69,10 @@ bool CalculiXJobRunRecord::read_input_units(std::string& error)
     for (const QByteArray& raw : file->second.split('\n'))
     {
       const QByteArray line = raw.trimmed();
+      if (line.startsWith("** CUBIT_SIM_") && !connections.read_marker(line.toStdString(), error))
+      {
+        return false;
+      }
       if (line.startsWith("** CUBIT_SIM_STEP_AXIS="))
       {
         const auto value = line.mid(QByteArray("** CUBIT_SIM_STEP_AXIS=").size());
@@ -109,6 +115,11 @@ bool CalculiXJobRunRecord::read_input_units(std::string& error)
         geometryLengthUnit = line.mid(QByteArray("** CUBIT_SIM_GEOMETRY_UNIT=").size()).trimmed().toStdString();
       }
     }
+  }
+  if (!connections.valid())
+  {
+    error = "Invalid archived connection roles or joint endpoints.";
+    return false;
   }
   if (!unitSystem.empty())
   {

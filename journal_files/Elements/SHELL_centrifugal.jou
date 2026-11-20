@@ -30,7 +30,8 @@ nodeset 1 add curve 3
 create vertex 0 0 0 
 create vertex 0 0 0 
 
-ccx create constraint rigid body nodeset 1 ref 4 rot 5
+ccx create rp 1 name "Control 1" vertex 4 rotation_vertex 5
+ccx create rigid body 1 name "Attachment 1" nodeset 1 rp 1
 
 nodeset 2 add vertex 4
 ccx create displacement nodeset 2 dof_1 0 dof_2 0 dof_3 0

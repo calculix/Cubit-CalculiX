@@ -133,8 +133,10 @@ sideset 4 add curve 66 64 45 70 68
 sideset 4 name "Part_Die"
 
 # constraints
-ccx create constraint rigid body nodeset 2 ref 68 rot 69
-ccx create constraint rigid body nodeset 3 ref 70 rot 71
+ccx create rp 1 name "Control 1" vertex 68 rotation_vertex 69
+ccx create rigid body 1 name "Attachment 1" nodeset 2 rp 1
+ccx create rp 2 name "Control 2" vertex 70 rotation_vertex 71
+ccx create rigid body 2 name "Attachment 2" nodeset 3 rp 2
 
 #contact
 ccx create surfaceinteraction name "ContactType" linear slopeK 1e6 sigmaINF 3 c0 1e-2

@@ -8,6 +8,3 @@ target_sources(calculix_commands PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxResultProjectJobCommand.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ccxResultProjectJobCommand.hpp
 )
-
-add_subdirectory(frd)
-add_subdirectory(dat)

@@ -47,7 +47,7 @@ The model contains:
    * - Loaded region
      - Nodeset 3, named ``rb``, connected to reference and rotation nodes by a rigid-body constraint.
    * - Load
-     - Force 10000 in the negative Y direction on the rigid-body reference vertex.
+     - Force 10000 in the negative Y direction applied directly to reference point 1.
    * - Step
      - A linear static step with the force, displacement BC, and output requests assigned.
 

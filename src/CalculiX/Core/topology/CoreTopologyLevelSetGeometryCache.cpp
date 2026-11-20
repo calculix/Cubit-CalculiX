@@ -2,7 +2,7 @@
 #include "CoreTopologyLevelSet.hpp"
 #include "CoreTopologyLevelSetGeometry.hpp"
 #include "ElementInterpolation.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <chrono>
 #include <cmath>
 #include <set>
@@ -59,7 +59,7 @@ bool CoreTopologyLevelSetGeometryCache::lookup(int iteration_id, int element_id,
       nodes.size() != coordinates.size() || nodes.size() != values.size() ||
       unique_nodes.size() != nodes.size() || *unique_nodes.begin() <= 0)
   {
-    PRINT_ERROR("Invalid level-set geometry cache request.\n");
+    TOPOLOGY_ERROR("Invalid level-set geometry cache request.\n");
     return false;
   }
   const auto found = entries.find(element_id);
@@ -100,7 +100,7 @@ bool CoreTopologyLevelSetGeometryCache::store(int iteration_id, int element_id, 
       geometry.solid_fraction < 0.0 || geometry.solid_fraction > 1.0 ||
       geometry.fraction_derivatives.size() != nodes.size() || geometry.volume_derivatives.size() != nodes.size())
   {
-    PRINT_ERROR("Invalid completed level-set cache entry.\n");
+    TOPOLOGY_ERROR("Invalid completed level-set cache entry.\n");
     return false;
   }
   for (std::size_t node = 0; node < nodes.size(); ++node)
@@ -109,14 +109,14 @@ bool CoreTopologyLevelSetGeometryCache::store(int iteration_id, int element_id, 
         !std::isfinite(geometry.fraction_derivatives[node]) || !std::isfinite(geometry.volume_derivatives[node]) ||
         (preserved && (geometry.fraction_derivatives[node] != 0.0 || geometry.volume_derivatives[node] != 0.0)))
     {
-      PRINT_ERROR("Invalid completed level-set cache coefficients/derivatives.\n");
+      TOPOLOGY_ERROR("Invalid completed level-set cache coefficients/derivatives.\n");
       return false;
     }
     for (double coordinate : coordinates[node])
     {
       if (!std::isfinite(coordinate))
       {
-        PRINT_ERROR("Invalid completed level-set cache coordinates.\n");
+        TOPOLOGY_ERROR("Invalid completed level-set cache coordinates.\n");
         return false;
       }
     }

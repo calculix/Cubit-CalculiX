@@ -1,0 +1,23 @@
+#!cubit
+reset
+create brick x 100 y 30 z 30
+block 1 add volume 1
+nodeset 1 add surface 4
+nodeset 1 name "Fixed"
+ccx units system "N-mm-s"
+ccx units geometry unit "mm"
+ccx create material "Steel"
+ccx modify material 1 card elastic model iso
+ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"
+ccx modify material 1 activate card elastic
+ccx create section solid block 1 material 1
+ccx create distributing attachment 1 name "End face" surface 6 center mean_displacement
+ccx create force rp 1 dof_2 -100 dof_6 25 name "End load"
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0
+ccx create step name "Static" static
+ccx step 1 add bc displacement 1
+ccx step 1 add load force 1
+block 1 element type HEX8
+volume 1 size 5
+mesh volume all
+ccx create job name "distributed_flange"

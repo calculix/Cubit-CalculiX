@@ -4,7 +4,7 @@
 #include "Core/materials/CoreMaterials.hpp"
 #include "Core/results/CoreResults.hpp"
 #include "Core/results/dat/CoreResultsDat.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <cmath>
 #include <cstddef>
 #include <limits>
@@ -15,7 +15,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
   if (key != "S" && key != "ME")
   {
-    PRINT_ERROR("Topology tensor reader supports S and ME only.\n");
+    TOPOLOGY_ERROR("Topology tensor reader supports S and ME only.\n");
     return false;
   }
 
@@ -23,7 +23,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
   if (dat_index < 0)
   {
-    PRINT_ERROR("DAT results for job %d are missing.\n", job_id);
+    TOPOLOGY_ERROR("DAT results for job %d are missing.\n", job_id);
     return false;
   }
 
@@ -33,7 +33,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
   if (final_step <= 0 || final_increment <= 0)
   {
-    PRINT_ERROR("Final solver step/increment is missing for job %d.\n", job_id);
+    TOPOLOGY_ERROR("Final solver step/increment is missing for job %d.\n", job_id);
     return false;
   }
 
@@ -58,7 +58,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
   {
     if (block.size() < 7)
     {
-      PRINT_ERROR("Invalid DAT result block for job %d.\n", job_id);
+      TOPOLOGY_ERROR("Invalid DAT result block for job %d.\n", job_id);
       return false;
     }
 
@@ -71,7 +71,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
     if (type_id < 0 || static_cast<std::size_t>(type_id) >= dat.result_block_type.size())
     {
-      PRINT_ERROR("Invalid DAT result type for job %d.\n", job_id);
+      TOPOLOGY_ERROR("Invalid DAT result type for job %d.\n", job_id);
       return false;
     }
 
@@ -84,7 +84,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
     if (data_id < 0 || static_cast<std::size_t>(data_id) >= dat.result_block_data.size() || static_cast<std::size_t>(data_id) >= dat.result_block_c1_data.size() || static_cast<std::size_t>(data_id) >= dat.result_block_components.size())
     {
-      PRINT_ERROR("Invalid DAT tensor storage for job %d.\n", job_id);
+      TOPOLOGY_ERROR("Invalid DAT tensor storage for job %d.\n", job_id);
       return false;
     }
 
@@ -115,7 +115,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
     if (element_column < 0 || integration_column < 0)
     {
-      PRINT_ERROR("Missing element/integration-point columns for job %d.\n", job_id);
+      TOPOLOGY_ERROR("Missing element/integration-point columns for job %d.\n", job_id);
       return false;
     }
 
@@ -127,7 +127,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
       if (columns[component] < 0)
       {
-        PRINT_ERROR("Missing or duplicate tensor component %s for job %d.\n", component_names[component].c_str(), job_id);
+        TOPOLOGY_ERROR("Missing or duplicate tensor component %s for job %d.\n", component_names[component].c_str(), job_id);
         return false;
       }
     }
@@ -136,7 +136,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
     {
       if (record.size() < 3)
       {
-        PRINT_ERROR("Invalid DAT tensor record for job %d.\n", job_id);
+        TOPOLOGY_ERROR("Invalid DAT tensor record for job %d.\n", job_id);
         return false;
       }
 
@@ -147,7 +147,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
       if (record[2] != 2 || record[1] < 0 || static_cast<std::size_t>(record[1]) >= dat.result_block_data[data_id].size())
       {
-        PRINT_ERROR("Invalid integration-point record for element %d.\n", record[0]);
+        TOPOLOGY_ERROR("Invalid integration-point record for element %d.\n", record[0]);
         return false;
       }
 
@@ -155,13 +155,13 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
       if (static_cast<std::size_t>(element_column) >= row.size() || static_cast<std::size_t>(integration_column) >= row.size())
       {
-        PRINT_ERROR("Missing element/integration-point values for job %d.\n", job_id);
+        TOPOLOGY_ERROR("Missing element/integration-point values for job %d.\n", job_id);
         return false;
       }
 
       if (!std::isfinite(row[element_column]) || row[element_column] != static_cast<double>(record[0]))
       {
-        PRINT_ERROR("Inconsistent DAT element mapping for job %d.\n", job_id);
+        TOPOLOGY_ERROR("Inconsistent DAT element mapping for job %d.\n", job_id);
         return false;
       }
 
@@ -169,7 +169,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
       if (!std::isfinite(integration_value) || integration_value < 1.0 || integration_value > static_cast<double>((std::numeric_limits<int>::max)()) || std::trunc(integration_value) != integration_value)
       {
-        PRINT_ERROR("Invalid integration-point ID for element %d.\n", record[0]);
+        TOPOLOGY_ERROR("Invalid integration-point ID for element %d.\n", record[0]);
         return false;
       }
 
@@ -180,7 +180,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
       {
         if (static_cast<std::size_t>(columns[component]) >= row.size() || !std::isfinite(row[columns[component]]))
         {
-          PRINT_ERROR("Invalid %s tensor for element %d, integration point %d.\n", key.c_str(), record[0], integration_id);
+          TOPOLOGY_ERROR("Invalid %s tensor for element %d, integration point %d.\n", key.c_str(), record[0], integration_id);
           return false;
         }
 
@@ -194,7 +194,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
       {
         if (existing->second != tensor)
         {
-          PRINT_ERROR("Conflicting %s results for element %d, integration point %d.\n", key.c_str(), record[0], integration_id);
+          TOPOLOGY_ERROR("Conflicting %s results for element %d, integration point %d.\n", key.c_str(), record[0], integration_id);
           return false;
         }
 
@@ -211,7 +211,7 @@ bool CoreTopologyTensorResults::read_final(CoreResults& results, int job_id, con
 
     if (found == collected.end() || found->second.empty())
     {
-      PRINT_ERROR("Missing final-increment %s results for topology element %d in job %d.\n", key.c_str(), element.first, job_id);
+      TOPOLOGY_ERROR("Missing final-increment %s results for topology element %d in job %d.\n", key.c_str(), element.first, job_id);
       return false;
     }
   }
@@ -226,13 +226,13 @@ bool CoreTopologyTensorResults::read_job(CoreResults& results, CoreJobs& jobs, c
 
   if (key != "S" && key != "ME")
   {
-    PRINT_ERROR("Topology tensor reader supports S and ME only.\n");
+    TOPOLOGY_ERROR("Topology tensor reader supports S and ME only.\n");
     return false;
   }
 
   if (job_id <= 0 || jobs.get_job_status(job_id) != 2)
   {
-    PRINT_ERROR("Topology tensor results require a completed job.\n");
+    TOPOLOGY_ERROR("Topology tensor results require a completed job.\n");
     return false;
   }
 
@@ -246,7 +246,7 @@ bool CoreTopologyTensorResults::read_job(CoreResults& results, CoreJobs& jobs, c
 
   if (topology_id <= 0 || iteration_id < 1)
   {
-    PRINT_ERROR("Job %d is not associated with a topology iteration.\n", job_id);
+    TOPOLOGY_ERROR("Job %d is not associated with a topology iteration.\n", job_id);
     return false;
   }
 
@@ -254,7 +254,7 @@ bool CoreTopologyTensorResults::read_job(CoreResults& results, CoreJobs& jobs, c
 
   if (collection == materials.topology_material_data.end() || collection->second.element_base_material.empty())
   {
-    PRINT_ERROR("Prepared elements for topology %d are missing.\n", topology_id);
+    TOPOLOGY_ERROR("Prepared elements for topology %d are missing.\n", topology_id);
     return false;
   }
 

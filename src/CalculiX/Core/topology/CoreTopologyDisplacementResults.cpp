@@ -7,7 +7,7 @@
 #include "Core/results/dat/CoreResultsDat.hpp"
 #include "Core/mesh/CoreMeshQuery.hpp"
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <QString>
 #include <algorithm>
 #include <cmath>
@@ -21,7 +21,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
 
   if (nodeset_id <= 0 || component < 0 || component > 3)
   {
-    PRINT_ERROR("Invalid topology displacement request.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement request.\n");
     return false;
   }
 
@@ -29,7 +29,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
 
   if (dat_index < 0)
   {
-    PRINT_ERROR("Missing DAT results for topology displacement measurement.\n");
+    TOPOLOGY_ERROR("Missing DAT results for topology displacement measurement.\n");
     return false;
   }
 
@@ -41,7 +41,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
 
   if (required.empty() || final_step <= 0 || final_increment <= 0)
   {
-    PRINT_ERROR("Missing displacement nodes or final solver increment.\n");
+    TOPOLOGY_ERROR("Missing displacement nodes or final solver increment.\n");
     return false;
   }
 
@@ -52,7 +52,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
   {
     if (block.size() < 7)
     {
-      PRINT_ERROR("Invalid DAT result block.\n");
+      TOPOLOGY_ERROR("Invalid DAT result block.\n");
       return false;
     }
 
@@ -67,7 +67,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
 
     if (type < 0 || static_cast<std::size_t>(type) >= dat.result_block_type.size() || set < 0 || static_cast<std::size_t>(set) >= dat.result_block_set.size())
     {
-      PRINT_ERROR("Invalid DAT displacement block reference.\n");
+      TOPOLOGY_ERROR("Invalid DAT displacement block reference.\n");
       return false;
     }
 
@@ -83,7 +83,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
 
     if (data < 0 || static_cast<std::size_t>(data) >= dat.result_block_components.size() || static_cast<std::size_t>(data) >= dat.result_block_data.size() || static_cast<std::size_t>(data) >= dat.result_block_c1_data.size())
     {
-      PRINT_ERROR("Invalid DAT displacement data reference.\n");
+      TOPOLOGY_ERROR("Invalid DAT displacement data reference.\n");
       return false;
     }
 
@@ -97,7 +97,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
 
       if (found == components.end())
       {
-        PRINT_ERROR("Missing displacement component %s.\n", names[axis].c_str());
+        TOPOLOGY_ERROR("Missing displacement component %s.\n", names[axis].c_str());
         return false;
       }
 
@@ -108,7 +108,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
     {
       if (record.size() < 3)
       {
-        PRINT_ERROR("Invalid DAT displacement record.\n");
+        TOPOLOGY_ERROR("Invalid DAT displacement record.\n");
         return false;
       }
 
@@ -121,7 +121,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
 
       if (row < 0 || static_cast<std::size_t>(row) >= dat.result_block_data[data].size())
       {
-        PRINT_ERROR("Invalid DAT displacement row.\n");
+        TOPOLOGY_ERROR("Invalid DAT displacement row.\n");
         return false;
       }
 
@@ -132,7 +132,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
       {
         if (static_cast<std::size_t>(columns[axis]) >= values.size() || !std::isfinite(values[columns[axis]]))
         {
-          PRINT_ERROR("Missing or invalid displacement for node %d.\n", record[0]);
+          TOPOLOGY_ERROR("Missing or invalid displacement for node %d.\n", record[0]);
           return false;
         }
 
@@ -149,7 +149,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
 
       if (!std::isfinite(measured_value) || !measured.emplace(record[0], displacement).second)
       {
-        PRINT_ERROR("Invalid or duplicate displacement for node %d.\n", record[0]);
+        TOPOLOGY_ERROR("Invalid or duplicate displacement for node %d.\n", record[0]);
         return false;
       }
     }
@@ -157,7 +157,7 @@ bool CoreTopologyDisplacementResults::read_final(CoreResults& results, MeshExpor
 
   if (measured.size() != required.size())
   {
-    PRINT_ERROR("Incomplete nodal displacements in the final solver step/increment.\n");
+    TOPOLOGY_ERROR("Incomplete nodal displacements in the final solver step/increment.\n");
     return false;
   }
 
@@ -179,7 +179,7 @@ bool CoreTopologyDisplacementResults::measure_iteration(CoreResults& results, Co
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -190,7 +190,7 @@ bool CoreTopologyDisplacementResults::measure_iteration(CoreResults& results, Co
 
   if (nodeset_id <= 0 || component < 0 || component > 3 || job_id <= 0 || jobs.get_job_status(job_id) != 2)
   {
-    PRINT_ERROR("Invalid topology displacement request.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement request.\n");
     return false;
   }
 

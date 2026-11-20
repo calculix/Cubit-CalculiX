@@ -1,13 +1,13 @@
 #include "Core/CalculiXCore.hpp"
 #include "CoreTopologyModelValidation.hpp"
 #include "CoreTopologyExportValidation.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CalculiXCore::validate_topology_compliance_model(bool require_zero_displacements)
 {
   if (!steps || !sections || !me_iface || !bcsdisplacements || !contactpairs || !initialconditions || !hbcs)
   {
-    PRINT_ERROR("Compliance validation interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Compliance validation interfaces are not initialized.\n");
     return false;
   }
 
@@ -29,7 +29,7 @@ bool CalculiXCore::check_topology_displacement_selection(int topology_id, int it
 {
   if (!topology)
   {
-    PRINT_ERROR("Invalid topology displacement selection request.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement selection request.\n");
     return false;
   }
 

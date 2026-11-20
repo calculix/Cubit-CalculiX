@@ -1,3 +1,4 @@
+#include "Core/connections/CalculiXConnectionsInterface.hpp"
 #include "CalculiXUnitPresentation.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "Framework/Core/units/UnitLabelFormat.hpp"
@@ -145,7 +146,7 @@ void CalculiXUnitPresentation::bind_equations(QTableWidget& table, int node_colu
     std::string error;
     std::string quantity;
     if (!validNode || node <= 0 || !validDof ||
-        !CalculiXInteractionsInterface().get_rotation_node_ids(rotationNodes, error) ||
+        !CalculiXConnectionsInterface().get_rotation_node_ids(rotationNodes, error) ||
         !CalculiXDofUnits::equation_quantity(dof, rotationNodes.count(node) != 0, quantity, error))
     {
       return {};

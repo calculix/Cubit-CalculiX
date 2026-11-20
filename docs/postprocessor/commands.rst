@@ -716,3 +716,18 @@ Vector display
 ``post vector`` selects a declared XYZ field and controls arrow visibility,
 length, scale, sampling density and coloring per representation. See
 :doc:`vectors` for syntax, defaults, units and filter/animation behavior.
+
+Topology series
+---------------
+
+``post open ccx topology ID [iteration N] [threshold VALUE] [name "source"]`` opens one frame
+per completed physical topology iteration. The cutoff defaults to 0.5 and must
+be within [0, 1]. Retained and Removed element sets are ready to toggle in the
+Results tree. The optional iteration ID selects the initial displayed frame
+without limiting the series to that iteration.
+
+``post topology threshold VALUE source "source name"`` changes the split for
+all frames in an open topology source. The **Apply** button in Source Properties
+submits the same command. It keeps the current frame, camera and set visibility
+and does not append iterations. See :doc:`../user/topology-results` for field
+and refresh behavior.

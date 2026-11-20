@@ -1,3 +1,4 @@
+#include "CoreConnectionDrawing.hpp"
 #include <type_traits>
 #include "CoreDraw.hpp"
 #include "CoreDrawCapture.hpp"
@@ -150,6 +151,16 @@ bool CoreDraw::buildEntity(DrawEntityKey key, double size)
     case DrawFeature::Orientation: return draw_orientation(key.id, size);
     case DrawFeature::Equation: return draw_equation(key.id, size);
     case DrawFeature::EquationGroup: return draw_equationgroup(key.id, size);
+    case DrawFeature::ReferencePoint:
+    case DrawFeature::RigidBody:
+    case DrawFeature::PointMass:
+    case DrawFeature::Spring:
+    case DrawFeature::Joint:
+    {
+      DrawingGeometry geometry;
+      return CoreConnectionDrawing::resolve(ccx_core.connections,key,size,geometry) &&
+        storeGeometry(key,std::move(geometry),size);
+    }
     case DrawFeature::Topology: return true;
   }
   return false;

@@ -2,7 +2,7 @@
 #include "Core/steps/CoreSteps.hpp"
 #include "Core/steps/CoreHistoryOutputs.hpp"
 #include "Core/steps/CoreFieldOutputs.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -16,7 +16,7 @@ bool append_outputs(Outputs& outputs, const std::vector<std::vector<int>>& assig
   {
     if (index < 0 || static_cast<std::size_t>(index) >= assignments.size() || assignments[index].size() < 2)
     {
-      PRINT_ERROR("Invalid %s output assignment for the final analysis step.\n", kind);
+      TOPOLOGY_ERROR("Invalid %s output assignment for the final analysis step.\n", kind);
       return false;
     }
 
@@ -24,7 +24,7 @@ bool append_outputs(Outputs& outputs, const std::vector<std::vector<int>>& assig
 
     if (outputs.get_outputs_data_id_from_output_id(output_id) < 0)
     {
-      PRINT_ERROR("%s output %d no longer exists.\n", label, output_id);
+      TOPOLOGY_ERROR("%s output %d no longer exists.\n", label, output_id);
       return false;
     }
 
@@ -32,7 +32,7 @@ bool append_outputs(Outputs& outputs, const std::vector<std::vector<int>>& assig
 
     if (data.empty())
     {
-      PRINT_ERROR("Unable to export %s output %d.\n", kind, output_id);
+      TOPOLOGY_ERROR("Unable to export %s output %d.\n", kind, output_id);
       return false;
     }
 

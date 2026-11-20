@@ -17,6 +17,7 @@ class NodesetTree;
 class SidesetTree;
 class MaterialTree;
 class SectionsTree;
+class ConnectionsTree;
 class ConstraintsTree;
 class SurfaceInteractionsTree;
 class ContactPairsTree;
@@ -81,6 +82,7 @@ private:
   SidesetTree *mySidesetTree = nullptr; //Side sets root item
   MaterialTree *myMaterialTree = nullptr; //Materials root item
   SectionsTree *mySectionsTree = nullptr; //Sections root item
+  ConnectionsTree *myConnectionsTree = nullptr;
   ConstraintsTree *myConstraintsTree = nullptr; //Constraints root item
   SurfaceInteractionsTree *mySurfaceInteractionsTree = nullptr; //SurfaceInteractions root item
   ContactPairsTree *myContactPairsTree = nullptr; //ContactPairs root item

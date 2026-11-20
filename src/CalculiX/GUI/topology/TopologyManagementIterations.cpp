@@ -152,6 +152,15 @@ void TopologyManagement::createIterationsTab(QWidget* tab)
   deleteElementsButton->setToolTip("Delete elements below the displayed threshold. Preserved elements are excluded.");
   layout->addWidget(deleteElementsButton);
 
+  iterationResultsButton = new QPushButton(tr("Open Results"),this);
+  iterationResultsButton->setObjectName("CalculiX.Topology.Iterations.OpenResults");
+  iterationResultsButton->setToolTip(tr("Open the case results in the Postprocessor at the selected completed iteration."));
+  layout->addWidget(iterationResultsButton);
+  connect(iterationResultsButton,&QPushButton::clicked,this,[this]()
+  {
+    openTopologyResults(true);
+  });
+
   monitorButton = new QPushButton("Physical job monitor", this);
   QHBoxLayout *jobRow = new QHBoxLayout();
   jobRow->addWidget(monitorButton);
@@ -228,6 +237,7 @@ void TopologyManagement::updateDisplay()
   updateAnimationControls();
   synchronizeResultControls();
   adjointMonitorButton->setEnabled(false);
+  iterationResultsButton->setEnabled(topologyResultsAvailable() && rows.count(iterations->currentData().toInt()) != 0);
   if (animation_was_active)
   {
     return;

@@ -1,4 +1,6 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreConnectionDrawing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreConnectionDrawing.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawSnapshotCapture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreDrawSnapshotCapture.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CalculiXCaptureRequest.cpp

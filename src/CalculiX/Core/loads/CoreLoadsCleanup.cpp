@@ -1,3 +1,4 @@
+#include "Core/connections/CalculiXConnectionsInterface.hpp"
 #include "Core/loads/CoreLoadsCleanup.hpp"
 #include "Core/loads/CoreLoadsForces.hpp"
 #include "Core/loads/CoreLoadsPressures.hpp"
@@ -44,7 +45,12 @@ bool cleanup_set_loads(LoadType& loads, CoreAmplitudes& amplitudes, CoreSteps& s
     }
 
     bool target_exists;
-    if (nodeset) {
+    const bool referencePoint = nodeset && load.size() > 7 && load[7] > 0;
+    if (referencePoint)
+    {
+      target_exists = CalculiXConnectionsInterface().has_point(load[7]);
+    }
+    else if (nodeset) {
       target_exists = query.check_nodeset_exists(load[4]);
     } else {
       target_exists = query.check_sideset_exists(load[4]);
@@ -53,12 +59,16 @@ bool cleanup_set_loads(LoadType& loads, CoreAmplitudes& amplitudes, CoreSteps& s
     if (!target_exists)
     {
       std::string set_label;
-      if (nodeset) {
+      if (referencePoint)
+      {
+        set_label = "Reference point";
+      }
+      else if (nodeset) {
         set_label = "Nodeset";
       } else {
         set_label = "Sideset";
       }
-      log.append(set_label + " ID " + std::to_string(load[4]) + " doesn't exist.\n");
+      log.append(set_label + " ID " + std::to_string(referencePoint ? load[7] : load[4]) + " doesn't exist.\n");
       log.append(label + " ID " + std::to_string(load_id) + " will be deleted.\n");
 
       CoreLoadRemoval::delete_load(loads, steps, load_id);

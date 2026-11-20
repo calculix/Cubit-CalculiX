@@ -3,7 +3,7 @@
 #include "CoreTopologyLevelSet.hpp"
 #include "ElementInterpolation.hpp"
 #include "ElementPhysicalMapping.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "CubitInterface.hpp"
 #include "Core/mesh/CalculiXMeshInterface.hpp"
 #include <set>
@@ -21,7 +21,7 @@ bool report_error(const std::string& message, std::string* error)
   }
   else
   {
-    PRINT_ERROR("%s\n", message.c_str());
+    TOPOLOGY_ERROR("%s\n", message.c_str());
   }
   return false;
 }
@@ -266,7 +266,7 @@ bool CoreTopologyLevelSetGeometry::query_element(int element_id, std::string& ca
   coordinates.clear();
   if (element_id <= 0 || !CubitInterface::get_element_exists(element_id))
   {
-    PRINT_ERROR("Invalid level-set element ID %d.\n", element_id);
+    TOPOLOGY_ERROR("Invalid level-set element ID %d.\n", element_id);
     return false;
   }
   CalculiXMeshInterface mesh;
@@ -279,7 +279,7 @@ bool CoreTopologyLevelSetGeometry::query_element(int element_id, std::string& ca
   const int block_id = CubitInterface::get_element_block(element_id);
   if ((entity != "hex" && entity != "tet" && entity != "wedge") || local_id <= 0 || block_id <= 0 || !mesh.check_block_exists(block_id))
   {
-    PRINT_ERROR("Invalid volume type or block for level-set element %d.\n", element_id);
+    TOPOLOGY_ERROR("Invalid volume type or block for level-set element %d.\n", element_id);
     return false;
   }
   const std::string type = mesh.get_ccx_element_type(block_id);
@@ -323,7 +323,7 @@ bool CoreTopologyLevelSetGeometry::query_element(int element_id, std::string& ca
   }
   if (!ElementInterpolation::matches_cubit_type(type, candidate_type))
   {
-    PRINT_ERROR("Unsupported CalculiX type/connectivity for level-set element %d.\n", element_id);
+    TOPOLOGY_ERROR("Unsupported CalculiX type/connectivity for level-set element %d.\n", element_id);
     return false;
   }
   std::set<int> unique;
@@ -332,7 +332,7 @@ bool CoreTopologyLevelSetGeometry::query_element(int element_id, std::string& ca
   {
     if (node <= 0 || !unique.insert(node).second || !CubitInterface::get_node_exists(node))
     {
-      PRINT_ERROR("Invalid or duplicate node in level-set element %d.\n", element_id);
+      TOPOLOGY_ERROR("Invalid or duplicate node in level-set element %d.\n", element_id);
       return false;
     }
     const auto point = CubitInterface::get_nodal_coordinates(node);
@@ -340,7 +340,7 @@ bool CoreTopologyLevelSetGeometry::query_element(int element_id, std::string& ca
     {
       if (!std::isfinite(value))
       {
-        PRINT_ERROR("Non-finite coordinates in level-set element %d.\n", element_id);
+        TOPOLOGY_ERROR("Non-finite coordinates in level-set element %d.\n", element_id);
         return false;
       }
     }

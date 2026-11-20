@@ -22,9 +22,6 @@
 class GuiTimer;
 class JobsMonitorLiveMonitor;
 class JobsMonitorProgressTables;
-class JobsMonitorFRD;
-class JobsMonitorDAT;
-class JobsMonitorDATSection;
 
 class JobsMonitor : public QWidget
 {
@@ -65,9 +62,6 @@ private:
   JobsMonitorLiveMonitor* liveMonitor_widget;
   JobsMonitorProgressTables* progress_tables;
   QPlainTextEdit* QPlainTextEdit_console;
-  JobsMonitorFRD* FRD_widget;
-  JobsMonitorDAT* DAT_widget;
-  JobsMonitorDATSection* DATSection_widget;
 
   GuiTimer *timer;
 };

@@ -6,7 +6,7 @@
 #include "Core/materials/CoreMaterials.hpp"
 #include "Core/results/CoreResults.hpp"
 #include "Core/results/frd/CoreResultsFrd.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -21,7 +21,7 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
 
   if (frd_index < 0)
   {
-    PRINT_ERROR("FRD results for job %d are missing.\n", job_id);
+    TOPOLOGY_ERROR("FRD results for job %d are missing.\n", job_id);
     return false;
   }
 
@@ -29,7 +29,7 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
 
   if (frd.current_total_increment < 1)
   {
-    PRINT_ERROR("Job %d has no completed result increment.\n", job_id);
+    TOPOLOGY_ERROR("Job %d has no completed result increment.\n", job_id);
     return false;
   }
 
@@ -40,7 +40,7 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
   {
     if (block.size() < 7)
     {
-      PRINT_ERROR("Invalid FRD result block for job %d.\n", job_id);
+      TOPOLOGY_ERROR("Invalid FRD result block for job %d.\n", job_id);
       return false;
     }
 
@@ -53,7 +53,7 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
 
     if (type < 0 || static_cast<std::size_t>(type) >= frd.result_block_type.size())
     {
-      PRINT_ERROR("Invalid FRD result type for job %d.\n", job_id);
+      TOPOLOGY_ERROR("Invalid FRD result type for job %d.\n", job_id);
       return false;
     }
 
@@ -66,7 +66,7 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
 
     if (data_id < 0 || static_cast<std::size_t>(data_id) >= frd.result_block_data.size() || static_cast<std::size_t>(data_id) >= frd.result_block_node_data.size() || static_cast<std::size_t>(data_id) >= frd.result_block_components.size())
     {
-      PRINT_ERROR("Invalid displacement result storage for job %d.\n", job_id);
+      TOPOLOGY_ERROR("Invalid displacement result storage for job %d.\n", job_id);
       return false;
     }
 
@@ -76,7 +76,7 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
 
     if (values.empty() || mapping.size() != values.size())
     {
-      PRINT_ERROR("Incomplete displacement node mapping for job %d.\n", job_id);
+      TOPOLOGY_ERROR("Incomplete displacement node mapping for job %d.\n", job_id);
       return false;
     }
 
@@ -88,7 +88,7 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
 
       if (component == components.end())
       {
-        PRINT_ERROR("Displacement component %s is missing for job %d.\n", component_names[axis].c_str(), job_id);
+        TOPOLOGY_ERROR("Displacement component %s is missing for job %d.\n", component_names[axis].c_str(), job_id);
         return false;
       }
 
@@ -101,13 +101,13 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
     {
       if (record.size() < 2 || record[0] <= 0 || record[1] < 0 || static_cast<std::size_t>(record[1]) >= values.size())
       {
-        PRINT_ERROR("Invalid displacement node record for job %d.\n", job_id);
+        TOPOLOGY_ERROR("Invalid displacement node record for job %d.\n", job_id);
         return false;
       }
 
       if (!used_rows.insert(record[1]).second)
       {
-        PRINT_ERROR("Duplicate displacement data mapping for job %d.\n", job_id);
+        TOPOLOGY_ERROR("Duplicate displacement data mapping for job %d.\n", job_id);
         return false;
       }
 
@@ -118,7 +118,7 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
       {
         if (component_ids[axis] >= row.size() || !std::isfinite(row[component_ids[axis]]))
         {
-          PRINT_ERROR("Invalid displacement for node %d in job %d.\n", record[0], job_id);
+          TOPOLOGY_ERROR("Invalid displacement for node %d in job %d.\n", record[0], job_id);
           return false;
         }
 
@@ -127,7 +127,7 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
 
       if (!measured.emplace(record[0], displacement).second)
       {
-        PRINT_ERROR("Duplicate displacement result for node %d in job %d.\n", record[0], job_id);
+        TOPOLOGY_ERROR("Duplicate displacement result for node %d in job %d.\n", record[0], job_id);
         return false;
       }
     }
@@ -135,7 +135,7 @@ bool CoreTopologyResults::read_final_displacements(CoreResults& results, int job
 
   if (measured.empty())
   {
-    PRINT_ERROR("Final-increment displacement results are missing for job %d.\n", job_id);
+    TOPOLOGY_ERROR("Final-increment displacement results are missing for job %d.\n", job_id);
     return false;
   }
 
@@ -149,7 +149,7 @@ bool CoreTopologyResults::read_job_displacements(CoreResults& results, CoreJobs&
 
   if (job_id <= 0 || jobs.get_job_status(job_id) != 2)
   {
-    PRINT_ERROR("Topology displacement results require a completed job.\n");
+    TOPOLOGY_ERROR("Topology displacement results require a completed job.\n");
     return false;
   }
 
@@ -163,7 +163,7 @@ bool CoreTopologyResults::read_job_displacements(CoreResults& results, CoreJobs&
 
   if (topology_id <= 0 || iteration_id < 1)
   {
-    PRINT_ERROR("Job %d is not associated with a topology iteration.\n", job_id);
+    TOPOLOGY_ERROR("Job %d is not associated with a topology iteration.\n", job_id);
     return false;
   }
 
@@ -171,7 +171,7 @@ bool CoreTopologyResults::read_job_displacements(CoreResults& results, CoreJobs&
 
   if (collection == materials.topology_material_data.end() || collection->second.element_base_material.empty())
   {
-    PRINT_ERROR("Prepared elements for topology %d are missing.\n", topology_id);
+    TOPOLOGY_ERROR("Prepared elements for topology %d are missing.\n", topology_id);
     return false;
   }
 
@@ -184,7 +184,7 @@ bool CoreTopologyResults::read_job_displacements(CoreResults& results, CoreJobs&
 
   if (!blocks)
   {
-    PRINT_ERROR("Block core is not initialized.\n");
+    TOPOLOGY_ERROR("Block core is not initialized.\n");
     return false;
   }
 
@@ -199,7 +199,7 @@ bool CoreTopologyResults::read_job_displacements(CoreResults& results, CoreJobs&
   {
     if (measured.count(node_id) == 0)
     {
-      PRINT_ERROR("Job %d is missing displacement results for topology node %d.\n", job_id, node_id);
+      TOPOLOGY_ERROR("Job %d is missing displacement results for topology node %d.\n", job_id, node_id);
       return false;
     }
   }
@@ -216,7 +216,7 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
 
   if (dat_index < 0)
   {
-    PRINT_ERROR("DAT results for job %d are missing.\n", job_id);
+    TOPOLOGY_ERROR("DAT results for job %d are missing.\n", job_id);
     return false;
   }
 
@@ -228,7 +228,7 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
 
   if (last_step <= 0 || last_increment <= 0)
   {
-    PRINT_ERROR("Final solver step/increment is missing in job %d.\n", job_id);
+    TOPOLOGY_ERROR("Final solver step/increment is missing in job %d.\n", job_id);
     return false;
   }
 
@@ -245,7 +245,7 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
 
   if (energy_type < 0)
   {
-    PRINT_ERROR("Job %d has no element internal energy results.\n", job_id);
+    TOPOLOGY_ERROR("Job %d has no element internal energy results.\n", job_id);
     return false;
   }
 
@@ -253,7 +253,7 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
 
   if (energy_component < 0)
   {
-    PRINT_ERROR("Internal energy component is missing.\n");
+    TOPOLOGY_ERROR("Internal energy component is missing.\n");
     return false;
   }
 
@@ -264,7 +264,7 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
   {
     if (block.size() < 7 || block[1] < 0 || static_cast<std::size_t>(block[1]) >= dat.total_times.size())
     {
-      PRINT_ERROR("Invalid DAT result block.\n");
+      TOPOLOGY_ERROR("Invalid DAT result block.\n");
       return false;
     }
 
@@ -277,7 +277,7 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
 
     if (data_id < 0 || static_cast<std::size_t>(data_id) >= dat.result_block_data.size() || static_cast<std::size_t>(data_id) >= dat.result_block_c1_data.size())
     {
-      PRINT_ERROR("Invalid DAT energy data reference.\n");
+      TOPOLOGY_ERROR("Invalid DAT energy data reference.\n");
       return false;
     }
 
@@ -285,7 +285,7 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
     {
       if (record.size() < 3)
       {
-        PRINT_ERROR("Invalid DAT element record.\n");
+        TOPOLOGY_ERROR("Invalid DAT element record.\n");
         return false;
       }
 
@@ -299,7 +299,7 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
 
       if (row_id < 0 || static_cast<std::size_t>(row_id) >= dat.result_block_data[data_id].size())
       {
-        PRINT_ERROR("Invalid DAT energy row reference.\n");
+        TOPOLOGY_ERROR("Invalid DAT energy row reference.\n");
         return false;
       }
 
@@ -307,7 +307,7 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
 
       if (static_cast<std::size_t>(energy_component) >= values.size())
       {
-        PRINT_ERROR("Missing energy value for element %d.\n", record[0]);
+        TOPOLOGY_ERROR("Missing energy value for element %d.\n", record[0]);
         return false;
       }
 
@@ -315,13 +315,13 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
 
       if (!std::isfinite(energy))
       {
-        PRINT_ERROR("Non-finite energy for element %d.\n", record[0]);
+        TOPOLOGY_ERROR("Non-finite energy for element %d.\n", record[0]);
         return false;
       }
 
       if (!collected.emplace(record[0], energy).second)
       {
-        PRINT_ERROR("Multiple energy values for element %d in final step %d, increment %d.\n", record[0], last_step, last_increment);
+        TOPOLOGY_ERROR("Multiple energy values for element %d in final step %d, increment %d.\n", record[0], last_step, last_increment);
         return false;
       }
     }
@@ -331,7 +331,7 @@ bool CoreTopologyResults::read_final_element_energies(CoreResults& results, int 
   {
     if (collected.count(element.first) == 0)
     {
-      PRINT_ERROR("Missing energy for topology element %d in final step %d, increment %d.\n", element.first, last_step, last_increment);
+      TOPOLOGY_ERROR("Missing energy for topology element %d in final step %d, increment %d.\n", element.first, last_step, last_increment);
       return false;
     }
   }
@@ -352,7 +352,7 @@ bool CoreTopologyResults::select_maximum_displacement(const std::map<int, std::a
 
   if (component < 0 || component > 3 || measured.empty())
   {
-    PRINT_ERROR("Invalid topology displacement request.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement request.\n");
     return false;
   }
 
@@ -390,7 +390,7 @@ bool CoreTopologyResults::read_iteration_energies(CoreResults& results, CoreJobs
 
   if (job_id <= 0 || jobs.get_job_status(job_id) != 2)
   {
-    PRINT_ERROR("Topology iteration has no successfully completed job.\n");
+    TOPOLOGY_ERROR("Topology iteration has no successfully completed job.\n");
     return false;
   }
 
@@ -398,7 +398,7 @@ bool CoreTopologyResults::read_iteration_energies(CoreResults& results, CoreJobs
 
   if (collection == materials.topology_material_data.end() || collection->second.element_base_material.empty())
   {
-    PRINT_ERROR("Topology material assignments are missing.\n");
+    TOPOLOGY_ERROR("Topology material assignments are missing.\n");
     return false;
   }
 

@@ -5,11 +5,13 @@
 #include <limits>
 CoreResultsSourceMetadata::CoreResultsSourceMetadata() = default;
 CoreResultsSourceMetadata::CoreResultsSourceMetadata(const CalculiXJobRunRecord& record) : unitSystem(record.unitSystem), launchId(record.launchId), materialProjectId(record.materialProjectId), materialIds(record.materialIds) {
+  connections = record.connections;
   step_axis_quantities = record.step_axis_quantities;
 }
 QJsonObject CoreResultsSourceMetadata::to_json() const {
   QJsonObject value;
   value.insert("version", 1);
+  value.insert("connections", connections.json());
   value.insert("system", QString::fromUtf8(unitSystem.c_str()));
   QJsonObject axes;
   for (const auto& axis : step_axis_quantities)
@@ -32,6 +34,10 @@ bool CoreResultsSourceMetadata::from_json(const QJsonObject& value, CoreResultsS
     return false;
   }
   CoreResultsSourceMetadata candidate;
+  if (!candidate.connections.restore(value.value("connections").toObject(), error))
+  {
+    return false;
+  }
   candidate.unitSystem = value.value("system").toString().toUtf8().toStdString();
   if (value.contains("step_axes") && !value.value("step_axes").isObject())
   {

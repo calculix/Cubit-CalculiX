@@ -81,7 +81,8 @@ mesh vertex all
 
 #!python
 vertex_id = cubit.get_last_id("vertex")
-cubit.cmd(f"ccx create constraint rigid body nodeset 1 ref {vertex_id-1} rot {vertex_id}")
+cubit.cmd(f'ccx create rp 1 name "Control 1" vertex {vertex_id-1} rotation_vertex {vertex_id}')
+cubit.cmd('ccx create rigid body 1 name "Attachment 1" nodeset 1 rp 1')
 cubit.cmd(f"nodeset 3 add vertex {vertex_id-1}")
 cubit.cmd(f"nodeset 4 add vertex {vertex_id}")
 

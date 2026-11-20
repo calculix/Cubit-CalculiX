@@ -19,7 +19,7 @@ public:
    * Current-model coordinates are converted to the recorded source system
    * before comparison. Unknown source units use the INP/FRD fallback.
    */
-  bool prepare(int job_id, const CoreResultsFrd& frd, const CoreResultsDat& dat, const std::string& input_path, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& output, const std::string& source_system = {}) const;
+  bool prepare(int job_id, const CoreResultsFrd& frd, const CoreResultsDat& dat, const std::string& input_path, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& output, const std::string& source_system = {}, const ConnectionRunMap* connections = nullptr) const;
 
   // External INP is authoritative when supplied. Never capture the live model.
   // A DAT-only source without an INP produces tables, not invented coordinates.

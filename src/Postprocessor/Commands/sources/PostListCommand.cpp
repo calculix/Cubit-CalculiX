@@ -59,6 +59,10 @@ bool PostListCommand::execute(CubitCommandData&)
 
           if constexpr (std::is_same_v<Reference, Postprocessor::JobSourceReference>)
           {
+            if (reference.topology_threshold)
+            {
+              return "topology: " + reference.application_id + " " + std::to_string(reference.job_id);
+            }
             return "job: " + reference.application_id + " " + std::to_string(reference.job_id);
           }
           else if constexpr (std::is_same_v<Reference, Postprocessor::FileSourceReference>)

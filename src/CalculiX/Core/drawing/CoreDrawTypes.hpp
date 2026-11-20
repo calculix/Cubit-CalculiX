@@ -6,13 +6,13 @@
 #include <string>
 #include <vector>
 
-enum class DrawGroup { BoundaryConditions, Loads, Constraints, Orientations, Topology };
+enum class DrawGroup { BoundaryConditions, Loads, Constraints, Connections, Orientations, Topology };
 enum class DrawScopeKind { Model, Step, Custom };
 enum class DrawFeature
 {
   Force, Pressure, Heatflux, Gravity, Centrifugal, Trajectory, Film, Radiation,
   SurfaceTraction, BodyHeatflux, Displacement, Temperature, Orientation,
-  Equation, EquationGroup, Topology
+  Equation, EquationGroup, Topology, ReferencePoint, RigidBody, Joint, PointMass, Spring
 };
 
 struct DrawEntityKey

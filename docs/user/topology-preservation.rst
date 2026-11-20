@@ -27,7 +27,7 @@ contact-pair definitions are collected separately as model-level definitions.
 
    * - Source
      - Selection collected
-   * - Rigid-body constraint
+   * - Rigid-body connection
      - Its block or nodeset.
    * - Tie constraint
      - Both sidesets.

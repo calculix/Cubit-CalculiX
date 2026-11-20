@@ -31,8 +31,9 @@ CoreResultsProject::~CoreResultsProject()
   clear();
 }
 
-bool CoreResultsProject::init(CoreResultsFrd* frd)
+bool CoreResultsProject::init(CoreResultsFrd* frd, const ConnectionRunMap& connections)
 {
+  connection_map = connections;
   if (frd == nullptr)
   {
     PRINT_ERROR("Cannot initialize projection without FRD results.\n");
@@ -124,11 +125,18 @@ bool CoreResultsProject::project(int step, int totalincrement, double scale, con
   // Validate every move before changing the mesh. Values remain in the recorded
   // solver basis; the user's scale is dimensionless.
   std::vector<std::string> moves;
-  std::set<int> rotationNodes;
-  if (!CalculiXInteractionsInterface().get_rotation_node_ids(rotationNodes, error))
+  std::set<int> excluded;
+  for (const auto& entry : connection_map.distributed)
   {
-    PRINT_ERROR("Cannot resolve displacement projection targets: %s\n", error.c_str());
-    return false;
+    excluded.insert(entry.second.ref);
+  }
+  for (const auto& entry : connection_map.points)
+  {
+    excluded.insert(entry.second.rot);
+    if (entry.second.generated_ref)
+    {
+      excluded.insert(entry.second.ref);
+    }
   }
   for (const auto& record : frd->result_block_node_data[data_id])
   {
@@ -139,7 +147,7 @@ bool CoreResultsProject::project(int step, int totalincrement, double scale, con
       return false;
     }
     // The dummy ROT NODE's first three values are angles, not coordinates.
-    if (rotationNodes.count(record[0]) != 0)
+    if (excluded.count(record[0]) != 0)
     {
       continue;
     }
@@ -427,8 +435,30 @@ bool CoreResultsProject::checkLinkPossible()
     return false;
   }
   
+  std::set<int> generated;
+  for (const auto& entry : connection_map.distributed)
+  {
+    generated.insert(entry.second.ref);
+  }
+  for (const auto& entry : connection_map.points)
+  {
+    if (entry.second.generated_ref)
+    {
+      generated.insert(entry.second.ref);
+    }
+    if (entry.second.generated_rot)
+    {
+      generated.insert(entry.second.rot);
+    }
+  }
+  int generated_count = 0;
   for (size_t i = 0; i < frd->nodes.size(); i++)
   {
+    if (generated.count(frd->nodes[i][0]))
+    {
+      ++generated_count;
+      continue;
+    }
     if (!CubitInterface::get_node_exists(frd->nodes[i][0]))
     {
       log = "Linking Failed! Node " + std::to_string(frd->nodes[i][0]) + " doesn't exist in Cubit.\n";
@@ -436,8 +466,25 @@ bool CoreResultsProject::checkLinkPossible()
       return false;
     }
   }
+  std::size_t discrete_count = 0;
   for (size_t i = 0; i < frd->elements.size(); i++)
   {
+    const auto mapped = connection_map.discrete.find(frd->elements[i][0]);
+    if (mapped != connection_map.discrete.end())
+    {
+      const auto& feature = mapped->second;
+      const auto& row = frd->elements[i];
+      if (row.size() < 3 || feature.type != "SPRINGA" || row[1] != 11 || row[2] < 0 ||
+          static_cast<std::size_t>(row[2]) >= frd->elements_connectivity.size() ||
+          frd->elements_connectivity[row[2]] != std::vector<int>{feature.a,feature.b} ||
+          CubitInterface::get_element_exists(feature.element))
+      {
+        log = "Linking failed for generated spring " + std::to_string(feature.id) + ".";
+        return false;
+      }
+      ++discrete_count;
+      continue;
+    }
     if (!CubitInterface::get_element_exists(frd->elements[i][0]))
     { 
       log = "Linking Failed! Element " + std::to_string(frd->elements[i][0]) + " doesn't exist in Cubit.\n";
@@ -477,7 +524,7 @@ bool CoreResultsProject::checkLinkPossible()
     }
   }
   
-  if (CubitInterface::get_node_count()!=frd->nodes.size() + free_node_count)
+  if (CubitInterface::get_node_count()!=frd->nodes.size() - generated_count + free_node_count)
   {
     log = "Linking Failed! Wrong number of Nodes.\n";
     log.append("Cubit Node Count:" + std::to_string(CubitInterface::get_node_count()) + "\n");
@@ -497,7 +544,7 @@ bool CoreResultsProject::checkLinkPossible()
     free_element_count = free_element_count + int(ccx_loads_iface.loadstrajectory_heatflux_get_edge_ids(trajectory_ids[i]).size());
     free_element_count = free_element_count + int(ccx_loads_iface.loadstrajectory_bodyheatfluxsphere_get_edge_ids(trajectory_ids[i]).size());
   }
-  if (CubitInterface::get_element_count()!=frd->elements.size()+free_element_count)
+  if (CubitInterface::get_element_count()!=frd->elements.size()-discrete_count+free_element_count)
   {
     log = "Linking Failed! Wrong number of Elements.\n";
     //log.append("Cubit " + std::to_string(CubitInterface::get_element_count()) + " FRD " + std::to_string(frd->elements.size()+CubitInterface::get_list_of_free_ref_entities("vertex").size()) +  "\n");

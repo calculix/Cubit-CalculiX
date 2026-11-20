@@ -13,7 +13,7 @@ std::vector<std::string> ccxDisplayCommand::get_syntax()
     "ccx display labels color <string:type='unquoted',number='1',label='label_color'>",
     "ccx display scope model",
     "ccx display scope step <value:label='step_id',help='<step_id>'>",
-    "ccx display {overlay|all|bcs|loads|constraints|orientations|topology} {on|off}",
+    "ccx display {overlay|all|bcs|loads|constraints|connections|orientations|topology} {on|off}",
     "ccx display size <value:label='factor',help='<factor>'>",
     "ccx display picking {on|off}",
     "ccx display defaults",
@@ -23,7 +23,7 @@ std::vector<std::string> ccxDisplayCommand::get_syntax()
 
 std::vector<std::string> ccxDisplayCommand::get_syntax_help()
 {
-  return {"ccx display labels {on|off}", "ccx display labels {loads|bcs|ids|names|values|amplitudes|leaders} {on|off}", "ccx display labels scope {all|selected}", "ccx display labels offset <factor>", "ccx display labels color <name>", "ccx display scope {model|step <id>}", "ccx display {overlay|all|bcs|loads|constraints|orientations|topology} {on|off}", "ccx display size <factor>", "ccx display picking {on|off}", "ccx display defaults", "ccx display refresh"};
+  return {"ccx display labels {on|off}", "ccx display labels {loads|bcs|ids|names|values|amplitudes|leaders} {on|off}", "ccx display labels scope {all|selected}", "ccx display labels offset <factor>", "ccx display labels color <name>", "ccx display scope {model|step <id>}", "ccx display {overlay|all|bcs|loads|constraints|connections|orientations|topology} {on|off}", "ccx display size <factor>", "ccx display picking {on|off}", "ccx display defaults", "ccx display refresh"};
 }
 
 std::vector<std::string> ccxDisplayCommand::get_help()
@@ -146,6 +146,10 @@ bool ccxDisplayCommand::execute(CubitCommandData& data)
       else if (data.find_keyword("CONSTRAINTS"))
       {
         group = DrawGroup::Constraints;
+      }
+      else if (data.find_keyword("CONNECTIONS"))
+      {
+        group = DrawGroup::Connections;
       }
       else if (data.find_keyword("ORIENTATIONS"))
       {

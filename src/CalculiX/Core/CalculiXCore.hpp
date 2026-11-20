@@ -1,6 +1,7 @@
 #ifndef CALCULIXCORE_HPP
 #define CALCULIXCORE_HPP
 
+#include "Core/connections/CoreConnections.hpp"
 #include <vector>
 #include <cstddef>
 #include <memory>
@@ -588,7 +589,6 @@ public:
   std::vector<std::vector<double>> get_draw_data_for_orientation(int id);
   std::vector<std::vector<double>> get_draw_data_for_equation(int id);
   std::vector<std::vector<double>> get_draw_data_for_equationgroup(int id);
-  std::vector<int> get_rigidbody_vertex_list();
 
   // Drawing: complete categories
   bool draw_all(double size);
@@ -796,6 +796,7 @@ public:
   CoreConstraints* constraints = nullptr;
   CoreSurfaceInteractions* surfaceinteractions = nullptr;
   CoreContactPairs* contactpairs = nullptr;
+  CoreConnections connections;
   CoreAmplitudes* amplitudes = nullptr;
   CoreOrientations* orientations = nullptr;
   CoreDamping* damping = nullptr;

@@ -12,6 +12,7 @@ struct LoadsForcesSettings
   std::string timeDelay;
   std::string operation;
   std::string nodeset;
+  int referencePoint = 0;
   std::string component1;
   std::string component2;
   std::string component3;

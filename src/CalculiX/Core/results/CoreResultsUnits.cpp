@@ -294,6 +294,49 @@ namespace
     {
       return "time";
     }
+    if (field == "PointMassHistory" || field == "SpringHistory")
+    {
+      if (column.find("force") != std::string::npos)
+      {
+        return "force";
+      }
+      return "length";
+    }
+    if (field == "DistributingHistory")
+    {
+      if (column.find("Mean displacement ") == 0)
+      {
+        return "length";
+      }
+      if (column.find("Force ") == 0)
+      {
+        return "force";
+      }
+      if (column.find("Moment ") == 0)
+      {
+        return "moment";
+      }
+      return "dimensionless";
+    }
+    if (field == "JointHistory")
+    {
+      if (column.find("Rotation") != std::string::npos || column == "Relative axial angle")
+      {
+        return "angle";
+      }
+      if (column.find("Translation") != std::string::npos || column == "Relative axial travel")
+      {
+        return "length";
+      }
+      if (column.find("Moment") != std::string::npos)
+      {
+        return "moment";
+      }
+      if (column.find("Force") != std::string::npos)
+      {
+        return "force";
+      }
+    }
     if (field == "FREQUENCY")
     {
       if (column == "Eigenvalue")
@@ -381,7 +424,18 @@ namespace
         }
         const std::string columnName(rawName);
         auto quantity = table_quantity(field,metadata[i].name,columnName);
-        if (columnName == "Time")
+        if (table_text(*inputs[i],"ReferencePointRole") == "Rotation")
+        {
+          if (quantity == "length")
+          {
+            quantity = "angle";
+          }
+          else if (quantity == "force")
+          {
+            quantity = "moment";
+          }
+        }
+        if (columnName == "Time" && (field != "DistributingHistory" || !axis_quantity.empty()))
         {
           quantity = axis_quantity;
         }

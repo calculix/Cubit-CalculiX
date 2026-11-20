@@ -13,18 +13,6 @@ target_sources(calculix_gui PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/JobsModifyPanel.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitor.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorDAT.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorDAT.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorDATPlot.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorDATPlot.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorDATSection.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorDATSection.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorDATSectionPlot.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorDATSectionPlot.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorFRD.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorFRD.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorFRDPlot.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorFRDPlot.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorLiveMonitor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorLiveMonitor.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/JobsMonitorLiveMonitorConvergence.cpp

@@ -591,6 +591,17 @@ bool CubitWorkspaceHost::apply(const WorkspaceView& view, const QPersistentModel
     dock->toggleViewAction()->setEnabled(active);
   }
 
+  if (!nativeActive && view.docks.size() == 1)
+  {
+    auto* dock = view.docks.front();
+    if (!dock->isFloating() && (firstVisit || gui->dockWidgetArea(dock) == Qt::NoDockWidgetArea))
+    {
+      gui->addDockWidget(Qt::LeftDockWidgetArea,dock);
+      dock->show();
+      gui->resizeDocks({dock},{260},Qt::Horizontal);
+    }
+  }
+
   if (!nativeActive && firstVisit && view.docks.size() >= 2)
   {
     auto* modelDock = view.docks.at(0);

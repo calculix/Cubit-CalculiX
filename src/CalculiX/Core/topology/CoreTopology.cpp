@@ -9,7 +9,7 @@
 #include <array>
 #include "Core/mesh/CalculiXMeshInterface.hpp"
 #include "Core/topology/CalculiXTopologyInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "HDF5Tool.hpp"
 #include "TopologyHdf5.hpp"
 #include "TopologyIterationIds.hpp"
@@ -257,7 +257,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
 
     if (topology_cases.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
     {
-      PRINT_ERROR("Too many topology cases to save.\n");
+      TOPOLOGY_ERROR("Too many topology cases to save.\n");
       return false;
     }
 
@@ -266,7 +266,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
       if (entry.first <= 0 || !ValidateTopologyConfiguration(entry.second) || !CoreTopologySaveValidation::validate_case(entry.second) ||
           !std::isfinite(entry.second.density_penalization) || entry.second.density_penalization < 1.0)
       {
-        PRINT_ERROR("Invalid topology case %d; save cancelled.\n", entry.first);
+        TOPOLOGY_ERROR("Invalid topology case %d; save cancelled.\n", entry.first);
         return false;
       }
     }
@@ -275,7 +275,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
     {
       if (!file.deleteGroup(root))
       {
-        PRINT_ERROR("Unable to replace saved topology data.\n");
+        TOPOLOGY_ERROR("Unable to replace saved topology data.\n");
         return false;
       }
     }
@@ -284,7 +284,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
         !file.write_dataset_int_rank_1("case_count", root,
             {static_cast<int>(topology_cases.size())}))
     {
-      PRINT_ERROR("Unable to create topology save data.\n");
+      TOPOLOGY_ERROR("Unable to create topology save data.\n");
       return false;
     }
 
@@ -351,7 +351,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
           !file.write_dataset_int_rank_1("integers", group, integers) ||
           !file.write_dataset_double_rank_1("parameters", group, parameters))
       {
-        PRINT_ERROR("Unable to save topology case %d.\n", id);
+        TOPOLOGY_ERROR("Unable to save topology case %d.\n", id);
         return false;
       }
 
@@ -360,7 +360,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
       {
         if (!file.write_dataset_int_rank_2("preserved_sets", group, preserved_sets))
         {
-          PRINT_ERROR("Unable to save preserved sets for topology %d.\n", id);
+          TOPOLOGY_ERROR("Unable to save preserved sets for topology %d.\n", id);
           return false;
         }
       }
@@ -368,7 +368,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
       TopologyHdf5<false> archive(file, group);
       if (!archive.value("level_set_settings", configuration.level_set_settings) || !archive.value("runtime", configuration))
       {
-        PRINT_ERROR("Unable to save topology %d iteration data.\n", id);
+        TOPOLOGY_ERROR("Unable to save topology %d iteration data.\n", id);
         return false;
       }
     }
@@ -377,7 +377,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
     {
       if (!file.write_dataset_int_rank_1("case_ids", root, case_ids))
       {
-        PRINT_ERROR("Unable to save topology case IDs.\n");
+        TOPOLOGY_ERROR("Unable to save topology case IDs.\n");
         return false;
       }
     }
@@ -386,7 +386,7 @@ bool CoreTopology::save_configuration(HDF5Tool& file) const
   }
   catch (const H5::Exception& error)
   {
-    PRINT_ERROR(
+    TOPOLOGY_ERROR(
         "Unable to save topology configurations: %s\n",
         error.getDetailMsg().c_str());
     return false;
@@ -412,7 +412,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
     if (!file.read_dataset_int_rank_1("case_count", root, count) ||
         count.size() != 1 || count[0] < 0)
     {
-      PRINT_ERROR("Invalid topology save format.\n");
+      TOPOLOGY_ERROR("Invalid topology save format.\n");
       return false;
     }
 
@@ -421,7 +421,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
       if (!file.read_dataset_int_rank_1("case_ids", root, case_ids) ||
           case_ids.size() != static_cast<size_t>(count[0]))
       {
-        PRINT_ERROR("Invalid saved topology case IDs.\n");
+        TOPOLOGY_ERROR("Invalid saved topology case IDs.\n");
         return false;
       }
     }
@@ -432,7 +432,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
     {
       if (id <= 0 || loaded.count(id) != 0)
       {
-        PRINT_ERROR("Invalid or duplicate topology ID %d.\n", id);
+        TOPOLOGY_ERROR("Invalid or duplicate topology ID %d.\n", id);
         return false;
       }
 
@@ -451,7 +451,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
           integers.size() != 7u ||
           parameters.size() != 9u)
       {
-        PRINT_ERROR("Incomplete saved topology case %d.\n", id);
+        TOPOLOGY_ERROR("Incomplete saved topology case %d.\n", id);
         return false;
       }
 
@@ -475,7 +475,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
       configuration.compliance_tolerance = parameters[7];
       if (integers[5] != 0 && integers[5] != 1)
       {
-        PRINT_ERROR("Invalid saved adaptive move setting for topology %d.\n", id);
+        TOPOLOGY_ERROR("Invalid saved adaptive move setting for topology %d.\n", id);
         return false;
       }
       configuration.adaptive_move_limits = integers[5] == 1;
@@ -483,7 +483,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
       TopologyHdf5<true> archive(file, group);
       if (!archive.value("level_set_settings", configuration.level_set_settings))
       {
-        PRINT_ERROR("Incomplete saved topology settings for case %d.\n", id);
+        TOPOLOGY_ERROR("Incomplete saved topology settings for case %d.\n", id);
         return false;
       }
 
@@ -491,7 +491,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
           !std::isfinite(configuration.density_penalization) ||
           configuration.density_penalization < 1.0)
       {
-        PRINT_ERROR("Invalid saved topology case %d.\n", id);
+        TOPOLOGY_ERROR("Invalid saved topology case %d.\n", id);
         return false;
       }
 
@@ -501,7 +501,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
 
         if (!file.read_dataset_int_rank_2("preserved_sets", group, selections))
         {
-          PRINT_ERROR("Unable to read preserved sets for topology %d.\n", id);
+          TOPOLOGY_ERROR("Unable to read preserved sets for topology %d.\n", id);
           return false;
         }
 
@@ -512,7 +512,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
               selection[1] < 1 || selection[1] > 3 ||
               selection[2] <= 0)
           {
-            PRINT_ERROR("Invalid saved preservation selection for topology %d.\n", id);
+            TOPOLOGY_ERROR("Invalid saved preservation selection for topology %d.\n", id);
             return false;
           }
 
@@ -526,7 +526,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
 
           if (!target[selection[1]].insert(selection[2]).second)
           {
-            PRINT_ERROR("Duplicate saved preservation selection.\n");
+            TOPOLOGY_ERROR("Duplicate saved preservation selection.\n");
             return false;
           }
         }
@@ -544,7 +544,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
           {
             if (removed->second.count(set_id) != 0)
             {
-              PRINT_ERROR("Conflicting saved preservation selections.\n");
+              TOPOLOGY_ERROR("Conflicting saved preservation selections.\n");
               return false;
             }
           }
@@ -553,13 +553,13 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
 
       if (!archive.value("runtime", configuration) || !CoreTopologySaveValidation::validate_case(configuration))
       {
-        PRINT_ERROR("Invalid or incomplete saved topology %d iteration data.\n", id);
+        TOPOLOGY_ERROR("Invalid or incomplete saved topology %d iteration data.\n", id);
         return false;
       }
       if (configuration.run_state == TopologyRunState::Running)
       {
         configuration.run_state = TopologyRunState::Failed;
-        PRINT_INFO("Topology %d was saved while running; restored as an interrupted run.\n", id);
+        TOPOLOGY_INFO("Topology %d was saved while running; restored as an interrupted run.\n", id);
       }
 
       loaded.emplace(id, std::move(configuration));
@@ -571,7 +571,7 @@ bool CoreTopology::read_configuration(HDF5Tool& file)
   }
   catch (const H5::Exception& error)
   {
-    PRINT_ERROR(
+    TOPOLOGY_ERROR(
         "Unable to read topology configurations: %s\n",
         error.getDetailMsg().c_str());
     return false;
@@ -582,13 +582,13 @@ bool CoreTopology::create_topology(int topology_id,const TopologyOptions& option
 {
   if (!is_initialized || topology_id <= 0)
   {
-    PRINT_ERROR("Invalid topology initialization or ID.\n");
+    TOPOLOGY_ERROR("Invalid topology initialization or ID.\n");
     return false;
   }
 
   if (topology_cases.count(topology_id) != 0)
   {
-    PRINT_ERROR("Topology case %d already exists.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d already exists.\n", topology_id);
     return false;
   }
 
@@ -609,7 +609,7 @@ bool CoreTopology::create_topology(int topology_id,const TopologyOptions& option
 
   if (!ValidateTopologyConfiguration(configuration))
   {
-    PRINT_ERROR("Invalid topology case configuration.\n");
+    TOPOLOGY_ERROR("Invalid topology case configuration.\n");
     return false;
   }
 
@@ -623,7 +623,7 @@ bool CoreTopology::modify_topology(
 {
   if (!is_initialized)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -631,13 +631,13 @@ bool CoreTopology::modify_topology(
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
   if (entry->second.run_state == TopologyRunState::Running)
   {
-    PRINT_ERROR("Topology %d is running.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d is running.\n", topology_id);
     return false;
   }
 
@@ -647,7 +647,7 @@ bool CoreTopology::modify_topology(
 
   if (!ValidateTopologyConfiguration(configuration))
   {
-    PRINT_ERROR("Invalid topology case configuration.\n");
+    TOPOLOGY_ERROR("Invalid topology case configuration.\n");
     return false;
   }
 
@@ -661,14 +661,14 @@ bool CoreTopology::delete_topology(int topology_id)
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
   // The coordinating core must remove linked jobs first.
   if (!entry->second.iteration_jobs.empty() || !entry->second.iteration_adjoint_jobs.empty())
   {
-    PRINT_ERROR("Topology case %d still has linked jobs.\n",
+    TOPOLOGY_ERROR("Topology case %d still has linked jobs.\n",
                 topology_id);
     return false;
   }
@@ -683,7 +683,7 @@ bool CoreTopology::resolve_preserved_elements(int topology_id, const std::vector
 
   if (!is_initialized)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -691,13 +691,13 @@ bool CoreTopology::resolve_preserved_elements(int topology_id, const std::vector
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
   if (analysis_element_ids.empty())
   {
-    PRINT_ERROR("Topology %d has no analysis elements.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d has no analysis elements.\n", topology_id);
     return false;
   }
 
@@ -708,7 +708,7 @@ bool CoreTopology::resolve_preserved_elements(int topology_id, const std::vector
     if (element_id <= 0 ||
         !flags.emplace(element_id, false).second)
     {
-      PRINT_ERROR("Invalid or duplicate topology element %d.\n",
+      TOPOLOGY_ERROR("Invalid or duplicate topology element %d.\n",
                   element_id);
       return false;
     }
@@ -737,7 +737,7 @@ bool CoreTopology::resolve_preserved_elements(int topology_id, const std::vector
 
     if (set_type < 1 || set_type > 3)
     {
-      PRINT_ERROR("Invalid default preserved set type %d.\n",
+      TOPOLOGY_ERROR("Invalid default preserved set type %d.\n",
                   set_type);
       return false;
     }
@@ -758,7 +758,7 @@ bool CoreTopology::resolve_preserved_elements(int topology_id, const std::vector
 
         if (flag == flags.end())
         {
-          PRINT_ERROR("Unexpected topology element %d.\n", element_id);
+          TOPOLOGY_ERROR("Unexpected topology element %d.\n", element_id);
           return false;
         }
 
@@ -771,7 +771,7 @@ bool CoreTopology::resolve_preserved_elements(int topology_id, const std::vector
   {
     if (element_id <= 0)
     {
-      PRINT_ERROR("Invalid default preserved element %d.\n",
+      TOPOLOGY_ERROR("Invalid default preserved element %d.\n",
                   element_id);
       return false;
     }
@@ -794,7 +794,7 @@ bool CoreTopology::set_iteration_element_energies(int topology_id,int iteration_
 {
   if (!is_initialized || iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology energy storage request.\n");
+    TOPOLOGY_ERROR("Invalid topology energy storage request.\n");
     return false;
   }
 
@@ -802,7 +802,7 @@ bool CoreTopology::set_iteration_element_energies(int topology_id,int iteration_
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -812,13 +812,13 @@ bool CoreTopology::set_iteration_element_energies(int topology_id,int iteration_
     configuration.iteration_element_energies.count(iteration_id) != 0 ||
     configuration.iteration_total_energies.count(iteration_id) != 0)
   {
-    PRINT_ERROR("Missing job or already stored iteration energies.\n");
+    TOPOLOGY_ERROR("Missing job or already stored iteration energies.\n");
     return false;
   }
 
   if (element_energies.empty() || element_energies.size() != configuration.element_preserved.size())
   {
-    PRINT_ERROR("Incomplete topology iteration energies.\n");
+    TOPOLOGY_ERROR("Incomplete topology iteration energies.\n");
     return false;
   }
 
@@ -828,21 +828,21 @@ bool CoreTopology::set_iteration_element_energies(int topology_id,int iteration_
   {
     if (configuration.element_preserved.count(energy.first) == 0 || !std::isfinite(energy.second))
     {
-      PRINT_ERROR("Invalid energy for topology element %d.\n", energy.first);
+      TOPOLOGY_ERROR("Invalid energy for topology element %d.\n", energy.first);
       return false;
     }
 
     total_energy += energy.second;
     if (!std::isfinite(total_energy))
     {
-      PRINT_ERROR("Invalid total energy for topology %d iteration %d.\n", topology_id, iteration_id);
+      TOPOLOGY_ERROR("Invalid total energy for topology %d iteration %d.\n", topology_id, iteration_id);
       return false;
     }
   }
 
   configuration.iteration_element_energies.emplace(iteration_id, element_energies);
   configuration.iteration_total_energies.emplace(iteration_id, total_energy);
-  PRINT_INFO("Topology %d iteration %d: total internal energy %.9g.\n", topology_id, iteration_id, total_energy);
+  TOPOLOGY_INFO("Topology %d iteration %d: total internal energy %.9g.\n", topology_id, iteration_id, total_energy);
 
   return true;
 }
@@ -851,7 +851,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
 {
   if (!is_initialized || iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology compliance evaluation request.\n");
+    TOPOLOGY_ERROR("Invalid topology compliance evaluation request.\n");
     return false;
   }
 
@@ -859,7 +859,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -873,7 +873,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
       total == configuration.iteration_total_energies.end() ||
       configuration.iteration_evaluations.count(iteration_id) != 0)
   {
-    PRINT_ERROR("Missing data or already evaluated topology iteration.\n");
+    TOPOLOGY_ERROR("Missing data or already evaluated topology iteration.\n");
     return false;
   }
 
@@ -881,7 +881,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
       energies->second.size() != stiffness_factors.size() ||
       energies->second.size() != configuration.element_preserved.size())
   {
-    PRINT_ERROR("Incomplete topology compliance data.\n");
+    TOPOLOGY_ERROR("Incomplete topology compliance data.\n");
     return false;
   }
 
@@ -892,7 +892,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
 
   if (!std::isfinite(evaluation.value) || evaluation.value < 0.0)
   {
-    PRINT_ERROR("Invalid topology compliance value.\n");
+    TOPOLOGY_ERROR("Invalid topology compliance value.\n");
     return false;
   }
 
@@ -909,7 +909,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
         !std::isfinite(energy.second) ||
         energy.second < 0.0)
     {
-      PRINT_ERROR("Invalid compliance data for element %d.\n", energy.first);
+      TOPOLOGY_ERROR("Invalid compliance data for element %d.\n", energy.first);
       return false;
     }
 
@@ -922,7 +922,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
 
     if (!std::isfinite(sensitivity))
     {
-      PRINT_ERROR("Invalid compliance sensitivity for element %d.\n", energy.first);
+      TOPOLOGY_ERROR("Invalid compliance sensitivity for element %d.\n", energy.first);
       return false;
     }
 
@@ -947,7 +947,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
         design.void_ratio <= 0.0 ||
         design.void_ratio >= 1.0)
     {
-      PRINT_ERROR("Invalid stored topology density design.\n");
+      TOPOLOGY_ERROR("Invalid stored topology density design.\n");
       return false;
     }
 
@@ -962,7 +962,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
           density.second < 0.0 ||
           density.second > 1.0)
       {
-        PRINT_ERROR("Invalid density sensitivity data for element %d.\n", density.first);
+        TOPOLOGY_ERROR("Invalid density sensitivity data for element %d.\n", density.first);
         return false;
       }
 
@@ -987,7 +987,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
 
       if (!std::isfinite(sensitivity))
       {
-        PRINT_ERROR("Invalid density sensitivity for element %d.\n", density.first);
+        TOPOLOGY_ERROR("Invalid density sensitivity for element %d.\n", density.first);
         return false;
       }
 
@@ -996,7 +996,7 @@ bool CoreTopology::evaluate_compliance(int topology_id,int iteration_id,const st
   }
 
   configuration.iteration_evaluations.emplace(iteration_id, evaluation);
-  PRINT_INFO("Topology %d iteration %d: compliance %.9g.\n", topology_id, iteration_id, evaluation.value);
+  TOPOLOGY_INFO("Topology %d iteration %d: compliance %.9g.\n", topology_id, iteration_id, evaluation.value);
 
   return true;
 }
@@ -1005,7 +1005,7 @@ bool CoreTopology::evaluate_displacement(int topology_id, int iteration_id, doub
 {
   if (!is_initialized || iteration_id < 1 || !std::isfinite(value) || value < 0.0 || node_id <= 0)
   {
-    PRINT_ERROR("Invalid topology displacement evaluation request.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement evaluation request.\n");
     return false;
   }
 
@@ -1013,7 +1013,7 @@ bool CoreTopology::evaluate_displacement(int topology_id, int iteration_id, doub
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -1029,13 +1029,13 @@ bool CoreTopology::evaluate_displacement(int topology_id, int iteration_id, doub
       configuration.iteration_evaluations.count(iteration_id) != 0 ||
       density_design == configuration.iteration_density_designs.end())
   {
-    PRINT_ERROR("Missing data, invalid objective or already evaluated topology iteration.\n");
+    TOPOLOGY_ERROR("Missing data, invalid objective or already evaluated topology iteration.\n");
     return false;
   }
 
   if (value > 0.0 && configuration.iteration_adjoint_jobs.count(iteration_id) == 0)
   {
-    PRINT_ERROR("Missing topology adjoint job association.\n");
+    TOPOLOGY_ERROR("Missing topology adjoint job association.\n");
     return false;
   }
 
@@ -1054,7 +1054,7 @@ bool CoreTopology::evaluate_displacement(int topology_id, int iteration_id, doub
       design.minimum_density <= 0.0 ||
       design.minimum_density >= 1.0)
   {
-    PRINT_ERROR("Incomplete displacement data or invalid stored density design.\n");
+    TOPOLOGY_ERROR("Incomplete displacement data or invalid stored density design.\n");
     return false;
   }
 
@@ -1086,7 +1086,7 @@ bool CoreTopology::evaluate_displacement(int topology_id, int iteration_id, doub
         density->second < design.minimum_density ||
         density->second > 1.0)
     {
-      PRINT_ERROR("Invalid displacement sensitivity data for element %d.\n", element_id);
+      TOPOLOGY_ERROR("Invalid displacement sensitivity data for element %d.\n", element_id);
       return false;
     }
 
@@ -1097,7 +1097,7 @@ bool CoreTopology::evaluate_displacement(int topology_id, int iteration_id, doub
         (preserved->second && (rho != 1.0 || factor->second != 1.0)) ||
         (value == 0.0 && integral.second != 0.0))
     {
-      PRINT_ERROR("Inconsistent displacement design data for element %d.\n", element_id);
+      TOPOLOGY_ERROR("Inconsistent displacement design data for element %d.\n", element_id);
       return false;
     }
 
@@ -1123,7 +1123,7 @@ bool CoreTopology::evaluate_displacement(int topology_id, int iteration_id, doub
 
     if (!std::isfinite(stiffness_sensitivity) || !std::isfinite(density_sensitivity))
     {
-      PRINT_ERROR("Non-finite displacement sensitivity for element %d.\n", element_id);
+      TOPOLOGY_ERROR("Non-finite displacement sensitivity for element %d.\n", element_id);
       return false;
     }
 
@@ -1132,7 +1132,7 @@ bool CoreTopology::evaluate_displacement(int topology_id, int iteration_id, doub
   }
 
   configuration.iteration_evaluations.emplace(iteration_id, std::move(evaluation));
-  PRINT_INFO("Topology %d iteration %d: displacement objective %.9g.\n", topology_id, iteration_id, value);
+  TOPOLOGY_INFO("Topology %d iteration %d: displacement objective %.9g.\n", topology_id, iteration_id, value);
   return true;
 }
 
@@ -1142,7 +1142,7 @@ bool CoreTopology::build_density_design(int topology_id,int iteration_id,const s
 
   if (!is_initialized || iteration_id < 1 || entry == topology_cases.end())
   {
-    PRINT_ERROR("Invalid topology density request.\n");
+    TOPOLOGY_ERROR("Invalid topology density request.\n");
     return false;
   }
 
@@ -1152,7 +1152,7 @@ bool CoreTopology::build_density_design(int topology_id,int iteration_id,const s
       configuration.iteration_jobs.count(iteration_id) != 0 ||
       configuration.iteration_density_designs.count(iteration_id) != 0)
   {
-    PRINT_ERROR("Density method required or iteration already exists.\n");
+    TOPOLOGY_ERROR("Density method required or iteration already exists.\n");
     return false;
   }
 
@@ -1167,7 +1167,7 @@ bool CoreTopology::build_density_design(int topology_id,int iteration_id,const s
       configuration.minimum_density <= 0.0 ||
       configuration.minimum_density >= 1.0)
   {
-    PRINT_ERROR("Invalid density data or interpolation settings.\n");
+    TOPOLOGY_ERROR("Invalid density data or interpolation settings.\n");
     return false;
   }
 
@@ -1185,13 +1185,13 @@ bool CoreTopology::build_density_design(int topology_id,int iteration_id,const s
         !std::isfinite(density.second) ||
         density.second < 0.0 || density.second > 1.0)
     {
-      PRINT_ERROR("Invalid density for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid density for element %d.\n", density.first);
       return false;
     }
 
     if (!preserved->second && density.second < candidate.minimum_density)
     {
-      PRINT_ERROR("Density for element %d is below the minimum %.9g.\n", density.first, candidate.minimum_density);
+      TOPOLOGY_ERROR("Density for element %d is below the minimum %.9g.\n", density.first, candidate.minimum_density);
       return false;
     }
 
@@ -1207,7 +1207,7 @@ bool CoreTopology::build_density_design(int topology_id,int iteration_id,const s
 
     if (!std::isfinite(factor) || factor <= 0.0 || factor > 1.0)
     {
-      PRINT_ERROR("Invalid stiffness factor for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid stiffness factor for element %d.\n", density.first);
       return false;
     }
 
@@ -1226,7 +1226,7 @@ bool CoreTopology::evaluate_density_volume(int topology_id,int iteration_id,cons
 
   if (!is_initialized || iteration_id < 1 || entry == topology_cases.end())
   {
-    PRINT_ERROR("Invalid topology volume evaluation request.\n");
+    TOPOLOGY_ERROR("Invalid topology volume evaluation request.\n");
     return false;
   }
 
@@ -1235,7 +1235,7 @@ bool CoreTopology::evaluate_density_volume(int topology_id,int iteration_id,cons
 
   if (design == configuration.iteration_density_designs.end())
   {
-    PRINT_ERROR("Missing topology density design.\n");
+    TOPOLOGY_ERROR("Missing topology density design.\n");
     return false;
   }
 
@@ -1246,7 +1246,7 @@ bool CoreTopology::evaluate_density_volume(int topology_id,int iteration_id,cons
       minimum_density <= 0.0 ||
       minimum_density >= 1.0)
   {
-    PRINT_ERROR("Invalid stored minimum density.\n");
+    TOPOLOGY_ERROR("Invalid stored minimum density.\n");
     return false;
   }
 
@@ -1254,7 +1254,7 @@ bool CoreTopology::evaluate_density_volume(int topology_id,int iteration_id,cons
       element_volumes.size() != densities.size() ||
       element_volumes.size() != configuration.element_preserved.size())
   {
-    PRINT_ERROR("Incomplete topology element volumes.\n");
+    TOPOLOGY_ERROR("Incomplete topology element volumes.\n");
     return false;
   }
 
@@ -1273,13 +1273,13 @@ bool CoreTopology::evaluate_density_volume(int topology_id,int iteration_id,cons
         density->second < minimum_density ||
         density->second > 1.0)
     {
-      PRINT_ERROR("Invalid volume data for element %d.\n", element.first);
+      TOPOLOGY_ERROR("Invalid volume data for element %d.\n", element.first);
       return false;
     }
 
     if (preserved->second && density->second != 1.0)
     {
-      PRINT_ERROR("Preserved element %d must have density 1.\n", element.first);
+      TOPOLOGY_ERROR("Preserved element %d must have density 1.\n", element.first);
       return false;
     }
 
@@ -1297,7 +1297,7 @@ bool CoreTopology::evaluate_density_volume(int topology_id,int iteration_id,cons
       !std::isfinite(evaluation.solid_volume) ||
       !std::isfinite(evaluation.preserved_volume))
   {
-    PRINT_ERROR("Invalid accumulated topology volumes.\n");
+    TOPOLOGY_ERROR("Invalid accumulated topology volumes.\n");
     return false;
   }
 
@@ -1326,7 +1326,7 @@ bool CoreTopology::evaluate_density_volume(int topology_id,int iteration_id,cons
   evaluation.available = true;
   design->second.volume = std::move(evaluation);
 
-  PRINT_INFO(
+  TOPOLOGY_INFO(
       "Topology %d iteration %d: volume fraction %.9g; "
       "preserved minimum %.9g.\n",
       topology_id, iteration_id,
@@ -1355,7 +1355,7 @@ bool CoreTopology::select_density_move_limit(const TopologyCase& configuration, 
       configuration.minimum_move_limit < 0.0 ||
       configuration.minimum_move_limit > configuration.move_limit)
   {
-    PRINT_ERROR("Invalid adaptive density move request.\n");
+    TOPOLOGY_ERROR("Invalid adaptive density move request.\n");
     return false;
   }
 
@@ -1401,7 +1401,7 @@ bool CoreTopology::select_density_move_limit(const TopologyCase& configuration, 
       configuration.target_volume_fraction <= 0.0 ||
       configuration.target_volume_fraction > 1.0)
   {
-    PRINT_ERROR("Invalid adaptive density volume target.\n");
+    TOPOLOGY_ERROR("Invalid adaptive density volume target.\n");
     return false;
   }
 
@@ -1412,7 +1412,7 @@ bool CoreTopology::select_density_move_limit(const TopologyCase& configuration, 
         stored->volume.volume_fraction < 0.0 ||
         stored->volume.volume_fraction > 1.0)
     {
-      PRINT_ERROR("Missing or invalid volume history for adaptive density moves.\n");
+      TOPOLOGY_ERROR("Missing or invalid volume history for adaptive density moves.\n");
       return false;
     }
 
@@ -1434,7 +1434,7 @@ bool CoreTopology::select_density_move_limit(const TopologyCase& configuration, 
       current_densities.size() != weights.size() ||
       current_densities.size() != configuration.element_preserved.size())
   {
-    PRINT_ERROR("Incomplete density history for adaptive density moves.\n");
+    TOPOLOGY_ERROR("Incomplete density history for adaptive density moves.\n");
     return false;
   }
 
@@ -1442,7 +1442,7 @@ bool CoreTopology::select_density_move_limit(const TopologyCase& configuration, 
   {
     if (!std::isfinite(current->second.effective_move_limit) || current->second.effective_move_limit <= 0.0)
     {
-      PRINT_ERROR("Invalid stored effective move limit.\n");
+      TOPOLOGY_ERROR("Invalid stored effective move limit.\n");
       return false;
     }
 
@@ -1476,7 +1476,7 @@ bool CoreTopology::select_density_move_limit(const TopologyCase& configuration, 
         older_density->second > 1.0 ||
         !std::isfinite(weight->second))
     {
-      PRINT_ERROR("Invalid adaptive move history for element %d.\n", element_id);
+      TOPOLOGY_ERROR("Invalid adaptive move history for element %d.\n", element_id);
       return false;
     }
 
@@ -1487,7 +1487,7 @@ bool CoreTopology::select_density_move_limit(const TopologyCase& configuration, 
 
     if (weight->second <= 0.0 || weight->second > 1.0)
     {
-      PRINT_ERROR("Invalid adaptive move volume weight for element %d.\n", element_id);
+      TOPOLOGY_ERROR("Invalid adaptive move volume weight for element %d.\n", element_id);
       return false;
     }
 
@@ -1501,7 +1501,7 @@ bool CoreTopology::select_density_move_limit(const TopologyCase& configuration, 
 
   if (!std::isfinite(product) || !std::isfinite(current_norm) || !std::isfinite(previous_norm))
   {
-    PRINT_ERROR("Invalid adaptive density change correlation.\n");
+    TOPOLOGY_ERROR("Invalid adaptive density change correlation.\n");
     return false;
   }
 
@@ -1532,7 +1532,7 @@ bool CoreTopology::set_density_update_diagnostics(int topology_id, int source_it
 
   if (!is_initialized || source_iteration < 1 || entry == topology_cases.end())
   {
-    PRINT_ERROR("Invalid topology density update diagnostic request.\n");
+    TOPOLOGY_ERROR("Invalid topology density update diagnostic request.\n");
     return false;
   }
 
@@ -1541,7 +1541,7 @@ bool CoreTopology::set_density_update_diagnostics(int topology_id, int source_it
   if (configuration.method != TopologyMethod::Density ||
       configuration.iteration_density_designs.count(source_iteration) == 0)
   {
-    PRINT_ERROR("Missing source density design for update diagnostics.\n");
+    TOPOLOGY_ERROR("Missing source density design for update diagnostics.\n");
     return false;
   }
 
@@ -1569,7 +1569,7 @@ bool CoreTopology::build_density_update(int topology_id,int source_iteration,std
 
   if (!is_initialized || source_iteration < 1 || entry == topology_cases.end())
   {
-    PRINT_ERROR("Invalid topology density update request.\n");
+    TOPOLOGY_ERROR("Invalid topology density update request.\n");
     return false;
   }
 
@@ -1585,7 +1585,7 @@ bool CoreTopology::build_density_update(int topology_id,int source_iteration,std
       evaluation->second.objective != configuration.objective ||
       !design->second.volume.available)
   {
-    PRINT_ERROR("Missing or inconsistent evaluated density iteration.\n");
+    TOPOLOGY_ERROR("Missing or inconsistent evaluated density iteration.\n");
     return false;
   }
 
@@ -1613,7 +1613,7 @@ bool CoreTopology::build_density_update(int topology_id,int source_iteration,std
     configuration.target_volume_fraction + 1.0e-12 <
         volume.minimum_design_volume_fraction)
   {
-    PRINT_ERROR("Invalid topology density update data.\n");
+    TOPOLOGY_ERROR("Invalid topology density update data.\n");
     return false;
   }
 
@@ -1622,7 +1622,7 @@ bool CoreTopology::build_density_update(int topology_id,int source_iteration,std
   if (!std::isfinite(move_limit) ||
       move_limit <= 0.0 || move_limit > 1.0)
   {
-    PRINT_ERROR("Invalid topology move limit.\n");
+    TOPOLOGY_ERROR("Invalid topology move limit.\n");
     return false;
   }
   double effective_move_limit = move_limit;
@@ -1650,11 +1650,11 @@ bool CoreTopology::build_density_update(int topology_id,int source_iteration,std
 
   if (correlation_available)
   {
-    PRINT_INFO("Topology %d iteration %d: next density move limit %.6g; density update correlation %.6g.\n", topology_id, source_iteration, effective_move_limit, correlation);
+    TOPOLOGY_INFO("Topology %d iteration %d: next density move limit %.6g; density update correlation %.6g.\n", topology_id, source_iteration, effective_move_limit, correlation);
   }
   else
   {
-    PRINT_INFO("Topology %d iteration %d: next density move limit %.6g.\n", topology_id, source_iteration, effective_move_limit);
+    TOPOLOGY_INFO("Topology %d iteration %d: next density move limit %.6g.\n", topology_id, source_iteration, effective_move_limit);
   }
 
   return true;
@@ -1670,7 +1670,7 @@ bool CoreTopology::build_compliance_oc_proposal(const TopologyCase& configuratio
       move_limit <= 0.0 ||
       move_limit > configuration.move_limit)
   {
-    PRINT_ERROR("Invalid compliance OC proposal move limit.\n");
+    TOPOLOGY_ERROR("Invalid compliance OC proposal move limit.\n");
     return false;
   }
 
@@ -1711,7 +1711,7 @@ bool CoreTopology::build_compliance_oc_proposal(const TopologyCase& configuratio
         gradient->second > 0.0 ||
         !std::isfinite(weight->second))
     {
-      PRINT_ERROR("Invalid update data for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid update data for element %d.\n", density.first);
       return false;
     }
 
@@ -1719,7 +1719,7 @@ bool CoreTopology::build_compliance_oc_proposal(const TopologyCase& configuratio
     {
       if (density.second != 1.0 || weight->second != 0.0)
       {
-        PRINT_ERROR("Invalid preserved element %d.\n", density.first);
+        TOPOLOGY_ERROR("Invalid preserved element %d.\n", density.first);
         return false;
       }
 
@@ -1729,7 +1729,7 @@ bool CoreTopology::build_compliance_oc_proposal(const TopologyCase& configuratio
 
     if (weight->second <= 0.0)
     {
-      PRINT_ERROR("Invalid volume derivative for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid volume derivative for element %d.\n", density.first);
       return false;
     }
 
@@ -1739,7 +1739,7 @@ bool CoreTopology::build_compliance_oc_proposal(const TopologyCase& configuratio
 
     if (!std::isfinite(benefit))
     {
-      PRINT_ERROR("Invalid update benefit for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid update benefit for element %d.\n", density.first);
       return false;
     }
 
@@ -1750,7 +1750,7 @@ bool CoreTopology::build_compliance_oc_proposal(const TopologyCase& configuratio
 
   if (!std::isfinite(minimum_reachable))
   {
-    PRINT_ERROR("Invalid reachable topology volume.\n");
+    TOPOLOGY_ERROR("Invalid reachable topology volume.\n");
     return false;
   }
 
@@ -1820,7 +1820,7 @@ bool CoreTopology::build_compliance_oc_proposal(const TopologyCase& configuratio
 
   if (!std::isfinite(fraction) || fraction > target + volume_tolerance)
   {
-    PRINT_ERROR("Unable to bracket the topology volume constraint.\n");
+    TOPOLOGY_ERROR("Unable to bracket the topology volume constraint.\n");
     return false;
   }
 
@@ -1835,7 +1835,7 @@ bool CoreTopology::build_compliance_oc_proposal(const TopologyCase& configuratio
 
     if (!std::isfinite(fraction))
     {
-      PRINT_ERROR("Invalid trial topology volume.\n");
+      TOPOLOGY_ERROR("Invalid trial topology volume.\n");
       return false;
     }
 
@@ -1888,7 +1888,7 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
       volume.minimum_design_volume_fraction < 0.0 || volume.minimum_design_volume_fraction > 1.0 ||
       configuration.target_volume_fraction + 1.0e-12 < volume.minimum_design_volume_fraction)
   {
-    PRINT_ERROR("Invalid displacement density update data or move limit.\n");
+    TOPOLOGY_ERROR("Invalid displacement density update data or move limit.\n");
     return false;
   }
   constexpr double volume_tolerance = 1.0e-10;
@@ -1926,7 +1926,7 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
         !std::isfinite(gradient->second) ||
         !std::isfinite(weight->second))
     {
-      PRINT_ERROR("Invalid displacement update data for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid displacement update data for element %d.\n", density.first);
       return false;
     }
 
@@ -1934,7 +1934,7 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
     {
       if (density.second != 1.0 || weight->second != 0.0 || gradient->second != 0.0)
       {
-        PRINT_ERROR("Invalid preserved displacement update element %d.\n", density.first);
+        TOPOLOGY_ERROR("Invalid preserved displacement update element %d.\n", density.first);
         return false;
       }
 
@@ -1944,7 +1944,7 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
 
     if (weight->second <= 0.0)
     {
-      PRINT_ERROR("Invalid volume derivative for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid volume derivative for element %d.\n", density.first);
       return false;
     }
 
@@ -1954,7 +1954,7 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
 
     if (!std::isfinite(direction))
     {
-      PRINT_ERROR("Invalid displacement update direction for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid displacement update direction for element %d.\n", density.first);
       return false;
     }
 
@@ -1969,7 +1969,7 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
       !std::isfinite(weight_sum) ||
       std::abs(weight_sum - 1.0) > volume_tolerance)
   {
-    PRINT_ERROR("Invalid displacement update volume weights.\n");
+    TOPOLOGY_ERROR("Invalid displacement update volume weights.\n");
     return false;
   }
 
@@ -2022,7 +2022,7 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
 
   if (!std::isfinite(fraction))
   {
-    PRINT_ERROR("Invalid displacement trial volume.\n");
+    TOPOLOGY_ERROR("Invalid displacement trial volume.\n");
     return false;
   }
 
@@ -2037,7 +2037,7 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
 
   if (!std::isfinite(fraction) || fraction > target + volume_tolerance)
   {
-    PRINT_ERROR("Unable to bracket the displacement update volume constraint.\n");
+    TOPOLOGY_ERROR("Unable to bracket the displacement update volume constraint.\n");
     return false;
   }
 
@@ -2052,7 +2052,7 @@ bool CoreTopology::build_displacement_density_update(const TopologyCase& configu
 
     if (!std::isfinite(fraction))
     {
-      PRINT_ERROR("Invalid projected displacement update volume.\n");
+      TOPOLOGY_ERROR("Invalid projected displacement update volume.\n");
       return false;
     }
 
@@ -2082,7 +2082,7 @@ bool CoreTopology::evaluate_compliance_oc_residual(int topology_id, int iteratio
 
   if (!is_initialized || iteration_id < 1 || entry == topology_cases.end())
   {
-    PRINT_ERROR("Invalid compliance OC residual request.\n");
+    TOPOLOGY_ERROR("Invalid compliance OC residual request.\n");
     return false;
   }
 
@@ -2097,7 +2097,7 @@ bool CoreTopology::evaluate_compliance_oc_residual(int topology_id, int iteratio
       evaluation->second.objective != TopologyObjective::Compliance ||
       !design->second.volume.available)
   {
-    PRINT_ERROR("Missing evaluated compliance iteration for OC residual.\n");
+    TOPOLOGY_ERROR("Missing evaluated compliance iteration for OC residual.\n");
     return false;
   }
 
@@ -2131,7 +2131,7 @@ bool CoreTopology::evaluate_compliance_oc_residual(int topology_id, int iteratio
       volume.minimum_design_volume_fraction > 1.0 ||
       configuration.target_volume_fraction + 1.0e-12 < volume.minimum_design_volume_fraction)
   {
-    PRINT_ERROR("Invalid density data for compliance OC residual.\n");
+    TOPOLOGY_ERROR("Invalid density data for compliance OC residual.\n");
     return false;
   }
 
@@ -2145,7 +2145,7 @@ bool CoreTopology::evaluate_compliance_oc_residual(int topology_id, int iteratio
 
   if (proposal.size() != densities.size())
   {
-    PRINT_ERROR("Incomplete ordinary compliance OC proposal.\n");
+    TOPOLOGY_ERROR("Incomplete ordinary compliance OC proposal.\n");
     return false;
   }
 
@@ -2160,7 +2160,7 @@ bool CoreTopology::evaluate_compliance_oc_residual(int topology_id, int iteratio
         proposed->second < stored_design.minimum_density ||
         proposed->second > 1.0)
     {
-      PRINT_ERROR("Invalid ordinary OC proposal for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid ordinary OC proposal for element %d.\n", density.first);
       return false;
     }
 
@@ -2169,7 +2169,7 @@ bool CoreTopology::evaluate_compliance_oc_residual(int topology_id, int iteratio
 
   if (!std::isfinite(residual))
   {
-    PRINT_ERROR("Invalid ordinary compliance OC residual.\n");
+    TOPOLOGY_ERROR("Invalid ordinary compliance OC residual.\n");
     return false;
   }
 
@@ -2183,7 +2183,7 @@ bool CoreTopology::evaluate_displacement_projected_residual(int topology_id, int
   const auto entry = topology_cases.find(topology_id);
   if (!is_initialized || iteration_id < 1 || entry == topology_cases.end())
   {
-    PRINT_ERROR("Invalid displacement projected residual request.\n");
+    TOPOLOGY_ERROR("Invalid displacement projected residual request.\n");
     return false;
   }
   auto& configuration = entry->second;
@@ -2191,7 +2191,7 @@ bool CoreTopology::evaluate_displacement_projected_residual(int topology_id, int
   const auto evaluation = configuration.iteration_evaluations.find(iteration_id);
   if (evaluation == configuration.iteration_evaluations.end())
   {
-    PRINT_ERROR("Missing displacement evaluation for projected residual.\n");
+    TOPOLOGY_ERROR("Missing displacement evaluation for projected residual.\n");
     return false;
   }
   auto& progress = evaluation->second;
@@ -2199,7 +2199,7 @@ bool CoreTopology::evaluate_displacement_projected_residual(int topology_id, int
   progress.projected_proposal_residual = 0.0;
   if (design == configuration.iteration_density_designs.end())
   {
-    PRINT_ERROR("Missing displacement design for projected residual.\n");
+    TOPOLOGY_ERROR("Missing displacement design for projected residual.\n");
     return false;
   }
   const auto& stored_design = design->second;
@@ -2212,7 +2212,7 @@ bool CoreTopology::evaluate_displacement_projected_residual(int topology_id, int
   }
   if (proposal.size() != densities.size())
   {
-    PRINT_ERROR("Incomplete ordinary displacement proposal.\n");
+    TOPOLOGY_ERROR("Incomplete ordinary displacement proposal.\n");
     return false;
   }
   double residual = 0.0;
@@ -2222,14 +2222,14 @@ bool CoreTopology::evaluate_displacement_projected_residual(int topology_id, int
     if (proposed == proposal.end() || !std::isfinite(proposed->second) ||
         proposed->second < stored_design.minimum_density || proposed->second > 1.0)
     {
-      PRINT_ERROR("Invalid ordinary displacement proposal for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid ordinary displacement proposal for element %d.\n", density.first);
       return false;
     }
     residual = std::max(residual, std::abs(proposed->second - density.second));
   }
   if (!std::isfinite(residual))
   {
-    PRINT_ERROR("Invalid ordinary displacement projected residual.\n");
+    TOPOLOGY_ERROR("Invalid ordinary displacement projected residual.\n");
     return false;
   }
   progress.projected_proposal_residual = residual;
@@ -2248,7 +2248,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
       current_iteration <= previous_iteration ||
       entry == topology_cases.end())
   {
-    PRINT_ERROR("Invalid topology convergence request.\n");
+    TOPOLOGY_ERROR("Invalid topology convergence request.\n");
     return false;
   }
 
@@ -2270,7 +2270,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
       current_evaluation->second.objective != configuration.objective ||
       !current->second.volume.available)
   {
-    PRINT_ERROR("Missing or inconsistent topology convergence data.\n");
+    TOPOLOGY_ERROR("Missing or inconsistent topology convergence data.\n");
     return false;
   }
 
@@ -2280,7 +2280,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
   if (previous_densities.empty() ||
       previous_densities.size() != current_densities.size())
   {
-    PRINT_ERROR("Incomplete topology convergence densities.\n");
+    TOPOLOGY_ERROR("Incomplete topology convergence densities.\n");
     return false;
   }
 
@@ -2296,7 +2296,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
         density.second < 0.0 || density.second > 1.0 ||
         old->second < 0.0 || old->second > 1.0)
     {
-      PRINT_ERROR("Invalid convergence density for element %d.\n",
+      TOPOLOGY_ERROR("Invalid convergence density for element %d.\n",
                   density.first);
       return false;
     }
@@ -2317,7 +2317,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
       configuration.target_volume_fraction <= 0.0 ||
       configuration.target_volume_fraction > 1.0)
   {
-    PRINT_ERROR("Invalid topology convergence values.\n");
+    TOPOLOGY_ERROR("Invalid topology convergence values.\n");
     return false;
   }
 
@@ -2339,7 +2339,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
       !std::isfinite(objective_tolerance) ||
       objective_tolerance <= 0.0 || objective_tolerance > 1.0)
   {
-    PRINT_ERROR("Invalid topology convergence tolerances.\n");
+    TOPOLOGY_ERROR("Invalid topology convergence tolerances.\n");
     return false;
   }
 
@@ -2361,7 +2361,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
   }();
   if (residual_available && (!std::isfinite(residual) || residual < 0.0))
   {
-    PRINT_ERROR("Invalid ordinary density proposal residual.\n");
+    TOPOLOGY_ERROR("Invalid ordinary density proposal residual.\n");
     return false;
   }
   const bool residual_passed = residual_available && residual <= density_tolerance;
@@ -2386,8 +2386,8 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
   progress.converged = converged;
   progress.convergence_checked = true;
 
-  PRINT_INFO("Topology %d iteration %d convergence:\n", topology_id, current_iteration);
-  PRINT_INFO("  Maximum density change: %.6g / %.6g (%.2fx limit) [%s]\n", maximum_change, density_tolerance, maximum_change / density_tolerance, [&]() -> const char* {
+  TOPOLOGY_INFO("Topology %d iteration %d convergence:\n", topology_id, current_iteration);
+  TOPOLOGY_INFO("  Maximum density change: %.6g / %.6g (%.2fx limit) [%s]\n", maximum_change, density_tolerance, maximum_change / density_tolerance, [&]() -> const char* {
     if (maximum_change <= density_tolerance) {
       return "PASS";
     } else {
@@ -2396,7 +2396,7 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
   }());
   if (residual_available)
   {
-    PRINT_INFO("  %s: %.6g / %.6g (%.2fx limit) [%s]\n", residual_name, residual, density_tolerance, residual / density_tolerance, [&]() -> const char* {
+    TOPOLOGY_INFO("  %s: %.6g / %.6g (%.2fx limit) [%s]\n", residual_name, residual, density_tolerance, residual / density_tolerance, [&]() -> const char* {
       if (residual_passed) {
         return "PASS";
       } else {
@@ -2406,23 +2406,23 @@ bool CoreTopology::check_density_convergence(int topology_id,int previous_iterat
   }
   else
   {
-    PRINT_INFO("  %s: unavailable [WAIT]\n", residual_name);
+    TOPOLOGY_INFO("  %s: unavailable [WAIT]\n", residual_name);
   }
-  PRINT_INFO("  Relative %s change: %.6g / %.6g (%.2fx limit) [%s]\n", objective_name, relative_change, objective_tolerance, relative_change / objective_tolerance, [&]() -> const char* {
+  TOPOLOGY_INFO("  Relative %s change: %.6g / %.6g (%.2fx limit) [%s]\n", objective_name, relative_change, objective_tolerance, relative_change / objective_tolerance, [&]() -> const char* {
     if (relative_change <= objective_tolerance) {
       return "PASS";
     } else {
       return "WAIT";
     }
   }());
-  PRINT_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration.target_volume_fraction + volume_tolerance, [&]() -> const char* {
+  TOPOLOGY_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration.target_volume_fraction + volume_tolerance, [&]() -> const char* {
     if (fraction <= configuration.target_volume_fraction + volume_tolerance) {
       return "PASS";
     } else {
       return "WAIT";
     }
   }());
-  PRINT_INFO("  Converged: %s\n", [&]() -> const char* {
+  TOPOLOGY_INFO("  Converged: %s\n", [&]() -> const char* {
     if (converged) {
       return "YES";
     } else {
@@ -2439,7 +2439,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
 
   if (!is_initialized || iteration_id < 1 || entry == topology_cases.end())
   {
-    PRINT_ERROR("Invalid topology sensitivity filter request.\n");
+    TOPOLOGY_ERROR("Invalid topology sensitivity filter request.\n");
     return false;
   }
 
@@ -2454,7 +2454,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
       evaluation->second.objective != configuration.objective ||
       !design->second.volume.available)
   {
-    PRINT_ERROR("Missing or inconsistent topology sensitivity filter data.\n");
+    TOPOLOGY_ERROR("Missing or inconsistent topology sensitivity filter data.\n");
     return false;
   }
 
@@ -2467,7 +2467,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
       densities.size() != element_centers.size() ||
       densities.size() != configuration.element_preserved.size())
   {
-    PRINT_ERROR("Incomplete topology sensitivity filter data.\n");
+    TOPOLOGY_ERROR("Incomplete topology sensitivity filter data.\n");
     return false;
   }
 
@@ -2490,7 +2490,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
         !std::isfinite(volume->second) ||
         volume->second <= 0.0)
     {
-      PRINT_ERROR("Invalid filter data for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid filter data for element %d.\n", density.first);
       return false;
     }
 
@@ -2498,7 +2498,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
     {
       if (!std::isfinite(coordinate))
       {
-        PRINT_ERROR("Invalid filter center for element %d.\n", density.first);
+        TOPOLOGY_ERROR("Invalid filter center for element %d.\n", density.first);
         return false;
       }
     }
@@ -2511,7 +2511,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
 
   if (!std::isfinite(radius) || radius < 0.0)
   {
-    PRINT_ERROR("Invalid topology filter radius setting.\n");
+    TOPOLOGY_ERROR("Invalid topology filter radius setting.\n");
     return false;
   }
 
@@ -2522,7 +2522,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
 
   if (!std::isfinite(radius) || radius <= 0.0)
   {
-    PRINT_ERROR("Invalid topology sensitivity filter radius.\n");
+    TOPOLOGY_ERROR("Invalid topology sensitivity filter radius.\n");
     return false;
   }
 
@@ -2584,7 +2584,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
           coordinate < 0.0 ||
           coordinate > maximum_cell_coordinate)
       {
-        PRINT_ERROR("Invalid spatial cell for element %d.\n",
+        TOPOLOGY_ERROR("Invalid spatial cell for element %d.\n",
                     element.first);
         return false;
       }
@@ -2644,7 +2644,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
 
             if (!std::isfinite(distance))
             {
-              PRINT_ERROR("Invalid distance in topology filter.\n");
+              TOPOLOGY_ERROR("Invalid distance in topology filter.\n");
               return false;
             }
 
@@ -2679,7 +2679,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
         !std::isfinite(denominator) ||
         denominator <= 0.0)
     {
-      PRINT_ERROR("Invalid filter accumulation for element %d.\n", element.first);
+      TOPOLOGY_ERROR("Invalid filter accumulation for element %d.\n", element.first);
       return false;
     }
 
@@ -2688,7 +2688,7 @@ bool CoreTopology::filter_density_sensitivities(int topology_id,int iteration_id
 
     if (!std::isfinite(sensitivity))
     {
-      PRINT_ERROR("Invalid filtered sensitivity for element %d.\n",  element.first);
+      TOPOLOGY_ERROR("Invalid filtered sensitivity for element %d.\n",  element.first);
       return false;
     }
     filtered.emplace(element.first, sensitivity);
@@ -2720,7 +2720,7 @@ bool CoreTopology::reset_preserved_sets(int topology_id)
 {
   if (!is_initialized)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -2728,7 +2728,7 @@ bool CoreTopology::reset_preserved_sets(int topology_id)
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -2736,7 +2736,7 @@ bool CoreTopology::reset_preserved_sets(int topology_id)
 
   if (configuration.run_state == TopologyRunState::Running)
   {
-    PRINT_ERROR("Topology %d is running; preservation cannot be reset.\n",
+    TOPOLOGY_ERROR("Topology %d is running; preservation cannot be reset.\n",
       topology_id);
     return false;
   }
@@ -2753,7 +2753,7 @@ bool CoreTopology::change_preserved_sets(int topology_id,int set_type,const std:
 
   if (!is_initialized)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -2761,19 +2761,19 @@ bool CoreTopology::change_preserved_sets(int topology_id,int set_type,const std:
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
   if (entry->second.run_state == TopologyRunState::Running)
   {
-    PRINT_ERROR("Topology %d is running.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d is running.\n", topology_id);
     return false;
   }
 
   if (set_type < 1 || set_type > 3)
   {
-    PRINT_ERROR("Invalid topology preserved set type.\n");
+    TOPOLOGY_ERROR("Invalid topology preserved set type.\n");
     return false;
   }
 
@@ -2798,7 +2798,7 @@ bool CoreTopology::change_preserved_sets(int topology_id,int set_type,const std:
 
     if (!exists)
     {
-      PRINT_ERROR("Preserved set type %d, ID %d does not exist.\n", set_type, id);
+      TOPOLOGY_ERROR("Preserved set type %d, ID %d does not exist.\n", set_type, id);
       return false;
     }
   }
@@ -2838,7 +2838,7 @@ std::vector<double> CoreTopology::get_topology_parameters(int topology_id) const
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return {};
   }
 
@@ -2858,7 +2858,7 @@ bool CoreTopology::get_topology_settings(int topology_id, TopologyOptions& optio
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -2928,7 +2928,7 @@ std::string CoreTopology::get_topology_run_state(int topology_id) const
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return "";
   }
 
@@ -2960,7 +2960,7 @@ std::string CoreTopology::get_topology_run_state(int topology_id) const
     }
   }
 
-  PRINT_ERROR("Invalid topology run state.\n");
+  TOPOLOGY_ERROR("Invalid topology run state.\n");
   return "";
 }
 
@@ -2970,7 +2970,7 @@ bool CoreTopology::set_topology_run_state(int topology_id, TopologyRunState stat
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -3006,7 +3006,7 @@ std::vector<std::vector<int>> CoreTopology::get_topology_element_preservation(in
 
   if (entry == topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return {};
   }
 
@@ -3014,7 +3014,7 @@ std::vector<std::vector<int>> CoreTopology::get_topology_element_preservation(in
 
   if (flags.empty())
   {
-    PRINT_ERROR("Preservation for topology %d has not been resolved.\n", topology_id);
+    TOPOLOGY_ERROR("Preservation for topology %d has not been resolved.\n", topology_id);
     return {};
   }
 

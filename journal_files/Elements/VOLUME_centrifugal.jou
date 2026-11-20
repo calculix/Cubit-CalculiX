@@ -26,7 +26,8 @@ create vertex 0 0 0
 create vertex 0 0 0
 
 nodeset 1 add surface 7
-ccx create constraint rigid body nodeset 1 ref 7 rot 8
+ccx create rp 1 name "Control 1" vertex 7 rotation_vertex 8
+ccx create rigid body 1 name "Attachment 1" nodeset 1 rp 1
 
 nodeset 2 add vertex 7
 ccx create displacement nodeset 2 dof_1 0 dof_2 0 dof_3 0

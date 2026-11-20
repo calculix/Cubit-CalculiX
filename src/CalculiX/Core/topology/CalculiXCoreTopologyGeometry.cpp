@@ -1,6 +1,6 @@
 #include "Core/CalculiXCore.hpp"
 #include "CoreTopologyGeometry.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CalculiXCore::collect_topology_element_volumes(int topology_id, std::map<int, double>& element_volumes, std::map<int, std::array<double, 3>>* element_centers)
 {
@@ -13,13 +13,13 @@ bool CalculiXCore::collect_topology_element_volumes(int topology_id, std::map<in
 
   if (!mat)
   {
-    PRINT_ERROR("Material core is not initialized.\n");
+    TOPOLOGY_ERROR("Material core is not initialized.\n");
     return false;
   }
 
   if (!cb)
   {
-    PRINT_ERROR("Block core is not initialized.\n");
+    TOPOLOGY_ERROR("Block core is not initialized.\n");
     return false;
   }
 
@@ -32,7 +32,7 @@ bool CalculiXCore::collect_topology_integration_weights(int topology_id, std::ma
 
   if (!topology || !mat || !cb)
   {
-    PRINT_ERROR("Topology integration weight interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology integration weight interfaces are not initialized.\n");
     return false;
   }
 

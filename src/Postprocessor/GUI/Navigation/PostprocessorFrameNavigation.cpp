@@ -297,6 +297,11 @@ void PostprocessorFrameNavigation::refresh(const std::shared_ptr<const SimResult
         selected = static_cast<int>(indices.size());
       }
       indices.push_back(i);
+      if (value.topology_iteration > 0)
+      {
+        frames->addItem(parameter_text(value));
+        continue;
+      }
       frames->addItem(tr("Frame %1 | Step %2 | Increment %3 | %4")
         .arg(static_cast<qulonglong>(i + 1))
         .arg([&]() -> std::common_type_t<decltype(tr("unknown")), decltype(QString::number(value.step))> {
@@ -634,6 +639,10 @@ void PostprocessorFrameNavigation::advance_animation()
 
 QString PostprocessorFrameNavigation::parameter_text(const SimResults::Increment& frame) const
 {
+  if (frame.topology_iteration > 0)
+  {
+    return tr("Topology iteration %1 | Job %2").arg(frame.topology_iteration).arg(frame.topology_job);
+  }
   double displayed = 0.0;
   std::string unit;
   std::string error;
@@ -667,6 +676,11 @@ void PostprocessorFrameNavigation::refresh_frame_labels()
       continue;
     }
     const auto& frame = snapshot->increments[indices[row]];
+    if (frame.topology_iteration > 0)
+    {
+      frames->setItemText(static_cast<int>(row),parameter_text(frame));
+      continue;
+    }
     QString step = tr("unknown");
     QString increment = tr("unknown");
     if (frame.step >= 0)

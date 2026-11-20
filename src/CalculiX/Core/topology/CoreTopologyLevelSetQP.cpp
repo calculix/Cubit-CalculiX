@@ -1,5 +1,5 @@
 #include "CoreTopologyLevelSetQP.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -20,7 +20,7 @@ bool solve_box(const TopologyLevelSetQPProblem& problem, double multiplier, cons
   const Vector right = problem.right - multiplier * problem.volume;
   if (!right.allFinite())
   {
-    PRINT_ERROR("Non-finite level-set volume multiplier right-hand side.\n");
+    TOPOLOGY_ERROR("Non-finite level-set volume multiplier right-hand side.\n");
     return false;
   }
   for (int sweep = 0; sweep < controls.maximum_coordinate_sweeps; ++sweep)
@@ -43,7 +43,7 @@ bool solve_box(const TopologyLevelSetQPProblem& problem, double multiplier, cons
       const double value = (right[row] - off_diagonal) / problem.diagonal[row];
       if (!std::isfinite(value))
       {
-        PRINT_ERROR("Non-finite level-set QP coordinate.\n");
+        TOPOLOGY_ERROR("Non-finite level-set QP coordinate.\n");
         return false;
       }
       values[row] = clamp(value, problem.lower[row], problem.upper[row]);
@@ -51,7 +51,7 @@ bool solve_box(const TopologyLevelSetQPProblem& problem, double multiplier, cons
     const Vector gradient = problem.matrix * values - right;
     if (!gradient.allFinite())
     {
-      PRINT_ERROR("Non-finite level-set QP gradient.\n");
+      TOPOLOGY_ERROR("Non-finite level-set QP gradient.\n");
       return false;
     }
     residual = 0.0;
@@ -65,7 +65,7 @@ bool solve_box(const TopologyLevelSetQPProblem& problem, double multiplier, cons
       return true;
     }
   }
-  PRINT_ERROR("Level-set box QP did not converge within %d sweeps.\n", controls.maximum_coordinate_sweeps);
+  TOPOLOGY_ERROR("Level-set box QP did not converge within %d sweeps.\n", controls.maximum_coordinate_sweeps);
   return false;
 }
 
@@ -87,12 +87,12 @@ bool solve_volume(const TopologyLevelSetQPProblem& problem, double source_volume
   }
   if (!std::isfinite(minimum_change))
   {
-    PRINT_ERROR("Non-finite linearized level-set volume bound.\n");
+    TOPOLOGY_ERROR("Non-finite linearized level-set volume bound.\n");
     return false;
   }
   if (source_volume > target + controls.volume_tolerance && minimum_change >= -controls.linear_volume_tolerance)
   {
-    PRINT_ERROR("No resolved free linearized volume-reduction direction for the level-set design.\n");
+    TOPOLOGY_ERROR("No resolved free linearized volume-reduction direction for the level-set design.\n");
     return false;
   }
   // Restoration can require several physical iterations because of the move limit.
@@ -104,7 +104,7 @@ bool solve_volume(const TopologyLevelSetQPProblem& problem, double source_volume
   double value = problem.volume.dot(values);
   if (!std::isfinite(value))
   {
-    PRINT_ERROR("Non-finite linearized level-set volume.\n");
+    TOPOLOGY_ERROR("Non-finite linearized level-set volume.\n");
     return false;
   }
   if (value <= bound + controls.linear_volume_tolerance)
@@ -123,7 +123,7 @@ bool solve_volume(const TopologyLevelSetQPProblem& problem, double source_volume
     value = problem.volume.dot(values);
     if (!std::isfinite(value))
     {
-      PRINT_ERROR("Non-finite bracketed level-set volume.\n");
+      TOPOLOGY_ERROR("Non-finite bracketed level-set volume.\n");
       return false;
     }
     if (value <= bound + controls.linear_volume_tolerance)
@@ -136,7 +136,7 @@ bool solve_volume(const TopologyLevelSetQPProblem& problem, double source_volume
   }
   if (!bracketed)
   {
-    PRINT_ERROR("Unable to bracket the linearized level-set volume multiplier.\n");
+    TOPOLOGY_ERROR("Unable to bracket the linearized level-set volume multiplier.\n");
     return false;
   }
   for (int iteration = 0; iteration < controls.maximum_multiplier_iterations; ++iteration)
@@ -149,7 +149,7 @@ bool solve_volume(const TopologyLevelSetQPProblem& problem, double source_volume
     value = problem.volume.dot(values);
     if (!std::isfinite(value))
     {
-      PRINT_ERROR("Non-finite multiplier level-set volume.\n");
+      TOPOLOGY_ERROR("Non-finite multiplier level-set volume.\n");
       return false;
     }
     if (std::abs(value - bound) <= controls.linear_volume_tolerance)
@@ -165,7 +165,7 @@ bool solve_volume(const TopologyLevelSetQPProblem& problem, double source_volume
       upper = multiplier;
     }
   }
-  PRINT_ERROR("Linearized level-set volume multiplier did not converge.\n");
+  TOPOLOGY_ERROR("Linearized level-set volume multiplier did not converge.\n");
   return false;
 }
 }
@@ -175,7 +175,7 @@ bool CoreTopologyLevelSetQP::solve(const TopologyLevelSetQPProblem& problem, dou
   if (&values == &problem.diagonal || &values == &problem.origin || &values == &problem.lower ||
       &values == &problem.upper || &values == &problem.right || &values == &problem.volume || &multiplier == &stationarity_residual)
   {
-    PRINT_ERROR("Level-set QP outputs must not alias inputs or each other.\n");
+    TOPOLOGY_ERROR("Level-set QP outputs must not alias inputs or each other.\n");
     return false;
   }
   values.resize(0);
@@ -194,7 +194,7 @@ bool CoreTopologyLevelSetQP::solve(const TopologyLevelSetQPProblem& problem, dou
       !std::isfinite(controls.linear_volume_tolerance) || controls.linear_volume_tolerance <= 0.0 ||
       !std::isfinite(controls.volume_tolerance) || controls.volume_tolerance <= 0.0)
   {
-    PRINT_ERROR("Invalid dimensions, numeric inputs or controls for level-set QP.\n");
+    TOPOLOGY_ERROR("Invalid dimensions, numeric inputs or controls for level-set QP.\n");
     return false;
   }
   for (int row = 0; row < count; ++row)
@@ -202,7 +202,7 @@ bool CoreTopologyLevelSetQP::solve(const TopologyLevelSetQPProblem& problem, dou
     if (problem.diagonal[row] <= 0.0 || problem.diagonal[row] != problem.matrix.coeff(row, row) ||
         problem.lower[row] > problem.upper[row] || problem.origin[row] < problem.lower[row] || problem.origin[row] > problem.upper[row])
     {
-      PRINT_ERROR("Invalid level-set QP diagonal, bounds or source field.\n");
+      TOPOLOGY_ERROR("Invalid level-set QP diagonal, bounds or source field.\n");
       return false;
     }
     for (Sparse::InnerIterator entry(problem.matrix, row); entry; ++entry)
@@ -211,7 +211,7 @@ bool CoreTopologyLevelSetQP::solve(const TopologyLevelSetQPProblem& problem, dou
       const double scale = (std::max)(1.0, (std::max)(std::abs(entry.value()), std::abs(transposed)));
       if (!std::isfinite(entry.value()) || !std::isfinite(transposed) || std::abs(entry.value() - transposed) > 1.0e-12 * scale)
       {
-        PRINT_ERROR("Non-finite or nonsymmetric level-set QP operator.\n");
+        TOPOLOGY_ERROR("Non-finite or nonsymmetric level-set QP operator.\n");
         return false;
       }
     }
@@ -226,7 +226,7 @@ bool CoreTopologyLevelSetQP::solve(const TopologyLevelSetQPProblem& problem, dou
   if (!candidate.allFinite() || !std::isfinite(candidate_multiplier) || candidate_multiplier < 0.0 ||
       !std::isfinite(candidate_residual) || candidate_residual < 0.0 || candidate_residual > controls.qp_tolerance)
   {
-    PRINT_ERROR("Invalid solved level-set QP outputs.\n");
+    TOPOLOGY_ERROR("Invalid solved level-set QP outputs.\n");
     return false;
   }
   values = std::move(candidate);

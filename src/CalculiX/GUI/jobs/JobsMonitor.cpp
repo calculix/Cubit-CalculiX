@@ -6,9 +6,6 @@
 #include "GUI/application/GuiTimer.hpp"
 #include "JobsMonitorLiveMonitor.hpp"
 #include "JobsMonitorProgressTables.hpp"
-#include "JobsMonitorFRD.hpp"
-#include "JobsMonitorDAT.hpp"
-#include "JobsMonitorDATSection.hpp"
 #include "GUI/application/GuiSendCmd.hpp"
 
 #include "CubitInterface.hpp"
@@ -67,9 +64,6 @@ JobsMonitor::JobsMonitor()
   QPlainTextEdit_console->setReadOnly(true);
   QPlainTextEdit_console->setMaximumBlockCount(maximumBlockCount);
   progress_tables = new JobsMonitorProgressTables(this);
-  FRD_widget = new JobsMonitorFRD();
-  DAT_widget = new JobsMonitorDAT();
-  DATSection_widget = new JobsMonitorDATSection();
 
   //tab widget
   TabWidget = new QTabWidget();
@@ -77,9 +71,6 @@ JobsMonitor::JobsMonitor()
   TabWidget->addTab(QPlainTextEdit_console,"Console Output");
   TabWidget->addTab(progress_tables->convergence_page(),"Convergence (CVG)");
   TabWidget->addTab(progress_tables->status_page(),"Status (STA)");
-  TabWidget->addTab(FRD_widget,"*.frd");
-  TabWidget->addTab(DAT_widget,"*.dat");
-  TabWidget->addTab(DATSection_widget,"*.dat Section");
   boxLayout_tab->addWidget(TabWidget);
 
   // Signals
@@ -109,10 +100,6 @@ void JobsMonitor::clear()
   QPlainTextEdit_console->clear();
   progress_tables->clear();
   liveMonitor_widget->clear();
-
-  FRD_widget->clear();
-  DAT_widget->clear();
-  DATSection_widget->clear();
 
   setWindowTitle("Jobs Monitor");
 
@@ -226,9 +213,6 @@ void JobsMonitor::setJob(int job_id)
   }
 
   current_job_id = job_id;
-  FRD_widget->set_current_job_id(job_id);
-  DAT_widget->set_current_job_id(job_id);
-  DATSection_widget->set_current_job_id(job_id);
 
   update();
 }

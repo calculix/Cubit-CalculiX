@@ -15,6 +15,7 @@
 #include <QSpacerItem>
 #include <QTableWidget>
 #include <QLineEdit>
+class ForceTargetWidget;
 class LoadsForcesCreatePanel : public QWidget
 {
   Q_OBJECT
@@ -23,6 +24,7 @@ public:
   explicit LoadsForcesCreatePanel(QWidget *parent = 0);
   ~LoadsForcesCreatePanel();
 
+  void setReferencePoint(int id);
   bool isInitialized;
 
 private slots:
@@ -60,7 +62,7 @@ private:
   QLabel* label_10;
   QLabel* label_11;
   QLineEdit* lineEdit_1;
-  QLineEdit* lineEdit_2;
+  ForceTargetWidget* target;
   QLineEdit* lineEdit_3;
   QLineEdit* lineEdit_4;
   QLineEdit* lineEdit_5;

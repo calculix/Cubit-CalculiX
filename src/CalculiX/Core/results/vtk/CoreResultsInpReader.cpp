@@ -4,7 +4,10 @@
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <cmath>
 #include <fstream>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <map>
 #include <set>
 #include <sstream>
@@ -79,11 +82,21 @@ namespace
     std::vector<std::pair<std::string, std::string>> entries;
   };
 
+  bool discrete_type(const std::string& type)
+  {
+    return type == "SPRING2" || type == "MASS" || type == "SPRINGA" || type == "SPRING1";
+  }
+
   class Parser
   {
   public:
     std::map<int, CoreResultsVtkNode> nodes;
+    ConnectionRunMap connections;
+    std::set<std::pair<int,int>> rigid_controls;
+    std::set<std::pair<int,std::string>> distributing_controls;
+    std::pair<int,std::string> coupling;
     std::map<int, CoreResultsVtkElement> elements;
+    std::map<std::pair<std::string,std::string>,std::vector<std::string>> discrete_properties;
     std::map<std::string, SetDefinition> node_sets;
     std::map<std::string, SetDefinition> element_sets;
     std::map<std::string, SurfaceDefinition> surfaces;
@@ -117,6 +130,11 @@ namespace
       {
         ++line_number;
         line = trim(line);
+        if (!connections.read_marker(line, error))
+        {
+          success = false;
+          break;
+        }
         if (line == "** CUBIT_SIM_SURFACE_HELPER_ELSET" && header.empty())
         {
           surfaceHelperPending = true;
@@ -192,6 +210,147 @@ namespace
       {
         return false;
       }
+      for (const auto& entry : connections.points)
+      {
+        const auto& binding = entry.second;
+        const auto prefix = "CCX_RP_" + std::to_string(binding.id);
+        if (!nodes.count(binding.ref) || !nodes.count(binding.rot) || !rigid_controls.count({binding.ref, binding.rot}) ||
+            node_sets[prefix + "_REF"].ids != std::vector<int>{binding.ref} ||
+            node_sets[prefix + "_ROT"].ids != std::vector<int>{binding.rot})
+        {
+          error = "RP binding does not match the exported rigid body and sets.";
+          return false;
+        }
+      }
+      for (const auto& entry : connections.distributed)
+      {
+        const auto& a = entry.second;
+        const auto surface = "CCX_DA_" + std::to_string(a.id) + "_FACE";
+        if (!a.weights.empty())
+        {
+          std::set<int> weighted;
+          for (const auto& entry : a.weights)
+          {
+            weighted.insert(entry.first);
+          }
+          const auto& output_nodes = node_sets["CCX_DA_" + std::to_string(a.id) + "_NODES"].ids;
+          if (std::set<int>(output_nodes.begin(), output_nodes.end()) != weighted || weighted.count(a.ref))
+          {
+            error = "Distributing attachment weights differ from the exported displacement set.";
+            return false;
+          }
+        }
+        if (!nodes.count(a.ref) || !surfaces.count(surface) || !distributing_controls.count({a.ref,surface}) ||
+            node_sets["CCX_RP_"+std::to_string(a.point)+"_REF"].ids != std::vector<int>{a.ref})
+        {
+          error = "Distributing attachment mapping differs from the input deck.";
+          return false;
+        }
+      }
+      for (const auto& entry : connections.joints)
+      {
+        const auto& joint = entry.second;
+        if (!joint.guide)
+        {
+          continue;
+        }
+        const auto point = connections.points.find(joint.b);
+        if (!nodes.count(joint.guide) || point == connections.points.end())
+        {
+          error = "Missing slider guide or reference point for " + joint.name;
+          return false;
+        }
+        const auto members = node_sets.find("CCX_RB_" + std::to_string(point->second.body) + "_MEMBERS");
+        if (members == node_sets.end() ||
+            std::find(members->second.ids.begin(), members->second.ids.end(), joint.guide) == members->second.ids.end())
+        {
+          error = "Slider guide is missing from its rigid body for " + joint.name;
+          return false;
+        }
+      }
+      for (const auto& item : connections.joint_nodes)
+      {
+        const auto found = nodes.find(item.first);
+        if (found == nodes.end())
+        {
+          error = "Missing archived joint node in the input deck.";
+          return false;
+        }
+        for (int i = 0; i < 3; ++i)
+        {
+          const double value = found->second.coordinates[i];
+          if (std::abs(value-item.second[i]) > std::max(1e-13,1e-12*std::abs(value)))
+          {
+            error = "Joint node coordinates differ from the run binding.";
+            return false;
+          }
+        }
+      }
+      for (const auto& item : connections.joint_elements)
+      {
+        const auto found = elements.find(item.first);
+        if (found == elements.end() || found->second.calculix_type != "SPRING2" ||
+            found->second.connectivity != std::vector<int>{item.second[0],item.second[1]})
+        {
+          error = "Joint spring mapping differs from the input deck.";
+          return false;
+        }
+      }
+      if (!connections.valid())
+      {
+        error = "Invalid joint endpoint or duplicate connection node.";
+        return false;
+      }
+      std::map<int,std::set<int>> requested_nodes;
+      for (const auto& entry : connections.discrete)
+      {
+        const auto& d = entry.second;
+        const auto element = elements.find(d.element);
+        const auto set = (d.type == "MASS" ? "CCX_POINT_MASS_" : "CCX_SPRING_") + std::to_string(d.id);
+        const auto property = discrete_properties.find({d.type == "MASS" ? "*MASS" : "*SPRING",set});
+        const std::vector<int> endpoints = d.b ? std::vector<int>{d.a,d.b} : std::vector<int>{d.a};
+        const bool grounded = d.type == "SPRING1";
+        double value = 0;
+        int direction = 0;
+        if (element == elements.end() || element->second.calculix_type != d.type ||
+            element->second.connectivity != endpoints || element_sets[set].ids != std::vector<int>{d.element} ||
+            property == discrete_properties.end() || property->second.size() != (grounded ? 2 : 1) ||
+            !ResultReadNumbers::real(property->second.back(),value) ||
+            std::abs(value-d.value) > 1e-10*std::abs(d.value) ||
+            (grounded && (!ResultReadNumbers::integer(property->second.front(),direction) || direction != d.direction)))
+        {
+          error = "Archived definition differs from the input element or property for " + d.name;
+          return false;
+        }
+        for (const int endpoint : endpoints)
+        {
+          const auto& position = endpoint == d.a ? d.position_a : d.position_b;
+          const auto& actual = nodes.at(endpoint).coordinates;
+          for (int axis = 0; axis < 3; ++axis)
+          {
+            if (std::abs(actual[axis]-position[axis]) > std::max(1e-13,1e-12*std::abs(actual[axis])))
+            {
+              error = "Discrete endpoint coordinates differ from the exported node for " + d.name;
+              return false;
+            }
+          }
+        }
+        for (const auto& step : d.history)
+        {
+          requested_nodes[step.first].insert(endpoints.begin(),endpoints.end());
+        }
+      }
+      for (const auto& step : requested_nodes)
+      {
+        const auto requested = node_sets.find("CCX_DISCRETE_STEP_" + std::to_string(step.first));
+        if (requested == node_sets.end() ||
+            std::set<int>(requested->second.ids.begin(),requested->second.ids.end()) != step.second)
+        {
+          error = "Discrete history endpoint set differs from the archived assignment.";
+          return false;
+        }
+      }
+      result.connections = connections;
       for (const auto& entry : surfaces)
       {
         CoreResultsVtkGroup group;
@@ -235,6 +394,15 @@ namespace
       }
       for (auto& entry : elements)
       {
+        if (discrete_type(entry.second.calculix_type))
+        {
+          if (!connections.discrete.count(entry.first) && !connections.joint_elements.count(entry.first))
+          {
+            error = "Unmapped discrete element " + std::to_string(entry.first);
+            return false;
+          }
+          continue;
+        }
         result.elements.push_back(std::move(entry.second));
       }
       output = std::move(result);
@@ -289,6 +457,24 @@ namespace
         error = "Unsupported INP mesh-changing keyword " + key + ".";
         return false;
       }
+      if (key == "*DISTRIBUTING")
+      {
+        distributing_controls.insert(coupling);
+      }
+      coupling = {};
+      if (key == "*COUPLING")
+      {
+        ResultReadNumbers::integer(parameters["REF NODE"],coupling.first);
+        coupling.second = upper(parameters["SURFACE"]);
+      }
+      if (key == "*RIGID BODY")
+      {
+        int ref = 0, rot = 0;
+        if (ResultReadNumbers::integer(parameters["REF NODE"], ref) && ResultReadNumbers::integer(parameters["ROT NODE"], rot))
+        {
+          rigid_controls.emplace(ref, rot);
+        }
+      }
       section = key;
       generated = parameters.count("GENERATE") != 0;
       set_name.clear();
@@ -328,15 +514,26 @@ namespace
           }
         }
       }
+      if (key == "*MASS" || key == "*SPRING")
+      {
+        set_name = upper(parameters["ELSET"]);
+      }
       if (key == "*ELEMENT")
       {
         element_type = upper(parameters["TYPE"]);
         CoreResultsVtkElements::Description description;
-        if (!CoreResultsVtkElements::describe(element_type, description, error))
+        if (discrete_type(element_type))
         {
-          return false;
+          expected_nodes = (element_type == "SPRINGA" || element_type == "SPRING2") ? 2 : 1;
         }
-        expected_nodes = description.node_count;
+        else
+        {
+          if (!CoreResultsVtkElements::describe(element_type, description, error))
+          {
+            return false;
+          }
+          expected_nodes = description.node_count;
+        }
         if (!set_name.empty())
         {
           auto& definition = element_sets[upper(set_name)];
@@ -359,6 +556,11 @@ namespace
 
     bool record(const std::string& line)
     {
+      if (section == "*MASS" || section == "*SPRING")
+      {
+        discrete_properties[{section,set_name}].push_back(line);
+        return true;
+      }
       if (section != "*NODE" && section != "*ELEMENT" && section != "*NSET" && section != "*ELSET" && section != "*SURFACE")
       {
         return true;
@@ -412,7 +614,7 @@ namespace
           }
           pending.calculix_type = element_type;
           CoreResultsVtkElements::Description description;
-          if (!CoreResultsVtkElements::describe(element_type, description, error))
+          if (!discrete_type(element_type) && !CoreResultsVtkElements::describe(element_type, description, error))
           {
             return false;
           }
@@ -601,6 +803,17 @@ namespace
         }
         group.name = entry.second.name;
         group.ids = entry.second.ids;
+        if (!nodal)
+        {
+          group.ids.erase(std::remove_if(group.ids.begin(),group.ids.end(),[&](int id)
+          {
+            return connections.discrete.count(id) || connections.joint_elements.count(id);
+          }),group.ids.end());
+          if (group.ids.empty() && !entry.second.ids.empty())
+          {
+            continue;
+          }
+        }
         result.groups.push_back(std::move(group));
       }
       return true;

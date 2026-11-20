@@ -25,7 +25,12 @@ bool CalculiXCore::modify_step(int step_id, int modify_type, std::vector<std::st
 }
 
 bool CalculiXCore::delete_step(int step_id) {
-  return steps->delete_step(step_id);
+  if (!steps->delete_step(step_id))
+  {
+    return false;
+  }
+  connections.clear_history_step(step_id);
+  return true;
 }
 
 bool CalculiXCore::step_add_loads(int step_id, int load_type, std::vector<int> load_ids) {

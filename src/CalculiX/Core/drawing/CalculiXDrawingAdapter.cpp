@@ -5,7 +5,7 @@
 
 namespace
 {
-const std::array<std::pair<DrawFeature, const char*>, 16> Features = {{
+const std::array<std::pair<DrawFeature, const char*>, 21> Features = {{
   {DrawFeature::Force, "force"}, {DrawFeature::Pressure, "pressure"},
   {DrawFeature::Heatflux, "heatflux"}, {DrawFeature::Gravity, "gravity"},
   {DrawFeature::Centrifugal, "centrifugal"}, {DrawFeature::Trajectory, "trajectory"},
@@ -13,7 +13,9 @@ const std::array<std::pair<DrawFeature, const char*>, 16> Features = {{
   {DrawFeature::SurfaceTraction, "surface_traction"}, {DrawFeature::BodyHeatflux, "body_heatflux"},
   {DrawFeature::Displacement, "displacement"}, {DrawFeature::Temperature, "temperature"},
   {DrawFeature::Orientation, "orientation"}, {DrawFeature::Equation, "equation"},
-  {DrawFeature::EquationGroup, "equation_group"}, {DrawFeature::Topology, "topology"}
+  {DrawFeature::EquationGroup, "equation_group"}, {DrawFeature::Topology, "topology"},
+  {DrawFeature::ReferencePoint, "rp"}, {DrawFeature::RigidBody, "rigid_body"}, {DrawFeature::Joint, "joint"},
+  {DrawFeature::PointMass, "point_mass"}, {DrawFeature::Spring, "spring"}
 }};
 }
 

@@ -4,7 +4,7 @@
 #include "Core/steps/CoreSteps.hpp"
 #include "Core/mesh/CoreMeshQuery.hpp"
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <cmath>
 #include <cstddef>
 
@@ -20,13 +20,13 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
 
     if (index < 0 || displacements.bcs_data[index].size() < 7)
     {
-      PRINT_ERROR("Missing displacement BC %d.\n", bc_id);
+      TOPOLOGY_ERROR("Missing displacement BC %d.\n", bc_id);
       return false;
     }
 
     if (displacements.bcs_data[index][1] != 0)
     {
-      PRINT_ERROR("Adjoint export does not yet support OP=NEW in displacement BC %d.\n", bc_id);
+      TOPOLOGY_ERROR("Adjoint export does not yet support OP=NEW in displacement BC %d.\n", bc_id);
       return false;
     }
 
@@ -35,7 +35,7 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
 
     if (!mesh_query.check_nodeset_exists(nodeset_id) || CubitInterface::get_nodeset_nodes_inclusive(nodeset_id).empty())
     {
-      PRINT_ERROR("Displacement BC %d has a missing or empty nodeset.\n", bc_id);
+      TOPOLOGY_ERROR("Displacement BC %d has a missing or empty nodeset.\n", bc_id);
       return false;
     }
 
@@ -44,14 +44,14 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
 
     if (displacement_data_id < 0 || mode_data_id < 0)
     {
-      PRINT_ERROR("Missing displacement data for BC %d.\n", bc_id);
+      TOPOLOGY_ERROR("Missing displacement data for BC %d.\n", bc_id);
       return false;
     }
 
     if (displacements.displacement_data[displacement_data_id].size() < 7 ||
         displacements.mode_data[mode_data_id].size() < 7)
     {
-      PRINT_ERROR("Invalid displacement data for BC %d.\n", bc_id);
+      TOPOLOGY_ERROR("Invalid displacement data for BC %d.\n", bc_id);
       return false;
     }
 
@@ -59,7 +59,7 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
     std::string error;
     if (!displacements.get_solver_boundaries(bc_id, mapped, error))
     {
-      PRINT_ERROR("Cannot resolve adjoint boundary %d: %s\n", bc_id, error.c_str());
+      TOPOLOGY_ERROR("Cannot resolve adjoint boundary %d: %s\n", bc_id, error.c_str());
       return false;
     }
     for (int dof = 1; dof <= 6; ++dof)
@@ -68,7 +68,7 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
 
       if (mode < 0 || mode > 2)
       {
-        PRINT_ERROR("Invalid displacement mode for BC %d, DOF %d.\n", bc_id, dof);
+        TOPOLOGY_ERROR("Invalid displacement mode for BC %d, DOF %d.\n", bc_id, dof);
         return false;
       }
 
@@ -78,7 +78,7 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
 
         if (!std::isfinite(magnitude))
         {
-          PRINT_ERROR("Invalid displacement magnitude for BC %d, DOF %d.\n", bc_id, dof);
+          TOPOLOGY_ERROR("Invalid displacement magnitude for BC %d, DOF %d.\n", bc_id, dof);
           return false;
         }
       }
@@ -96,7 +96,7 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
   {
     if (bc.size() < 3 || bc[1] != 1 || !collect_bc(bc[2]))
     {
-      PRINT_ERROR("Unable to collect model-level adjoint boundary conditions.\n");
+      TOPOLOGY_ERROR("Unable to collect model-level adjoint boundary conditions.\n");
       return false;
     }
   }
@@ -105,7 +105,7 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
   {
     if (step.size() < 7)
     {
-      PRINT_ERROR("Invalid step boundary assignment.\n");
+      TOPOLOGY_ERROR("Invalid step boundary assignment.\n");
       return false;
     }
 
@@ -113,7 +113,7 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
     {
       if (index < 0 || static_cast<std::size_t>(index) >= steps.bcs_data.size())
       {
-        PRINT_ERROR("Invalid step boundary assignment.\n");
+        TOPOLOGY_ERROR("Invalid step boundary assignment.\n");
         return false;
       }
 
@@ -121,7 +121,7 @@ bool CoreTopologyAdjointBoundaries::collect(CoreBCsDisplacements& displacements,
 
       if (bc.size() < 3 || bc[1] != 1 || !collect_bc(bc[2]))
       {
-        PRINT_ERROR("Unable to collect adjoint boundary conditions for step %d.\n", step[0]);
+        TOPOLOGY_ERROR("Unable to collect adjoint boundary conditions for step %d.\n", step[0]);
         return false;
       }
     }

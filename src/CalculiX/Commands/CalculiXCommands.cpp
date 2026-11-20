@@ -30,9 +30,14 @@
 #include "Commands/interactions/ccxConstraintEquationCreateCommand.hpp"
 #include "Commands/interactions/ccxConstraintEquationCreateFromCoincidentNodesCommand.hpp"
 #include "Commands/interactions/ccxConstraintEquationModifyCommand.hpp"
-#include "Commands/interactions/ccxConstraintRigidBodyCreateCommand.hpp"
-#include "Commands/interactions/ccxConstraintRigidBody2CreateCommand.hpp"
-#include "Commands/interactions/ccxConstraintRigidBodyModifyCommand.hpp"
+#include "Commands/connections/ccxConnectionHistoryCommand.hpp"
+#include "Commands/connections/ccxJointCreateCommand.hpp"
+#include "Commands/connections/ccxReferencePointCreateCommand.hpp"
+#include "Commands/connections/ccxPointMassCommand.hpp"
+#include "Commands/connections/ccxSpringCommand.hpp"
+#include "Commands/connections/ccxDistributingAttachmentCommand.hpp"
+#include "Commands/connections/ccxRigidBodyCreateCommand.hpp"
+#include "Commands/connections/ccxConnectionDeleteCommand.hpp"
 #include "Commands/interactions/ccxConstraintTieCreateCommand.hpp"
 #include "Commands/interactions/ccxConstraintTieModifyCommand.hpp"
 #include "Commands/interactions/ccxConstraintTieCreateFromCubitContactPairCommand.hpp"
@@ -159,12 +164,6 @@
 #include "Commands/results/ccxResultLoadJobCommand.hpp"
 #include "Commands/results/ccxResultConvertJobCommand.hpp"
 #include "Commands/results/ccxResultExportJobCommand.hpp"
-#include "Commands/results/frd/ccxResultPlotJobFrdCommand.hpp"
-#include "Commands/results/dat/ccxResultPlotJobDatCommand.hpp"
-#include "Commands/results/dat/ccxResultPlotJobDatSectionCommand.hpp"
-#include "Commands/results/frd/ccxResultCSVJobFrdCommand.hpp"
-#include "Commands/results/dat/ccxResultCSVJobDatCommand.hpp"
-#include "Commands/results/dat/ccxResultCSVJobDatSectionCommand.hpp"
 #include "Commands/results/ccxResultProjectJobCommand.hpp"
 #include "Commands/jobs/ccxKillJobCommand.hpp"
 #include "Commands/export/ccxCustomLineCreateCommand.hpp"
@@ -209,9 +208,14 @@ std::vector<std::string> CalculiXCommands::command_keys() const
   keys.push_back("ccxConstraintEquationCreateCommand");
   keys.push_back("ccxConstraintEquationCreateFromCoincidentNodesCommand");
   keys.push_back("ccxConstraintEquationModifyCommand");
-  keys.push_back("ccxConstraintRigidBodyCreateCommand");
-  keys.push_back("ccxConstraintRigidBody2CreateCommand");
-  keys.push_back("ccxConstraintRigidBodyModifyCommand");
+  keys.push_back("ccxConnectionHistoryCommand");
+  keys.push_back("ccxJointCreateCommand");
+  keys.push_back("ccxReferencePointCreateCommand");
+  keys.push_back("ccxPointMassCommand");
+  keys.push_back("ccxSpringCommand");
+  keys.push_back("ccxDistributingAttachmentCommand");
+  keys.push_back("ccxRigidBodyCreateCommand");
+  keys.push_back("ccxConnectionDeleteCommand");
   keys.push_back("ccxConstraintTieCreateCommand");
   keys.push_back("ccxConstraintTieModifyCommand");
   keys.push_back("ccxConstraintTieCreateFromCubitContactPairCommand");
@@ -339,12 +343,6 @@ std::vector<std::string> CalculiXCommands::command_keys() const
   keys.push_back("ccxResultLoadJobCommand");
   keys.push_back("ccxResultConvertJobCommand");
   keys.push_back("ccxResultExportJobCommand");
-  keys.push_back("ccxResultPlotJobFrdCommand");
-  keys.push_back("ccxResultPlotJobDatCommand");
-  keys.push_back("ccxResultPlotJobDatSectionCommand");
-  keys.push_back("ccxResultCSVJobFrdCommand");
-  keys.push_back("ccxResultCSVJobDatCommand");
-  keys.push_back("ccxResultCSVJobDatSectionCommand");
   keys.push_back("ccxResultProjectJobCommand");
   keys.push_back("ccxCustomLineCreateCommand");
   keys.push_back("ccxCustomLineModifyCommand");
@@ -463,17 +461,43 @@ CubitCommand* CalculiXCommands::create_command(const std::string &key) {
     return new ccxConstraintDeleteCommand();
   }
 
-  if(key == "ccxConstraintRigidBodyCreateCommand") {
-    return new ccxConstraintRigidBodyCreateCommand();
+  if (key == "ccxConnectionHistoryCommand")
+  {
+    return new ccxConnectionHistoryCommand();
+  }
+  if (key == "ccxJointCreateCommand")
+  {
+    return new ccxJointCreateCommand();
+  }
+  if (key == "ccxReferencePointCreateCommand")
+  {
+    return new ccxReferencePointCreateCommand();
   }
 
-  if(key == "ccxConstraintRigidBody2CreateCommand") {
-    return new ccxConstraintRigidBody2CreateCommand();
+  if (key == "ccxPointMassCommand")
+  {
+    return new ccxPointMassCommand();
+  }
+  if (key == "ccxSpringCommand")
+  {
+    return new ccxSpringCommand();
+  }
+  if (key == "ccxDistributingAttachmentCommand")
+  {
+    return new ccxDistributingAttachmentCommand();
+  }
+  if (key == "ccxRigidBodyCreateCommand")
+  {
+    return new ccxRigidBodyCreateCommand();
   }
 
-  if(key == "ccxConstraintRigidBodyModifyCommand") {
-    return new ccxConstraintRigidBodyModifyCommand();
+  if (key == "ccxConnectionDeleteCommand")
+  {
+    return new ccxConnectionDeleteCommand();
   }
+
+
+
 
   if(key == "ccxConstraintTieCreateCommand") {
     return new ccxConstraintTieCreateCommand();
@@ -992,30 +1016,6 @@ CubitCommand* CalculiXCommands::create_command(const std::string &key) {
 
   if(key == "ccxResultProjectJobCommand") {
     return new ccxResultProjectJobCommand();
-  }
-
-  if(key == "ccxResultPlotJobFrdCommand") {
-    return new ccxResultPlotJobFrdCommand();
-  }
-
-  if(key == "ccxResultPlotJobDatCommand") {
-    return new ccxResultPlotJobDatCommand();
-  }
-
-  if(key == "ccxResultPlotJobDatSectionCommand") {
-    return new ccxResultPlotJobDatSectionCommand();
-  }
-
-  if(key == "ccxResultCSVJobFrdCommand") {
-    return new ccxResultCSVJobFrdCommand();
-  }
-
-  if(key == "ccxResultCSVJobDatCommand") {
-    return new ccxResultCSVJobDatCommand();
-  }
-
-  if(key == "ccxResultCSVJobDatSectionCommand") {
-    return new ccxResultCSVJobDatSectionCommand();
   }
 
   if(key == "ccxKillJobCommand") {

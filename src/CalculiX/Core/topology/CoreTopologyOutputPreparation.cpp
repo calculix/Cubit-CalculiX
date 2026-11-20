@@ -7,7 +7,7 @@
 #include "Core/mesh/CoreBlocks.hpp"
 #include "Core/mesh/CoreMeshQuery.hpp"
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <vector>
 
 bool CoreTopologyOutputPreparation::prepare(const CoreTopologyOutputPreparationData& data, int topology_id, const std::set<int>& block_ids, const std::function<bool(const std::string&)>& execute_command)
@@ -16,7 +16,7 @@ bool CoreTopologyOutputPreparation::prepare(const CoreTopologyOutputPreparationD
 
   if (entry == data.topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -28,7 +28,7 @@ bool CoreTopologyOutputPreparation::prepare(const CoreTopologyOutputPreparationD
   {
     if (step.empty())
     {
-      PRINT_ERROR("Invalid step data.\n");
+      TOPOLOGY_ERROR("Invalid step data.\n");
       return false;
     }
 
@@ -37,7 +37,7 @@ bool CoreTopologyOutputPreparation::prepare(const CoreTopologyOutputPreparationD
 
   if (step_ids.empty())
   {
-    PRINT_ERROR("Topology optimization requires an analysis step.\n");
+    TOPOLOGY_ERROR("Topology optimization requires an analysis step.\n");
     return false;
   }
 
@@ -45,13 +45,13 @@ bool CoreTopologyOutputPreparation::prepare(const CoreTopologyOutputPreparationD
   {
     if (!data.mesh)
     {
-      PRINT_ERROR("Invalid topology history output request.\n");
+      TOPOLOGY_ERROR("Invalid topology history output request.\n");
       return false;
     }
 
     if (!CoreMeshQuery(*data.mesh).check_nodeset_exists(nodeset_id) || CubitInterface::get_nodeset_nodes_inclusive(nodeset_id).empty())
     {
-      PRINT_ERROR("Topology displacement nodeset %d is missing or empty.\n", nodeset_id);
+      TOPOLOGY_ERROR("Topology displacement nodeset %d is missing or empty.\n", nodeset_id);
       return false;
     }
   }
@@ -60,7 +60,7 @@ bool CoreTopologyOutputPreparation::prepare(const CoreTopologyOutputPreparationD
   {
     if (!data.blocks || !data.blocks->check_block_exists(block_id))
     {
-      PRINT_ERROR("Invalid topology history output request.\n");
+      TOPOLOGY_ERROR("Invalid topology history output request.\n");
       return false;
     }
 
@@ -94,7 +94,7 @@ bool CoreTopologyOutputPreparation::prepare(const CoreTopologyOutputPreparationD
     {
       if (!data.mesh || !CoreMeshQuery(*data.mesh).check_nodeset_exists(nodeset_id))
       {
-        PRINT_ERROR("Invalid topology history output request.\n");
+        TOPOLOGY_ERROR("Invalid topology history output request.\n");
         return false;
       }
 
@@ -109,7 +109,7 @@ bool CoreTopologyOutputPreparation::prepare(const CoreTopologyOutputPreparationD
   {
     if (!data.fieldoutputs)
     {
-      PRINT_ERROR("Topology field output interfaces are not initialized.\n");
+      TOPOLOGY_ERROR("Topology field output interfaces are not initialized.\n");
       return false;
     }
 

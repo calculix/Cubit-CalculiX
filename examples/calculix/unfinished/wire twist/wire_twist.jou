@@ -49,7 +49,8 @@ sideset 2 add surface 4
 sideset 2 name "wire_2"
 
 #rigid body
-ccx create constraint rigid body nodeset 2 ref 5 rot 6
+ccx create rp 1 name "Control 1" vertex 5 rotation_vertex 6
+ccx create rigid body 1 name "Attachment 1" nodeset 2 rp 1
 
 #contact
 ccx create surfaceinteraction name "ContactType" linear slopeK 1e6 sigmaINF 3 c0 1e-2

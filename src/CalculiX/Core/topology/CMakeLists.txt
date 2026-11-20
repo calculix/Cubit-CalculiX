@@ -1,4 +1,7 @@
 target_sources(calculix_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyConsole.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyConsole.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyConsoleMessages.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetIntegrationDiagnostics.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetIntegrationDiagnostics.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CoreTopologyLevelSetPipeline.hpp

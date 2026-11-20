@@ -18,7 +18,7 @@
 #include <utility>
 
 #include "Core/topology/CoreTopology.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "Core/loadCalculiXCore.hpp"
 
 bool CalculiXTopologyRunInterface::begin_topology_run(int topology_id)
@@ -61,7 +61,7 @@ bool CalculiXTopologyRunInterface::prepare_topology_run(int topology_id)
 {
   if (!ccx_core.topologyoptimization)
   {
-    PRINT_ERROR("Topology optimization core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology optimization core is not initialized.\n");
     return false;
   }
 
@@ -87,7 +87,7 @@ int CalculiXTopologyRunInterface::start_topology_iteration(int topology_id, int 
 {
   if (!ccx_core.topologyoptimization)
   {
-    PRINT_ERROR("Topology optimization core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology optimization core is not initialized.\n");
     return -1;
   }
 
@@ -106,7 +106,7 @@ bool CalculiXTopologyRunInterface::create_topology_adjoint_job(int topology_id, 
 
   if (!ccx_core.topologyoptimization)
   {
-    PRINT_ERROR("Topology optimization core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology optimization core is not initialized.\n");
     return false;
   }
 
@@ -117,7 +117,7 @@ int CalculiXTopologyRunInterface::get_topology_adjoint_job_source(int topology_i
 {
   if (!ccx_core.topology || !ccx_core.jobs)
   {
-    PRINT_ERROR("Invalid topology adjoint job request.\n");
+    TOPOLOGY_ERROR("Invalid topology adjoint job request.\n");
     return -1;
   }
 
@@ -130,7 +130,7 @@ bool CalculiXTopologyRunInterface::register_topology_adjoint_job(int topology_id
 
   if (!ccx_core.topology || !ccx_core.jobs)
   {
-    PRINT_ERROR("Invalid topology adjoint job request.\n");
+    TOPOLOGY_ERROR("Invalid topology adjoint job request.\n");
     return false;
   }
 
@@ -145,7 +145,7 @@ bool CalculiXTopologyRunInterface::build_topology_adjoint_load(int topology_id, 
 
   if (!ccx_core.topologyoptimization)
   {
-    PRINT_ERROR("Topology optimization core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology optimization core is not initialized.\n");
     return false;
   }
 
@@ -156,7 +156,7 @@ bool CalculiXTopologyRunInterface::check_topology_displacement_selection(int top
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Invalid topology displacement selection request.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement selection request.\n");
     return false;
   }
 
@@ -175,7 +175,7 @@ bool CalculiXTopologyRunInterface::read_topology_job_displacements(int job_id, s
 
   if (!ccx_core.results || !ccx_core.jobs || !ccx_core.topology || !ccx_core.mat)
   {
-    PRINT_ERROR("Topology displacement results require a completed job.\n");
+    TOPOLOGY_ERROR("Topology displacement results require a completed job.\n");
     return false;
   }
 
@@ -205,7 +205,7 @@ bool CalculiXTopologyRunInterface::evaluate_topology_compliance(int topology_id,
 
   if (!ccx_core.topology || !ccx_core.mat)
   {
-    PRINT_ERROR("Invalid topology compliance evaluation request.\n");
+    TOPOLOGY_ERROR("Invalid topology compliance evaluation request.\n");
     return false;
   }
 
@@ -216,7 +216,7 @@ bool CalculiXTopologyRunInterface::evaluate_topology_displacement(int topology_i
 {
   if (!ccx_core.topology || !ccx_core.mat || !ccx_core.jobs)
   {
-    PRINT_ERROR("Invalid topology displacement evaluation request.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement evaluation request.\n");
     return false;
   }
 
@@ -227,7 +227,7 @@ bool CalculiXTopologyRunInterface::set_topology_iteration_displacement(int topol
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Invalid topology displacement measurement.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement measurement.\n");
     return false;
   }
 
@@ -238,7 +238,7 @@ bool CalculiXTopologyRunInterface::mark_topology_iteration_completed(int topolog
 {
   if (!ccx_core.topology || !ccx_core.jobs)
   {
-    PRINT_ERROR("Invalid topology iteration completion request.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration completion request.\n");
     return false;
   }
 
@@ -251,7 +251,7 @@ bool CalculiXTopologyRunInterface::read_topology_element_energies(int topology_i
 
   if (!ccx_core.topology || !ccx_core.mat || !ccx_core.results || !ccx_core.jobs)
   {
-    PRINT_ERROR("Invalid topology energy query.\n");
+    TOPOLOGY_ERROR("Invalid topology energy query.\n");
     return false;
   }
 
@@ -264,13 +264,13 @@ bool CalculiXTopologyRunInterface::read_topology_job_element_tensors(int job_id,
 
   if (key != "S" && key != "ME")
   {
-    PRINT_ERROR("Topology tensor reader supports S and ME only.\n");
+    TOPOLOGY_ERROR("Topology tensor reader supports S and ME only.\n");
     return false;
   }
 
   if (!ccx_core.topology || !ccx_core.mat || !ccx_core.results || !ccx_core.jobs)
   {
-    PRINT_ERROR("Topology tensor results require a completed job.\n");
+    TOPOLOGY_ERROR("Topology tensor results require a completed job.\n");
     return false;
   }
 
@@ -289,7 +289,7 @@ bool CalculiXTopologyRunInterface::read_topology_displacement(int topology_id, i
 
   if (!ccx_core.topology || !ccx_core.results || !ccx_core.jobs || !ccx_core.me_iface)
   {
-    PRINT_ERROR("Topology displacement interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology displacement interfaces are not initialized.\n");
     return false;
   }
 
@@ -317,13 +317,13 @@ bool CalculiXTopologyRunInterface::collect_topology_element_volumes(int topology
 
   if (!ccx_core.mat)
   {
-    PRINT_ERROR("Material core is not initialized.\n");
+    TOPOLOGY_ERROR("Material core is not initialized.\n");
     return false;
   }
 
   if (!ccx_core.cb)
   {
-    PRINT_ERROR("Block core is not initialized.\n");
+    TOPOLOGY_ERROR("Block core is not initialized.\n");
     return false;
   }
 
@@ -336,7 +336,7 @@ bool CalculiXTopologyRunInterface::collect_topology_integration_weights(int topo
 
   if (!ccx_core.topology || !ccx_core.mat || !ccx_core.cb)
   {
-    PRINT_ERROR("Topology integration weight interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology integration weight interfaces are not initialized.\n");
     return false;
   }
 
@@ -347,7 +347,7 @@ bool CalculiXTopologyRunInterface::filter_topology_density_sensitivities(int top
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -360,7 +360,7 @@ bool CalculiXTopologyRunInterface::build_topology_density_update(int topology_id
 
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -371,7 +371,7 @@ bool CalculiXTopologyRunInterface::evaluate_topology_compliance_oc_residual(int 
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -382,13 +382,13 @@ bool CalculiXTopologyRunInterface::set_topology_iteration_densities(int topology
 {
   if (!ccx_core.topology || !ccx_core.mat)
   {
-    PRINT_ERROR("Topology/material cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology/material cores are not initialized.\n");
     return false;
   }
 
   if (!ccx_core.cb)
   {
-    PRINT_ERROR("Block core is not initialized.\n");
+    TOPOLOGY_ERROR("Block core is not initialized.\n");
     return false;
   }
 
@@ -401,7 +401,7 @@ bool CalculiXTopologyRunInterface::check_topology_density_convergence(int topolo
 
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -412,7 +412,7 @@ bool CalculiXTopologyRunInterface::evaluate_topology_displacement_projected_resi
 {
   if (!ccx_core.topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 

@@ -1,5 +1,5 @@
 #include "StopWatch.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 StopWatch::StopWatch()
 {}
@@ -17,7 +17,7 @@ bool StopWatch::tick(std::string label)
   
   std::string log;
   log =  label + " " + std::to_string(t_runtime_duration) + " " + std::to_string(t_runtime_round_duration) + "\n";
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
 
   return true;
 }
@@ -29,7 +29,7 @@ bool StopWatch::total(std::string label)
     
   std::string log;
   log =  label + " " + std::to_string(t_runtime_duration) + "\n";
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
 
   return true;
 }

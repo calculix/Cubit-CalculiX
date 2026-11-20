@@ -1,4 +1,6 @@
 target_sources(postprocessor_module PRIVATE
+  PostTopologyThresholdCommand.cpp
+  PostTopologyThresholdCommand.hpp
   PostRefreshCommand.cpp
   PostOpenCommand.cpp
   PostOpenCommand.hpp

@@ -12,7 +12,7 @@
 #include <QScopedValueRollback>
 #include <QScopeGuard>
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "StopWatch.hpp"
 
 #include "CubitProcess.hpp"
@@ -87,6 +87,7 @@ bool CoreJobs::reset()
     PRINT_ERROR("Cannot reset jobs during result preparation.\n");
     return false;
   }
+  CoreTopologyConsole::clear();
   pending_result_jobs.clear();
   runRecords.clear();
   preparedRuns.clear();
@@ -289,6 +290,7 @@ bool CoreJobs::delete_job(int job_id)
     int topology_id = -1;
     int iteration_id = -1;
     jobs_iface.get_job_topology_context(job_id, topology_id, iteration_id);
+    CoreTopologyConsole::forget_job(job_id);
     jobs_data.erase(jobs_data.begin() + jobs_data_id);
     monitorExecutions.erase(job_id);
     runRecords.erase(job_id);
@@ -311,14 +313,17 @@ bool CoreJobs::delete_job(int job_id)
 
 bool CoreJobs::run_job(int job_id,int option)
 {
+  const auto consoleContext = CoreTopologyConsole::job_context(job_id);
+  const CoreTopologyConsole consoleLog(consoleContext);
   CalculiXJobRunRecord pending_run;
   // Observe completed processes before another run can overwrite their input
   // or output files. This also covers a restart before the GUI timer ticks.
   if (!check_jobs() || !results_ready())
   {
-    PRINT_ERROR("Finish or retry pending VTK result conversion before starting another job.\n");
+    TOPOLOGY_ERROR("Finish or retry pending VTK result conversion before starting another job.\n");
     return false;
   }
+  CoreTopologyConsole::register_job(consoleContext);
   CalculiXJobsInterface ccx_jobs_iface;
  
   #ifdef WIN32
@@ -337,7 +342,7 @@ bool CoreJobs::run_job(int job_id,int option)
       SetEnvironmentVariableA("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str());
     }else{
       log = "CCX Solver not found! checked path \"" + ccx_uo.mPathSolver.toStdString() + "\" \n";
-      PRINT_INFO("%s", log.c_str());    
+      TOPOLOGY_INFO("%s", log.c_str());
       return false;
     }   
     
@@ -355,12 +360,12 @@ bool CoreJobs::run_job(int job_id,int option)
           { 
             log = "Kill Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " if already running \n";
             output_console[std::stoi(jobs_data[job_data_id][5])].clear();
-            PRINT_INFO("%s", log.c_str());
+            TOPOLOGY_INFO("%s", log.c_str());
             TerminateProcess(processhandle, 1);
             CloseHandle(processhandle);
             kill_pipe(job_id);
             log = " Job killed!\n";
-            PRINT_INFO("%s", log.c_str());
+            TOPOLOGY_INFO("%s", log.c_str());
             jobs_data[job_data_id][3] = "3";         
           }
         }
@@ -382,10 +387,10 @@ bool CoreJobs::run_job(int job_id,int option)
         filepath = jobs_data[job_data_id][1] + ".inp";
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
         log.append(filepath +  " \n");
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         if (!ccx_jobs_iface.prepare_job_input(job_id, filepath))
         {
-          PRINT_ERROR("Failed to export input for job %d.\n", job_id);
+          TOPOLOGY_ERROR("Failed to export input for job %d.\n", job_id);
           return false;
         }
       }
@@ -437,7 +442,7 @@ bool CoreJobs::run_job(int job_id,int option)
       sta[std::stoi(jobs_data[job_data_id][8])].clear();
 
       // Create the child process.         
-      PRINT_INFO("Job %d: starting solver process.\n", job_id);
+      TOPOLOGY_INFO("Job %d: starting solver process.\n", job_id);
       bSuccess = CreateProcess(NULL, 
           //&arguments[0],     // command line 
           &args[0],     // command line 
@@ -454,7 +459,7 @@ bool CoreJobs::run_job(int job_id,int option)
       if ( ! bSuccess )
       {
           log = "Running Job Failed! \n";
-          PRINT_INFO("%s", log.c_str()); 
+          TOPOLOGY_INFO("%s", log.c_str());
           return false;
       } else
       {        
@@ -484,11 +489,12 @@ bool CoreJobs::run_job(int job_id,int option)
         //PRINT_INFO("%s", log.c_str());
         std::string output(chBuf, dwRead);
         output_console[std::stoi(jobs_data[job_data_id][5])].push_back(output);
+        CoreTopologyConsole::solver_output(job_id,output);
         
         /*
         log = "pipethreads \n" + std::to_string(PipeThreads.size()) + " \n";
         log.append("pipethreadsrun \n" + std::to_string(PipeThreadsRun.size()) + " \n");
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         */
 
         PipeThreadsRun.push_back(true);
@@ -498,7 +504,7 @@ bool CoreJobs::run_job(int job_id,int option)
         /*
         log = "pipethreads \n" + std::to_string(PipeThreads.size()) + " \n";
         log.append("pipethreadsrun \n" + std::to_string(PipeThreadsRun.size()) + " \n");
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         */
 
         // write linking of the ids
@@ -515,7 +521,7 @@ bool CoreJobs::run_job(int job_id,int option)
         /*
         log = "CREATED THREAD ID " + oss.str() + " \n";
         log.append("NUMBER OF PIPE READ THREADS " + std::to_string(PipeThreads.size())  + " \n");
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         */
       }
 
@@ -539,7 +545,7 @@ bool CoreJobs::run_job(int job_id,int option)
       setenv("OMP_NUM_THREADS",std::to_string(ccx_uo.mSolverThreads).c_str(),1);
     }else{
       log = "CCX Solver not found! checked path \"" + ccx_uo.mPathSolver.toStdString() + "\" \n";
-      PRINT_INFO("%s", log.c_str());    
+      TOPOLOGY_INFO("%s", log.c_str());
       return false;
     }
 
@@ -557,12 +563,12 @@ bool CoreJobs::run_job(int job_id,int option)
       }else{
         log = "Kill Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " if already running \n";
         output_console[std::stoi(jobs_data[job_data_id][5])].clear();
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         CubitProcessHandler[CubitProcessHandler_data_id].kill();
         CubitProcessHandler[CubitProcessHandler_data_id].wait();
         //log = " Job killed with Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n";
         log = " Job killed!\n";
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         jobs_data[job_data_id][3] = "3";
       }
 
@@ -577,10 +583,10 @@ bool CoreJobs::run_job(int job_id,int option)
         filepath = jobs_data[job_data_id][1] + ".inp";
         log = "Exporting Job " + jobs_data[job_data_id][1] + " with ID " + jobs_data[job_data_id][0] + " to \n";
         log.append(filepath +  " \n");
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         if (!ccx_jobs_iface.prepare_job_input(job_id, filepath))
         {
-          PRINT_ERROR("Failed to export input for job %d.\n", job_id);
+          TOPOLOGY_ERROR("Failed to export input for job %d.\n", job_id);
           return false;
         }
       }
@@ -600,12 +606,12 @@ bool CoreJobs::run_job(int job_id,int option)
       cvg[std::stoi(jobs_data[job_data_id][7])].clear();
       sta[std::stoi(jobs_data[job_data_id][8])].clear();
 
-      PRINT_INFO("Job %d: starting solver process.\n", job_id);
+      TOPOLOGY_INFO("Job %d: starting solver process.\n", job_id);
       CubitProcessHandler[CubitProcessHandler_data_id].start();
       process_id = CubitProcessHandler[CubitProcessHandler_data_id].pid();
       if (process_id <= 0)
       {
-        PRINT_ERROR("Failed to start solver for job %d.\n", job_id);
+        TOPOLOGY_ERROR("Failed to start solver for job %d.\n", job_id);
         return false;
       }
       if (process_id!=0)
@@ -621,7 +627,7 @@ bool CoreJobs::run_job(int job_id,int option)
         log.append(working_dir.str() + temp.str() + "\n");
         log.append(temp.str() + "\n");
         log = " Output " + output.str() + " \n";
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         */
       }
       return true;
@@ -635,6 +641,8 @@ bool CoreJobs::run_job(int job_id,int option)
 
 bool CoreJobs::wait_job(int job_id)
 {
+  const auto consoleContext = CoreTopologyConsole::job_context(job_id);
+  const CoreTopologyConsole consoleLog(consoleContext);
   CalculiXMeshInterface ccx_mesh_iface;
   CalculiXResultsInterface ccx_results_iface;
  
@@ -660,7 +668,7 @@ bool CoreJobs::wait_job(int job_id)
         if (returnCode == STILL_ACTIVE)
         { 
           log = " Waiting for Job " + jobs_data[jobs_data_id][1] + " to Exit \n";
-          PRINT_INFO("%s", log.c_str());
+          TOPOLOGY_INFO("%s", log.c_str());
 
           log = " Waiting for Job " + jobs_data[jobs_data_id][1] + " to Exit";
           progressbar->start(0,100,log.c_str());
@@ -682,6 +690,7 @@ bool CoreJobs::wait_job(int job_id)
             success = ReadFile(ProcessPipe[ProcessPipe_data_id], chBuf, BUFSIZE, &dwRead, NULL);
             std::string output(chBuf, dwRead);
             output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back(output);
+            CoreTopologyConsole::solver_output(job_id,output);
             get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));        
             //update progress bar
             const auto t_end = std::chrono::high_resolution_clock::now();
@@ -742,15 +751,17 @@ bool CoreJobs::wait_job(int job_id)
       }
       if (status!=0)
       {
+        CoreTopologyConsole::finish_solver_output(job_id);
         log = "Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + " exited with errors! \n";
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "4";
         jobs_data[jobs_data_id][6] = "-1";
       }else{
+        CoreTopologyConsole::finish_solver_output(job_id);
         log = "Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + " finished! \n";
         //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "2";
         results_loaded = complete_job_results(job_id);
       }
@@ -778,7 +789,7 @@ bool CoreJobs::wait_job(int job_id)
       if (CubitProcessHandler_data_id != -1)
       {
         log = " Waiting for Job " + jobs_data[jobs_data_id][1] + " to Exit \n";
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
 
         log = " Waiting for Job " + jobs_data[jobs_data_id][1] + " to Exit";
         progressbar->start(0,100,log.c_str());
@@ -795,6 +806,7 @@ bool CoreJobs::wait_job(int job_id)
             //PRINT_INFO("%s", log.c_str());
             //jobs_data[jobs_data_id][5] = jobs_data[jobs_data_id][5] + output.str();
             output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back(output.str());
+            CoreTopologyConsole::solver_output(job_id,output.str());
             output = "";
             get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));
           }
@@ -815,15 +827,17 @@ bool CoreJobs::wait_job(int job_id)
         //errorcode = CubitProcessHandler[CubitProcessHandler_data_id].exit_code();
         if (status!=0)
         {
+          CoreTopologyConsole::finish_solver_output(job_id);
           log = "Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + " exited with errors! \n";
           //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
-          PRINT_INFO("%s", log.c_str());
+          TOPOLOGY_INFO("%s", log.c_str());
           jobs_data[jobs_data_id][3] = "4";
           jobs_data[jobs_data_id][6] = "-1";
         }else{
+          CoreTopologyConsole::finish_solver_output(job_id);
           log = "Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + " finished! \n";
           //log.append(" Exit Code " + std::to_string(errorcode) + " \n");
-          PRINT_INFO("%s", log.c_str());
+          TOPOLOGY_INFO("%s", log.c_str());
           jobs_data[jobs_data_id][3] = "2";
           results_loaded = complete_job_results(job_id);
         }
@@ -836,7 +850,9 @@ bool CoreJobs::wait_job(int job_id)
 }
 
 bool CoreJobs::kill_job(int job_id)
-{ 
+{
+  const auto consoleContext = CoreTopologyConsole::job_context(job_id);
+  const CoreTopologyConsole consoleLog(consoleContext);
   #ifdef WIN32
     std::string log;
     int jobs_data_id=-1;
@@ -852,19 +868,20 @@ bool CoreJobs::kill_job(int job_id)
         if (returnCode == STILL_ACTIVE)
         { 
           log = "Kill Job " + jobs_data[jobs_data_id][1] + " with ID " + jobs_data[jobs_data_id][0] + "\n";
-          PRINT_INFO("%s", log.c_str());
+          TOPOLOGY_INFO("%s", log.c_str());
           const bool terminated = TerminateProcess(processhandle, 1) != FALSE;
           const bool exited = terminated && WaitForSingleObject(processhandle, 1000) == WAIT_OBJECT_0;
           CloseHandle(processhandle);
           if (!exited)
           {
-            PRINT_ERROR("Unable to confirm termination of job %d.\n", job_id);
+            TOPOLOGY_ERROR("Unable to confirm termination of job %d.\n", job_id);
             return false;
           }
           kill_pipe(std::stoi(jobs_data[jobs_data_id][0]));
           log = " Job killed!\n";
-          PRINT_INFO("%s", log.c_str());
+          TOPOLOGY_INFO("%s", log.c_str());
           jobs_data[jobs_data_id][3] = "3";
+          CoreTopologyConsole::finish_solver_output(job_id);
           output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back("JOB KILLED!");
 
           // delete handles
@@ -899,11 +916,11 @@ bool CoreJobs::kill_job(int job_id)
       if (CubitProcessHandler_data_id != -1)
       {
         log = " Kill the Job " + jobs_data[jobs_data_id][2] + " \n";
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         CubitProcessHandler[CubitProcessHandler_data_id].kill();
         CubitProcessHandler[CubitProcessHandler_data_id].wait();
         log = " Job killed with Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n";
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
         jobs_data[jobs_data_id][3] = "3";
         CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
       }
@@ -939,6 +956,8 @@ bool CoreJobs::results_ready()
 
 bool CoreJobs::complete_job_results(int job_id)
 {
+  const auto consoleContext = CoreTopologyConsole::job_context(job_id);
+  const CoreTopologyConsole consoleLog(consoleContext);
   if (completing_results)
   {
     return false;
@@ -980,7 +999,7 @@ bool CoreJobs::complete_job_results(int job_id)
     {
       jobs_data[index][3] = "4";
       pending_result_jobs.erase(job_id);
-      PRINT_ERROR("Failed to load results for job %d.\n", job_id);
+      TOPOLOGY_ERROR("Failed to load results for job %d.\n", job_id);
       return false;
     }
 
@@ -1003,7 +1022,7 @@ bool CoreJobs::complete_job_results(int job_id)
     }());
     if (!converted)
     {
-      PRINT_ERROR("VTK conversion failed for job %d. Retry conversion before the next job.\n", job_id);
+      TOPOLOGY_ERROR("VTK conversion failed for job %d. Retry conversion before the next job.\n", job_id);
       return false;
     }
     pending_result_jobs.erase(job_id);
@@ -1017,7 +1036,7 @@ bool CoreJobs::complete_job_results(int job_id)
       jobs_data[index][3] = "4";
       pending_result_jobs.erase(job_id);
     }
-    PRINT_ERROR("Unable to prepare results for job %d: %s\n", job_id, failure.what());
+    TOPOLOGY_ERROR("Unable to prepare results for job %d: %s\n", job_id, failure.what());
     return false;
   }
   catch (...)
@@ -1028,7 +1047,7 @@ bool CoreJobs::complete_job_results(int job_id)
       jobs_data[index][3] = "4";
       pending_result_jobs.erase(job_id);
     }
-    PRINT_ERROR("Unable to prepare results for job %d.\n", job_id);
+    TOPOLOGY_ERROR("Unable to prepare results for job %d.\n", job_id);
     return false;
   }
 }
@@ -1054,6 +1073,8 @@ bool CoreJobs::check_jobs()
     {
       if (std::stoi(jobs_data[i][3])==1)
       {
+        const int consoleJob = std::stoi(jobs_data[i][0]);
+        const CoreTopologyConsole consoleLog(CoreTopologyConsole::job_context(consoleJob));
         const int process_id = std::stoi(jobs_data[i][4]);
         HANDLE processhandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, process_id);
         DWORD returnCode = STILL_ACTIVE;
@@ -1065,7 +1086,7 @@ bool CoreJobs::check_jobs()
         }
         if (!queried)
         {
-          PRINT_ERROR("Unable to query solver process for job %s.\n", jobs_data[i][0].c_str());
+          TOPOLOGY_ERROR("Unable to query solver process for job %s.\n", jobs_data[i][0].c_str());
           continue;
         }
         if (returnCode == STILL_ACTIVE)
@@ -1091,14 +1112,16 @@ bool CoreJobs::check_jobs()
         }
         if ((returnCode != STILL_ACTIVE) && (status!=0)) // if process doesn't exist and exited with error
         {
+          CoreTopologyConsole::finish_solver_output(consoleJob);
           log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " exited with errors! \n";
-          PRINT_INFO("%s", log.c_str());
+          TOPOLOGY_INFO("%s", log.c_str());
           jobs_data[i][3] = "4";
           jobs_data[i][6] = "-1";
         }else if ((returnCode != STILL_ACTIVE) && (status==0)) // if process doesn't exist and exited without error
         {
+          CoreTopologyConsole::finish_solver_output(consoleJob);
           log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " finished! \n";
-          PRINT_INFO("%s", log.c_str());
+          TOPOLOGY_INFO("%s", log.c_str());
           jobs_data[i][3] = "2";
           load_finished_results(i);
         }
@@ -1121,10 +1144,12 @@ bool CoreJobs::check_jobs()
         log.append("Job PID " + jobs_data[i][4] + " \n");
         log.append("PID " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].pid()) + " \n");
         log.append("CubitProcessHandler_data_id " + std::to_string(CubitProcessHandler_data_id) + " \n");
-        PRINT_INFO("%s", log.c_str());*/
+        TOPOLOGY_INFO("%s", log.c_str());*/
 
         if (std::stoi(jobs_data[i][3])==1)
         {
+          const int consoleJob = std::stoi(jobs_data[i][0]);
+          const CoreTopologyConsole consoleLog(CoreTopologyConsole::job_context(consoleJob));
           // check for output
           int ic=0;
           while (CubitProcessHandler[CubitProcessHandler_data_id].can_read_output())
@@ -1136,6 +1161,7 @@ bool CoreJobs::check_jobs()
               //PRINT_INFO("%s", log.c_str());
               //jobs_data[i][5] = jobs_data[i][5] + output.str();
               output_console[std::stoi(jobs_data[i][5])].push_back(output.str());
+              CoreTopologyConsole::solver_output(consoleJob,output.str());
               output = "";
               get_cvgsta(std::stoi(jobs_data[i][0]));
             }else{
@@ -1157,7 +1183,7 @@ bool CoreJobs::check_jobs()
           }
           if (finished < 0)
           {
-            PRINT_ERROR("Unable to query solver process for job %s.\n", jobs_data[i][0].c_str());
+            TOPOLOGY_ERROR("Unable to query solver process for job %s.\n", jobs_data[i][0].c_str());
             jobs_data[i][3] = "4";
             jobs_data[i][6] = "-1";
             CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
@@ -1170,18 +1196,20 @@ bool CoreJobs::check_jobs()
           if (!succeeded) // if process doesn't exist and exited with error
           {
             CubitProcessHandler[CubitProcessHandler_data_id].wait();
+            CoreTopologyConsole::finish_solver_output(consoleJob);
             log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " exited with errors! \n";
             //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
-            PRINT_INFO("%s", log.c_str());
+            TOPOLOGY_INFO("%s", log.c_str());
             jobs_data[i][3] = "4";
             jobs_data[i][6] = "-1";
             CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
           }else if (succeeded) // if process doesn't exist and exited without error
           {
             CubitProcessHandler[CubitProcessHandler_data_id].wait();
+            CoreTopologyConsole::finish_solver_output(consoleJob);
             log = "Job " + jobs_data[i][1] + " with ID " + jobs_data[i][0] + " finished! \n";
             //log.append(" Exit Code " + std::to_string(CubitProcessHandler[CubitProcessHandler_data_id].exit_code()) + " \n");
-            PRINT_INFO("%s", log.c_str());
+            TOPOLOGY_INFO("%s", log.c_str());
             jobs_data[i][3] = "2";
             load_finished_results(i);
             CubitProcessHandler.erase(CubitProcessHandler.begin() + CubitProcessHandler_data_id);
@@ -1307,6 +1335,7 @@ int CoreJobs::get_jobs_data_id_from_job_id(int job_id)
             }
             std::string output(chBuf, dwRead);
             output_console[std::stoi(jobs_data[jobs_data_id][5])].push_back(output);
+            CoreTopologyConsole::solver_output(job_id,output);
             get_cvgsta(std::stoi(jobs_data[jobs_data_id][0]));
           }
         }

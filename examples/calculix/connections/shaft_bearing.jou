@@ -1,0 +1,38 @@
+#!cubit
+reset
+# Two independent solids. Keep separate meshes on the shaft and bore.
+create cylinder radius 3 height 10
+create cylinder radius 1.2 height 12
+subtract volume 2 from volume 1
+#!python
+housing = cubit.get_entities("volume")[0]
+#!cubit
+create cylinder radius 1 height 12
+#!python
+shaft = cubit.get_last_id("volume")
+
+def mantle(volume, radius):
+    for face in cubit.get_relatives("volume", volume, "surface"):
+        types = cubit.get_geometry_type("surface", [face])
+        if types and types[0] in ("cylinder", "cone"):
+            for edge in cubit.get_relatives("surface", face, "curve"):
+                if abs(cubit.get_arc_center_radius(edge)[3] - radius) < 1e-7:
+                    return face
+    raise ValueError(f"No cylindrical surface of radius {radius} on volume {volume}")
+
+bore_face = mantle(housing, 1.2)
+shaft_face = mantle(shaft, 1)
+cubit.cmd(f"block 1 add volume {housing} {shaft}")
+cubit.cmd(f'ccx create joint 1 name "Shaft bearing" type revolute surface {shaft_face} to surface {bore_face} coaxial history all')
+#!cubit
+ccx units system "N-mm-s"
+ccx units geometry unit "mm"
+ccx create material "Steel"
+ccx modify material 1 card elastic model iso
+ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"
+ccx modify material 1 activate card elastic
+ccx create section solid block 1 material 1
+volume all scheme tetmesh
+volume all size 0.75
+mesh volume all
+# Model-definition example. Choose supports, loading and analysis steps before solving.

@@ -29,8 +29,10 @@ create vertex location on surface 1  center
 create vertex location on surface 2  center
 create vertex location on surface 2  center
 
-ccx create constraint rigid body nodeset 1 ref 9 rot 10
-ccx create constraint rigid body nodeset 2 ref 11 rot 12
+ccx create rp 1 name "Control 1" vertex 9 rotation_vertex 10
+ccx create rigid body 1 name "Attachment 1" nodeset 1 rp 1
+ccx create rp 2 name "Control 2" vertex 11 rotation_vertex 12
+ccx create rigid body 2 name "Attachment 2" nodeset 2 rp 2
 
 nodeset 3 add vertex 9
 ccx create displacement nodeset 3 dof_1 0 dof_2 0

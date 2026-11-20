@@ -1,0 +1,41 @@
+#!cubit
+reset
+# Pull two separated solids apart along X using an axial spring at aligned corners.
+create brick x 10 y 10 z 10
+create brick x 10 y 10 z 10
+move volume 2 x 20
+block 1 add volume 1 2
+nodeset 1 add volume 1
+nodeset 1 name "Fixed"
+nodeset 2 add volume 2
+nodeset 2 name "Lateral"
+ccx units system "N-mm-s"
+ccx units geometry unit "mm"
+ccx create material "Steel"
+ccx modify material 1 card elastic model iso
+ccx modify material 1 card elastic row 1 values 210000000000 0.3 273.15 unit "SI"
+ccx modify material 1 activate card elastic
+#!python
+def corner(volume, xyz):
+    vertices = cubit.get_relatives("volume", volume, "vertex")
+    return min(vertices, key=lambda v: sum((a-b)**2 for a,b in zip(cubit.get_center_point("vertex",v),xyz)))
+
+a = corner(1, (5,5,5))
+b = corner(2, (15,5,5))
+cubit.cmd(f"nodeset 3 add vertex {b}")
+cubit.cmd(f'ccx create spring 1 name "Return spring" from vertex {a} to vertex {b} stiffness 200 unit "N/mm"')
+#!cubit
+nodeset 3 name "Loaded"
+ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0
+ccx create displacement nodeset 2 dof_2 0 dof_3 0
+ccx create force nodeset 3 dof_1 10
+ccx create step name "Extension" static
+ccx step 1 add bc displacement 1 2
+ccx step 1 add load force 1
+ccx create section solid block 1 material 1
+block 1 element type HEX8
+volume all size 5
+mesh volume all
+# Expected axial extension 0.05 mm, derived tensile force 10 N.
+ccx create job name "axial_spring"
+ccx run job 1

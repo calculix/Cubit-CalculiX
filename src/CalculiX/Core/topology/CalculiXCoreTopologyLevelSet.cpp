@@ -7,7 +7,7 @@
 #include "CalculiXTopologyRunInterface.hpp"
 #include "Core/materials/CalculiXMaterialsInterface.hpp"
 #include "Core/jobs/CalculiXJobsInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <QScopeGuard>
 #include <algorithm>
 #include <cmath>
@@ -26,7 +26,7 @@ TopologyCase* level_set_case(CoreTopology* topology, int topology_id)
       return &entry->second;
     }
   }
-  PRINT_ERROR("A prepared level-set compliance topology case is required.\n");
+  TOPOLOGY_ERROR("A prepared level-set compliance topology case is required.\n");
   return nullptr;
 }
 
@@ -35,7 +35,7 @@ bool completed_job(int topology_id, int iteration_id)
   const int job = CalculiXTopologyInterface().get_topology_iteration_job_id(topology_id, iteration_id);
   if (job <= 0 || CalculiXJobsInterface().get_job_status(job) != 2)
   {
-    PRINT_ERROR("Completed physical job results are required for level-set evaluation/update.\n");
+    TOPOLOGY_ERROR("Completed physical job results are required for level-set evaluation/update.\n");
     return false;
   }
   return true;
@@ -48,7 +48,7 @@ bool store_design(TopologyCase& configuration, int topology_id, TopologyLevelSet
       configuration.iteration_density_designs.count(iteration) != 0 || configuration.iteration_level_set_designs.count(iteration) != 0 ||
       factors.size() != configuration.element_preserved.size() || factors.empty())
   {
-    PRINT_ERROR("Level-set destination iteration already exists or is incomplete.\n");
+    TOPOLOGY_ERROR("Level-set destination iteration already exists or is incomplete.\n");
     return false;
   }
   std::vector<int> ids;
@@ -98,7 +98,7 @@ bool CalculiXCore::initialize_topology_level_set_design(int topology_id)
   if (!std::isfinite(configuration->target_volume_fraction) || configuration->target_volume_fraction <= 0.0 || configuration->target_volume_fraction > 1.0 ||
       design.volume.minimum_design_volume_fraction > configuration->target_volume_fraction + controls.volume_tolerance)
   {
-    PRINT_ERROR("Invalid level-set target or target below the pinned-element volume bound.\n");
+    TOPOLOGY_ERROR("Invalid level-set target or target below the pinned-element volume bound.\n");
     return false;
   }
   return store_design(*configuration, topology_id, std::move(design), factors);
@@ -114,7 +114,7 @@ bool CalculiXCore::evaluate_topology_level_set_compliance(int topology_id, int i
   const auto design = configuration->iteration_level_set_designs.find(iteration_id);
   if (design == configuration->iteration_level_set_designs.end() || configuration->iteration_evaluations.count(iteration_id) != 0)
   {
-    PRINT_ERROR("Missing level-set design or already evaluated iteration.\n");
+    TOPOLOGY_ERROR("Missing level-set design or already evaluated iteration.\n");
     return false;
   }
   std::map<int, double> volumes;
@@ -147,12 +147,12 @@ bool CalculiXCore::evaluate_topology_level_set_proposal(int topology_id, int ite
   if (design == configuration->iteration_level_set_designs.end() || evaluation == configuration->iteration_evaluations.end() ||
       evaluation->second.method != TopologyMethod::LevelSet || !evaluation->second.level_set_evaluation.available)
   {
-    PRINT_ERROR("Solved level-set evaluation is missing.\n");
+    TOPOLOGY_ERROR("Solved level-set evaluation is missing.\n");
     return false;
   }
   if (!design->second.free_interface_available)
   {
-    PRINT_ERROR("Level-set field is saturated without a resolved free interface; convergence cannot be certified.\n");
+    TOPOLOGY_ERROR("Level-set field is saturated without a resolved free interface; convergence cannot be certified.\n");
     return false;
   }
   std::map<int, double> volumes;
@@ -176,7 +176,7 @@ bool CalculiXCore::prepare_topology_level_set_iteration(int topology_id, int sou
   if (!configuration || source_iteration < 1 || source_iteration == (std::numeric_limits<int>::max)() ||
       next_iteration != source_iteration + 1 || !completed_job(topology_id, source_iteration))
   {
-    PRINT_ERROR("Invalid source/destination for level-set iteration preparation.\n");
+    TOPOLOGY_ERROR("Invalid source/destination for level-set iteration preparation.\n");
     return false;
   }
   const auto source = configuration->iteration_level_set_designs.find(source_iteration);
@@ -187,7 +187,7 @@ bool CalculiXCore::prepare_topology_level_set_iteration(int topology_id, int sou
       evaluation->second.level_set_proposal.source_iteration != source_iteration || !proposal.available || proposal.source_iteration != source_iteration ||
       proposal.diagnostics.target_volume_fraction != configuration->target_volume_fraction)
   {
-    PRINT_ERROR("Missing/stale level-set proposal or source evaluation.\n");
+    TOPOLOGY_ERROR("Missing/stale level-set proposal or source evaluation.\n");
     return false;
   }
   std::map<int, double> volumes;
@@ -211,7 +211,7 @@ bool CalculiXCore::check_topology_level_set_convergence(int topology_id, int pre
   auto* configuration = level_set_case(topology, topology_id);
   if (!configuration || previous_iteration < 1 || previous_iteration == (std::numeric_limits<int>::max)() || current_iteration != previous_iteration + 1)
   {
-    PRINT_ERROR("Invalid level-set convergence iteration IDs.\n");
+    TOPOLOGY_ERROR("Invalid level-set convergence iteration IDs.\n");
     return false;
   }
   const auto previous = configuration->iteration_level_set_designs.find(previous_iteration);
@@ -230,13 +230,13 @@ bool CalculiXCore::check_topology_level_set_convergence(int topology_id, int pre
       !current->second.volume.available || !current->second.free_interface_available || current->second.node_values.empty() ||
       current->second.node_values.size() != previous->second.node_values.size() || current->second.fixed_nodes != previous->second.fixed_nodes)
   {
-    PRINT_ERROR("Incomplete/current level-set convergence data is missing.\n");
+    TOPOLOGY_ERROR("Incomplete/current level-set convergence data is missing.\n");
     return false;
   }
   const auto& settings = current->second.settings;
   if (!CoreTopologyLevelSet::validate_settings(settings) || !std::isfinite(configuration->compliance_tolerance) || configuration->compliance_tolerance <= 0.0 || configuration->compliance_tolerance > 1.0)
   {
-    PRINT_ERROR("Invalid level-set convergence tolerances.\n");
+    TOPOLOGY_ERROR("Invalid level-set convergence tolerances.\n");
     return false;
   }
   double maximum = 0.0;
@@ -247,7 +247,7 @@ bool CalculiXCore::check_topology_level_set_convergence(int topology_id, int pre
         node.second < -1.0 || node.second > 1.0 || old->second < -1.0 || old->second > 1.0 ||
         (current->second.fixed_nodes.count(node.first) != 0 && (node.second != 1.0 || old->second != 1.0)))
     {
-      PRINT_ERROR("Invalid level-set convergence field.\n");
+      TOPOLOGY_ERROR("Invalid level-set convergence field.\n");
       return false;
     }
     maximum = (std::max)(maximum, std::abs(node.second - old->second));
@@ -260,7 +260,7 @@ bool CalculiXCore::check_topology_level_set_convergence(int topology_id, int pre
   if (!std::isfinite(before) || before < 0.0 || !std::isfinite(value) || value < 0.0 || !std::isfinite(fraction) || fraction < 0.0 || fraction > 1.0 ||
       !std::isfinite(residual) || residual < 0.0 || !std::isfinite(configuration->target_volume_fraction) || configuration->target_volume_fraction <= 0.0 || configuration->target_volume_fraction > 1.0)
   {
-    PRINT_ERROR("Invalid level-set convergence values.\n");
+    TOPOLOGY_ERROR("Invalid level-set convergence values.\n");
     return false;
   }
   const double scale = (std::max)(before, value);
@@ -279,36 +279,36 @@ bool CalculiXCore::check_topology_level_set_convergence(int topology_id, int pre
   progress.relative_objective_change = relative;
   progress.convergence_checked = true;
   progress.converged = converged;
-  PRINT_INFO("Topology %d iteration %d level-set convergence:\n", topology_id, current_iteration);
-  PRINT_INFO("  Maximum field change: %.6g / %.6g [%s]\n", maximum, settings.field_tolerance, [&]() -> const char* {
+  TOPOLOGY_INFO("Topology %d iteration %d level-set convergence:\n", topology_id, current_iteration);
+  TOPOLOGY_INFO("  Maximum field change: %.6g / %.6g [%s]\n", maximum, settings.field_tolerance, [&]() -> const char* {
     if (maximum <= settings.field_tolerance) {
       return "PASS";
     } else {
       return "WAIT";
     }
   }());
-  PRINT_INFO("  Ordinary field proposal residual: %.6g / %.6g [%s]\n", residual, settings.field_tolerance, [&]() -> const char* {
+  TOPOLOGY_INFO("  Ordinary field proposal residual: %.6g / %.6g [%s]\n", residual, settings.field_tolerance, [&]() -> const char* {
     if (residual <= settings.field_tolerance) {
       return "PASS";
     } else {
       return "WAIT";
     }
   }());
-  PRINT_INFO("  Relative compliance change: %.6g / %.6g [%s]\n", relative, configuration->compliance_tolerance, [&]() -> const char* {
+  TOPOLOGY_INFO("  Relative compliance change: %.6g / %.6g [%s]\n", relative, configuration->compliance_tolerance, [&]() -> const char* {
     if (relative <= configuration->compliance_tolerance) {
       return "PASS";
     } else {
       return "WAIT";
     }
   }());
-  PRINT_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration->target_volume_fraction + controls.volume_tolerance, [&]() -> const char* {
+  TOPOLOGY_INFO("  Volume fraction: %.9g / %.9g [%s]\n", fraction, configuration->target_volume_fraction + controls.volume_tolerance, [&]() -> const char* {
     if (fraction <= configuration->target_volume_fraction + controls.volume_tolerance) {
       return "PASS";
     } else {
       return "WAIT";
     }
   }());
-  PRINT_INFO("  Converged: %s\n", [&]() -> const char* {
+  TOPOLOGY_INFO("  Converged: %s\n", [&]() -> const char* {
     if (converged) {
       return "YES";
     } else {

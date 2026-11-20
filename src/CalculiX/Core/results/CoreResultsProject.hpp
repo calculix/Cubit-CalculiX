@@ -2,6 +2,7 @@
 #define CORERESULTSPROJECT_HPP
 
 #include <vector>
+#include "Core/connections/ConnectionRunMap.hpp"
 #include <string>
 #include <chrono>
 class CoreResultsFrd;
@@ -17,7 +18,7 @@ public:
 
   bool is_initialized = false;
 
-  bool init(CoreResultsFrd* frd); // initialize
+  bool init(CoreResultsFrd* frd, const ConnectionRunMap& connections); // initialize
   bool reset(); // delete all data and initialize afterwards
   bool clear(); // clear all stored result data
   bool project(int step, int totalincrement, double scale, const std::string& source_system); // recorded solver units -> geometry units
@@ -26,6 +27,7 @@ public:
   int get_result_blocks_data_id_step(int step); // gets the result blocks data id for the desired step, -1 if fails
   int get_result_blocks_data_id_totalincrement(int totalincrement); // gets the result blocks data id for the desired totalincrement, -1 if fails
 
+  ConnectionRunMap connection_map;
   ProgressTool *progressbar = nullptr; // borrowed from AppUtil
   CoreResultsFrd *frd = nullptr; // borrowed reader
   MeshExportInterface *me_iface = nullptr;

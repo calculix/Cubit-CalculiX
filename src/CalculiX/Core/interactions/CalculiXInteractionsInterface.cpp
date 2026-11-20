@@ -10,16 +10,6 @@
 
 #include "Core/loadCalculiXCore.hpp"
 
-bool CalculiXInteractionsInterface::get_rotation_node_ids(std::set<int>& nodes, std::string& error) const
-{
-  if (ccx_core.constraints == nullptr)
-  {
-    error = "Constraint storage is unavailable.";
-    return false;
-  }
-  return ccx_core.constraints->get_rotation_node_ids(nodes, error);
-}
-
 std::string CalculiXInteractionsInterface::get_surfaceinteraction_name(int surfaceinteraction_id) {
   return ccx_core.surfaceinteractions->get_surfaceinteraction_name(surfaceinteraction_id);
 }

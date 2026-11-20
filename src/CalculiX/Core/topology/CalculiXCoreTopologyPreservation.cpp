@@ -3,13 +3,13 @@
 #include "CoreTopologyPreservation.hpp"
 #include "CoreTopologyDefaultPreservation.hpp"
 #include "CoreTopologyModelPreparation.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CalculiXCore::reset_preserved_sets(int topology_id)
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -20,7 +20,7 @@ bool CalculiXCore::add_preserved_sets(int topology_id, int set_type, const std::
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -31,7 +31,7 @@ bool CalculiXCore::remove_preserved_sets(int topology_id, int set_type, const st
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -42,7 +42,7 @@ std::vector<std::vector<int>> CalculiXCore::get_topology_element_preservation(in
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return {};
   }
 
@@ -56,7 +56,7 @@ bool CalculiXCore::get_topology_preserved_sets(int topology_id, std::vector<Topo
 
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -64,7 +64,7 @@ bool CalculiXCore::get_topology_preserved_sets(int topology_id, std::vector<Topo
 
   if (entry == topology->topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -85,13 +85,13 @@ bool CalculiXCore::get_topology_set_element_ids(int topology_id, int set_type, i
 
   if (!mat || !me_iface)
   {
-    PRINT_ERROR("Topology mesh/material interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology mesh/material interfaces are not initialized.\n");
     return false;
   }
 
   if (!cb)
   {
-    PRINT_ERROR("Block core is not initialized.\n");
+    TOPOLOGY_ERROR("Block core is not initialized.\n");
     return false;
   }
 
@@ -109,7 +109,7 @@ bool CalculiXCore::collect_topology_default_sets(std::map<int, std::set<int>>& d
     !loadsgravity || !loadscentrifugal ||
     !loadsfilm || !loadsradiation || !loadssurfacetraction || !loadsbodyheatflux)
   {
-    PRINT_ERROR("Topology preservation cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology preservation cores are not initialized.\n");
     return false;
   }
 
@@ -140,7 +140,7 @@ bool CalculiXCore::resolve_topology_preservation(int topology_id, const std::map
 {
   if (!topology || !mat)
   {
-    PRINT_ERROR("Topology/material cores are not initialized.\n");
+    TOPOLOGY_ERROR("Topology/material cores are not initialized.\n");
     return false;
   }
 

@@ -1,3 +1,4 @@
+#include "Core/connections/CalculiXConnectionsInterface.hpp"
 #include "CalculiXDomainUnits.hpp"
 #include <map>
 #include "CalculiXDofUnits.hpp"
@@ -177,7 +178,7 @@ bool CalculiXDomainUnits::convert(CoreConstraints& model, CalculiXDomainUnitView
     return false;
   }
   std::set<int> rotationNodes;
-  if (!candidate.equation_data.empty() && !candidate.get_rotation_node_ids(rotationNodes, error))
+  if (!candidate.equation_data.empty() && !CalculiXConnectionsInterface().get_rotation_node_ids(rotationNodes, error))
   {
     return false;
   }

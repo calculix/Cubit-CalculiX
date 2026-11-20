@@ -1,5 +1,5 @@
 #include "CoreTopologyLevelSetQuadrature.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <QScopedValueRollback>
 #include <cmath>
 #include <utility>
@@ -14,7 +14,7 @@ bool report_error(const std::string& message, std::string* error)
   }
   else
   {
-    PRINT_ERROR("%s\n", message.c_str());
+    TOPOLOGY_ERROR("%s\n", message.c_str());
   }
   return false;
 }

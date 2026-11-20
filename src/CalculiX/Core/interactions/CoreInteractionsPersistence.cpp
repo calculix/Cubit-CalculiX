@@ -44,18 +44,12 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreConstraints& constrai
   {
 
     decltype(constraints.constraints_data) saved_constraints_data;
-    decltype(constraints.rigidbody_constraint_data) saved_rigidbody_constraint_data;
     decltype(constraints.tie_constraint_data) saved_tie_constraint_data;
     decltype(constraints.equation_constraint_data) saved_equation_constraint_data;
     decltype(constraints.equation_data) saved_equation_data;
     decltype(constraints.equation_group_constraint_data) saved_equation_group_constraint_data;
     decltype(constraints.equation_group_data) saved_equation_group_data;
     if (file.nameExists(CalculiXModelSchema::path("Constraints/constraints_data")) && !file.read_dataset_int_rank_2("constraints_data", CalculiXModelSchema::path("Constraints"), saved_constraints_data))
-    {
-      PRINT_ERROR("Cannot read CalculiX Constraints: %s\n", file.last_error().c_str());
-      return false;
-    }
-    if (file.nameExists(CalculiXModelSchema::path("Constraints/rigidbody_constraint_data")) && !file.read_dataset_string_rank_2("rigidbody_constraint_data", CalculiXModelSchema::path("Constraints"), saved_rigidbody_constraint_data))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;
@@ -90,11 +84,6 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreConstraints& constrai
       PRINT_ERROR("Cannot read CalculiX Constraints: constraints_data has incomplete rows.\n");
       return false;
     }
-    if (!(PersistenceTable::keyedRows(saved_rigidbody_constraint_data, 5)))
-    {
-      PRINT_ERROR("Cannot read CalculiX Constraints: rigidbody_constraint_data has incomplete rows.\n");
-      return false;
-    }
     if (!(PersistenceTable::keyedRows(saved_tie_constraint_data, 5)))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: tie_constraint_data has incomplete rows.\n");
@@ -120,11 +109,6 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreConstraints& constrai
       PRINT_ERROR("Cannot read CalculiX Constraints: equation_group_data has incomplete rows.\n");
       return false;
     }
-    if (!(PersistenceTable::selectedReferences(saved_constraints_data, 1, 1, 2, saved_rigidbody_constraint_data)))
-    {
-      PRINT_ERROR("Cannot read CalculiX Constraints: invalid rigidbody_constraint_data reference.\n");
-      return false;
-    }
     if (!(PersistenceTable::selectedReferences(saved_constraints_data, 1, 2, 2, saved_tie_constraint_data)))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: invalid tie_constraint_data reference.\n");
@@ -140,7 +124,7 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreConstraints& constrai
       PRINT_ERROR("Cannot read CalculiX Constraints: invalid equation_group_constraint_data reference.\n");
       return false;
     }
-    if (!(PersistenceTable::types(saved_constraints_data, 1, {1, 2, 3, 4})))
+    if (!(PersistenceTable::types(saved_constraints_data, 1, {2, 3, 4})))
     {
       PRINT_ERROR("Cannot read CalculiX Constraints: unknown feature type.\n");
       return false;
@@ -151,7 +135,6 @@ bool CoreInteractionsPersistence::read(HDF5Tool& file, CoreConstraints& constrai
       return false;
     }
     constraints.constraints_data.swap(saved_constraints_data);
-    constraints.rigidbody_constraint_data.swap(saved_rigidbody_constraint_data);
     constraints.tie_constraint_data.swap(saved_tie_constraint_data);
     constraints.equation_constraint_data.swap(saved_equation_constraint_data);
     constraints.equation_data.swap(saved_equation_data);
@@ -187,11 +170,6 @@ bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreConstraints& c
       PRINT_ERROR("Cannot write CalculiX Constraints: constraints_data has incomplete rows.\n");
       return false;
     }
-    if (!(PersistenceTable::keyedRows(constraints.rigidbody_constraint_data, 5)))
-    {
-      PRINT_ERROR("Cannot write CalculiX Constraints: rigidbody_constraint_data has incomplete rows.\n");
-      return false;
-    }
     if (!(PersistenceTable::keyedRows(constraints.tie_constraint_data, 5)))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: tie_constraint_data has incomplete rows.\n");
@@ -217,11 +195,6 @@ bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreConstraints& c
       PRINT_ERROR("Cannot write CalculiX Constraints: equation_group_data has incomplete rows.\n");
       return false;
     }
-    if (!(PersistenceTable::selectedReferences(constraints.constraints_data, 1, 1, 2, constraints.rigidbody_constraint_data)))
-    {
-      PRINT_ERROR("Cannot write CalculiX Constraints: invalid rigidbody_constraint_data reference.\n");
-      return false;
-    }
     if (!(PersistenceTable::selectedReferences(constraints.constraints_data, 1, 2, 2, constraints.tie_constraint_data)))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: invalid tie_constraint_data reference.\n");
@@ -237,7 +210,7 @@ bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreConstraints& c
       PRINT_ERROR("Cannot write CalculiX Constraints: invalid equation_group_constraint_data reference.\n");
       return false;
     }
-    if (!(PersistenceTable::types(constraints.constraints_data, 1, {1, 2, 3, 4})))
+    if (!(PersistenceTable::types(constraints.constraints_data, 1, {2, 3, 4})))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: unknown feature type.\n");
       return false;
@@ -253,11 +226,6 @@ bool CoreInteractionsPersistence::write(HDF5Tool& file, const CoreConstraints& c
       return false;
     }
     if (!file.write_dataset_int_rank_2("constraints_data", CalculiXModelSchema::path("Constraints"), constraints.constraints_data))
-    {
-      PRINT_ERROR("Cannot write CalculiX Constraints: %s\n", file.last_error().c_str());
-      return false;
-    }
-    if (!file.write_dataset_string_rank_2("rigidbody_constraint_data", CalculiXModelSchema::path("Constraints"), constraints.rigidbody_constraint_data))
     {
       PRINT_ERROR("Cannot write CalculiX Constraints: %s\n", file.last_error().c_str());
       return false;

@@ -3,7 +3,7 @@
 #include "CoreTopologyGeometry.hpp"
 #include "CoreTopologyIteration.hpp"
 #include "Core/materials/CoreMaterials.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <cmath>
 #include <vector>
 
@@ -11,7 +11,7 @@ bool CoreTopologyDensity::set_densities(CoreTopology& topology, CoreMaterials& m
 {
   if (source_iteration < -1 || source_iteration == 0 || source_iteration >= iteration_id)
   {
-    PRINT_ERROR("Invalid source iteration for topology density storage.\n");
+    TOPOLOGY_ERROR("Invalid source iteration for topology density storage.\n");
     return false;
   }
 
@@ -85,7 +85,7 @@ bool CoreTopologyDensity::set_densities(CoreTopology& topology, CoreMaterials& m
       configuration.target_volume_fraction <= 0.0 ||
       configuration.target_volume_fraction > 1.0)
   {
-    PRINT_ERROR("Invalid topology target volume fraction.\n");
+    TOPOLOGY_ERROR("Invalid topology target volume fraction.\n");
     discard_iteration();
     return false;
   }
@@ -93,7 +93,7 @@ bool CoreTopologyDensity::set_densities(CoreTopology& topology, CoreMaterials& m
   // Allow a small tolerance for accumulated floating-point rounding.
   if (configuration.target_volume_fraction + 1.0e-12 < minimum)
   {
-    PRINT_ERROR(
+    TOPOLOGY_ERROR(
         "Topology %d target volume fraction %.9g is below "
         "the minimum achievable fraction %.9g.\n",
         topology_id, configuration.target_volume_fraction, minimum);

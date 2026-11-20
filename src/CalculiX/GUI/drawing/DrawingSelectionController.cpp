@@ -83,6 +83,21 @@ void DrawingSelectionController::showSelection(const PropertySelection& selectio
       selectFeature(DrawFeature::Orientation, selection.id, selection.stepId);
       break;
     }
+    case PropertyFeature::ReferencePoint:
+      selectFeature(DrawFeature::ReferencePoint, selection.id, -1);
+      break;
+    case PropertyFeature::RigidBody:
+      selectFeature(DrawFeature::RigidBody, selection.id, -1);
+      break;
+    case PropertyFeature::PointMass:
+      selectFeature(DrawFeature::PointMass, selection.id, -1);
+      break;
+    case PropertyFeature::Spring:
+      selectFeature(DrawFeature::Spring, selection.id, -1);
+      break;
+    case PropertyFeature::Joint:
+      selectFeature(DrawFeature::Joint, selection.id, -1);
+      break;
     case PropertyFeature::Constraint:
     {
       selectConstraint(selection.id);

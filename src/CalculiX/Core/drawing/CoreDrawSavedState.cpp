@@ -39,6 +39,11 @@ bool validFeature(DrawFeature feature)
     case DrawFeature::Temperature:
     case DrawFeature::Orientation:
     case DrawFeature::Equation:
+    case DrawFeature::ReferencePoint:
+    case DrawFeature::RigidBody:
+    case DrawFeature::PointMass:
+    case DrawFeature::Spring:
+    case DrawFeature::Joint:
     case DrawFeature::EquationGroup: return true;
     default: return false;
   }
@@ -50,7 +55,7 @@ bool validateSavedState(const DrawSavedState& saved, std::string& error)
   {
     return false;
   }
-  if (!std::isfinite(saved.sizeFactor) || saved.sizeFactor <= 0 || !validScope(saved.scope) || saved.groups.size() != 4)
+  if (!std::isfinite(saved.sizeFactor) || saved.sizeFactor <= 0 || !validScope(saved.scope) || saved.groups.size() != 5)
   {
     error = "Invalid drawing size, scope or group count.";
     return false;
@@ -58,7 +63,7 @@ bool validateSavedState(const DrawSavedState& saved, std::string& error)
   std::set<DrawGroup> seen;
   for (const auto& group : saved.groups)
   {
-    if ((group.group != DrawGroup::BoundaryConditions && group.group != DrawGroup::Loads && group.group != DrawGroup::Constraints && group.group != DrawGroup::Orientations) || !seen.insert(group.group).second || !validScope(group.sourceScope))
+    if ((group.group != DrawGroup::BoundaryConditions && group.group != DrawGroup::Loads && group.group != DrawGroup::Constraints && group.group != DrawGroup::Connections && group.group != DrawGroup::Orientations) || !seen.insert(group.group).second || !validScope(group.sourceScope))
     {
       error = "Invalid or duplicate drawing group.";
       return false;
@@ -208,7 +213,7 @@ bool CoreDraw::restoreState(const DrawSavedState& saved, std::string& error)
     {
       if (group.featureFilter.empty())
       {
-        for (auto feature : {DrawFeature::Force, DrawFeature::Pressure, DrawFeature::Heatflux, DrawFeature::Gravity, DrawFeature::Centrifugal, DrawFeature::Trajectory, DrawFeature::Film, DrawFeature::Radiation, DrawFeature::SurfaceTraction, DrawFeature::BodyHeatflux, DrawFeature::Displacement, DrawFeature::Temperature, DrawFeature::Orientation, DrawFeature::Equation, DrawFeature::EquationGroup})
+        for (auto feature : {DrawFeature::Force, DrawFeature::Pressure, DrawFeature::Heatflux, DrawFeature::Gravity, DrawFeature::Centrifugal, DrawFeature::Trajectory, DrawFeature::Film, DrawFeature::Radiation, DrawFeature::SurfaceTraction, DrawFeature::BodyHeatflux, DrawFeature::Displacement, DrawFeature::Temperature, DrawFeature::Orientation, DrawFeature::Equation, DrawFeature::EquationGroup, DrawFeature::ReferencePoint, DrawFeature::RigidBody, DrawFeature::Joint, DrawFeature::PointMass, DrawFeature::Spring})
         {
           if (drawing_group(feature) == source.group)
           {

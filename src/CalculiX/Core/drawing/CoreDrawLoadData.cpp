@@ -1,3 +1,4 @@
+#include "Core/connections/CalculiXConnectionsInterface.hpp"
 #include "CoreDrawLoadData.hpp"
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "Core/loads/CoreLoadsForces.hpp"
@@ -54,15 +55,28 @@ std::vector<std::vector<double>> CoreDrawLoadData::get_draw_data_for_load_force(
     return {};
   }
 
-  int nodeset_id = loads.loads_data[loads_data_id][4];
-  NodesetHandle nodeset;
-
-  if (!mesh.get_nodeset_handle(nodeset_id, nodeset)) {
-    return {};
-  }
-
+  const auto& record = loads.loads_data[loads_data_id];
   std::vector<std::vector<double>> draw_data;
-  std::vector<std::vector<double>> coords = CoreMeshGeometry::get_nodeset_entities_coords(nodeset_id);
+  std::vector<std::vector<double>> coords;
+  if (record.size() > 7 && record[7] > 0)
+  {
+    std::array<double, 3> point;
+    std::string error;
+    if (!CalculiXConnectionsInterface().point_position(record[7], point, error))
+    {
+      return {};
+    }
+    coords.push_back({point[0], point[1], point[2]});
+  }
+  else
+  {
+    NodesetHandle nodeset;
+    if (!mesh.get_nodeset_handle(record[4], nodeset))
+    {
+      return {};
+    }
+    coords = CoreMeshGeometry::get_nodeset_entities_coords(record[4]);
+  }
   const auto& force = loads.force_data[force_data_id];
 
   for (const auto& coord : coords) {

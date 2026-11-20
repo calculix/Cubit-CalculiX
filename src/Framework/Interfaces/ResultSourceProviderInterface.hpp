@@ -42,6 +42,14 @@ public:
     SimResults::PublishedResultSource& output,
     std::string& error) = 0;
 
+  // Reclassifies the same published topology iterations at a different cutoff.
+  virtual bool repartition_topology(const SimResults::JobSourceReference&, double,
+    SimResults::PublishedResultSource&, std::string& error)
+  {
+    error = "This provider cannot change a topology cutoff.";
+    return false;
+  }
+
   // Explicitly reloads the referenced job/files. A job refresh may resolve a
   // newer run, recorded in the output reference. The same publication and
   // failure guarantees as open() apply, preserving the old snapshot on failure.

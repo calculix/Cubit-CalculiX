@@ -12,9 +12,6 @@ std::vector<int> CalculiXCore::get_equationgroup_ids() {
   return constraints->get_equationgroup_ids();
 }
 
-std::vector<int> CalculiXCore::get_rigidbody_vertex_list() {
-  return constraints->get_rigidbody_vertex_list();
-}
 
 bool CalculiXCore::create_constraint(std::string constraint_type, std::vector<std::string> options, std::vector<std::vector<double>> options2) {
   const bool accepted = constraints->create_constraint(constraint_type, options, options2);

@@ -38,12 +38,13 @@ ccx create section solid block 1 material 1
 create vertex location on surface 6 center  
 create vertex location on surface 6 center  
 
-# rigid body constraint
-ccx create constraint rigid body nodeset 2 ref 27 rot 28
+# rigid body connection
+ccx create rp 1 name "Control 1" vertex 27 rotation_vertex 28
+ccx create rigid body 1 name "Attachment 1" nodeset 2 rp 1
 
 # load 
 nodeset 3 add vertex 27
-ccx create force nodeset 3 dof_1 0 dof_2 -5 dof_3 0 dof_4 0 dof_5 0 dof_6 0
+ccx create force rp 1 dof_1 0 dof_2 -5 dof_3 0 dof_4 0 dof_5 0 dof_6 0
 
 # bc
 ccx create displacement nodeset 1 dof_1 0 dof_2 0 dof_3 0

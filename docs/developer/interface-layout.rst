@@ -171,9 +171,6 @@ include the moved Qt headers.
    * - ``results``
      - Load, conversion, projection and external viewers.
      - No separate GUI directory.
-   * - ``results/frd`` and ``results/dat``
-     - Result plotting and CSV commands.
-     - Monitor widgets remain in ``GUI/jobs``.
    * - ``topology``
      - Configuration, preservation and run control.
      - Topology Management, command panels/tree and the displacement-text helper header.

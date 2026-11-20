@@ -12,6 +12,7 @@
 #include "GUI/materials/MaterialTree.hpp"
 #include "GUI/sections/SectionsTree.hpp"
 #include "GUI/interactions/ConstraintsTree.hpp"
+#include "GUI/connections/ConnectionsTree.hpp"
 #include "GUI/interactions/SurfaceInteractionsTree.hpp"
 #include "GUI/interactions/ContactPairsTree.hpp"
 #include "GUI/amplitudes/AmplitudesTree.hpp"
@@ -97,6 +98,7 @@ void CCXDockWindowModelTree::initialize(NavigationModel* navigation)
   myMaterialTree->initialize();   
   mySectionsTree = new SectionsTree(myModelTree);
   mySectionsTree->initialize();   
+  myConnectionsTree = new ConnectionsTree(myModelTree);
   myConstraintsTree = new ConstraintsTree(myModelTree);
   myConstraintsTree->initialize();   
   mySurfaceInteractionsTree = new SurfaceInteractionsTree(myModelTree);
@@ -194,7 +196,8 @@ void CCXDockWindowModelTree::clear()
     delete mySidesetTree;
     delete myMaterialTree;
     delete mySectionsTree;
-    delete myConstraintsTree;
+    delete myConnectionsTree;
+  delete myConstraintsTree;
     delete mySurfaceInteractionsTree;
     delete myContactPairsTree;
     delete myAmplitudesTree;
@@ -244,6 +247,7 @@ void CCXDockWindowModelTree::update()
   mySidesetTree->update(); 
   myMaterialTree->update(); 
   mySectionsTree->update();
+  myConnectionsTree->update();
   myConstraintsTree->update();
   mySurfaceInteractionsTree->update();
   myContactPairsTree->update();
@@ -289,6 +293,7 @@ void CCXDockWindowModelTree::reset()
   mySidesetTree->clear(); 
   myMaterialTree->clear(); 
   mySectionsTree->clear();
+  myConnectionsTree->clear();
   myConstraintsTree->clear();
   mySurfaceInteractionsTree->clear();
   myContactPairsTree->clear();

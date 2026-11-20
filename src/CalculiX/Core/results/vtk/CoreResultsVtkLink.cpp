@@ -119,7 +119,7 @@ namespace
       }
       mesh.elements.push_back(std::move(element));
     }
-    if (mesh.nodes.empty() || mesh.elements.empty() || !sort_entities(mesh.elements)) {
+    if (mesh.nodes.empty() || !sort_entities(mesh.elements)) {
       error = "Empty FRD mesh or invalid/duplicate element IDs.";
       return false;
     }
@@ -298,6 +298,81 @@ namespace
       return false;
     }
     return true;
+  }
+
+  bool add_discrete_groups(CoreResultsVtkMesh& mesh, std::string& error)
+  {
+    const auto& features = mesh.connections.discrete;
+    if (features.empty())
+    {
+      return true;
+    }
+    const bool has_blocks = std::any_of(mesh.groups.begin(),mesh.groups.end(),[](const auto& group)
+    {
+      return group.kind == CoreResultsVtkGroupKind::Block;
+    });
+    if (!has_blocks && !mesh.elements.empty())
+    {
+      CoreResultsVtkGroup group;
+      group.name = "Mesh";
+      for (const auto& element : mesh.elements)
+      {
+        if (!features.count(element.id))
+        {
+          group.ids.push_back(element.id);
+        }
+      }
+      if (!group.ids.empty())
+      {
+        mesh.groups.push_back(std::move(group));
+      }
+    }
+    // FRD may contain the SPRINGA as a generic two-node line. Reconstruct the
+    // named display group only after checking its exact solver ID and endpoints.
+    for (const auto& existing : mesh.elements)
+    {
+      const auto found = features.find(existing.id);
+      if (found != features.end() && (found->second.type != "SPRINGA" || existing.frd_type != 11 ||
+          existing.connectivity != std::vector<int>{found->second.a,found->second.b}))
+      {
+        error = "Conflicting FRD topology for discrete element " + std::to_string(existing.id);
+        return false;
+      }
+    }
+    mesh.elements.erase(std::remove_if(mesh.elements.begin(),mesh.elements.end(),[&](const auto& existing)
+    {
+      return features.count(existing.id) != 0;
+    }),mesh.elements.end());
+    for (const auto& entry : features)
+    {
+      const auto& d = entry.second;
+      for (const int id : {d.a,d.b})
+      {
+        if (id > 0 && !entity(mesh.nodes,id))
+        {
+          CoreResultsVtkNode node{id,id == d.a ? d.position_a : d.position_b};
+          auto at = std::lower_bound(mesh.nodes.begin(),mesh.nodes.end(),id,[](const auto& n,int key)
+          {
+            return n.id < key;
+          });
+          mesh.nodes.insert(at,node);
+        }
+      }
+      CoreResultsVtkGroup group;
+      group.name = (d.type == "MASS" ? "Point mass " : "Spring ") + std::to_string(d.id) + " / " + d.name;
+      if (d.type == "SPRINGA")
+      {
+        mesh.elements.push_back({d.element,11,{}, {d.a,d.b}});
+        group.ids.push_back(d.element);
+      }
+      else
+      {
+        group.kind = CoreResultsVtkGroupKind::Nodeset;
+        group.ids.push_back(d.a);
+      }
+      mesh.groups.push_back(std::move(group));
+    }
+    return sort_entities(mesh.elements);
   }
 
   bool select_groups(CoreResultsVtkPlan& plan, std::string& error) {
@@ -530,6 +605,10 @@ namespace
           }
         }
         else {
+          if (plan.mesh.connections.joint_elements.count(row[0]))
+          {
+            continue;
+          }
           const auto* element = entity(plan.mesh.elements, row[0]);
           if (!element) {
             error = "DAT element is absent from the shared job mesh (expanded shell/beam mapping is not established).";
@@ -558,6 +637,10 @@ namespace
           }
         }
         group.ids.push_back(row[0]);
+      }
+      if (group.ids.empty())
+      {
+        continue;
       }
       std::sort(group.ids.begin(), group.ids.end());
       group.ids.erase(std::unique(group.ids.begin(), group.ids.end()), group.ids.end());
@@ -654,11 +737,73 @@ namespace
 }
 
 bool CoreResultsVtkLink::compatible(const CoreResultsVtkMesh& result, const CoreResultsVtkMesh& candidate, const CoreResultsVtkOptions& options, std::string& reason) {
-  if (result.nodes.empty() || result.elements.empty() || !std::isfinite(options.coordinate_absolute_tolerance) || !std::isfinite(options.coordinate_relative_tolerance) || options.coordinate_absolute_tolerance < 0.0 || options.coordinate_relative_tolerance < 0.0) {
+  if (result.nodes.empty() || (result.elements.empty() && candidate.connections.discrete.empty()) || !std::isfinite(options.coordinate_absolute_tolerance) || !std::isfinite(options.coordinate_relative_tolerance) || options.coordinate_absolute_tolerance < 0.0 || options.coordinate_relative_tolerance < 0.0) {
     reason = "Empty reference mesh or invalid coordinate tolerances.";
     return false;
   }
-  if (result.elements.size() != candidate.elements.size()) {
+  std::size_t structural_count = result.elements.size();
+  for (const auto& entry : candidate.connections.discrete)
+  {
+    const auto& feature = entry.second;
+    for (const int id : {feature.a,feature.b})
+    {
+      if (id == 0)
+      {
+        continue;
+      }
+      const auto node = entity(candidate.nodes,id);
+      if (!node)
+      {
+        reason = "A physical discrete endpoint is missing from the candidate mesh.";
+        return false;
+      }
+      const auto& archived = id == feature.a ? feature.position_a : feature.position_b;
+      for (int axis = 0; axis < 3; ++axis)
+      {
+        if (!close(node->coordinates[axis],archived[axis],options.coordinate_absolute_tolerance,
+            std::max(1e-12, options.coordinate_relative_tolerance)))
+        {
+          reason = "The physical endpoint has moved for " + feature.name;
+          return false;
+        }
+      }
+    }
+    if (entity(candidate.elements,feature.element))
+    {
+      reason = "A discrete element ID is occupied by the candidate structural mesh.";
+      return false;
+    }
+    const auto observed = entity(result.elements,feature.element);
+    if (observed)
+    {
+      if (feature.type != "SPRINGA" || observed->frd_type != 11 ||
+          observed->connectivity != std::vector<int>{feature.a,feature.b})
+      {
+        reason = "FRD discrete topology differs at solver element " + std::to_string(feature.element);
+        return false;
+      }
+      --structural_count;
+    }
+  }
+  for (const auto& item : candidate.connections.joint_elements)
+  {
+    if (entity(candidate.elements,item.first))
+    {
+      reason = "Joint helper element ID is occupied by a structural element.";
+      return false;
+    }
+    const auto observed = entity(result.elements,item.first);
+    if (observed)
+    {
+      if (observed->frd_type != 11 || observed->connectivity != std::vector<int>{item.second[0],item.second[1]})
+      {
+        reason = "Joint helper element differs from archived topology.";
+        return false;
+      }
+      --structural_count;
+    }
+  }
+  if (structural_count != candidate.elements.size()) {
     reason = "Analysis element counts differ.";
     return false;
   }
@@ -676,6 +821,10 @@ bool CoreResultsVtkLink::compatible(const CoreResultsVtkMesh& result, const Core
     }
   }
   for (const auto& element : result.elements) {
+    if (candidate.connections.discrete.count(element.id) || candidate.connections.joint_elements.count(element.id))
+    {
+      continue;
+    }
     const auto* other = entity(candidate.elements, element.id);
     if (!other || other->frd_type != element.frd_type || other->connectivity != element.connectivity) {
       reason = "Topology/connectivity differs at result element " + std::to_string(element.id) + ".";
@@ -702,7 +851,7 @@ bool CoreResultsVtkLink::match_input_mesh(const CoreResultsFrd& frd, const std::
   return true;
 }
 
-bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const CoreResultsDat& dat, const std::string& input_path, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& output, const std::string& source_system) const
+bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const CoreResultsDat& dat, const std::string& input_path, const CoreResultsVtkOptions& options, CoreResultsVtkPlan& output, const std::string& source_system, const ConnectionRunMap* connections) const
 {
   const double tolerances[] = {options.coordinate_absolute_tolerance, options.coordinate_relative_tolerance, options.time_absolute_tolerance, options.time_relative_tolerance};
   for (double tolerance : tolerances) {
@@ -721,12 +870,96 @@ bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const Co
   result.input_path = input_path;
   std::string reason;
   CoreResultsVtkMesh reference;
+  if (frd.nodes.empty() && connections && (!connections->discrete.empty() || !connections->joint_elements.empty()))
+  {
+    CoreResultsVtkMesh input;
+    const bool matched = !input_path.empty() &&
+      CoreResultsInpReader().read(input_path,input,result.input_files,reason) &&
+      input.connections.json() == connections->json();
+    if (matched)
+    {
+      result.mesh = std::move(input);
+    }
+    else
+    {
+      result.input_files.clear();
+      result.mesh.connections = *connections;
+      result.diagnostics.push_back("No matching input mesh for DAT history. Displaying archived discrete endpoints.");
+    }
+    result.link_source = SimResults::LinkSource::JobInput;
+    result.layout = SimResults::DatasetLayout::Collection;
+    if (!select_groups(result,reason) || !add_discrete_groups(result.mesh,reason) ||
+        !fields(frd,dat,result,reason) || (result.increments.empty() && result.tables.empty()))
+    {
+      PRINT_ERROR("Cannot link discrete history to its run input: %s\n",reason.c_str());
+      return false;
+    }
+    output = std::move(result);
+    return true;
+  }
   if (!frd_mesh(frd, reference, reason)) {
     PRINT_ERROR("Cannot plan VTK conversion: %s\n", reason.c_str());
     return false;
   }
   CoreResultsVtkMesh current;
-  if (capture_model(current, source_system, reason) && compatible(reference, current, options, reason))
+  bool currentAvailable = capture_model(current, source_system, reason);
+  if (currentAvailable && connections)
+  {
+    current.connections = *connections;
+    std::set<int> occupied;
+    for (const auto& node : current.nodes)
+    {
+      occupied.insert(node.id);
+    }
+    for (const auto& entry : connections->distributed)
+    {
+      const auto& a = entry.second;
+      if (!occupied.insert(a.ref).second)
+      {
+        currentAvailable = false;
+        reason = "Archived distributing reference node ID is now occupied.";
+        break;
+      }
+      current.nodes.push_back({a.ref,a.position});
+    }
+    for (const auto& item : connections->joint_nodes)
+    {
+      if (!occupied.insert(item.first).second)
+      {
+        currentAvailable = false;
+        reason = "Archived joint node ID is occupied.";
+        break;
+      }
+      current.nodes.push_back({item.first,item.second});
+    }
+    for (const auto& entry : connections->points)
+    {
+      const auto& point = entry.second;
+      for (int id : {point.ref, point.rot})
+      {
+        if (!(id == point.ref ? point.generated_ref : point.generated_rot))
+        {
+          continue;
+        }
+        if (!occupied.insert(id).second)
+        {
+          currentAvailable = false;
+          reason = "An archived connection node ID is now in use by the current mesh.";
+          break;
+        }
+        current.nodes.push_back({id, point.position});
+      }
+      if (!currentAvailable)
+      {
+        break;
+      }
+    }
+    if (currentAvailable)
+    {
+      currentAvailable = sort_entities(current.nodes);
+    }
+  }
+  if (currentAvailable && compatible(reference, current, options, reason))
   {
     result.link_source = SimResults::LinkSource::CurrentModel;
     result.mesh = std::move(current);
@@ -737,6 +970,7 @@ bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const Co
       CoreResultsVtkMesh input;
       CoreResultsInpReader reader;
       if (reader.read(input_path, input, result.input_files, reason) && compatible(reference, input, options, reason)) {
+        result.mesh.connections = input.connections;
         for (auto& element : result.mesh.elements) {
           element.calculix_type = entity(input.elements, element.id)->calculix_type;
         }
@@ -775,7 +1009,25 @@ bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const Co
       found->coordinates = node.coordinates;
     }
   }
-  if (!select_groups(result, reason) || !fields(frd, dat, result, reason)) {
+  if (connections)
+  {
+    result.mesh.connections = *connections;
+    auto& elements = result.mesh.elements;
+    for (const auto& item : connections->joint_elements)
+    {
+      const auto observed = entity(elements,item.first);
+      if (observed && (observed->frd_type != 11 || observed->connectivity != std::vector<int>{item.second[0],item.second[1]}))
+      {
+        PRINT_ERROR("Archived joint helper conflicts with result element %d.\n",item.first);
+        return false;
+      }
+    }
+    elements.erase(std::remove_if(elements.begin(),elements.end(),[&](const auto& e)
+    {
+      return connections->joint_elements.count(e.id) != 0;
+    }),elements.end());
+  }
+  if (!select_groups(result, reason) || !add_discrete_groups(result.mesh, reason) || !fields(frd, dat, result, reason)) {
     for (const auto& diagnostic : result.diagnostics) {
       PRINT_INFO("VTK linking: %s\n", diagnostic.c_str());
     }
@@ -787,7 +1039,7 @@ bool CoreResultsVtkLink::prepare(int job_id, const CoreResultsFrd& frd, const Co
     return false;
   }
   result.layout = SimResults::DatasetLayout::SingleGrid;
-  if (!result.mesh.groups.empty()) {
+  if (!result.mesh.groups.empty() || !result.mesh.connections.points.empty() || !result.mesh.connections.discrete.empty() || !result.mesh.connections.distributed.empty()) {
     result.layout = SimResults::DatasetLayout::Collection;
   }
   output = std::move(result);
@@ -827,7 +1079,7 @@ bool CoreResultsVtkLink::prepare_external(const CoreResultsFrd& frd, const CoreR
   else {
     plan.mesh = std::move(reference);
   }
-  if (!select_groups(plan,error) || !fields(frd,dat,plan,error) ||
+  if (!select_groups(plan,error) || !add_discrete_groups(plan.mesh,error) || !fields(frd,dat,plan,error) ||
       (plan.increments.empty() && plan.tables.empty())) {
     if (error.empty()) {
       error = "No convertible result fields or tables were found.";
@@ -835,7 +1087,7 @@ bool CoreResultsVtkLink::prepare_external(const CoreResultsFrd& frd, const CoreR
     return false;
   }
   plan.layout = SimResults::DatasetLayout::SingleGrid;
-  if (!plan.mesh.groups.empty()) {
+  if (!plan.mesh.groups.empty() || !plan.mesh.connections.points.empty() || !plan.mesh.connections.discrete.empty() || !plan.mesh.connections.distributed.empty()) {
     plan.layout = SimResults::DatasetLayout::Collection;
   }
   output = std::move(plan);

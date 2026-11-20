@@ -430,3 +430,133 @@ unverified name or ID. Refresh/reconvert linked results to capture native colors
 Result scalar coloring overrides solid RGB. Returning to solid coloring, or a
 frame without the selected field, uses the stored native color. Element edges
 remain black. Lighting can shade the displayed RGB.
+
+Topology result series
+----------------------
+
+``CalculiXTopologyResultSource`` assembles one completed physical solve per
+iteration and delegates partitioning to ``TopologyElementPartitioner``. The
+partitioner extracts retained, removed and outside-domain cells from each
+primary block into private VTK grids. It joins the design by original element
+ID and checks that topology-domain connectivity stays consistent across frames.
+Solver data is retained on extracted cells and points. Default hiding is
+catalogue metadata consumed when the Postprocessor creates a representation.
+The source identity hashes the cutoff, ordered contributing result identities
+and stored element and nodal design data. Restore uses retained readers through
+the saved iteration boundary. Neither the CalculiX preview nor automatic job
+conversion is changed by this integration.
+
+Cutoff edits use the provider's repartition operation. It uses the saved
+iteration boundary and retained job results. The original cutoff is used to
+verify the old snapshot fingerprint while the new cutoff produces a separate
+fingerprint. The Postprocessor checks the frame and dataset identities before
+replacing the runtime data under the same source ID. Existing representation
+settings remain in place, transient picks are cleared and derived geometry
+caches are invalidated.
+
+Native checks pending: apply a higher and then lower cutoff on a later frame
+with a custom Retained/Removed visibility selection. Verify that the frame,
+camera and visibility stay fixed and that changes survive project restore.
+Compare both sets against the existing preview at 0.5,
+including equality and preserved cells; exercise a displacement run with
+adjoints, frame playback, refresh with another completed iteration, and project
+restore after a run has changed. No build was run for this change.
+
+Distributing attachment histories
+---------------------------------
+
+The CalculiX export archives each distributing attachment ID, RP ID and name,
+solver-only load node, and RP position in solver units. When mean displacement
+is enabled the deck also records a normalized area weight per face node.
+The job run record preserves these bindings independently of the live model.
+External deck reads check the coupling, face surface and reference node set.
+
+The converter reads the section force and global-origin moment from DAT and
+shifts the moment to the archived RP position. It reduces displacement from
+the archived face-node set using its weights. Nominal prescribed loads are
+stored separately with their step and load parameters. The tables carry
+ReferencePoint and ReferencePointId metadata for the Postprocessor tree.
+
+Point mass and spring bindings
+------------------------------
+
+Discrete Connections features have persistent model IDs and independent
+solver element IDs. A job archives the solver formulation, ordered endpoint
+nodes, original positions and property in solver units. The converter uses
+these records for run-specific endpoint histories. Structural mesh comparison
+and projection must account for the solver's discrete-element output: a
+point mass can be absent from FRD and an axial spring can appear as a
+two-node line. Identify them by the run binding and connectivity. Ordinary
+lines remain structural mesh elements. Private displacement sets supply the
+endpoint samples in global coordinates. Missing samples must never be
+interpreted as zero motion. A linearized axial spring uses relative
+displacement projected onto its initial axis. With finite geometry, its
+extension is the current chord length minus the archived reference length.
+Ground-spring restoring force is minus stiffness times global directional
+travel.
+
+Element ID allocation considers exported blocks, explicit custom element
+records and included data. Custom ELGEN and ELCOPY keywords that generate
+additional IDs cause an explicit export error when discrete features require
+new element IDs.
+
+Joint result linking
+--------------------
+
+Each exported joint binding records the selected history steps by solver
+ordinal. Rigid-body RP bindings carry their own selection. Conversion reads
+these assignments from the run so later model edits do not change which
+tables belong to a solved job. Joint histories use global REF and ROT
+control-node DAT samples from the same increment.
+
+A finite-rotation prismatic joint carries a generated guide node ID and
+solver-space position in its binding. Current-mesh linking checks the ID
+before reconstructing the guide. The exporter writes the guide in rigid
+body B and uses a STRAIGHT MPC with B's REF, the guide, and A's REF, in
+that order. Three equations lock the two ROT vectors together. Conversion
+rotates the original axis by B's rotation vector before projecting signed
+travel and attaching the current axis to the joint marker.
+
+Moving hinge and cylinder solver checks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The standalone input decks under
+``examples/calculix/connections/solver_checks`` exercise the moving revolute and
+cylindrical formulations in stock CCX 2.23. Export requires nonlinear static
+steps throughout the analysis.
+
+Two planes attached to body B intersect on its axis. Each plane has its own
+follower node, allowing CCX to switch its dependent displacement component
+as the guide rotates. A marker on A follows both planes. The revolute case
+ties the two origins together. The cylindrical case uses a second pair of
+plane followers at the origin to allow axial travel.
+
+The marker and each follower are coupled component by component using two
+SPRING2 elements with equal and opposite coefficients and one free auxiliary
+node. Equilibrium at that node gives k times the difference between marker
+and follower displacement equal to zero. These elements implement algebraic
+constraints. Their coefficients are numerical scaling factors. Individual
+element IDs, connectivity, guide nodes and coordinates are archived with the
+joint. Result linking uses this mapping to exclude numerical springs from
+physical groups and spring histories, including sets containing both kinds
+of element. This formulation produces an indefinite system.
+
+For both decks the guide translates and turns through 120 degrees in 40
+increments. Check the deformed unit vectors from node 9 to 13 and from
+node 11 to 14 at every increment. They should agree within 0.000002 in
+Euclidean norm. At the last increment the relative twist is 11.537 degrees.
+The revolute origins coincide. For the cylindrical joint the relative
+displacement projected onto the current guide axis is 0.298205 mm, with
+transverse displacement below 0.000002 mm throughout the step.
+
+Reaction checks
+^^^^^^^^^^^^^^^
+
+Run the companion ``check_balance.py`` script with the path to the CCX executable.
+It runs both balance decks in a temporary directory. Physical support nodes 90
+and 91 measure the foundation and guide-drive reactions independently. The
+check sums their forces with the two ramped applied loads at every increment.
+It also compares the guide ROT reaction with the external moment about the
+moving guide origin, transformed to the generalized components conjugate to
+its rotation vector. The absolute limits are 0.00001 N and 0.001 N mm.
+The script also checks axis alignment, transverse separation, final twist and axial travel.

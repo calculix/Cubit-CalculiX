@@ -439,3 +439,50 @@ bool CalculiXMeshInterface::get_sideset_members(int id,
   error.clear();
   return true;
 }
+
+bool CalculiXMeshInterface::get_export_sides(int id, std::set<std::pair<int,int>>& faces, std::string& error)
+{
+  SidesetHandle handle = nullptr;
+  std::set<std::pair<int,int>> selected;
+  auto* mesh = ccx_core.me_iface;
+  if (!mesh || !mesh->get_sideset_handle(id,handle) || !handle)
+  {
+    error = "Missing sideset.";
+    return false;
+  }
+  int offset = 0;
+  int count;
+  std::vector<ElementHandle> handles(256);
+  std::vector<ElementType> types(256);
+  std::vector<int> sides(256);
+  while ((count = mesh->get_sideset_sides(handle,offset,256,handles,types,sides)) > 0)
+  {
+    if (count > 256 || offset > (std::numeric_limits<int>::max)() - count)
+    {
+      error = "Invalid sideset batch size.";
+      return false;
+    }
+    for (int i = 0; i < count; ++i)
+    {
+      int local = 0;
+      mesh->get_element_id(handles[i],local);
+      const auto kind = get_cubit_element_type_entity(mesh->get_element_type_name(types[i]));
+      const int element = CubitInterface::get_global_element_id(kind,local);
+      const int side = get_ccx_element_side(types[i],sides[i]);
+      if (element <= 0 || side <= 0)
+      {
+        error = "Cannot resolve a sideset face to a CalculiX element and side.";
+        return false;
+      }
+      selected.emplace(element,side);
+    }
+    offset += count;
+  }
+  if (count < 0 || selected.empty())
+  {
+    error = "Select a nonempty face-based sideset.";
+    return false;
+  }
+  faces = std::move(selected);
+  return true;
+}

@@ -7,14 +7,14 @@
 #include "Core/sections/CoreSections.hpp"
 #include "Core/mesh/CoreBlocks.hpp"
 #include "Core/mesh/CoreMeshQuery.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <string>
 
 bool CoreTopologyModelPreparation::initialize(CoreMaterials& materials, CoreSections& sections, CoreBlocks& blocks, MeshExportInterface& mesh, int topology_id, const std::vector<int>& section_ids)
 {
   if (topology_id <= 0 || section_ids.empty())
   {
-    PRINT_ERROR("Invalid topology initialization.\n");
+    TOPOLOGY_ERROR("Invalid topology initialization.\n");
     return false;
   }
 
@@ -32,7 +32,7 @@ bool CoreTopologyModelPreparation::initialize(CoreMaterials& materials, CoreSect
 
     if (section_index < 0 || sections.sections_data[section_index][1] != 1)
     {
-      PRINT_ERROR("Section %d is not an existing solid section.\n", section_id);
+      TOPOLOGY_ERROR("Section %d is not an existing solid section.\n", section_id);
       return false;
     }
 
@@ -40,7 +40,7 @@ bool CoreTopologyModelPreparation::initialize(CoreMaterials& materials, CoreSect
 
     if (solid_index < 0)
     {
-      PRINT_ERROR("Solid section data missing for section %d.\n", section_id);
+      TOPOLOGY_ERROR("Solid section data missing for section %d.\n", section_id);
       return false;
     }
 
@@ -50,7 +50,7 @@ bool CoreTopologyModelPreparation::initialize(CoreMaterials& materials, CoreSect
 
     if (blocks.get_blocks_data_id_from_block_id(block_id) < 0)
     {
-      PRINT_ERROR("Block %d for section %d does not exist.\n", block_id, section_id);
+      TOPOLOGY_ERROR("Block %d for section %d does not exist.\n", block_id, section_id);
       return false;
     }
 
@@ -58,7 +58,7 @@ bool CoreTopologyModelPreparation::initialize(CoreMaterials& materials, CoreSect
 
     if (block_elements.empty())
     {
-      PRINT_ERROR("Block %d contains no elements.\n", block_id);
+      TOPOLOGY_ERROR("Block %d contains no elements.\n", block_id);
       return false;
     }
 
@@ -71,7 +71,7 @@ bool CoreTopologyModelPreparation::initialize(CoreMaterials& materials, CoreSect
 
   if (!materials.initialize_topology_materials(topology_id, element_ids, base_material_ids))
   {
-    PRINT_ERROR("Failed to initialize materials for topology %d.\n", topology_id);
+    TOPOLOGY_ERROR("Failed to initialize materials for topology %d.\n", topology_id);
     return false;
   }
 
@@ -82,7 +82,7 @@ bool CoreTopologyModelPreparation::initialize(CoreMaterials& materials, CoreSect
     return false;
   }
 
-  PRINT_INFO("Topology %d initialized with %d elements.\n", topology_id, static_cast<int>(element_ids.size()));
+  TOPOLOGY_INFO("Topology %d initialized with %d elements.\n", topology_id, static_cast<int>(element_ids.size()));
   return true;
 }
 
@@ -92,7 +92,7 @@ bool CoreTopologyModelPreparation::resolve_preservation(CoreTopology& topology, 
 
   if (collection == materials.topology_material_data.end())
   {
-    PRINT_ERROR("Material collection for topology %d not found.\n", topology_id);
+    TOPOLOGY_ERROR("Material collection for topology %d not found.\n", topology_id);
     return false;
   }
 
@@ -110,7 +110,7 @@ bool CoreTopologyModelPreparation::initialize_run_design(CoreTopology& topology,
 {
   if (!preservation.blocks)
   {
-    PRINT_ERROR("Topology initialization interfaces are not initialized.\n");
+    TOPOLOGY_ERROR("Topology initialization interfaces are not initialized.\n");
     return false;
   }
 
@@ -118,7 +118,7 @@ bool CoreTopologyModelPreparation::initialize_run_design(CoreTopology& topology,
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -127,14 +127,14 @@ bool CoreTopologyModelPreparation::initialize_run_design(CoreTopology& topology,
   const bool level_set = entry->second.method == TopologyMethod::LevelSet && entry->second.objective == TopologyObjective::Compliance;
   if (!density && !level_set)
   {
-    PRINT_ERROR("Unsupported topology method/objective combination for design preparation.\n");
+    TOPOLOGY_ERROR("Unsupported topology method/objective combination for design preparation.\n");
     return false;
   }
 
   if (level_set && (!entry->second.iteration_jobs.empty() || !entry->second.iteration_evaluations.empty() ||
       !entry->second.iteration_density_designs.empty() || !entry->second.iteration_level_set_designs.empty()))
   {
-    PRINT_ERROR("Level-set initialization requires freshly reset case run data.\n");
+    TOPOLOGY_ERROR("Level-set initialization requires freshly reset case run data.\n");
     return false;
   }
 
@@ -155,7 +155,7 @@ bool CoreTopologyModelPreparation::initialize_run_design(CoreTopology& topology,
 
   if (collection == materials.topology_material_data.end())
   {
-    PRINT_ERROR("Topology material initialization failed.\n");
+    TOPOLOGY_ERROR("Topology material initialization failed.\n");
     discard_prepared_data();
     return false;
   }
@@ -166,7 +166,7 @@ bool CoreTopologyModelPreparation::initialize_run_design(CoreTopology& topology,
   if (!CoreTopologyDefaultPreservation::collect(preservation, default_sets, default_elements) ||
       !resolve_preservation(topology, materials, topology_id, default_sets, default_elements))
   {
-    PRINT_ERROR("Failed to resolve preservation for topology %d.\n", topology_id);
+    TOPOLOGY_ERROR("Failed to resolve preservation for topology %d.\n", topology_id);
     discard_prepared_data();
     return false;
   }
@@ -206,7 +206,7 @@ bool CoreTopologyModelPreparation::collect_run_sections(CoreSections& sections, 
   {
     if (section.size() < 3)
     {
-      PRINT_ERROR("Invalid section data.\n");
+      TOPOLOGY_ERROR("Invalid section data.\n");
       return false;
     }
 
@@ -219,7 +219,7 @@ bool CoreTopologyModelPreparation::collect_run_sections(CoreSections& sections, 
 
     if (solid_index < 0)
     {
-      PRINT_ERROR("Solid section data missing for section %d.\n", section[0]);
+      TOPOLOGY_ERROR("Solid section data missing for section %d.\n", section[0]);
       return false;
     }
 
@@ -234,7 +234,7 @@ bool CoreTopologyModelPreparation::collect_run_sections(CoreSections& sections, 
 
   if (section_ids.empty())
   {
-    PRINT_ERROR("Topology optimization requires solid sections containing volume elements.\n");
+    TOPOLOGY_ERROR("Topology optimization requires solid sections containing volume elements.\n");
     return false;
   }
 

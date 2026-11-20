@@ -11,7 +11,7 @@
 #include "Core/jobs/CalculiXJobsInterface.hpp"
 #include "Core/results/CalculiXResultsInterface.hpp"
 #include "CubitInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "StopWatch.hpp"
 #include "loadUserOptions.hpp"
 
@@ -119,7 +119,7 @@ bool CoreResultsDat::read_file(const std::string& path)
 {
   if (is_initialized || path.empty())
   {
-    PRINT_ERROR("Detached DAT reader requires a fresh instance and a file path.\n");
+    TOPOLOGY_ERROR("Detached DAT reader requires a fresh instance and a file path.\n");
     return false;
   }
   job_id = 0;
@@ -143,7 +143,7 @@ bool CoreResultsDat::read_single()
   int currentline = 0;
   std::string log;
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
 
   std::string datline = "";
   std::vector<std::string> dat_array;
@@ -269,7 +269,7 @@ bool CoreResultsDat::read_single()
           log.append(dat_array[i] + " ");
         }
         log.append("\n");
-        PRINT_INFO("%s", log.c_str());
+        TOPOLOGY_INFO("%s", log.c_str());
       }*/
     }
   }
@@ -426,7 +426,7 @@ bool CoreResultsDat::read_parallel()
   int currentline = 0;
   std::string log;
   log = "reading results " + filepath + " for Job ID " + std::to_string(job_id) + " \n";
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
 
   std::string datline = "";
   std::vector<std::string> dat_array;
@@ -617,12 +617,12 @@ bool CoreResultsDat::read_parallel()
 
   /*
   log = "result_blocks.size() " + std::to_string(result_blocks.size()) + "\n";
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
   log = "result_block_data.size() " + std::to_string(result_block_data.size()) + "\n";
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
 
   log = "number of blocks " + std::to_string(dat_arrays.size()) + "\n";
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
 
   */
 
@@ -630,14 +630,14 @@ bool CoreResultsDat::read_parallel()
   for (size_t i = 0; i < result_blocks.size(); i++)
   {    
     log = "block id " + std::to_string(i) + " data id " + std::to_string(result_blocks[i][4]) + "\n";
-    PRINT_INFO("%s", log.c_str());
+    TOPOLOGY_INFO("%s", log.c_str());
   }
   
   for (size_t i = 0; i < result_block_c1_data.size(); i++)
   {    
     //log = "block id " + std::to_string(i) + " type " + std::to_string(result_block_c1_data[i][0][2]) + "\n";
     log = "block id " + std::to_string(i) + " size " + std::to_string(result_block_c1_data[i].size()) + "\n";
-    PRINT_INFO("%s", log.c_str());
+    TOPOLOGY_INFO("%s", log.c_str());
   }
   */
 
@@ -754,24 +754,24 @@ bool CoreResultsDat::read_parallel_boost()
   StopWatch stopwatch;
   if (!is_initialized || !progressbar)
   {
-    PRINT_ERROR("DAT reader is not initialized.\n");
+    TOPOLOGY_ERROR("DAT reader is not initialized.\n");
     return false;
   }
   if (ccx_uo.mConverterThreads < 1)
   {
-    PRINT_ERROR("DAT reader requires at least one converter thread.\n");
+    TOPOLOGY_ERROR("DAT reader requires at least one converter thread.\n");
     return false;
   }
   std::ifstream file(std::filesystem::u8path(filepath), std::ios::binary);
   if (!file.is_open())
   {
-    PRINT_ERROR("Cannot open DAT file: %s\n", filepath.c_str());
+    TOPOLOGY_ERROR("Cannot open DAT file: %s\n", filepath.c_str());
     return false;
   }
   DatReadState state;
   if (!ResultsReaderPipeline::file_size(file, state.file_size))
   {
-    PRINT_ERROR("Cannot determine DAT file size.\n");
+    TOPOLOGY_ERROR("Cannot determine DAT file size.\n");
     return false;
   }
 
@@ -808,12 +808,12 @@ bool CoreResultsDat::read_parallel_boost()
     }
     catch (const std::exception& error)
     {
-      PRINT_ERROR("DAT finalization failed: %s\n", error.what());
+      TOPOLOGY_ERROR("DAT finalization failed: %s\n", error.what());
       success = false;
     }
     catch (...)
     {
-      PRINT_ERROR("Unexpected DAT finalization failure.\n");
+      TOPOLOGY_ERROR("Unexpected DAT finalization failure.\n");
       success = false;
     }
   }
@@ -824,11 +824,11 @@ bool CoreResultsDat::read_parallel_boost()
         || std::any_of(buckle_data.begin(), buckle_data.end(), [](const auto& block) { return !block.empty(); });
     for (const auto& diagnostic : diagnostics)
     {
-      PRINT_WARNING("DAT: %s\n", diagnostic.c_str());
+      TOPOLOGY_WARNING("DAT: %s\n", diagnostic.c_str());
     }
     if (!has_results)
     {
-      PRINT_INFO("DAT file contains no results: %s\n", filepath.c_str());
+      TOPOLOGY_INFO("DAT file contains no results: %s\n", filepath.c_str());
     }
     progressbar->percent(1.0);
   }
@@ -890,7 +890,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       {
         if (status != ResultsReaderPipeline::LineStatus::End)
         {
-          PRINT_ERROR("Cannot read DAT results: I/O error or line exceeds 64 KiB.\n");
+          TOPOLOGY_ERROR("Cannot read DAT results: I/O error or line exceeds 64 KiB.\n");
           return false;
         }
         if (state.frequency != DatReadState::FrequencyState::None)
@@ -963,12 +963,12 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         }());
         if (size <= identifiers)
         {
-          PRINT_ERROR("DAT variable record has no values at line %zu.\n", state.line_number);
+          TOPOLOGY_ERROR("DAT variable record has no values at line %zu.\n", state.line_number);
           return false;
         }
         if (size > ResultsReaderPipeline::max_batch_bytes / (sizeof(double) + sizeof(std::string)))
         {
-          PRINT_ERROR("DAT component layout exceeds the reader batch limit at line %zu.\n", state.line_number);
+          TOPOLOGY_ERROR("DAT component layout exceeds the reader batch limit at line %zu.\n", state.line_number);
           return false;
         }
         for (std::size_t i = identifiers; i < size; ++i)
@@ -988,7 +988,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         ResultsReaderPipeline::result_row_storage(state.components.size(), 3);
       if (row_bytes > ResultsReaderPipeline::max_batch_bytes)
       {
-        PRINT_ERROR("DAT record exceeds the reader batch limit at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("DAT record exceeds the reader batch limit at line %zu.\n", state.line_number);
         return false;
       }
       if (input.consumed_bytes() >= state.file_size)
@@ -1059,7 +1059,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     {
       if ((state.table_id >= 0 && state.summary_section) || (current_read_mode >= 111 && current_read_mode <= 118))
       {
-        PRINT_ERROR("Incomplete DAT statistics before eigenvalue summary at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Incomplete DAT statistics before eigenvalue summary at line %zu.\n", state.line_number);
         return false;
       }
       finish_frequency();
@@ -1095,7 +1095,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       {
         if (!ResultsReaderPipeline::ids_fit(result_tables.size(), 1))
         {
-          PRINT_ERROR("DAT eigenvalue table index overflow.\n");
+          TOPOLOGY_ERROR("DAT eigenvalue table index overflow.\n");
           return false;
         }
         DatResultTable table;
@@ -1136,7 +1136,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
             finish_frequency();
             continue;
           }
-          PRINT_ERROR("Invalid DAT eigenvalue record at line %zu.\n", state.line_number);
+          TOPOLOGY_ERROR("Invalid DAT eigenvalue record at line %zu.\n", state.line_number);
           return false;
         }
         rows.push_back(std::move(values));
@@ -1150,12 +1150,12 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       if (state.table_id >= 0 && state.summary_section && (result_tables.back().rows.empty() ||
         result_tables.back().rows.back().size() != result_tables.back().columns.size()))
       {
-        PRINT_ERROR("Incomplete DAT contact statistics before line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Incomplete DAT contact statistics before line %zu.\n", state.line_number);
         return false;
       }
       if (current_read_mode >= 111 && current_read_mode <= 118)
       {
-        PRINT_ERROR("Incomplete DAT section statistics before line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Incomplete DAT section statistics before line %zu.\n", state.line_number);
         return false;
       }
       state.association = 0;
@@ -1167,7 +1167,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       {
         if (!ResultsReaderPipeline::ids_fit(result_blocks.size(), 1))
         {
-          PRINT_ERROR("DAT result block index overflow.\n");
+          TOPOLOGY_ERROR("DAT result block index overflow.\n");
           return false;
         }
         state.association = definition.association;
@@ -1200,7 +1200,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       {
         if (!ResultsReaderPipeline::ids_fit(result_tables.size(), 1))
         {
-          PRINT_ERROR("DAT table index overflow.\n");
+          TOPOLOGY_ERROR("DAT table index overflow.\n");
           return false;
         }
         auto table = definition.table;
@@ -1248,7 +1248,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
               finished = batch.records.empty();
               return true;
             }
-            PRINT_ERROR("Invalid DAT contact statistics at line %zu.\n", state.line_number);
+            TOPOLOGY_ERROR("Invalid DAT contact statistics at line %zu.\n", state.line_number);
             return false;
           }
           row.insert(row.end(), values.begin(), values.end());
@@ -1256,7 +1256,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
           {
             if (!identifiers(table.columns, row))
             {
-              PRINT_ERROR("Invalid DAT statistics coordinates at line %zu.\n", state.line_number);
+              TOPOLOGY_ERROR("Invalid DAT statistics coordinates at line %zu.\n", state.line_number);
               return false;
             }
             state.table_id = -1;
@@ -1274,7 +1274,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
               finished = batch.records.empty();
               return true;
             }
-            PRINT_ERROR("DAT table width mismatch at line %zu.\n", state.line_number);
+            TOPOLOGY_ERROR("DAT table width mismatch at line %zu.\n", state.line_number);
             return false;
           }
           table.rows.push_back(std::move(values));
@@ -1298,14 +1298,14 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
           finished = batch.records.empty();
           return true;
         }
-        PRINT_ERROR("Invalid numeric DAT table record at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid numeric DAT table record at line %zu.\n", state.line_number);
         return false;
       }
       if (state.summary_section)
       {
         if (line.find(" and time ") != std::string::npos || line.find("s t e p ") == 0 || line.find("increment ") == 0)
         {
-          PRINT_ERROR("Incomplete DAT contact statistics before line %zu.\n", state.line_number);
+          TOPOLOGY_ERROR("Incomplete DAT contact statistics before line %zu.\n", state.line_number);
           return false;
         }
         if (line.find("total normal surface force") == 0)
@@ -1336,14 +1336,14 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
     }
     if (fields.size() == 4 && fields[0] == "S" && fields[1] == "T" && fields[2] == "E" && fields[3] == "P")
     {
-      PRINT_ERROR("Incomplete DAT step header at line %zu.\n", state.line_number);
+      TOPOLOGY_ERROR("Incomplete DAT step header at line %zu.\n", state.line_number);
       return false;
     }
     if (check_step(fields))
     {
       if (current_read_mode >= 111 && current_read_mode <= 118)
       {
-        PRINT_ERROR("Incomplete DAT section statistics before a step/increment header.\n");
+        TOPOLOGY_ERROR("Incomplete DAT section statistics before a step/increment header.\n");
         return false;
       }
       state.association = 0;
@@ -1369,13 +1369,13 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
         std::vector<double> values;
         if (!numeric(raw, values) || values.size() != count)
         {
-          PRINT_ERROR("Invalid DAT section record at line %zu.\n", state.line_number);
+          TOPOLOGY_ERROR("Invalid DAT section record at line %zu.\n", state.line_number);
           return false;
         }
         if (result_section_data.empty() || result_section_data.back().size() != 22 ||
           (current_read_mode == 115 && !identifiers({"CenterX", "CenterY", "CenterZ", "NormalX", "NormalY", "NormalZ"}, values)))
         {
-          PRINT_ERROR("Invalid DAT section metadata at line %zu.\n", state.line_number);
+          TOPOLOGY_ERROR("Invalid DAT section metadata at line %zu.\n", state.line_number);
           return false;
         }
         const std::size_t offset = [&]() -> std::size_t {
@@ -1415,7 +1415,7 @@ bool CoreResultsDat::read_next_raw_batch(ResultsReaderPipeline::BufferedInput& i
       if (fields.size() != 2 || !ResultReadNumbers::integer(fields[0], mode) || mode <= 0 ||
         !ResultReadNumbers::result_value(fields[1], factor))
       {
-        PRINT_ERROR("Invalid DAT buckling record at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid DAT buckling record at line %zu.\n", state.line_number);
         return false;
       }
       buckle_data.back().push_back({static_cast<double>(mode), factor});
@@ -1679,12 +1679,12 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
       {
         if (!file.eof())
         {
-          PRINT_ERROR("Cannot read DAT results: I/O error or line exceeds 64 KiB.\n");
+          TOPOLOGY_ERROR("Cannot read DAT results: I/O error or line exceeds 64 KiB.\n");
           return false;
         }
         if (current_read_mode >= 111 && current_read_mode <= 118)
         {
-          PRINT_ERROR("Incomplete DAT section output at end of file.\n");
+          TOPOLOGY_ERROR("Incomplete DAT section output at end of file.\n");
           return false;
         }
         state.finished = true;
@@ -1696,7 +1696,7 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
 
     if (raw.size() > ResultsReaderPipeline::max_line_bytes)
     {
-      PRINT_ERROR("DAT line %zu exceeds the supported line size.\n", state.line_number);
+      TOPOLOGY_ERROR("DAT line %zu exceeds the supported line size.\n", state.line_number);
       return false;
     }
     if (is_whitespace(raw))
@@ -1706,7 +1706,7 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
     auto fields = split_line(raw);
     if (fields.empty() || fields.size() > ResultsReaderPipeline::max_fields)
     {
-      PRINT_ERROR("Invalid DAT record at line %zu.\n", state.line_number);
+      TOPOLOGY_ERROR("Invalid DAT record at line %zu.\n", state.line_number);
       return false;
     }
 
@@ -1724,7 +1724,7 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
 
     if (fields.size() == 4 && fields[0] == "S" && fields[1] == "T" && fields[2] == "E" && fields[3] == "P")
     {
-      PRINT_ERROR("Incomplete DAT step header at line %zu.\n", state.line_number);
+      TOPOLOGY_ERROR("Incomplete DAT step header at line %zu.\n", state.line_number);
       return false;
     }
     check_step(fields);
@@ -1735,12 +1735,12 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
       const auto set = std::find(fields.begin(), fields.end(), "set");
       if (set == fields.end() || std::distance(fields.begin(), set) < 2 || std::next(set) == fields.end())
       {
-        PRINT_ERROR("Invalid DAT result header at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid DAT result header at line %zu.\n", state.line_number);
         return false;
       }
       if (!ResultsReaderPipeline::ids_fit(result_blocks.size(), 1))
       {
-        PRINT_ERROR("DAT result block index overflow.\n");
+        TOPOLOGY_ERROR("DAT result block index overflow.\n");
         return false;
       }
       const bool valid_header = [&]() -> bool {
@@ -1759,7 +1759,7 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
       state.components = result_block_components[state.data_id];
       if (state.components.size() > ResultsReaderPipeline::max_fields)
       {
-        PRINT_ERROR("DAT result has too many components.\n");
+        TOPOLOGY_ERROR("DAT result has too many components.\n");
         return false;
       }
     }
@@ -1767,7 +1767,7 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
     {
       if (state.data_id < 0 || state.components.empty())
       {
-        PRINT_ERROR("DAT result row has no header at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("DAT result row has no header at line %zu.\n", state.line_number);
         return false;
       }
       if (batch.lines.empty())
@@ -1784,7 +1784,7 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
     {
       if (fields.size() < 2 || buckle_data.empty())
       {
-        PRINT_ERROR("Invalid DAT buckling row at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid DAT buckling row at line %zu.\n", state.line_number);
         return false;
       }
       if (!read_line_buckle(fields))
@@ -1796,7 +1796,7 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
     {
       if (fields.size() < 8)
       {
-        PRINT_ERROR("Incomplete DAT section header at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Incomplete DAT section header at line %zu.\n", state.line_number);
         return false;
       }
       if (!header_section_1(fields))
@@ -1847,7 +1847,7 @@ bool CoreResultsDat::read_next_boost_batch(std::ifstream& file, DatReadState& st
       }();
       if (result_section_data.empty() || fields.size() != expected)
       {
-        PRINT_ERROR("Invalid DAT section row at line %zu.\n", state.line_number);
+        TOPOLOGY_ERROR("Invalid DAT section row at line %zu.\n", state.line_number);
         return false;
       }
       bool valid = false;
@@ -1954,14 +1954,14 @@ bool CoreResultsDat::append_boost_batch(DatParsedBatch& batch)
 {
   if (batch.data_id < 0 || static_cast<std::size_t>(batch.data_id) >= result_block_data.size())
   {
-    PRINT_ERROR("Invalid DAT result destination.\n");
+    TOPOLOGY_ERROR("Invalid DAT result destination.\n");
     return false;
   }
   auto& values = result_block_data[batch.data_id];
   auto& mapping = result_block_c1_data[batch.data_id];
   if (batch.values.size() != batch.c1_data.size() || !ResultsReaderPipeline::ids_fit(values.size(), batch.values.size()))
   {
-    PRINT_ERROR("Invalid DAT batch size or result index overflow.\n");
+    TOPOLOGY_ERROR("Invalid DAT batch size or result index overflow.\n");
     return false;
   }
   if (!batch.local_rows.empty())
@@ -1977,7 +1977,7 @@ bool CoreResultsDat::append_boost_batch(DatParsedBatch& batch)
         (*block)[2] < 0 || static_cast<std::size_t>((*block)[2]) >= result_block_type.size() ||
         (*block)[3] < 0 || static_cast<std::size_t>((*block)[3]) >= result_block_set.size())
       {
-        PRINT_ERROR("Invalid DAT local-vector metadata.\n");
+        TOPOLOGY_ERROR("Invalid DAT local-vector metadata.\n");
         return false;
       }
       const auto type = erase_whitespace(result_block_type[(*block)[2]]);
@@ -2315,7 +2315,7 @@ bool CoreResultsDat::read_header(std::vector<std::string> line)
   } 
   if (search < 2 || static_cast<std::size_t>(search + 1) >= line.size())
   {
-    PRINT_ERROR("Invalid DAT result header.\n");
+    TOPOLOGY_ERROR("Invalid DAT result header.\n");
     return false;
   }
   block_set = line[search + 1];
@@ -2403,7 +2403,7 @@ bool CoreResultsDat::header_emas(std::vector<std::string> line)
   } 
   if (search < 2 || static_cast<std::size_t>(search + 1) >= line.size())
   {
-    PRINT_ERROR("Invalid DAT result header.\n");
+    TOPOLOGY_ERROR("Invalid DAT result header.\n");
     return false;
   }
   block_set = line[search + 1];
@@ -2458,6 +2458,7 @@ bool CoreResultsDat::header_section_1(std::vector<std::string> line)
     std::vector<int> tmp_result_section(2);
     tmp_result_section[0] = this->get_current_result_section_set(line[4]);
     tmp_result_section[1] = int(result_section_data.size());
+    tmp_result_section.push_back(current_step);
     result_section.push_back(tmp_result_section);
 
     std::vector<double> tmp_result_section_data(22);
@@ -3072,7 +3073,7 @@ bool CoreResultsDat::print_data()
     }
   }
 
-  PRINT_INFO("%s", log.c_str());
+  TOPOLOGY_INFO("%s", log.c_str());
   return true;
 }
 

@@ -1,3 +1,4 @@
+#include "ForceTargetWidget.hpp"
 #include "GUI/common/CalculiXUnitPresentation.hpp"
 #include "CubitMessage.hpp"
 #include "Core/loads/CalculiXLoadsInterface.hpp"
@@ -61,7 +62,7 @@ LoadsForcesModifyPanel::LoadsForcesModifyPanel(QWidget *parent) :
   label_11->setFixedWidth(labelWidth);
   label_0->setText("Force ID");
   label_1->setText("Name");
-  label_2->setText("Nodeset ID");
+  label_2->setText("Target");
   label_3->setText("Force X");
   label_4->setText("Force Y");
   label_5->setText("Force Z");
@@ -73,7 +74,7 @@ LoadsForcesModifyPanel::LoadsForcesModifyPanel(QWidget *parent) :
   label_11->setText("Time Delay");
   lineEdit_0 = new QLineEdit();
   lineEdit_1 = new QLineEdit();
-  lineEdit_2 = new QLineEdit();
+  target = new ForceTargetWidget(this);
   lineEdit_3 = new QLineEdit();
   lineEdit_4 = new QLineEdit();
   lineEdit_5 = new QLineEdit();
@@ -88,7 +89,6 @@ LoadsForcesModifyPanel::LoadsForcesModifyPanel(QWidget *parent) :
   lineEdit_11 = new QLineEdit();
 
   lineEdit_1->setPlaceholderText("Optional");
-  lineEdit_2->setPlaceholderText("Optional");
   lineEdit_3->setPlaceholderText("Optional");
   lineEdit_4->setPlaceholderText("Optional");
   lineEdit_5->setPlaceholderText("Optional");
@@ -126,7 +126,7 @@ LoadsForcesModifyPanel::LoadsForcesModifyPanel(QWidget *parent) :
   HBoxLayout_1->addWidget(label_1);
   HBoxLayout_1->addWidget(lineEdit_1);
   HBoxLayout_2->addWidget(label_2);
-  HBoxLayout_2->addWidget(lineEdit_2);
+  HBoxLayout_2->addWidget(target);
   HBoxLayout_3->addWidget(label_3);
   HBoxLayout_3->addWidget(lineEdit_3);
   HBoxLayout_4->addWidget(label_4);
@@ -152,7 +152,6 @@ LoadsForcesModifyPanel::LoadsForcesModifyPanel(QWidget *parent) :
   QObject::connect(pushButton_apply, SIGNAL(clicked(bool)),this,  SLOT(on_pushButton_apply_clicked(bool)));
 
   auto* unitPresentation = new CalculiXUnitPresentation(this);
-  unitPresentation->bind(*label_0, *lineEdit_0, label_0->text(), "force");
   unitPresentation->bind(*label_3, *lineEdit_3, label_3->text(), "force");
   unitPresentation->bind(*label_4, *lineEdit_4, label_4->text(), "force");
   unitPresentation->bind(*label_5, *lineEdit_5, label_5->text(), "force");
@@ -172,7 +171,7 @@ void LoadsForcesModifyPanel::on_pushButton_apply_clicked(bool)
 {
   bool changed = false;
   changed = changed || fieldChanged("lineEdit_1", lineEdit_1->text());
-  changed = changed || fieldChanged("lineEdit_2", lineEdit_2->text());
+  changed = changed || fieldChanged("target", target->keyword() + " " + target->idText());
   changed = changed || fieldChanged("lineEdit_3", lineEdit_3->text());
   changed = changed || fieldChanged("lineEdit_4", lineEdit_4->text());
   changed = changed || fieldChanged("lineEdit_5", lineEdit_5->text());
@@ -213,9 +212,9 @@ void LoadsForcesModifyPanel::on_pushButton_apply_clicked(bool)
     PRINT_ERROR("An empty value cannot clear Name; use the supported reset value.\n");
     return;
   }
-  if (loadedEntityId >= 0 && lineEdit_2->isEnabled() && !originalValues.value("lineEdit_2").isEmpty() && lineEdit_2->text().trimmed().isEmpty())
+  if (loadedEntityId >= 0 && target->isEnabled() && !originalValues.value("target").isEmpty() && target->idText().trimmed().isEmpty())
   {
-    PRINT_ERROR("An empty value cannot clear Nodeset ID; use the supported reset value.\n");
+    PRINT_ERROR("An empty value cannot clear the force target; use the supported reset value.\n");
     return;
   }
   if (loadedEntityId >= 0 && lineEdit_3->isEnabled() && !originalValues.value("lineEdit_3").isEmpty() && lineEdit_3->text().trimmed().isEmpty())
@@ -265,9 +264,9 @@ void LoadsForcesModifyPanel::on_pushButton_apply_clicked(bool)
   if (!lineEdit_0->text().trimmed().isEmpty())
   {
     command.append("ccx modify force " + lineEdit_0->text());
-    if (!lineEdit_2->text().trimmed().isEmpty() && fieldChanged("lineEdit_2", lineEdit_2->text()))
+    if (!target->idText().trimmed().isEmpty() && fieldChanged("target", target->keyword() + " " + target->idText()))
     {
-      command.append(" nodeset " + lineEdit_2->text());
+      command.append(" " + target->keyword() + " " + target->idText());
     }
     if (!lineEdit_3->text().trimmed().isEmpty() && fieldChanged("lineEdit_3", lineEdit_3->text()))
     {
@@ -297,11 +296,11 @@ void LoadsForcesModifyPanel::on_pushButton_apply_clicked(bool)
     {
       command.append(" op " + comboBox_9->currentText());
     }
-    if (!lineEdit_10->text().trimmed().isEmpty() && fieldChanged("lineEdit_1", lineEdit_1->text()))
+    if (!lineEdit_10->text().trimmed().isEmpty() && fieldChanged("lineEdit_10", lineEdit_10->text()))
     {
       command.append(" amplitude " + lineEdit_10->text());
     }
-    if (!lineEdit_11->text().trimmed().isEmpty() && fieldChanged("lineEdit_1", lineEdit_1->text()))
+    if (!lineEdit_11->text().trimmed().isEmpty() && fieldChanged("lineEdit_11", lineEdit_11->text()))
     {
       command.append(" timedelay " + lineEdit_11->text());
     }
@@ -336,7 +335,7 @@ bool LoadsForcesModifyPanel::setForce(int id)
   pushButton_apply->setEnabled(false);
   lineEdit_0->clear();
   lineEdit_1->clear();
-  lineEdit_2->clear();
+  target->setTarget(0, {});
   lineEdit_3->clear();
   lineEdit_4->clear();
   lineEdit_5->clear();
@@ -356,7 +355,7 @@ bool LoadsForcesModifyPanel::setForce(int id)
   }
   lineEdit_0->setText(QString::number(settings.id));
   lineEdit_1->setText(QString::fromStdString(settings.name));
-  lineEdit_2->setText(QString::fromStdString(settings.nodeset));
+  target->setTarget(settings.referencePoint, QString::fromStdString(settings.nodeset));
   lineEdit_3->setText(QString::fromStdString(settings.component1));
   lineEdit_4->setText(QString::fromStdString(settings.component2));
   lineEdit_5->setText(QString::fromStdString(settings.component3));
@@ -375,7 +374,7 @@ bool LoadsForcesModifyPanel::setForce(int id)
   lineEdit_11->setText(QString::fromStdString(settings.timeDelay));
   originalValues.insert("lineEdit_0", lineEdit_0->text());
   originalValues.insert("lineEdit_1", lineEdit_1->text());
-  originalValues.insert("lineEdit_2", lineEdit_2->text());
+  originalValues.insert("target", target->keyword() + " " + target->idText());
   originalValues.insert("lineEdit_3", lineEdit_3->text());
   originalValues.insert("lineEdit_4", lineEdit_4->text());
   originalValues.insert("lineEdit_5", lineEdit_5->text());

@@ -1,12 +1,12 @@
 #include "Core/CalculiXCore.hpp"
 #include "CoreTopology.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 bool CalculiXCore::create_topology(int topology_id, const TopologyOptions& options)
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -17,7 +17,7 @@ bool CalculiXCore::modify_topology(int topology_id, const TopologyOptions& optio
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 
@@ -28,7 +28,7 @@ std::vector<double> CalculiXCore::get_topology_parameters(int topology_id)
 {
   if (!topology)
   {
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return {};
   }
 
@@ -40,7 +40,7 @@ bool CalculiXCore::get_topology_settings(int topology_id, TopologyOptions& optio
   if (!topology)
   {
     options = {};
-    PRINT_ERROR("Topology core is not initialized.\n");
+    TOPOLOGY_ERROR("Topology core is not initialized.\n");
     return false;
   }
 

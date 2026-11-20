@@ -91,12 +91,15 @@ struct CoreResultsVtkGroup
   std::optional<std::array<double,3>> solid_color;
 };
 
+#include "Core/connections/ConnectionRunMap.hpp"
+
 struct CoreResultsVtkMesh
 {
   // Sorted by global ID, unique; connectivity is validated against these nodes.
   std::vector<CoreResultsVtkNode> nodes;
   std::vector<CoreResultsVtkElement> elements;
   std::vector<CoreResultsVtkGroup> groups;
+  ConnectionRunMap connections;
 };
 
 struct CoreResultsVtkFieldPlan

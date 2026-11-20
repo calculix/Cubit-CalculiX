@@ -1,3 +1,6 @@
+#include "GUI/connections/DiscreteConnectionPanel.hpp"
+#include "GUI/connections/ConnectionEditorPanel.hpp"
+#include "GUI/connections/DistributingAttachmentPanel.hpp"
 /*!
  *  \file MyCmdWidgetFactory.cpp
  *  \brief
@@ -29,12 +32,10 @@
 #include "GUI/sections/SectionsModifyBeamPanel.hpp"
 #include "GUI/sections/SectionsModifyMembranePanel.hpp"
 #include "GUI/sections/SectionsDeletePanel.hpp"
-#include "GUI/interactions/ConstraintsCreateRigidBodyPanel.hpp"
 #include "GUI/interactions/ConstraintsCreateTiePanel.hpp"
 #include "GUI/interactions/ConstraintsCreateTieFromCubitContactPairPanel.hpp"
 #include "GUI/interactions/ConstraintsCreateEquationPanel.hpp"
 #include "GUI/interactions/ConstraintsCreateEquationFromGroupPanel.hpp"
-#include "GUI/interactions/ConstraintsModifyRigidBodyPanel.hpp"
 #include "GUI/interactions/ConstraintsModifyTiePanel.hpp"
 #include "GUI/interactions/ConstraintsModifyEquationPanel.hpp"
 #include "GUI/interactions/ConstraintsDeletePanel.hpp"
@@ -277,8 +278,25 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name) {
   if(name == "CCXSectionsDelete") {
     return new SectionsDeletePanel();
   }
-  if(name == "CCXConstraintsCreateRigidBody") {
-    return new ConstraintsCreateRigidBodyPanel();
+  if (name == "ReferencePoint")
+  {
+    return new ConnectionEditorPanel("rp");
+  }
+  if (name == "PointMass" || name == "Spring")
+  {
+    return new DiscreteConnectionPanel(name == "Spring" ? DiscreteConnectionPanel::Feature::Spring : DiscreteConnectionPanel::Feature::PointMass);
+  }
+  if (name == "DistributingAttachment")
+  {
+    return new DistributingAttachmentPanel();
+  }
+  if (name == "RigidBody")
+  {
+    return new ConnectionEditorPanel("rigid body");
+  }
+  if (name == "Joint")
+  {
+    return new ConnectionEditorPanel("joint");
   }
   if(name == "CCXConstraintsCreateTie") {
     return new ConstraintsCreateTiePanel();
@@ -291,9 +309,6 @@ QWidget* MyCmdWidgetFactory::createWidget(const QString &name) {
   }
   if(name == "CCXConstraintsCreateEquationFromGroup") {
     return new ConstraintsCreateEquationFromGroupPanel();
-  }
-  if(name == "CCXConstraintsModifyRigidBody") {
-    return new ConstraintsModifyRigidBodyPanel();
   }
   if(name == "CCXConstraintsModifyTie") {
     return new ConstraintsModifyTiePanel();

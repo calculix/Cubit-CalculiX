@@ -255,8 +255,14 @@ namespace Postprocessor
       Object object{{"id",q(source.id)},{"name",q(source.name)}};
       if (const auto* job = std::get_if<JobSourceReference>(&source.reference))
       {
-        object.insert("reference",Object{{"type","job"},{"application",q(job->application_id)},{"project",q(job->project_id)},
-          {"job",job->job_id},{"run",q(job->run_identity)},{"identity",q(job->result_identity)}});
+        Object reference{{"type","job"},{"application",q(job->application_id)},{"project",q(job->project_id)},
+          {"job",job->job_id},{"run",q(job->run_identity)},{"identity",q(job->result_identity)}};
+        if (job->topology_threshold)
+        {
+          reference.insert("topology_threshold",*job->topology_threshold);
+          reference.insert("topology_last_iteration",job->topology_last_iteration);
+        }
+        object.insert("reference",reference);
       }
       else if (const auto* files = std::get_if<FileSourceReference>(&source.reference))
       {
@@ -485,6 +491,17 @@ namespace Postprocessor
             job.application_id.empty() || job.job_id <= 0)
         {
           return false;
+        }
+        if (reference.contains("topology_threshold") || reference.contains("topology_last_iteration"))
+        {
+          double threshold = 0;
+          if (job.application_id != "calculix" || !number(reference,"topology_threshold",threshold) ||
+              threshold < 0 || threshold > 1 || !integer(reference,"topology_last_iteration",job.topology_last_iteration) ||
+              job.topology_last_iteration <= 0)
+          {
+            return false;
+          }
+          job.topology_threshold = threshold;
         }
         source.reference = job;
       }

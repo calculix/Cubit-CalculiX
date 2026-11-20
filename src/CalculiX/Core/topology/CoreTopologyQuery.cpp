@@ -2,7 +2,7 @@
 #include "CoreTopologyQuery.hpp"
 #include "CoreTopology.hpp"
 #include "Core/jobs/CoreJobs.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include "Core/materials/CoreMaterials.hpp"
 #include <cmath>
 #include <iomanip>
@@ -71,7 +71,7 @@ int CoreTopologyQuery::get_iteration_job_id(const CoreTopology& topology, CoreJo
 {
   if (iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology iteration query.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration query.\n");
     return -1;
   }
 
@@ -79,7 +79,7 @@ int CoreTopologyQuery::get_iteration_job_id(const CoreTopology& topology, CoreJo
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return -1;
   }
 
@@ -87,7 +87,7 @@ int CoreTopologyQuery::get_iteration_job_id(const CoreTopology& topology, CoreJo
 
   if (iteration == entry->second.iteration_jobs.end())
   {
-    PRINT_ERROR("Topology %d iteration %d has no job.\n", topology_id, iteration_id);
+    TOPOLOGY_ERROR("Topology %d iteration %d has no job.\n", topology_id, iteration_id);
     return -1;
   }
 
@@ -95,7 +95,7 @@ int CoreTopologyQuery::get_iteration_job_id(const CoreTopology& topology, CoreJo
 
   if (jobs.get_jobs_data_id_from_job_id(job_id) < 0)
   {
-    PRINT_ERROR("Topology iteration job %d no longer exists.\n", job_id);
+    TOPOLOGY_ERROR("Topology iteration job %d no longer exists.\n", job_id);
     return -1;
   }
 
@@ -106,7 +106,7 @@ int CoreTopologyQuery::get_iteration_adjoint_job_id(const CoreTopology& topology
 {
   if (iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology adjoint job query.\n");
+    TOPOLOGY_ERROR("Invalid topology adjoint job query.\n");
     return -1;
   }
 
@@ -114,7 +114,7 @@ int CoreTopologyQuery::get_iteration_adjoint_job_id(const CoreTopology& topology
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return -1;
   }
 
@@ -122,7 +122,7 @@ int CoreTopologyQuery::get_iteration_adjoint_job_id(const CoreTopology& topology
 
   if (job == entry->second.iteration_adjoint_jobs.end() || jobs.get_jobs_data_id_from_job_id(job->second) < 0)
   {
-    PRINT_ERROR("Topology %d iteration %d has no available adjoint job.\n", topology_id, iteration_id);
+    TOPOLOGY_ERROR("Topology %d iteration %d has no available adjoint job.\n", topology_id, iteration_id);
     return -1;
   }
 
@@ -164,7 +164,7 @@ std::vector<std::vector<std::string>> CoreTopologyQuery::get_iteration_data(cons
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return {};
   }
 
@@ -272,7 +272,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
 {
   if (iteration_id < -1)
   {
-    PRINT_ERROR("Invalid topology element-data request.\n");
+    TOPOLOGY_ERROR("Invalid topology element-data request.\n");
     return {};
   }
 
@@ -281,7 +281,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
 
   if (entry == topology.topology_cases.end() || collection == materials.topology_material_data.end())
   {
-    PRINT_ERROR("Topology %d has no prepared design data.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d has no prepared design data.\n", topology_id);
     return {};
   }
 
@@ -294,7 +294,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
 
   if (iteration_id < 1)
   {
-    PRINT_ERROR("Topology %d has no selected iteration.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d has no selected iteration.\n", topology_id);
     return {};
   }
 
@@ -302,7 +302,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
 
   if (job_id <= 0 || jobs.get_job_status(job_id) != 2 || configuration.iteration_evaluations.count(iteration_id) == 0)
   {
-    PRINT_ERROR("Topology iteration %d is not a completed evaluation.\n", iteration_id);
+    TOPOLOGY_ERROR("Topology iteration %d is not a completed evaluation.\n", iteration_id);
     return {};
   }
 
@@ -310,7 +310,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
   const auto factors = collection->second.iteration_factors.find(iteration_id);
   if (!get_iteration_method(topology, topology_id, iteration_id, method) || factors == collection->second.iteration_factors.end())
   {
-    PRINT_ERROR("Missing topology iteration design, method or factors.\n");
+    TOPOLOGY_ERROR("Missing topology iteration design, method or factors.\n");
     return {};
   }
 
@@ -327,7 +327,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
 
   if (densities.empty() || densities.size() != factors->second.size() || densities.size() != preserved.size() || densities.size() != assignments.size())
   {
-    PRINT_ERROR("Incomplete topology iteration element data.\n");
+    TOPOLOGY_ERROR("Incomplete topology iteration element data.\n");
     return {};
   }
 
@@ -350,7 +350,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_element_data(c
         !std::isfinite(factor->second) ||
         factor->second <= 0.0 || factor->second > 1.0)
     {
-      PRINT_ERROR("Invalid topology data for element %d.\n", density.first);
+      TOPOLOGY_ERROR("Invalid topology data for element %d.\n", density.first);
       return {};
     }
 
@@ -391,7 +391,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_sensitivity_da
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d does not exist.\n", topology_id);
     return {};
   }
 
@@ -407,7 +407,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_sensitivity_da
   if (!get_iteration_method(topology, topology_id, iteration_id, method) ||
       method != TopologyMethod::Density)
   {
-    PRINT_ERROR("Element sensitivity queries require a completed density iteration.\n");
+    TOPOLOGY_ERROR("Element sensitivity queries require a completed density iteration.\n");
     return {};
   }
 
@@ -415,7 +415,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_sensitivity_da
 
   if (evaluation == configuration.iteration_evaluations.end())
   {
-    PRINT_ERROR("Topology iteration sensitivities are unavailable.\n");
+    TOPOLOGY_ERROR("Topology iteration sensitivities are unavailable.\n");
     return {};
   }
 
@@ -425,7 +425,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_sensitivity_da
   if (stiffness.size() != element_data.size() ||
       density.size() != element_data.size())
   {
-    PRINT_ERROR("Incomplete topology iteration sensitivities.\n");
+    TOPOLOGY_ERROR("Incomplete topology iteration sensitivities.\n");
     return {};
   }
 
@@ -443,14 +443,14 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_sensitivity_da
         !std::isfinite(stiffness_value->second) ||
         !std::isfinite(density_value->second))
     {
-      PRINT_ERROR("Invalid sensitivities for topology element %d.\n", element_id);
+      TOPOLOGY_ERROR("Invalid sensitivities for topology element %d.\n", element_id);
       return {};
     }
 
     if (element[3] == 1.0 &&
         (stiffness_value->second != 0.0 || density_value->second != 0.0))
     {
-      PRINT_ERROR("Preserved topology element %d has nonzero sensitivities.\n", element_id);
+      TOPOLOGY_ERROR("Preserved topology element %d has nonzero sensitivities.\n", element_id);
       return {};
     }
 
@@ -471,7 +471,7 @@ bool CoreTopologyQuery::get_job_context(const CoreTopology& topology, int job_id
 
   if (job_id <= 0)
   {
-    PRINT_ERROR("Invalid job topology context query.\n");
+    TOPOLOGY_ERROR("Invalid job topology context query.\n");
     return false;
   }
 
@@ -488,7 +488,7 @@ bool CoreTopologyQuery::get_job_context(const CoreTopology& topology, int job_id
 
         if (topology_id != -1 || configuration.first <= 0 || iteration.first < 1)
         {
-          PRINT_ERROR("Invalid topology association for job %d.\n", job_id);
+          TOPOLOGY_ERROR("Invalid topology association for job %d.\n", job_id);
           return false;
         }
 
@@ -506,7 +506,7 @@ int CoreTopologyQuery::get_adjoint_job_source(const CoreTopology& topology, Core
 {
   if (iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology adjoint job request.\n");
+    TOPOLOGY_ERROR("Invalid topology adjoint job request.\n");
     return -1;
   }
 
@@ -514,13 +514,13 @@ int CoreTopologyQuery::get_adjoint_job_source(const CoreTopology& topology, Core
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return -1;
   }
 
   if (entry->second.iteration_adjoint_jobs.count(iteration_id) != 0)
   {
-    PRINT_ERROR("Topology %d iteration %d already has an adjoint job.\n", topology_id, iteration_id);
+    TOPOLOGY_ERROR("Topology %d iteration %d already has an adjoint job.\n", topology_id, iteration_id);
     return -1;
   }
 
@@ -528,7 +528,7 @@ int CoreTopologyQuery::get_adjoint_job_source(const CoreTopology& topology, Core
 
   if (physical_job <= 0 || jobs.get_job_status(physical_job) != 2)
   {
-    PRINT_ERROR("A completed physical job is required before creating an adjoint job.\n");
+    TOPOLOGY_ERROR("A completed physical job is required before creating an adjoint job.\n");
     return -1;
   }
 
@@ -545,7 +545,7 @@ bool CoreTopologyQuery::validate_selected_iterations(const CoreTopology& topolog
     {
       if (get_iteration_element_data(topology, materials, jobs, entry.first, iteration).empty())
       {
-        PRINT_ERROR("Unable to restore selected iteration for topology %d.\n", entry.first);
+        TOPOLOGY_ERROR("Unable to restore selected iteration for topology %d.\n", entry.first);
         return false;
       }
     }
@@ -559,7 +559,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_level_set_fiel
   TopologyMethod method;
   if (!get_iteration_method(topology, topology_id, iteration_id, method) || method != TopologyMethod::LevelSet)
   {
-    PRINT_ERROR("Missing historical level-set design.\n");
+    TOPOLOGY_ERROR("Missing historical level-set design.\n");
     return {};
   }
   const auto& configuration = topology.topology_cases.at(topology_id);
@@ -570,20 +570,20 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_level_set_fiel
   const int job_id = get_iteration_job_id(topology, jobs, topology_id, iteration_id);
   if (job_id <= 0 || jobs.get_job_status(job_id) != 2 || configuration.iteration_evaluations.count(iteration_id) == 0)
   {
-    PRINT_ERROR("Topology iteration %d is not a completed evaluation.\n", iteration_id);
+    TOPOLOGY_ERROR("Topology iteration %d is not a completed evaluation.\n", iteration_id);
     return {};
   }
   const auto& design = configuration.iteration_level_set_designs.at(iteration_id);
   if (design.node_values.empty())
   {
-    PRINT_ERROR("Empty historical level-set field.\n");
+    TOPOLOGY_ERROR("Empty historical level-set field.\n");
     return {};
   }
   for (const int node_id : design.fixed_nodes)
   {
     if (design.node_values.count(node_id) == 0)
     {
-      PRINT_ERROR("Missing fixed level-set node %d.\n", node_id);
+      TOPOLOGY_ERROR("Missing fixed level-set node %d.\n", node_id);
       return {};
     }
   }
@@ -594,7 +594,7 @@ std::vector<std::vector<double>> CoreTopologyQuery::get_iteration_level_set_fiel
     const bool fixed = design.fixed_nodes.count(node.first) != 0;
     if (node.first <= 0 || !std::isfinite(node.second) || node.second < -1.0 || node.second > 1.0 || (fixed && node.second != 1.0))
     {
-      PRINT_ERROR("Invalid historical level-set node %d.\n", node.first);
+      TOPOLOGY_ERROR("Invalid historical level-set node %d.\n", node.first);
       return {};
     }
     rows.push_back({static_cast<double>(node.first), node.second, [&]() -> double {

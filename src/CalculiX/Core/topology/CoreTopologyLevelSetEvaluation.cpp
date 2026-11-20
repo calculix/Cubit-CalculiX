@@ -7,7 +7,7 @@
 #include "CoreTopologyLevelSetGeometryCache.hpp"
 #include "CoreTopologyProgress.hpp"
 #include "CoreTopologyStructs.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <QScopeGuard>
 #include <QByteArray>
 #include <algorithm>
@@ -29,14 +29,14 @@ bool valid_design(const TopologyLevelSetDesign& design)
       design.settings.seed_spacing <= 0.0 || design.settings.seed_radius <= 0.0 || design.node_values.empty() ||
       !std::isfinite(design.characteristic_length) || design.characteristic_length <= 0.0)
   {
-    PRINT_ERROR("Invalid or unresolved level-set design.\n");
+    TOPOLOGY_ERROR("Invalid or unresolved level-set design.\n");
     return false;
   }
   for (double coordinate : design.seed_origin)
   {
     if (!std::isfinite(coordinate))
     {
-      PRINT_ERROR("Invalid level-set seed origin.\n");
+      TOPOLOGY_ERROR("Invalid level-set seed origin.\n");
       return false;
     }
   }
@@ -45,7 +45,7 @@ bool valid_design(const TopologyLevelSetDesign& design)
     if (node.first <= 0 || !std::isfinite(node.second) || node.second < -1.0 || node.second > 1.0 ||
         (design.fixed_nodes.count(node.first) != 0 && node.second != 1.0))
     {
-      PRINT_ERROR("Invalid or unpreserved level-set nodal coefficient.\n");
+      TOPOLOGY_ERROR("Invalid or unpreserved level-set nodal coefficient.\n");
       return false;
     }
   }
@@ -53,7 +53,7 @@ bool valid_design(const TopologyLevelSetDesign& design)
   {
     if (design.node_values.count(node) == 0)
     {
-      PRINT_ERROR("Missing fixed level-set node.\n");
+      TOPOLOGY_ERROR("Missing fixed level-set node.\n");
       return false;
     }
   }
@@ -64,14 +64,14 @@ bool valid_domain(const std::map<int, bool>& preserved, const std::map<int, doub
 {
   if (volumes.empty() || volumes.size() != preserved.size())
   {
-    PRINT_ERROR("Incomplete level-set element volume/preservation domain.\n");
+    TOPOLOGY_ERROR("Incomplete level-set element volume/preservation domain.\n");
     return false;
   }
   for (const auto& entry : volumes)
   {
     if (entry.first <= 0 || preserved.count(entry.first) == 0 || !std::isfinite(entry.second) || entry.second <= 0.0)
     {
-      PRINT_ERROR("Invalid level-set domain element volume or preservation.\n");
+      TOPOLOGY_ERROR("Invalid level-set domain element volume or preservation.\n");
       return false;
     }
   }
@@ -115,18 +115,18 @@ void capture_integration_failure(const TopologyLevelSetDesign& design, const cha
       std::string error;
       if (CoreTopologyLevelSetIntegrationDiagnostics::write_capture(directory.toStdString(), capture, path, error))
       {
-        PRINT_INFO("Level-set integration failure captured: %s\n", path.c_str());
+        TOPOLOGY_INFO("Level-set integration failure captured: %s\n", path.c_str());
       }
       else
       {
-        PRINT_WARNING("Unable to capture integration failure: %s\n", error.c_str());
+        TOPOLOGY_WARNING("Unable to capture integration failure: %s\n", error.c_str());
       }
       break;
     }
   }
   catch (...)
   {
-    PRINT_WARNING("Unable to capture integration failure; original integration error retained.\n");
+    TOPOLOGY_WARNING("Unable to capture integration failure; original integration error retained.\n");
   }
 }
 
@@ -165,7 +165,7 @@ bool evaluate_elements(const TopologyLevelSetDesign& design, const char* phase, 
           const auto found = design.node_values.find(node);
           if (found == design.node_values.end())
           {
-            PRINT_ERROR("Missing level-set coefficient for node %d.\n", node);
+            TOPOLOGY_ERROR("Missing level-set coefficient for node %d.\n", node);
             return false;
           }
           input.values.push_back(found->second);
@@ -205,7 +205,7 @@ bool evaluate_elements(const TopologyLevelSetDesign& design, const char* phase, 
       if (!pipeline.integrate(batch, design.settings, poll, error))
       {
         capture_integration_failure(design, phase, batch);
-        PRINT_ERROR("Level-set integration failed: %s\n", error.c_str());
+        TOPOLOGY_ERROR("Level-set integration failed: %s\n", error.c_str());
         return false;
       }
       for (const auto& input : batch)
@@ -230,12 +230,12 @@ bool evaluate_elements(const TopologyLevelSetDesign& design, const char* phase, 
   }
   catch (const std::exception& failure)
   {
-    PRINT_ERROR("Level-set evaluation failed: %s\n", failure.what());
+    TOPOLOGY_ERROR("Level-set evaluation failed: %s\n", failure.what());
     return false;
   }
   catch (...)
   {
-    PRINT_ERROR("Unexpected level-set evaluation failure.\n");
+    TOPOLOGY_ERROR("Unexpected level-set evaluation failure.\n");
     return false;
   }
   return true;
@@ -245,7 +245,7 @@ bool valid_node_domain(const TopologyLevelSetDesign& design, const std::set<int>
 {
   if (nodes.size() != design.node_values.size() || fixed != design.fixed_nodes)
   {
-    PRINT_ERROR("Level-set field/protected nodes do not match the current Cubit domain.\n");
+    TOPOLOGY_ERROR("Level-set field/protected nodes do not match the current Cubit domain.\n");
     return false;
   }
   return true;
@@ -299,7 +299,7 @@ bool CoreTopologyLevelSetEvaluation::build_geometry(TopologyLevelSetDesign& desi
     const double total_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
     const auto statistics = pipeline.statistics();
     const double other_ms = (std::max)(0.0, total_ms - query_ms - statistics.wall_ms - cache_ms);
-    PRINT_INFO("Level-set iteration %d geometry [ms]: total %.3f; mesh queries %.3f; integration wall %.3f; other %.3f; status %s.\n",
+    TOPOLOGY_INFO("Level-set iteration %d geometry [ms]: total %.3f; mesh queries %.3f; integration wall %.3f; other %.3f; status %s.\n",
       design.iteration_id, total_ms, query_ms, statistics.wall_ms, other_ms, [&]() -> const char* {
         if (succeeded) {
           return "complete";
@@ -307,7 +307,7 @@ bool CoreTopologyLevelSetEvaluation::build_geometry(TopologyLevelSetDesign& desi
           return "incomplete";
         }
       }());
-    PRINT_INFO("Level-set iteration %d geometry cache: hits %zu; misses %zu; lookup/copy/validation %.3f ms.\n",
+    TOPOLOGY_INFO("Level-set iteration %d geometry cache: hits %zu; misses %zu; lookup/copy/validation %.3f ms.\n",
       design.iteration_id, [&]() -> std::common_type_t<decltype(cache->hit_count() - hits_before), decltype(0)> {
         if (cache) {
           return cache->hit_count() - hits_before;
@@ -321,23 +321,23 @@ bool CoreTopologyLevelSetEvaluation::build_geometry(TopologyLevelSetDesign& desi
           return 0;
         }
       }(), cache_ms);
-    PRINT_INFO("Level-set iteration %d geometry quadrature: rule hits %zu; builds %zu; budget fallbacks %zu; retained bytes %zu.\n",
+    TOPOLOGY_INFO("Level-set iteration %d geometry quadrature: rule hits %zu; builds %zu; budget fallbacks %zu; retained bytes %zu.\n",
       design.iteration_id, statistics.rule_hits, statistics.rule_builds, statistics.rule_fallbacks, statistics.retained_bytes);
-    PRINT_INFO("Level-set iteration %d integration workers: configured %d; active %zu; aggregate integration %.3f ms.\n",
+    TOPOLOGY_INFO("Level-set iteration %d integration workers: configured %d; active %zu; aggregate integration %.3f ms.\n",
       design.iteration_id, configured_workers, statistics.workers, statistics.worker_ms);
-    PRINT_INFO("Level-set iteration %d shared quadrature: budget %d MiB; preparation %.3f ms; preparation budget fallbacks %zu.\n",
+    TOPOLOGY_INFO("Level-set iteration %d shared quadrature: budget %d MiB; preparation %.3f ms; preparation budget fallbacks %zu.\n",
       design.iteration_id, configured_budget_mib, statistics.preparation_ms, statistics.preparation_fallbacks);
-    PRINT_INFO("Level-set iteration %d geometry: elements %zu/%zu; slowest element %d: %.3f ms; maximum subdivisions %d; incomplete element %d.\n",
+    TOPOLOGY_INFO("Level-set iteration %d geometry: elements %zu/%zu; slowest element %d: %.3f ms; maximum subdivisions %d; incomplete element %d.\n",
       design.iteration_id, completed, element_volumes.size(), slowest_element, slowest_element_ms, maximum_subdivisions, current_element);
   });
   if (!valid_budget)
   {
-    PRINT_ERROR("Topology quadrature cache budget must be positive MiB and fit in the address space.\n");
+    TOPOLOGY_ERROR("Topology quadrature cache budget must be positive MiB and fit in the address space.\n");
     return false;
   }
   if (configured_workers < 1)
   {
-    PRINT_ERROR("Topology integration requires at least one converter thread.\n");
+    TOPOLOGY_ERROR("Topology integration requires at least one converter thread.\n");
     return false;
   }
   if (!valid_design(design) || !valid_domain(preserved, element_volumes))
@@ -399,12 +399,12 @@ bool CoreTopologyLevelSetEvaluation::build_geometry(TopologyLevelSetDesign& desi
   if (!valid_node_domain(design, touched, fixed) || !std::isfinite(volume.total_volume) || volume.total_volume <= 0.0 ||
       !std::isfinite(volume.solid_volume) || !std::isfinite(volume.preserved_volume) || !std::isfinite(fully_fixed_volume))
   {
-    PRINT_ERROR("Invalid integrated level-set design volumes.\n");
+    TOPOLOGY_ERROR("Invalid integrated level-set design volumes.\n");
     return false;
   }
   if (design.source_iteration == -1 && !interface_available)
   {
-    PRINT_ERROR("Initial level-set seeds have no resolved free interface; adjust seed size/spacing or refine the mesh/integration.\n");
+    TOPOLOGY_ERROR("Initial level-set seeds have no resolved free interface; adjust seed size/spacing or refine the mesh/integration.\n");
     return false;
   }
   volume.volume_fraction = volume.solid_volume / volume.total_volume;
@@ -429,7 +429,7 @@ bool CoreTopologyLevelSetEvaluation::build_factors(const TopologyLevelSetDesign&
   factors.clear();
   if (!valid_design(design) || !design.volume.available || preserved.empty() || preserved.size() != design.element_solid_fractions.size())
   {
-    PRINT_ERROR("Complete level-set fractions are required for stiffness factors.\n");
+    TOPOLOGY_ERROR("Complete level-set fractions are required for stiffness factors.\n");
     return false;
   }
   std::map<int, double> candidate;
@@ -439,7 +439,7 @@ bool CoreTopologyLevelSetEvaluation::build_factors(const TopologyLevelSetDesign&
     if (fraction.first <= 0 || flag == preserved.end() || !std::isfinite(fraction.second) || fraction.second < 0.0 || fraction.second > 1.0 ||
         (flag->second && fraction.second != 1.0))
     {
-      PRINT_ERROR("Invalid level-set fraction/preservation for stiffness interpolation.\n");
+      TOPOLOGY_ERROR("Invalid level-set fraction/preservation for stiffness interpolation.\n");
       return false;
     }
     const double factor = [&]() -> double {
@@ -451,7 +451,7 @@ bool CoreTopologyLevelSetEvaluation::build_factors(const TopologyLevelSetDesign&
     }();
     if (!std::isfinite(factor) || factor <= 0.0 || factor > 1.0)
     {
-      PRINT_ERROR("Invalid level-set stiffness factor.\n");
+      TOPOLOGY_ERROR("Invalid level-set stiffness factor.\n");
       return false;
     }
     candidate.emplace(fraction.first, factor);
@@ -507,7 +507,7 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
     const double total_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
     const auto statistics = pipeline.statistics();
     const double other_ms = (std::max)(0.0, total_ms - query_ms - statistics.wall_ms - cache_ms);
-    PRINT_INFO("Level-set iteration %d sensitivities [ms]: total %.3f; mesh queries %.3f; integration wall %.3f; other %.3f; status %s.\n",
+    TOPOLOGY_INFO("Level-set iteration %d sensitivities [ms]: total %.3f; mesh queries %.3f; integration wall %.3f; other %.3f; status %s.\n",
       design.iteration_id, total_ms, query_ms, statistics.wall_ms, other_ms, [&]() -> const char* {
         if (succeeded) {
           return "complete";
@@ -515,7 +515,7 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
           return "incomplete";
         }
       }());
-    PRINT_INFO("Level-set iteration %d sensitivities cache: hits %zu; misses %zu; lookup/copy/validation %.3f ms.\n",
+    TOPOLOGY_INFO("Level-set iteration %d sensitivities cache: hits %zu; misses %zu; lookup/copy/validation %.3f ms.\n",
       design.iteration_id, [&]() -> std::common_type_t<decltype(cache->hit_count() - hits_before), decltype(0)> {
         if (cache) {
           return cache->hit_count() - hits_before;
@@ -529,30 +529,30 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
           return 0;
         }
       }(), cache_ms);
-    PRINT_INFO("Level-set iteration %d sensitivities quadrature: rule hits %zu; builds %zu; budget fallbacks %zu; retained bytes %zu.\n",
+    TOPOLOGY_INFO("Level-set iteration %d sensitivities quadrature: rule hits %zu; builds %zu; budget fallbacks %zu; retained bytes %zu.\n",
       design.iteration_id, statistics.rule_hits, statistics.rule_builds, statistics.rule_fallbacks, statistics.retained_bytes);
-    PRINT_INFO("Level-set iteration %d integration workers: configured %d; active %zu; aggregate integration %.3f ms.\n",
+    TOPOLOGY_INFO("Level-set iteration %d integration workers: configured %d; active %zu; aggregate integration %.3f ms.\n",
       design.iteration_id, configured_workers, statistics.workers, statistics.worker_ms);
-    PRINT_INFO("Level-set iteration %d shared quadrature: budget %d MiB; preparation %.3f ms; preparation budget fallbacks %zu.\n",
+    TOPOLOGY_INFO("Level-set iteration %d shared quadrature: budget %d MiB; preparation %.3f ms; preparation budget fallbacks %zu.\n",
       design.iteration_id, configured_budget_mib, statistics.preparation_ms, statistics.preparation_fallbacks);
-    PRINT_INFO("Level-set iteration %d sensitivities: elements %zu/%zu; slowest element %d: %.3f ms; maximum subdivisions %d; incomplete element %d.\n",
+    TOPOLOGY_INFO("Level-set iteration %d sensitivities: elements %zu/%zu; slowest element %d: %.3f ms; maximum subdivisions %d; incomplete element %d.\n",
       design.iteration_id, completed, element_volumes.size(), slowest_element, slowest_element_ms, maximum_subdivisions, current_element);
   });
   evaluation = {};
   if (!valid_budget)
   {
-    PRINT_ERROR("Topology quadrature cache budget must be positive MiB and fit in the address space.\n");
+    TOPOLOGY_ERROR("Topology quadrature cache budget must be positive MiB and fit in the address space.\n");
     return false;
   }
   if (configured_workers < 1)
   {
-    PRINT_ERROR("Topology integration requires at least one converter thread.\n");
+    TOPOLOGY_ERROR("Topology integration requires at least one converter thread.\n");
     return false;
   }
   if (!valid_design(design) || !valid_domain(preserved, element_volumes) || !design.volume.available ||
       element_volumes.size() != design.element_solid_fractions.size() || element_energies.size() != element_volumes.size() || applied_factors.size() != element_volumes.size())
   {
-    PRINT_ERROR("Incomplete solved level-set compliance data.\n");
+    TOPOLOGY_ERROR("Incomplete solved level-set compliance data.\n");
     return false;
   }
   CoreTopologyProgress progress("Evaluating Level-Set Compliance Sensitivities", element_volumes.size());
@@ -576,7 +576,7 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
         !std::isfinite(fraction->second) || fraction->second < 0.0 || fraction->second > 1.0 ||
         (is_preserved && (factor->second != 1.0 || fraction->second != 1.0)))
     {
-      PRINT_ERROR("Invalid solved level-set data for element %d.\n", input.id);
+      TOPOLOGY_ERROR("Invalid solved level-set data for element %d.\n", input.id);
       return false;
     }
     const auto& nodes = input.nodes;
@@ -590,7 +590,7 @@ bool CoreTopologyLevelSetEvaluation::evaluate_compliance(const TopologyLevelSetD
     maximum_subdivisions = (std::max)(maximum_subdivisions, geometry.subdivisions);
     if (std::abs(geometry.solid_fraction - fraction->second) > design.settings.integration_tolerance)
     {
-      PRINT_ERROR("Stored level-set fraction disagrees with the current geometry for element %d.\n", input.id);
+      TOPOLOGY_ERROR("Stored level-set fraction disagrees with the current geometry for element %d.\n", input.id);
       return false;
     }
     const double requested = design.void_ratio + (1.0 - design.void_ratio) * fraction->second;
@@ -645,7 +645,7 @@ bool CoreTopologyLevelSetEvaluation::accumulate_compliance(const TopologyLevelSe
       !std::isfinite(evaluation.total_volume) || evaluation.total_volume < 0.0 ||
       !std::isfinite(evaluation.solid_volume) || evaluation.solid_volume < 0.0)
   {
-    PRINT_ERROR("Invalid element data or unfinished level-set compliance accumulator.\n");
+    TOPOLOGY_ERROR("Invalid element data or unfinished level-set compliance accumulator.\n");
     evaluation = {};
     return false;
   }
@@ -663,7 +663,7 @@ bool CoreTopologyLevelSetEvaluation::accumulate_compliance(const TopologyLevelSe
         !std::isfinite(geometry.fraction_derivatives[node]) || !std::isfinite(geometry.volume_derivatives[node]) ||
         (design.fixed_nodes.count(id) != 0 && (value->second != 1.0 || objective->second != 0.0 || volume->second != 0.0)))
     {
-      PRINT_ERROR("Invalid node domain or derivative in level-set compliance accumulation.\n");
+      TOPOLOGY_ERROR("Invalid node domain or derivative in level-set compliance accumulation.\n");
       evaluation = {};
       return false;
     }
@@ -671,7 +671,7 @@ bool CoreTopologyLevelSetEvaluation::accumulate_compliance(const TopologyLevelSe
   const double stiffness_derivative = -2.0 * (element_energy / applied_factor);
   if (!std::isfinite(stiffness_derivative))
   {
-    PRINT_ERROR("Non-finite level-set compliance factor derivative.\n");
+    TOPOLOGY_ERROR("Non-finite level-set compliance factor derivative.\n");
     evaluation = {};
     return false;
   }
@@ -680,7 +680,7 @@ bool CoreTopologyLevelSetEvaluation::accumulate_compliance(const TopologyLevelSe
   evaluation.solid_volume += geometry.solid_volume;
   if (!std::isfinite(evaluation.compliance) || !std::isfinite(evaluation.total_volume) || !std::isfinite(evaluation.solid_volume))
   {
-    PRINT_ERROR("Non-finite accumulated level-set compliance or volume.\n");
+    TOPOLOGY_ERROR("Non-finite accumulated level-set compliance or volume.\n");
     evaluation = {};
     return false;
   }
@@ -697,7 +697,7 @@ bool CoreTopologyLevelSetEvaluation::accumulate_compliance(const TopologyLevelSe
     volume += geometry.volume_derivatives[node];
     if (!std::isfinite(objective) || !std::isfinite(volume))
     {
-      PRINT_ERROR("Non-finite assembled level-set nodal derivative.\n");
+      TOPOLOGY_ERROR("Non-finite assembled level-set nodal derivative.\n");
       evaluation = {};
       return false;
     }
@@ -712,14 +712,14 @@ bool CoreTopologyLevelSetEvaluation::finalize_compliance(TopologyLevelSetEvaluat
       evaluation.compliance_derivatives.empty() || evaluation.compliance_derivatives.size() != evaluation.volume_derivatives.size() ||
       !evaluation.volume_fraction_derivatives.empty())
   {
-    PRINT_ERROR("Invalid assembled level-set compliance or volume.\n");
+    TOPOLOGY_ERROR("Invalid assembled level-set compliance or volume.\n");
     evaluation = {};
     return false;
   }
   evaluation.volume_fraction = evaluation.solid_volume / evaluation.total_volume;
   if (!std::isfinite(evaluation.volume_fraction))
   {
-    PRINT_ERROR("Non-finite assembled level-set volume fraction.\n");
+    TOPOLOGY_ERROR("Non-finite assembled level-set volume fraction.\n");
     evaluation = {};
     return false;
   }
@@ -730,7 +730,7 @@ bool CoreTopologyLevelSetEvaluation::finalize_compliance(TopologyLevelSetEvaluat
     if (node.first <= 0 || objective == evaluation.compliance_derivatives.end() || !std::isfinite(objective->second) ||
         !std::isfinite(node.second) || !std::isfinite(derivative))
     {
-      PRINT_ERROR("Invalid nodal domain or non-finite level-set volume fraction derivative.\n");
+      TOPOLOGY_ERROR("Invalid nodal domain or non-finite level-set volume fraction derivative.\n");
       evaluation = {};
       return false;
     }

@@ -1,6 +1,6 @@
 #include "CoreJobs.hpp"
 #include "CoreJobSnapshotBuilder.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
@@ -47,10 +47,10 @@ void CoreJobs::freeze_prepared_setup(int jobId, const std::string& filename, boo
     preparedRuns.emplace(jobId, std::move(candidate));
   }
   catch (const std::exception& exception) {
-    PRINT_WARNING("Job %d: cannot freeze setup: %s\n", jobId, exception.what());
+    TOPOLOGY_WARNING("Job %d: cannot freeze setup: %s\n", jobId, exception.what());
   }
   catch (...) {
-    PRINT_WARNING("Job %d: cannot freeze setup.\n", jobId);
+    TOPOLOGY_WARNING("Job %d: cannot freeze setup.\n", jobId);
   }
 }
 
@@ -69,7 +69,7 @@ void CoreJobs::prepare_run_record(int jobId, const std::string& filename, bool i
 
       if (!output.read_input_units(filename, error))
       {
-        PRINT_WARNING("Job %d: cannot record input metadata: %s\n", jobId, error.c_str());
+        TOPOLOGY_WARNING("Job %d: cannot record input metadata: %s\n", jobId, error.c_str());
       }
     }
     else if (!CoreJobSnapshotBuilder::captureInput(filename, output.input, error))
@@ -79,7 +79,7 @@ void CoreJobs::prepare_run_record(int jobId, const std::string& filename, bool i
     else
     {
       if (!output.read_input_units(error)) {
-        PRINT_WARNING("Job %d: %s\n", jobId, error.c_str());
+        TOPOLOGY_WARNING("Job %d: %s\n", jobId, error.c_str());
       }
       const auto prepared = preparedRuns.find(jobId);
       if (!imported && prepared != preparedRuns.end() && prepared->second.input.manifestFingerprint == output.input.manifestFingerprint) {
@@ -109,18 +109,18 @@ void CoreJobs::prepare_run_record(int jobId, const std::string& filename, bool i
     }
     clear_prepared_setup(jobId);
     if (!output.setup && !output.setupUnavailableReason.empty()) {
-      PRINT_WARNING("Job %d: %s\n", jobId, output.setupUnavailableReason.c_str());
+      TOPOLOGY_WARNING("Job %d: %s\n", jobId, output.setupUnavailableReason.c_str());
     }
   }
   catch (const std::exception& exception) {
     output.setup.reset();
     output.quality.reset();
-    PRINT_WARNING("Job %d: cannot prepare run archive: %s\n", jobId, exception.what());
+    TOPOLOGY_WARNING("Job %d: cannot prepare run archive: %s\n", jobId, exception.what());
   }
   catch (...) {
     output.setup.reset();
     output.quality.reset();
-    PRINT_WARNING("Job %d: cannot prepare run archive.\n", jobId);
+    TOPOLOGY_WARNING("Job %d: cannot prepare run archive.\n", jobId);
   }
 }
 
@@ -132,10 +132,10 @@ void CoreJobs::publish_run_record(CalculiXJobRunRecord&& record) noexcept
     runRecords.emplace(record.jobId, std::make_shared<const CalculiXJobRunRecord>(std::move(record)));
   }
   catch (const std::exception& exception) {
-    PRINT_WARNING("Cannot publish job launch archive: %s\n", exception.what());
+    TOPOLOGY_WARNING("Cannot publish job launch archive: %s\n", exception.what());
   }
   catch (...) {
-    PRINT_WARNING("Cannot publish job launch archive.\n");
+    TOPOLOGY_WARNING("Cannot publish job launch archive.\n");
   }
 }
 
@@ -148,18 +148,18 @@ bool CoreJobs::copy_job_input(const std::string& source, const std::string& dest
   QSaveFile output(target.absoluteFilePath());
   output.setDirectWriteFallback(false);
   if (!input.open(QIODevice::ReadOnly) || !output.open(QIODevice::WriteOnly)) {
-    PRINT_ERROR("Cannot open job input for copying.\n");
+    TOPOLOGY_ERROR("Cannot open job input for copying.\n");
     return false;
   }
   while (!input.atEnd()) {
     const auto bytes = input.read(1024 * 1024);
     if (input.error() != QFileDevice::NoError || bytes.isEmpty() || output.write(bytes) != bytes.size()) {
-      PRINT_ERROR("Cannot copy job input bytes.\n");
+      TOPOLOGY_ERROR("Cannot copy job input bytes.\n");
       return false;
     }
   }
   if (!output.commit()) {
-    PRINT_ERROR("Cannot commit copied job input.\n");
+    TOPOLOGY_ERROR("Cannot commit copied job input.\n");
     return false;
   }
   return true;

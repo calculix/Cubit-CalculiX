@@ -10,6 +10,7 @@
 class QLabel;
 class PostprocessorApplicationInterface;
 class PostprocessorProbeProperties;
+class PostprocessorTopologyCutoffControls;
 
 class PostprocessorProperties : public QWidget
 {
@@ -24,6 +25,7 @@ private:
   QLabel* name;
   QLabel* origin;
 
+  PostprocessorTopologyCutoffControls* topologyCutoff;
   PostprocessorProbeProperties* probe;
   PostprocessorAppearanceControls* appearance;
 };

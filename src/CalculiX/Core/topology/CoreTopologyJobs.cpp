@@ -5,7 +5,7 @@
 #include "CoreTopology.hpp"
 #include "CoreTopologyQuery.hpp"
 #include "Core/jobs/CoreJobs.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <initializer_list>
 #include <string>
 
@@ -24,7 +24,7 @@ bool CoreTopologyJobs::register_adjoint_job(CoreTopology& topology, CoreJobs& jo
 
   if (physical_index < 0 || jobs.jobs_data[physical_index].size() < 2)
   {
-    PRINT_ERROR("Physical job data is missing.\n");
+    TOPOLOGY_ERROR("Physical job data is missing.\n");
     return false;
   }
 
@@ -34,7 +34,7 @@ bool CoreTopologyJobs::register_adjoint_job(CoreTopology& topology, CoreJobs& jo
   {
     if (job.size() > 1 && job[1] == name)
     {
-      PRINT_ERROR("Job name '%s' already exists.\n", name.c_str());
+      TOPOLOGY_ERROR("Job name '%s' already exists.\n", name.c_str());
       return false;
     }
   }
@@ -55,7 +55,7 @@ int CoreTopologyJobs::create_iteration_job(CoreTopology& topology, const CoreMat
 {
   if (iteration_id < 1 || job_name.empty())
   {
-    PRINT_ERROR("Invalid topology iteration job request.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration job request.\n");
     return -1;
   }
 
@@ -64,7 +64,7 @@ int CoreTopologyJobs::create_iteration_job(CoreTopology& topology, const CoreMat
 
   if (entry == topology.topology_cases.end() || collection == materials.topology_material_data.end())
   {
-    PRINT_ERROR("Topology %d is not prepared.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d is not prepared.\n", topology_id);
     return -1;
   }
 
@@ -79,13 +79,13 @@ int CoreTopologyJobs::create_iteration_job(CoreTopology& topology, const CoreMat
 
   if (collection->second.iteration_factors.count(iteration_id) == 0)
   {
-    PRINT_ERROR("Factors for topology %d iteration %d are missing.\n", topology_id, iteration_id);
+    TOPOLOGY_ERROR("Factors for topology %d iteration %d are missing.\n", topology_id, iteration_id);
     return -1;
   }
 
   if (configuration.iteration_jobs.count(iteration_id) != 0)
   {
-    PRINT_ERROR("Topology %d iteration %d already has a job.\n", topology_id, iteration_id);
+    TOPOLOGY_ERROR("Topology %d iteration %d already has a job.\n", topology_id, iteration_id);
     return -1;
   }
 
@@ -95,7 +95,7 @@ int CoreTopologyJobs::create_iteration_job(CoreTopology& topology, const CoreMat
 
     if (status == 1 || status == 5)
     {
-      PRINT_ERROR("Topology %d already has an active job.\n", topology_id);
+      TOPOLOGY_ERROR("Topology %d already has an active job.\n", topology_id);
       return -1;
     }
   }
@@ -104,7 +104,7 @@ int CoreTopologyJobs::create_iteration_job(CoreTopology& topology, const CoreMat
   {
     if (job.size() > 1 && job[1] == job_name)
     {
-      PRINT_ERROR("Job name '%s' already exists.\n", job_name.c_str());
+      TOPOLOGY_ERROR("Job name '%s' already exists.\n", job_name.c_str());
       return -1;
     }
   }
@@ -127,13 +127,13 @@ bool CoreTopologyJobs::reset_run(CoreTopology& topology, CoreJobs& jobs, CoreMat
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
   if (entry->second.run_state == TopologyRunState::Running)
   {
-    PRINT_ERROR("Topology %d is running.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d is running.\n", topology_id);
     return false;
   }
 
@@ -148,7 +148,7 @@ bool CoreTopologyJobs::reset_run(CoreTopology& topology, CoreJobs& jobs, CoreMat
 
       if (status == 1 || status == 5)
       {
-        PRINT_ERROR("Topology %d has an active associated job.\n", topology_id);
+        TOPOLOGY_ERROR("Topology %d has an active associated job.\n", topology_id);
         return false;
       }
     }
@@ -162,7 +162,7 @@ bool CoreTopologyJobs::reset_run(CoreTopology& topology, CoreJobs& jobs, CoreMat
 
       if (jobs.get_jobs_data_id_from_job_id(job_id) >= 0 && !jobs.delete_job(job_id))
       {
-        PRINT_ERROR("Failed to delete topology job %d.\n", job_id);
+        TOPOLOGY_ERROR("Failed to delete topology job %d.\n", job_id);
         return false;
       }
 
@@ -204,7 +204,12 @@ bool CoreTopologyJobs::delete_topology(CoreTopology& topology, CoreJobs& jobs, C
     return false;
   }
 
-  return topology.delete_topology(topology_id);
+  if (!topology.delete_topology(topology_id))
+  {
+    return false;
+  }
+  CoreTopologyConsole::erase_case(topology_id);
+  return true;
 }
 
 void CoreTopologyJobs::invalidate_saved_processes(const CoreTopology& topology, CoreJobs& jobs)

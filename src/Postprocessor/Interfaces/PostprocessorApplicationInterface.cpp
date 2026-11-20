@@ -21,7 +21,7 @@ bool PostprocessorApplicationInterface::open_job(
   const std::string& prefix,
   int job_id,
   const std::optional<std::string>& name,
-  std::string& error) {
+  std::string& error, std::optional<double> topology_threshold, std::optional<int> topology_iteration) {
   error.clear();
   ResolvedResultSourceProvider resolved;
 
@@ -37,7 +37,8 @@ bool PostprocessorApplicationInterface::open_job(
   SimResults::JobSourceReference request;
   request.application_id = resolved.application_id;
   request.job_id = job_id;
-  return core->open_result(*resolved.provider, request, name, error);
+  request.topology_threshold = topology_threshold;
+  return core->open_result(*resolved.provider, request, name, error, topology_iteration);
 }
 
 const Postprocessor::PostprocessorSession& PostprocessorApplicationInterface::session() const noexcept
@@ -557,6 +558,34 @@ bool PostprocessorApplicationInterface::refresh_source(const std::string& name, 
   }
   return core->refresh_result(*resolved.provider,id,error);
 }
+bool PostprocessorApplicationInterface::set_topology_threshold(const std::string& name,double threshold,std::string& error)
+{
+  const auto id = core->source_id_from_name(name);
+  const auto& sources = core->session().sources;
+  const auto source = sources.find(id);
+  if (source == sources.end())
+  {
+    error = "The topology result source does not exist.";
+    return false;
+  }
+  const auto* reference = std::get_if<Postprocessor::JobSourceReference>(&source->second.reference);
+  if (!reference || !reference->topology_threshold)
+  {
+    error = "The selected source is not a topology result series.";
+    return false;
+  }
+  ResolvedResultSourceProvider resolved;
+  if (!providers.resolve_application_result_provider(reference->application_id,resolved,error) || !resolved.provider)
+  {
+    if (error.empty())
+    {
+      error = "The topology result provider is unavailable.";
+    }
+    return false;
+  }
+  return core->refresh_result(*resolved.provider,id,error,threshold);
+}
+
 bool PostprocessorApplicationInterface::show_only_source(const std::string& name, std::string& error) {
   return core->show_only_source(core->source_id_from_name(name),core->session().active_view_id,error);
 }

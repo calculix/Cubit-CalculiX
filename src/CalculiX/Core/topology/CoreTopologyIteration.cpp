@@ -4,14 +4,14 @@
 #include "Core/materials/CalculiXMaterialsInterface.hpp"
 #include "Core/materials/CoreMaterials.hpp"
 #include "Core/jobs/CoreJobs.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 #include <cmath>
 
 bool CoreTopologyIteration::select_iteration(CoreTopology& topology, const CoreMaterials& materials, CoreJobs& jobs, int topology_id, int iteration_id)
 {
   if (iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology iteration selection request.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration selection request.\n");
     return false;
   }
 
@@ -20,7 +20,7 @@ bool CoreTopologyIteration::select_iteration(CoreTopology& topology, const CoreM
 
   if (entry == topology.topology_cases.end() || collection == materials.topology_material_data.end())
   {
-    PRINT_ERROR("Topology %d has no prepared iteration data.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d has no prepared iteration data.\n", topology_id);
     return false;
   }
 
@@ -32,7 +32,7 @@ bool CoreTopologyIteration::select_iteration(CoreTopology& topology, const CoreM
 
     if (status == 1 || status == 5)
     {
-      PRINT_ERROR("Topology %d still has an active job.\n", topology_id);
+      TOPOLOGY_ERROR("Topology %d still has an active job.\n", topology_id);
       return false;
     }
   }
@@ -41,13 +41,13 @@ bool CoreTopologyIteration::select_iteration(CoreTopology& topology, const CoreM
 
   if (job_id <= 0 || CoreTopologyQuery::get_iteration_element_data(topology, materials, jobs, topology_id, iteration_id).empty())
   {
-    PRINT_ERROR("Topology %d iteration %d is not a completed, evaluated result.\n", topology_id, iteration_id);
+    TOPOLOGY_ERROR("Topology %d iteration %d is not a completed, evaluated result.\n", topology_id, iteration_id);
     return false;
   }
 
   configuration.selected_iteration = iteration_id;
 
-  PRINT_INFO("Topology %d selected iteration %d, job %d.\n", topology_id, iteration_id, job_id);
+  TOPOLOGY_INFO("Topology %d selected iteration %d, job %d.\n", topology_id, iteration_id, job_id);
   return true;
 }
 
@@ -55,7 +55,7 @@ bool CoreTopologyIteration::mark_completed(CoreTopology& topology, CoreJobs& job
 {
   if (iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology iteration completion request.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration completion request.\n");
     return false;
   }
 
@@ -63,7 +63,7 @@ bool CoreTopologyIteration::mark_completed(CoreTopology& topology, CoreJobs& job
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -71,7 +71,7 @@ bool CoreTopologyIteration::mark_completed(CoreTopology& topology, CoreJobs& job
 
   if (job == entry->second.iteration_jobs.end() || jobs.get_job_status(job->second) != 2 || entry->second.iteration_evaluations.count(iteration_id) == 0)
   {
-    PRINT_ERROR("Topology iteration is not ready for completion.\n");
+    TOPOLOGY_ERROR("Topology iteration is not ready for completion.\n");
     return false;
   }
 
@@ -83,7 +83,7 @@ bool CoreTopologyIteration::set_displacement(CoreTopology& topology, int topolog
 {
   if (iteration_id < 1 || !std::isfinite(displacement) || displacement < 0.0 || node_id <= 0)
   {
-    PRINT_ERROR("Invalid topology displacement measurement.\n");
+    TOPOLOGY_ERROR("Invalid topology displacement measurement.\n");
     return false;
   }
 
@@ -91,7 +91,7 @@ bool CoreTopologyIteration::set_displacement(CoreTopology& topology, int topolog
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
@@ -100,7 +100,7 @@ bool CoreTopologyIteration::set_displacement(CoreTopology& topology, int topolog
 
   if (evaluation == configuration.iteration_evaluations.end() || configuration.displacement_nodeset <= 0 || configuration.displacement_component < 0 || configuration.displacement_component > 3)
   {
-    PRINT_ERROR("Missing topology evaluation or invalid displacement selection.\n");
+    TOPOLOGY_ERROR("Missing topology evaluation or invalid displacement selection.\n");
     return false;
   }
 
@@ -118,13 +118,13 @@ bool CoreTopologyIteration::set_factors(const CoreTopology& topology, int topolo
 
   if (entry == topology.topology_cases.end())
   {
-    PRINT_ERROR("Topology case %d does not exist.\n", topology_id);
+    TOPOLOGY_ERROR("Topology case %d does not exist.\n", topology_id);
     return false;
   }
 
   if (element_ids.empty() || element_ids.size() != stiffness_factors.size())
   {
-    PRINT_ERROR("Invalid topology iteration factor data.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration factor data.\n");
     return false;
   }
 
@@ -132,7 +132,7 @@ bool CoreTopologyIteration::set_factors(const CoreTopology& topology, int topolo
 
   if (preserved.empty())
   {
-    PRINT_ERROR("Preservation for topology %d has not been resolved.\n", topology_id);
+    TOPOLOGY_ERROR("Preservation for topology %d has not been resolved.\n", topology_id);
     return false;
   }
 
@@ -146,13 +146,13 @@ bool CoreTopologyIteration::set_factors(const CoreTopology& topology, int topolo
 
     if (flag == preserved.end())
     {
-      PRINT_ERROR("Missing preservation flag for element %d.\n", element_id);
+      TOPOLOGY_ERROR("Missing preservation flag for element %d.\n", element_id);
       return false;
     }
 
     if (!std::isfinite(factors[i]) || factors[i] <= 0.0 || factors[i] > 1.0)
     {
-      PRINT_ERROR("Invalid stiffness factor for element %d.\n", element_id);
+      TOPOLOGY_ERROR("Invalid stiffness factor for element %d.\n", element_id);
       return false;
     }
 
@@ -165,7 +165,7 @@ bool CoreTopologyIteration::set_factors(const CoreTopology& topology, int topolo
   const bool stable_levels = entry->second.method == TopologyMethod::LevelSet;
   if (!CalculiXMaterialsInterface().set_topology_iteration_factors(topology_id, iteration_id, element_ids, factors, entry->second.material_cap, stable_levels, entry->second.void_stiffness_ratio))
   {
-    PRINT_ERROR("Failed to store topology %d iteration %d factors.\n", topology_id, iteration_id);
+    TOPOLOGY_ERROR("Failed to store topology %d iteration %d factors.\n", topology_id, iteration_id);
     return false;
   }
 

@@ -12,7 +12,7 @@
 #include "Framework/Core/units/FrameworkUnitsInterface.hpp"
 #include "Core/topology/CalculiXTopologyInterface.hpp"
 #include "Core/topology/CalculiXTopologyRunInterface.hpp"
-#include "CubitMessage.hpp"
+#include "Core/topology/CoreTopologyConsoleMessages.hpp"
 
 #include <QCoreApplication>
 #include <QEventLoop>
@@ -28,15 +28,19 @@
 
 bool CoreTopologyOptimization::run_topology(int topology_id, bool wait)
 {
+  const CoreTopologyConsole log({topology_id});
   CalculiXJobsInterface ccx_jobs_iface;
   CalculiXTopologyInterface ccx_topology_iface;
   CalculiXTopologyRunInterface ccx_topology_run_iface;
 
   if (!ccx_topology_run_iface.begin_topology_run(topology_id))
   {
+    PRINT_ERROR("Topology %d could not start. See Topology Management > Console.\n", topology_id);
     return false;
   }
 
+  CoreTopologyConsole::erase_case(topology_id);
+  TOPOLOGY_INFO("Starting topology run.\n");
   TopologyRunContext context;
   context.serial = ++topology_run_serial;
   topology_runs.insert_or_assign(topology_id, context);
@@ -86,6 +90,7 @@ void CoreTopologyOptimization::update()
 
   for (const auto& entry : active)
   {
+    const CoreTopologyConsole log({entry.first});
     try
     {
       advance_topology_run(entry.first, entry.second);
@@ -93,7 +98,7 @@ void CoreTopologyOptimization::update()
     catch (const std::exception& error)
     {
       const auto run = topology_runs.find(entry.first);
-      PRINT_ERROR("Topology %d iteration %d failed during %s: %s\n", entry.first,
+      TOPOLOGY_ERROR("Topology %d iteration %d failed during %s: %s\n", entry.first,
         [&]() -> std::common_type_t<decltype(-1), decltype(run->second.iteration_id)> {
           if (run == topology_runs.end()) {
             return -1;
@@ -113,7 +118,7 @@ void CoreTopologyOptimization::update()
     catch (...)
     {
       const auto run = topology_runs.find(entry.first);
-      PRINT_ERROR("Topology %d iteration %d failed during %s with an unexpected exception.\n", entry.first,
+      TOPOLOGY_ERROR("Topology %d iteration %d failed during %s with an unexpected exception.\n", entry.first,
         [&]() -> std::common_type_t<decltype(-1), decltype(run->second.iteration_id)> {
           if (run == topology_runs.end()) {
             return -1;
@@ -173,7 +178,11 @@ void CoreTopologyOptimization::finish_topology_run(int topology_id, unsigned lon
 
   if (ccx_topology_run_iface.set_topology_run_state(topology_id, state))
   {
-    PRINT_INFO("Topology %d: %s.\n", topology_id, ccx_topology_iface.get_topology_run_state(topology_id).c_str());
+    TOPOLOGY_INFO("Topology %d: %s.\n", topology_id, ccx_topology_iface.get_topology_run_state(topology_id).c_str());
+    if (state == TopologyRunState::Failed)
+    {
+      PRINT_ERROR("Topology %d failed. See Topology Management > Console.\n", topology_id);
+    }
   }
 }
 
@@ -212,7 +221,7 @@ int CoreTopologyOptimization::run_topology_iteration(int topology_id, int iterat
   const auto run = topology_runs.find(topology_id);
   if (run != topology_runs.end() && run->second.phase != TopologyRunPhase::Finished)
   {
-    PRINT_ERROR("Topology %d is already running.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d is already running.\n", topology_id);
     return -1;
   }
   const int job_id = start_topology_iteration(topology_id, iteration_id);
@@ -247,6 +256,7 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
     current.stop_requested = run->second.stop_requested;
     current.kill_error_reported = run->second.kill_error_reported;
     current.stop_state = run->second.stop_state;
+    const CoreTopologyConsole log({topology_id,current.iteration_id});
     if (current.stop_requested)
     {
       if (current.job_id > 0)
@@ -260,7 +270,7 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
           {
             if (!current.kill_error_reported)
             {
-              PRINT_ERROR("Topology %d: solver termination is still pending.\n", topology_id);
+              TOPOLOGY_ERROR("Topology %d: solver termination is still pending.\n", topology_id);
             }
             run = topology_runs.find(topology_id);
             if (run != topology_runs.end() && run->second.serial == serial)
@@ -380,7 +390,7 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
 
       if (job_id <= 0)
       {
-        PRINT_ERROR("Adjoint job creation returned an invalid job ID.\n");
+        TOPOLOGY_ERROR("Adjoint job creation returned an invalid job ID.\n");
         run->second.stop_requested = true;
         run->second.stop_state = TopologyRunState::Failed;
         continue;
@@ -401,7 +411,7 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
 
       if (!started)
       {
-        PRINT_ERROR("Topology %d iteration %d: adjoint job %d could not start.\n", topology_id, current.iteration_id, job_id);
+        TOPOLOGY_ERROR("Topology %d iteration %d: adjoint job %d could not start.\n", topology_id, current.iteration_id, job_id);
         run->second.stop_requested = true;
         run->second.stop_state = TopologyRunState::Failed;
         continue;
@@ -412,7 +422,7 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
         continue;
       }
 
-      PRINT_INFO("Topology %d iteration %d: adjoint job %d started.\n", topology_id, current.iteration_id, job_id);
+      TOPOLOGY_INFO("Topology %d iteration %d: adjoint job %d started.\n", topology_id, current.iteration_id, job_id);
       return;
     }
     else if (current.phase == TopologyRunPhase::WaitingAdjoint)
@@ -444,7 +454,7 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
         return;
       }
 
-      PRINT_INFO("Topology %d iteration %d: adjoint job %d completed; results are loaded.\n", topology_id, current.iteration_id, current.job_id);
+      TOPOLOGY_INFO("Topology %d iteration %d: adjoint job %d completed; results are loaded.\n", topology_id, current.iteration_id, current.job_id);
 
       run->second.job_id = physical_job;
       run->second.phase = TopologyRunPhase::Evaluating;
@@ -500,18 +510,19 @@ void CoreTopologyOptimization::advance_topology_run(int topology_id, unsigned lo
 
 bool CoreTopologyOptimization::wait_topology(int topology_id)
 {
+  const CoreTopologyConsole log({topology_id});
   CalculiXJobsInterface ccx_jobs_iface;
   CalculiXTopologyInterface ccx_topology_iface;
 
   if (ccx_jobs_iface.is_checking_jobs() || waiting_for_topology)
   {
-    PRINT_ERROR("A topology wait cannot be nested.\n");
+    TOPOLOGY_ERROR("A topology wait cannot be nested.\n");
     return false;
   }
   const auto initial = topology_runs.find(topology_id);
   if (initial == topology_runs.end())
   {
-    PRINT_ERROR("Topology %d has no current run.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d has no current run.\n", topology_id);
     return false;
   }
   const unsigned long long serial = initial->second.serial;
@@ -520,7 +531,7 @@ bool CoreTopologyOptimization::wait_topology(int topology_id)
   {
     if (!ccx_jobs_iface.check_jobs())
     {
-      PRINT_ERROR("Unable to poll topology jobs.\n");
+      TOPOLOGY_ERROR("Unable to poll topology jobs.\n");
       return false;
     }
     const auto run = topology_runs.find(topology_id);
@@ -543,12 +554,13 @@ bool CoreTopologyOptimization::wait_topology(int topology_id)
 
 bool CoreTopologyOptimization::kill_topology(int topology_id)
 {
+  const CoreTopologyConsole log({topology_id});
   CalculiXJobsInterface ccx_jobs_iface;
 
   const auto run = topology_runs.find(topology_id);
   if (run == topology_runs.end() || run->second.phase == TopologyRunPhase::Finished)
   {
-    PRINT_ERROR("Topology %d is not running.\n", topology_id);
+    TOPOLOGY_ERROR("Topology %d is not running.\n", topology_id);
     return false;
   }
   run->second.stop_requested = true;
@@ -573,7 +585,7 @@ bool CoreTopologyOptimization::cancel_topology_runs()
       {
         if (!ccx_jobs_iface.kill_job(entry.second.job_id))
         {
-          PRINT_ERROR("Unable to kill topology job %d during cleanup.\n", entry.second.job_id);
+          TOPOLOGY_ERROR("Unable to kill topology job %d during cleanup.\n", entry.second.job_id);
           stopped = false;
         }
       }
@@ -595,7 +607,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
 
   if (iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology objective evaluation request.\n");
+    TOPOLOGY_ERROR("Invalid topology objective evaluation request.\n");
     return false;
   }
 
@@ -621,7 +633,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
     }
     case TopologyObjective::Mass:
     {
-      PRINT_ERROR("Mass optimization is not implemented.\n");
+      TOPOLOGY_ERROR("Mass optimization is not implemented.\n");
       return false;
     }
     case TopologyObjective::Displacement:
@@ -660,7 +672,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
 
       if (physical_job <= 0 || adjoint_job <= 0 || physical_job == adjoint_job)
       {
-        PRINT_ERROR("Invalid physical or adjoint job for displacement evaluation.\n");
+        TOPOLOGY_ERROR("Invalid physical or adjoint job for displacement evaluation.\n");
         return false;
       }
 
@@ -672,14 +684,14 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
       if (!jobs.get_run_record(physical_job, physicalRun, unitError) ||
           !jobs.get_run_record(adjoint_job, adjointRun, unitError))
       {
-        PRINT_ERROR("Cannot read topology solver units: %s\n", unitError.c_str());
+        TOPOLOGY_ERROR("Cannot read topology solver units: %s\n", unitError.c_str());
         return false;
       }
 
       if (!physicalRun || !adjointRun || physicalRun->unitSystem.empty() ||
           physicalRun->unitSystem != adjointRun->unitSystem)
       {
-        PRINT_ERROR("Physical and adjoint jobs require the same recorded solver unit system.\n");
+        TOPOLOGY_ERROR("Physical and adjoint jobs require the same recorded solver unit system.\n");
         return false;
       }
 
@@ -690,7 +702,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
           !framework_units().system_from_si(geometryLengthSI, SimUnits::Length,
             physicalRun->unitSystem, solverLength, unitError))
       {
-        PRINT_ERROR("Cannot convert topology integration units: %s\n", unitError.c_str());
+        TOPOLOGY_ERROR("Cannot convert topology integration units: %s\n", unitError.c_str());
         return false;
       }
 
@@ -702,7 +714,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
 
       if (!std::isfinite(integrationVolumeScale) || integrationVolumeScale <= 0.0)
       {
-        PRINT_ERROR("Invalid topology integration volume scale.\n");
+        TOPOLOGY_ERROR("Invalid topology integration volume scale.\n");
         return false;
       }
 
@@ -717,7 +729,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
 
       if (weights.empty() || stresses.size() != weights.size() || strains.size() != weights.size())
       {
-        PRINT_ERROR("Incomplete element coverage for displacement integration.\n");
+        TOPOLOGY_ERROR("Incomplete element coverage for displacement integration.\n");
         return false;
       }
 
@@ -733,7 +745,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
             stress->second.size() != element.second.size() ||
             strain->second.size() != element.second.size())
         {
-          PRINT_ERROR("Incomplete integration point coverage for element %d.\n", element_id);
+          TOPOLOGY_ERROR("Incomplete integration point coverage for element %d.\n", element_id);
           return false;
         }
 
@@ -749,7 +761,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
               !std::isfinite(point.second) ||
               point.second <= 0.0)
           {
-            PRINT_ERROR("Invalid integration point %d for element %d.\n", point.first, element_id);
+            TOPOLOGY_ERROR("Invalid integration point %d for element %d.\n", point.first, element_id);
             return false;
           }
 
@@ -764,7 +776,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
 
             if (!std::isfinite(stress_value) || !std::isfinite(strain_value))
             {
-              PRINT_ERROR("Non-finite tensor at integration point %d of element %d.\n", point.first, element_id);
+              TOPOLOGY_ERROR("Non-finite tensor at integration point %d of element %d.\n", point.first, element_id);
               return false;
             }
 
@@ -782,7 +794,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
 
           if (!std::isfinite(solverWeight) || solverWeight <= 0.0)
           {
-            PRINT_ERROR("Invalid solver integration weight for element %d.\n", element_id);
+            TOPOLOGY_ERROR("Invalid solver integration weight for element %d.\n", element_id);
             return false;
           }
 
@@ -790,7 +802,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
 
           if (!std::isfinite(contribution))
           {
-            PRINT_ERROR("Non-finite displacement integral contribution for element %d.\n", element_id);
+            TOPOLOGY_ERROR("Non-finite displacement integral contribution for element %d.\n", element_id);
             return false;
           }
 
@@ -799,7 +811,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
 
         if (!std::isfinite(integral))
         {
-          PRINT_ERROR("Non-finite displacement integral for element %d.\n", element_id);
+          TOPOLOGY_ERROR("Non-finite displacement integral for element %d.\n", element_id);
           return false;
         }
 
@@ -810,7 +822,7 @@ bool CoreTopologyOptimization::evaluate_topology_objective(int topology_id, int 
     }
     default:
     {
-      PRINT_ERROR("Invalid topology objective.\n");
+      TOPOLOGY_ERROR("Invalid topology objective.\n");
       return false;
     }
   }
@@ -833,7 +845,7 @@ bool CoreTopologyOptimization::prepare_topology_run(int topology_id)
   const bool level_set = options.method == TopologyMethod::LevelSet && options.objective == TopologyObjective::Compliance;
   if (!density && !level_set)
   {
-    PRINT_ERROR("Unsupported topology method/objective combination for run preparation.\n");
+    TOPOLOGY_ERROR("Unsupported topology method/objective combination for run preparation.\n");
     return false;
   }
 
@@ -842,7 +854,7 @@ bool CoreTopologyOptimization::prepare_topology_run(int topology_id)
        options.displacement_component < 0 ||
        options.displacement_component > 3))
   {
-    PRINT_ERROR("Displacement optimization requires a displacement nodeset and valid component.\n");
+    TOPOLOGY_ERROR("Displacement optimization requires a displacement nodeset and valid component.\n");
     return false;
   }
 
@@ -873,7 +885,7 @@ bool CoreTopologyOptimization::build_topology_adjoint_load(int topology_id, int 
 
   if (iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology adjoint load request.\n");
+    TOPOLOGY_ERROR("Invalid topology adjoint load request.\n");
     return false;
   }
 
@@ -888,7 +900,7 @@ bool CoreTopologyOptimization::build_topology_adjoint_load(int topology_id, int 
 
   if (options.displacement_nodeset <= 0 || component < 0 || component > 3)
   {
-    PRINT_ERROR("Adjoint load calculation requires a displacement nodeset and valid component.\n");
+    TOPOLOGY_ERROR("Adjoint load calculation requires a displacement nodeset and valid component.\n");
     return false;
   }
 
@@ -907,7 +919,7 @@ bool CoreTopologyOptimization::build_topology_adjoint_load(int topology_id, int 
   // At zero displacement, use the zero subgradient.
   if (objective_value == 0.0)
   {
-    PRINT_INFO("Topology %d iteration %d: monitored displacement is zero; no adjoint load is required.\n", topology_id, iteration_id);
+    TOPOLOGY_INFO("Topology %d iteration %d: monitored displacement is zero; no adjoint load is required.\n", topology_id, iteration_id);
     return true;
   }
 
@@ -963,13 +975,14 @@ bool CoreTopologyOptimization::create_topology_adjoint_job(int topology_id, int 
 
 int CoreTopologyOptimization::start_topology_iteration(int topology_id, int iteration_id)
 {
+  const CoreTopologyConsole log({topology_id,iteration_id});
   CalculiXJobsInterface ccx_jobs_iface;
   CalculiXTopologyInterface ccx_topology_iface;
   CalculiXTopologyRunInterface ccx_topology_run_iface;
 
   if (iteration_id < 1)
   {
-    PRINT_ERROR("Invalid topology iteration request.\n");
+    TOPOLOGY_ERROR("Invalid topology iteration request.\n");
     return -1;
   }
 
@@ -1008,7 +1021,7 @@ int CoreTopologyOptimization::start_topology_iteration(int topology_id, int iter
 
   if (!ccx_jobs_iface.run_job(job_id, -1))
   {
-    PRINT_ERROR("Topology %d iteration %d could not start. Job %d is retained.\n", topology_id, iteration_id, job_id);
+    TOPOLOGY_ERROR("Topology %d iteration %d could not start. Job %d is retained.\n", topology_id, iteration_id, job_id);
     return -1;
   }
 
@@ -1017,13 +1030,14 @@ int CoreTopologyOptimization::start_topology_iteration(int topology_id, int iter
 
 bool CoreTopologyOptimization::prepare_topology_density_iteration(int topology_id, int source_iteration, int next_iteration)
 {
+  const CoreTopologyConsole log({topology_id,next_iteration});
   CalculiXJobsInterface ccx_jobs_iface;
   CalculiXTopologyInterface ccx_topology_iface;
   CalculiXTopologyRunInterface ccx_topology_run_iface;
 
   if (source_iteration < 1 || next_iteration <= source_iteration)
   {
-    PRINT_ERROR("Invalid next topology iteration request.\n");
+    TOPOLOGY_ERROR("Invalid next topology iteration request.\n");
     return false;
   }
 
@@ -1035,12 +1049,12 @@ bool CoreTopologyOptimization::prepare_topology_density_iteration(int topology_i
 
     if (job_id <= 0 || ccx_jobs_iface.get_job_status(job_id) != 2)
     {
-      PRINT_ERROR("The source topology job has not completed.\n");
+      TOPOLOGY_ERROR("The source topology job has not completed.\n");
       return false;
     }
 
     stage = "calculating the density update";
-    PRINT_INFO("Topology %d iteration %d: %s.\n", topology_id, next_iteration, stage);
+    TOPOLOGY_INFO("Topology %d iteration %d: %s.\n", topology_id, next_iteration, stage);
 
     std::map<int, double> densities;
 
@@ -1050,18 +1064,18 @@ bool CoreTopologyOptimization::prepare_topology_density_iteration(int topology_i
     }
 
     stage = "storing the next density design";
-    PRINT_INFO("Topology %d iteration %d: %s.\n", topology_id, next_iteration, stage);
+    TOPOLOGY_INFO("Topology %d iteration %d: %s.\n", topology_id, next_iteration, stage);
 
     return ccx_topology_run_iface.set_topology_iteration_densities(topology_id, next_iteration, densities, source_iteration);
   }
   catch (const std::exception& error)
   {
-    PRINT_ERROR("Topology %d iteration %d failed while %s: %s.\n", topology_id, next_iteration, stage, error.what());
+    TOPOLOGY_ERROR("Topology %d iteration %d failed while %s: %s.\n", topology_id, next_iteration, stage, error.what());
     return false;
   }
   catch (...)
   {
-    PRINT_ERROR("Topology %d iteration %d failed while %s.\n", topology_id, next_iteration, stage);
+    TOPOLOGY_ERROR("Topology %d iteration %d failed while %s.\n", topology_id, next_iteration, stage);
     return false;
   }
 }
@@ -1081,7 +1095,7 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
 
   if (job_id <= 0 || ccx_jobs_iface.get_job_status(job_id) != 2)
   {
-    PRINT_ERROR("Topology iteration results are not ready.\n");
+    TOPOLOGY_ERROR("Topology iteration results are not ready.\n");
     return false;
   }
 
@@ -1118,7 +1132,7 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
       return false;
     }
 
-    PRINT_INFO("Topology %d iteration %d: maximum monitored displacement %.9g at node %d.\n", topology_id, iteration_id, displacement, node_id);
+    TOPOLOGY_INFO("Topology %d iteration %d: maximum monitored displacement %.9g at node %d.\n", topology_id, iteration_id, displacement, node_id);
   }
 
   if (options.method == TopologyMethod::LevelSet)
@@ -1133,7 +1147,7 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
     std::map<int, double> element_volumes;
     std::map<int, std::array<double, 3>> element_centers;
 
-    PRINT_INFO("Topology %d iteration %d: preparing filtered sensitivities.\n", topology_id, iteration_id);
+    TOPOLOGY_INFO("Topology %d iteration %d: preparing filtered sensitivities.\n", topology_id, iteration_id);
 
     if (!ccx_topology_run_iface.collect_topology_element_volumes(topology_id, element_volumes, &element_centers))
     {
@@ -1162,7 +1176,7 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
   }
   else
   {
-    PRINT_ERROR("Unsupported topology method during iteration evaluation.\n");
+    TOPOLOGY_ERROR("Unsupported topology method during iteration evaluation.\n");
     return false;
   }
 
@@ -1176,7 +1190,7 @@ bool CoreTopologyOptimization::finish_topology_iteration(int topology_id, int it
     *proposal = std::move(level_set_proposal);
   }
 
-  PRINT_INFO("Topology %d iteration %d completed as job %d; results are loaded.\n", topology_id, iteration_id, job_id);
+  TOPOLOGY_INFO("Topology %d iteration %d completed as job %d; results are loaded.\n", topology_id, iteration_id, job_id);
   return true;
 }
 
@@ -1197,6 +1211,7 @@ const char* CoreTopologyOptimization::phase_name(TopologyRunPhase phase)
 
 bool CoreTopologyOptimization::prepare_topology_iteration(int topology_id, int source_iteration, int next_iteration)
 {
+  const CoreTopologyConsole log({topology_id,next_iteration});
   TopologyOptions options;
   if (!CalculiXTopologyInterface().get_topology_settings(topology_id, options))
   {
@@ -1208,13 +1223,13 @@ bool CoreTopologyOptimization::prepare_topology_iteration(int topology_id, int s
   }
   if (options.method != TopologyMethod::LevelSet || options.objective != TopologyObjective::Compliance)
   {
-    PRINT_ERROR("Unsupported topology method for next-iteration preparation.\n");
+    TOPOLOGY_ERROR("Unsupported topology method for next-iteration preparation.\n");
     return false;
   }
   auto run = topology_runs.find(topology_id);
   if (run == topology_runs.end() || !run->second.pending_level_set_proposal.available || run->second.pending_level_set_proposal.source_iteration != source_iteration)
   {
-    PRINT_ERROR("A current controller-owned level-set proposal is required.\n");
+    TOPOLOGY_ERROR("A current controller-owned level-set proposal is required.\n");
     return false;
   }
   const auto serial = run->second.serial;
@@ -1256,7 +1271,7 @@ bool CoreTopologyOptimization::prepare_topology_iteration(int topology_id, int s
     run->second.level_set_moves = next_moves;
     if (next_moves.scale < previous_moves.scale)
     {
-      PRINT_INFO("Topology %d: repeated level-set reversals; applied move scale %.6g -> %.6g.\n", topology_id, previous_moves.scale, next_moves.scale);
+      TOPOLOGY_INFO("Topology %d: repeated level-set reversals; applied move scale %.6g -> %.6g.\n", topology_id, previous_moves.scale, next_moves.scale);
     }
   }
   return prepared;
@@ -1279,6 +1294,6 @@ bool CoreTopologyOptimization::check_topology_convergence(int topology_id, int p
   {
     return topology.check_topology_level_set_convergence(topology_id, previous_iteration, current_iteration, converged);
   }
-  PRINT_ERROR("Unsupported topology method for convergence evaluation.\n");
+  TOPOLOGY_ERROR("Unsupported topology method for convergence evaluation.\n");
   return false;
 }

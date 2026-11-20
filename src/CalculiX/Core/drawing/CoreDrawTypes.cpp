@@ -7,6 +7,11 @@ DrawGroup drawing_group(DrawFeature feature)
     case DrawFeature::Displacement:
     case DrawFeature::Temperature: return DrawGroup::BoundaryConditions;
     case DrawFeature::Orientation: return DrawGroup::Orientations;
+    case DrawFeature::ReferencePoint:
+    case DrawFeature::RigidBody:
+    case DrawFeature::PointMass:
+    case DrawFeature::Spring:
+    case DrawFeature::Joint: return DrawGroup::Connections;
     case DrawFeature::Equation:
     case DrawFeature::EquationGroup: return DrawGroup::Constraints;
     case DrawFeature::Topology: return DrawGroup::Topology;
@@ -20,6 +25,7 @@ const char* drawing_group_name(DrawGroup group)
   {
     case DrawGroup::BoundaryConditions: return "ccx_bcs";
     case DrawGroup::Loads: return "ccx_loads";
+    case DrawGroup::Connections: return "ccx_connections";
     case DrawGroup::Constraints: return "ccx_constraints";
     case DrawGroup::Orientations: return "ccx_orientations";
     case DrawGroup::Topology: return "ccx_topology";
